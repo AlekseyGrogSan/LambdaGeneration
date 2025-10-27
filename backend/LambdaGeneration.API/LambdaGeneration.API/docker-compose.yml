@@ -22,9 +22,6 @@
       - ASPNETCORE_URLS=http://+:80
     ports:
       - "5000:80"
-    volumes:
-      - ./:/app
-      - nuget-packages:/root/.nuget/packages
     depends_on:
       - postgres
 
