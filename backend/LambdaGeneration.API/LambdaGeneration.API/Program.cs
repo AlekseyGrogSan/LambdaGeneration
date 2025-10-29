@@ -18,8 +18,7 @@ namespace LambdaGeneration.API
             builder.Services.AddSwaggerGen();
 
             builder.Services.AddDbContext<LambdaGenerationDbContext>(options =>
-                options.UseNpgsql(builder.Configuration.GetConnectionString(nameof(LambdaGenerationDbContext)))
-                );
+                options.UseNpgsql(builder.Configuration.GetConnectionString("LambdaGenerationDatabase")));
 
             var app = builder.Build();
 
