@@ -1,3 +1,7 @@
+using Microsoft.AspNetCore.Builder;
+using Microsoft.Extensions.DependencyInjection;
+using LambdaGeneration.API.Date;
+using Microsoft.EntityFrameworkCore;
 
 namespace LambdaGeneration.API
 {
@@ -8,11 +12,14 @@ namespace LambdaGeneration.API
             var builder = WebApplication.CreateBuilder(args);
 
             // Add services to the container.
-
+            
             builder.Services.AddControllers();
-            // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
             builder.Services.AddOpenApi();
             builder.Services.AddSwaggerGen();
+
+            builder.Services.AddDbContext<LambdaGenerationDbContext>(options =>
+                options.UseNpgsql(builder.Configuration.GetConnectionString(nameof(LambdaGenerationDbContext)))
+                );
 
             var app = builder.Build();
 
@@ -27,7 +34,7 @@ namespace LambdaGeneration.API
             app.UseHttpsRedirection();
 
             app.UseAuthorization();
-
+            app.UseAuthentication();
 
             app.MapControllers();
 
