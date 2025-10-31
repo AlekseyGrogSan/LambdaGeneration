@@ -84,11 +84,6 @@ namespace LambdaGeneration.API.Date.Migrations
                         .HasMaxLength(256)
                         .HasColumnType("character varying(256)");
 
-                    b.Property<string>("PasswordSalt")
-                        .IsRequired()
-                        .HasMaxLength(256)
-                        .HasColumnType("character varying(256)");
-
                     b.Property<string>("UserName")
                         .IsRequired()
                         .HasMaxLength(100)
@@ -102,7 +97,7 @@ namespace LambdaGeneration.API.Date.Migrations
 
                     b.HasKey("UserID");
 
-                    b.ToTable("UsersEntity");
+                    b.ToTable("Users");
                 });
 
             modelBuilder.Entity("LambdaGeneration.API.Date.Entities.ArticlesEntity", b =>

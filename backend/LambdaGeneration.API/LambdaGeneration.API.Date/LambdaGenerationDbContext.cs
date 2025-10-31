@@ -11,6 +11,8 @@ namespace LambdaGeneration.API.Date
         }
 
         public DbSet<ArticlesEntity> Articles { get; set; }
+        public DbSet<UsersEntity> Users { get; set; }
+
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);

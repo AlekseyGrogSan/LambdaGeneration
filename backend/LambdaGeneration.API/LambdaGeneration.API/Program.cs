@@ -1,7 +1,12 @@
-using Microsoft.AspNetCore.Builder;
-using Microsoft.Extensions.DependencyInjection;
+using LambdaGeneration.API.Application.Services;
 using LambdaGeneration.API.Date;
+using LambdaGeneration.API.Date.Repositories;
+using LambdaGeneration.API.Infrastructure;
+using LambdaGeneration.API.Midleware;
+using Microsoft.AspNetCore.Builder;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 
 namespace LambdaGeneration.API
 {
@@ -17,8 +22,19 @@ namespace LambdaGeneration.API
             builder.Services.AddOpenApi();
             builder.Services.AddSwaggerGen();
 
+            builder.Services.Configure<JwtOptions>(builder.Configuration.GetSection("JwtOptions"));
+
+            builder.Services.AddScoped<IUsersRepository, UsersRepository>();
+            builder.Services.AddScoped<IUsersService, UsersService>();
+            builder.Services.AddScoped<IPasswordHasher, PasswordHasher>();
+            builder.Services.AddScoped<IJwtProvider, JwtProvider>();
+
             builder.Services.AddDbContext<LambdaGenerationDbContext>(options =>
                 options.UseNpgsql(builder.Configuration.GetConnectionString("LambdaGenerationDatabase")));
+
+            var jwtOptions = builder.Services.BuildServiceProvider().GetService<IOptions<JwtOptions>>();
+
+            builder.Services.AddAuthentication(jwtOptions);
 
             var app = builder.Build();
 
@@ -32,8 +48,10 @@ namespace LambdaGeneration.API
 
             app.UseHttpsRedirection();
 
-            app.UseAuthorization();
             app.UseAuthentication();
+            app.UseAuthorization();
+
+   
 
             app.MapControllers();
 
