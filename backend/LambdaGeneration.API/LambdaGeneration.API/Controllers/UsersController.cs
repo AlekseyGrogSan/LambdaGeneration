@@ -32,7 +32,7 @@ namespace LambdaGeneration.API.Controllers
             {
                 await _usersService.Register(Guid.NewGuid(), request.UserName, request.Email, request.Password, request.aboutUser);
                 return Ok("You are registered!");
-            }
+        }
             catch (Exception ex)
             {
                 return BadRequest(ex.Message);
@@ -44,19 +44,19 @@ namespace LambdaGeneration.API.Controllers
         {
             try
             {
-                var token = await _usersService.Login(request.Email, request.Password);
+            var token = await _usersService.Login(request.Email, request.Password);
 
-                HttpContext.Response.Cookies.Append(
-                    "auth_cookies",
+            HttpContext.Response.Cookies.Append(
+                "auth_cookies",
                     token,
                     new CookieOptions
                     {
                         HttpOnly = true,
                         SameSite = SameSiteMode.Strict
                     }
-                    );
-                return Ok();
-            }
+                );
+            return Ok();
+        }
             catch (Exception ex) {
                 return BadRequest(ex.Message);
             }

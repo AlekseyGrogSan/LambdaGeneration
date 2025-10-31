@@ -32,7 +32,9 @@ namespace LambdaGeneration.API.Date.Repositories
             _context.Users.Add(userEntity);
 
             await _context.SaveChangesAsync();
+            return userEntity.UserID;
         }
+
         public async Task<Users?> GetByEmail(string email)
         {
             var userEntity = await _context.Users
@@ -68,7 +70,7 @@ namespace LambdaGeneration.API.Date.Repositories
                 userEntity.AboutUser,
                 userEntity.CreatedDate
             );
-        }
+            }
         public async Task Delete(Guid id)
         {
             var userEntity = await _context.Users.AsNoTracking().FirstOrDefaultAsync(u => u.UserID == id);
@@ -105,7 +107,7 @@ namespace LambdaGeneration.API.Date.Repositories
                     .SetProperty(u => u.Email, email)
                     .SetProperty(u => u.UserName, name)
                     .SetProperty(u => u.AboutUser, aboutUser)
-                );
+            );
             await _context.SaveChangesAsync();
 
             return await GetProfile(id);
