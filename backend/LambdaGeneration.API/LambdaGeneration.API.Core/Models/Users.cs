@@ -53,5 +53,15 @@ namespace LambdaGeneration.API.Core.Models
         {
             IsBanned = !IsBanned;
         }
+
+        public void SetRole(Role role)
+        {
+            Role = role;
+        }
+
+        public void SetBanned()
+        {
+            IsBanned = !IsBanned;
+        }
     }
 }

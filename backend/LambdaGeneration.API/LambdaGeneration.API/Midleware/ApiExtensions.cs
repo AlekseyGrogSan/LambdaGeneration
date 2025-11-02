@@ -6,7 +6,6 @@ using LambdaGeneration.API.Date;
 using LambdaGeneration.API.Date.Repositories;
 using LambdaGeneration.API.Infrastructure;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.EntityFrameworkCore.Storage.ValueConversion.Internal;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
