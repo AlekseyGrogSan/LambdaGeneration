@@ -9,7 +9,7 @@ namespace LambdaGeneration.API.Core.Enums
     public enum Tags
     {
         // Programming Languages
-        CSharp,
+        CSharp = 1,
         Java,
         Python,
         JavaScript,

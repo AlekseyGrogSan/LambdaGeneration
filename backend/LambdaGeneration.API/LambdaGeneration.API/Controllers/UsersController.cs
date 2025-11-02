@@ -3,6 +3,7 @@ using LambdaGeneration.API.DTO.Request;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity.Data;
 using Microsoft.AspNetCore.Mvc;
+using System.ComponentModel.DataAnnotations;
 using System.Runtime.InteropServices;
 
 // For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
@@ -29,13 +30,51 @@ namespace LambdaGeneration.API.Controllers
         [HttpPost("login")]
         public async Task<IActionResult> Login([FromBody] LoginUserRequest request)
         {
-            var token = await _usersService.Login(request.Email, request.Password);
+            try
+            {
+                var token = await _usersService.Login(request.Email, request.Password);
 
-            HttpContext.Response.Cookies.Append(
-                "auth_cookies",
-                token
-                );
-            return Ok();
+                HttpContext.Response.Cookies.Append(
+                    "auth_cookies",
+                    token,
+                    new CookieOptions
+                    {
+                        HttpOnly = true,
+                        SameSite = SameSiteMode.Strict
+                    }
+                    );
+                return Ok();
+            }
+            catch (Exception ex) {
+                return BadRequest(ex.Message);
+            }
+        }
+
+        [HttpPost("logout")]
+        [Authorize]
+        public async Task<IActionResult> Logout()
+        {
+            HttpContext.Response.Cookies.Delete("auth_cookies", 
+                new CookieOptions
+                {
+                    HttpOnly = true,
+                    SameSite = SameSiteMode.Strict
+                });
+            return Ok("You exist!");
+        }
+
+        [HttpPost("test_admin")]
+        [Authorize(Policy = "Admin")]
+        public async Task<IActionResult> Test_Admin()
+        {
+            return Ok("You admin");
+        }
+
+        [HttpPost("test_user")]
+        [Authorize(Policy = "User")]
+        public async Task<IActionResult> Test_User()
+        {
+            return Ok("You user");
         }
     }
 }

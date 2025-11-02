@@ -4,6 +4,7 @@ using LambdaGeneration.API.Date.Repositories;
 using LambdaGeneration.API.Infrastructure;
 using LambdaGeneration.API.Midleware;
 using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
@@ -24,17 +25,25 @@ namespace LambdaGeneration.API
 
             builder.Services.Configure<JwtOptions>(builder.Configuration.GetSection("JwtOptions"));
 
-            builder.Services.AddScoped<IUsersRepository, UsersRepository>();
-            builder.Services.AddScoped<IUsersService, UsersService>();
-            builder.Services.AddScoped<IPasswordHasher, PasswordHasher>();
-            builder.Services.AddScoped<IJwtProvider, JwtProvider>();
+            builder.Services.AddAplicationServices();
 
             builder.Services.AddDbContext<LambdaGenerationDbContext>(options =>
-                options.UseNpgsql(builder.Configuration.GetConnectionString("LambdaGenerationDatabase")));
+                options.UseNpgsql(builder.Configuration.GetConnectionString("LambdaGenerationDatabase")),
+                ServiceLifetime.Transient);
 
             var jwtOptions = builder.Services.BuildServiceProvider().GetService<IOptions<JwtOptions>>();
 
             builder.Services.AddAuthentication(jwtOptions);
+            builder.Services.AddAuthorization(jwtOptions);
+            // Ограничение попыток входа
+            builder.Services.AddRateLimiter(options =>
+            {
+                options.AddFixedWindowLimiter("Fixed", opt =>
+                {
+                    opt.PermitLimit = 5;
+                    opt.Window = TimeSpan.FromSeconds(10);
+                });
+            });
 
             var app = builder.Build();
 
@@ -50,8 +59,6 @@ namespace LambdaGeneration.API
 
             app.UseAuthentication();
             app.UseAuthorization();
-
-   
 
             app.MapControllers();
 

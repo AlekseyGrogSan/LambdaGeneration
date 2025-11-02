@@ -1,5 +1,7 @@
-﻿using System;
+﻿using LambdaGeneration.API.Core.Enums;
+using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -15,6 +17,8 @@ namespace LambdaGeneration.API.Date.Entities
         public DateTime CreatedDate { get; set; }
         public int countArticles { get; set; }
         public int countSubscribers { get; set; }
+        public Role Role { get; set; } = Role.User;
+        public bool IsBanned { get; set; } = false;
         public List<ArticlesEntity> Articles { get; set; } = new List<ArticlesEntity>();
     }
 

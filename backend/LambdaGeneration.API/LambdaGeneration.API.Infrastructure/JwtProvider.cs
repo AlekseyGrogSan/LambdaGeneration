@@ -22,7 +22,9 @@ namespace LambdaGeneration.API.Infrastructure
         public string Generate(Users user)
         {
             Claim[] claims = {new("UserId", user.UserID.ToString()),
-                             new("UserEmail", user.Email)};
+                             new("UserEmail", user.Email),
+                             new("UserRole", user.Role.ToString()),
+                             new("UserIsBanned", user.IsBanned.ToString())};
 
             var signingCredentials = new SigningCredentials(
                 new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_jwtOptions.Value.SecretKey)),
@@ -31,6 +33,8 @@ namespace LambdaGeneration.API.Infrastructure
 
             var toker = new JwtSecurityToken(
                 claims: claims,
+                issuer: _jwtOptions.Value.Issuer,
+                audience: _jwtOptions.Value.Audience,
                 signingCredentials: signingCredentials,
                 expires: DateTime.UtcNow.AddHours(_jwtOptions.Value.ExpiresHours)
                 );
