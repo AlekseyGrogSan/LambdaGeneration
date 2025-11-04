@@ -7,5 +7,6 @@ namespace LambdaGeneration.API.Date.Repositories
         Task<Guid> Add(Users user);
         Task<Users?> GetByEmail(string email);
         Task<Users?> GetByName(string username);
+        Task Delete(Guid id);
     }
 }

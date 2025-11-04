@@ -31,9 +31,9 @@ namespace LambdaGeneration.API.Application.Services
             await _usersRepository.Add(user);
         }
 
-        public async Task<string> Login(string Email, string password)
+        public async Task<string> Login(string email, string password)
         {
-            var user = await _usersRepository.GetByEmail(Email);
+            var user = await _usersRepository.GetByEmail(email);
 
             if (user == null || !_passwordHasher.VerifyPassword(password, user.PasswordHash))
             {
@@ -43,6 +43,18 @@ namespace LambdaGeneration.API.Application.Services
             var token = _jwtProvider.Generate(user);
 
             return token;
+        }
+
+        public async Task Delete(Guid id, string email, string password)
+        {
+            var user = await _usersRepository.GetByEmail(email);
+
+            if (user == null || !_passwordHasher.VerifyPassword(password, user.PasswordHash))
+            {
+                throw new UnauthorizedAccessException("Invalid email or password.");
+            }
+
+            await _usersRepository.Delete(id);
         }
     }
 }

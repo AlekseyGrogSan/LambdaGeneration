@@ -70,18 +70,27 @@ namespace LambdaGeneration.API.Controllers
             return Ok("You exist!");
         }
 
-        [HttpPost("test_admin")]
-        [Authorize(Policy = "Admin")]
-        public async Task<IActionResult> Test_Admin()
+        [HttpDelete]
+        [Authorize]
+        public async Task<IActionResult> Delete([FromBody] DeleteUserRequest request, Guid id)
         {
-            return Ok("You admin");
-        }
+            try
+            {
+                await _usersService.Delete(id, request.email, request.password);
 
-        [HttpPost("test_user")]
-        [Authorize(Policy = "User")]
-        public async Task<IActionResult> Test_User()
-        {
-            return Ok("You user");
+                HttpContext.Response.Cookies.Delete("auth_cookies",
+                    new CookieOptions
+                    {
+                        HttpOnly = true,
+                        SameSite = SameSiteMode.Strict
+                    });
+
+                return Ok();
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
         }
     }
 }

@@ -63,5 +63,14 @@ namespace LambdaGeneration.API.Date.Repositories
                 userEntity.Email
             );
         }
+        public async Task Delete(Guid id)
+        {
+            var userEntity = await _context.Users.AsNoTracking().FirstOrDefaultAsync(u => u.UserID == id);
+
+            if (userEntity == null)
+                throw new Exception("User doesn`t exist");
+            _context.Users.Remove(userEntity);
+            await _context.SaveChangesAsync();
+        }
     }
 }
