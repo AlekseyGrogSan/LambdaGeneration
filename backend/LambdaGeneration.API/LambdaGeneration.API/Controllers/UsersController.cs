@@ -23,8 +23,15 @@ namespace LambdaGeneration.API.Controllers
         [HttpPost("register")]
         public async Task<IActionResult> Register([FromBody] RegisterUserRequest request)
         {
-            var id = await _usersService.Register(Guid.NewGuid(), request.UserName, request.Email, request.Password);
-            return Ok(id);
+            try
+            {
+                await _usersService.Register(Guid.NewGuid(), request.UserName, request.Email, request.Password);
+                return Ok("You are registered!");
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
         }
 
         [HttpPost("login")]

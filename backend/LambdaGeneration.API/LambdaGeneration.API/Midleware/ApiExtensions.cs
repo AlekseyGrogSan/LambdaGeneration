@@ -1,5 +1,7 @@
-﻿using LambdaGeneration.API.Application.Services;
+﻿using LambdaGeneration.API.Application.Interfaces.Services;
+using LambdaGeneration.API.Application.Services;
 using LambdaGeneration.API.Core.Enums;
+using LambdaGeneration.API.Date;
 using LambdaGeneration.API.Date.Repositories;
 using LambdaGeneration.API.Infrastructure;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -69,6 +71,7 @@ namespace LambdaGeneration.API.Midleware
             services.AddScoped<IUsersService, UsersService>();
             services.AddScoped<IPasswordHasher, PasswordHasher>();
             services.AddScoped<IJwtProvider, JwtProvider>();
+            services.AddScoped<IAdminService, AdminService>();
             return services;
         }
 
@@ -90,6 +93,26 @@ namespace LambdaGeneration.API.Midleware
                 "admin" => Role.Admin,
                 _ => Role.User
             };
+        }
+
+        public static async Task InitialAdmin(this IHost host)
+        {
+            using (var scope = host.Services.CreateScope()) 
+            {
+                var services = scope.ServiceProvider;
+                var logger = services.GetRequiredService<ILogger<IHost>>();
+
+                try
+                {
+                    var _context = services.GetRequiredService<LambdaGenerationDbContext>();
+                    var adminService = services.GetRequiredService<IAdminService>();
+
+                    await adminService.Create();
+                }
+                catch (Exception ex) {
+                    logger.LogWarning(ex.Message);
+                }
+            }
         }
     }
 }

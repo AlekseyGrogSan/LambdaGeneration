@@ -13,7 +13,7 @@ namespace LambdaGeneration.API
 {
     public class Program
     {
-        public static void Main(string[] args)
+        public static async Task Main(string[] args)
         {
             var builder = WebApplication.CreateBuilder(args);
 
@@ -28,8 +28,7 @@ namespace LambdaGeneration.API
             builder.Services.AddAplicationServices();
 
             builder.Services.AddDbContext<LambdaGenerationDbContext>(options =>
-                options.UseNpgsql(builder.Configuration.GetConnectionString("LambdaGenerationDatabase")),
-                ServiceLifetime.Transient);
+                options.UseNpgsql(builder.Configuration.GetConnectionString("LambdaGenerationDatabase")));
 
             var jwtOptions = builder.Services.BuildServiceProvider().GetService<IOptions<JwtOptions>>();
 
@@ -46,6 +45,8 @@ namespace LambdaGeneration.API
             });
 
             var app = builder.Build();
+
+            await app.InitialAdmin();
 
             // Configure the HTTP request pipeline.
             if (app.Environment.IsDevelopment())

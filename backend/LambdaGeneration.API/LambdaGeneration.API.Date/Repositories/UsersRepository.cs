@@ -48,5 +48,20 @@ namespace LambdaGeneration.API.Date.Repositories
                 userEntity.Email
             );
         }
+
+        public async Task<Users?> GetByName(string name)
+        {
+            var userEntity = await _context.Users
+                .AsNoTracking()
+                .FirstOrDefaultAsync(u => u.UserName == name);
+            if (userEntity == null)
+                return null;
+            return Users.Create(
+                userEntity.UserID,
+                userEntity.UserName,
+                userEntity.PasswordHash,
+                userEntity.Email
+            );
+        }
     }
 }

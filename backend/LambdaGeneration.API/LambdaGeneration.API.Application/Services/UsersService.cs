@@ -16,12 +16,19 @@ namespace LambdaGeneration.API.Application.Services
             _jwtProvider = jwtProvider;
         }
 
-        public async Task<Guid> Register(Guid id, string userName, string email, string password)
+        public async Task Register(Guid id, string userName, string email, string password)
         {
+            var userByEmail = await _usersRepository.GetByEmail(email);
+            var userByName = await _usersRepository.GetByName(userName);
+
+            if (userByName != null)
+                throw new ArgumentException("User with this Name is already exist");
+            if (userByEmail != null)
+                throw new ArgumentException("User with this Email is already exist");
+
             var hashedPassword = _passwordHasher.HashPassword(password);
             var user = Users.Create(id, userName, hashedPassword, email);
-
-            return await _usersRepository.Add(user);
+            await _usersRepository.Add(user);
         }
 
         public async Task<string> Login(string Email, string password)
