@@ -35,8 +35,7 @@ namespace LambdaGeneration.API
             builder.Services.AddHttpContextAccessor();
 
             builder.Services.AddDbContext<LambdaGenerationDbContext>(options =>
-                options.UseNpgsql(builder.Configuration.GetConnectionString("LambdaGenerationDatabase")),
-                ServiceLifetime.Transient);
+                options.UseNpgsql(builder.Configuration.GetConnectionString("LambdaGenerationDatabase")));
 
             var jwtOptions = builder.Services.BuildServiceProvider().GetService<IOptions<JwtOptions>>();
 

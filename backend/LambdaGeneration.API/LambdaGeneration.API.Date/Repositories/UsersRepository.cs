@@ -119,5 +119,20 @@ namespace LambdaGeneration.API.Date.Repositories
                 .ExecuteUpdateAsync(setter => setter.SetProperty(u => u.PasswordHash, newPasswordHash));
             await _context.SaveChangesAsync();
         }
+
+        public async Task<Users?> GetByName(string name)
+        {
+            var userEntity = await _context.Users
+                .AsNoTracking()
+                .FirstOrDefaultAsync(u => u.UserName == name);
+            if (userEntity == null)
+                return null;
+            return Users.Create(
+                userEntity.UserID,
+                userEntity.UserName,
+                userEntity.PasswordHash,
+                userEntity.Email
+            );
+        }
     }
 }
