@@ -32,7 +32,8 @@ namespace LambdaGeneration.API.Midleware
                         ValidateLifetime = true,
                         ValidateIssuerSigningKey = true,
                         IssuerSigningKey = new SymmetricSecurityKey(
-                            Encoding.UTF8.GetBytes(jwtOptions.Value.SecretKey))
+                            Encoding.UTF8.GetBytes(jwtOptions.Value.SecretKey)),
+                        RoleClaimType = "UserRole"
                     };
 
                     options.Events = new JwtBearerEvents
@@ -55,7 +56,7 @@ namespace LambdaGeneration.API.Midleware
             services.AddAuthorization(options =>
             {
                 options.AddPolicy("Admin", policy =>
-                    policy.RequireRole(Role.Admin.ToString()));
+                    policy.RequireRole("UserRole",Role.Admin.ToString()));
                 options.AddPolicy("Authenticated", policy =>
                     policy.RequireAuthenticatedUser());
                 options.AddPolicy("User", policy =>

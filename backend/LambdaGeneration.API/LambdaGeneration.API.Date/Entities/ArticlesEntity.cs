@@ -12,7 +12,7 @@ namespace LambdaGeneration.API.Date.Entities
         public DateTime CreatedDate { get; set; }
         public int CountLikes { get; set; }
         public int CountComments { get; set; }
-        public List<Tags> ArticleTags { get; set; } = new List<Tags>();
+        public List<int> ArticleTags { get; set; } = new List<int>();
 
     }
 }

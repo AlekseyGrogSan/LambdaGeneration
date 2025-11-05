@@ -12,7 +12,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace LambdaGeneration.API.Date.Migrations
 {
     [DbContext(typeof(LambdaGenerationDbContext))]
-    [Migration("20251030175036_InitialCreate")]
+    [Migration("20251105173330_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -82,10 +82,16 @@ namespace LambdaGeneration.API.Date.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)");
 
+                    b.Property<bool>("IsBanned")
+                        .HasColumnType("boolean");
+
                     b.Property<string>("PasswordHash")
                         .IsRequired()
                         .HasMaxLength(256)
                         .HasColumnType("character varying(256)");
+
+                    b.Property<int>("Role")
+                        .HasColumnType("integer");
 
                     b.Property<string>("UserName")
                         .IsRequired()

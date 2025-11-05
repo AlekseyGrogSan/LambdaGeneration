@@ -26,6 +26,12 @@ namespace LambdaGeneration.API.Core.Models
             return new Users(id, username, hashpassword, email);
         }
 
+        public static Users Map(Guid id, string username, string hashpassword, string email, Role role)
+        {
+            Users user = new Users(id, username, hashpassword, email);
+            user.Role = role;
+            return user;
+        }
         public void SetRole(Role role)
         {
             Role = role;

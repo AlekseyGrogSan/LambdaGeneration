@@ -92,5 +92,12 @@ namespace LambdaGeneration.API.Controllers
                 return BadRequest(ex.Message);
             }
         }
+
+        [HttpPost]
+        [Authorize(Policy = "Admin")]
+        public async Task<IActionResult> Test_Admin()
+        {
+            return Ok("Ok");
+        }
     }
 }

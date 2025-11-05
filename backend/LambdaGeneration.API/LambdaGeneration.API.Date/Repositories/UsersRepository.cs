@@ -1,4 +1,5 @@
-﻿using LambdaGeneration.API.Core.Models;
+﻿using LambdaGeneration.API.Core.Enums;
+using LambdaGeneration.API.Core.Models;
 using LambdaGeneration.API.Date.Entities;
 using Microsoft.EntityFrameworkCore;
 
@@ -21,6 +22,7 @@ namespace LambdaGeneration.API.Date.Repositories
                 UserName = user.UserName,
                 Email = user.Email,
                 PasswordHash = user.PasswordHash,
+                Role = (int)user.Role,
                 CreatedDate = user.CreatedDate,
                 countArticles = 0,
                 countSubscribers = 0
@@ -41,12 +43,13 @@ namespace LambdaGeneration.API.Date.Repositories
             {
                 return null;
             }
-            return Users.Create(
+            return Users.Map(
                 userEntity.UserID,
                 userEntity.UserName,
                 userEntity.PasswordHash,
-                userEntity.Email
-            );
+                userEntity.Email,
+                (Role)userEntity.Role
+                );
         }
 
         public async Task<Users?> GetByName(string name)
