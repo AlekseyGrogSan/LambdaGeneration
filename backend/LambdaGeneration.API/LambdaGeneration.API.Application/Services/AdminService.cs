@@ -39,7 +39,9 @@ namespace LambdaGeneration.API.Application.Services
                 throw new ArgumentException("Admin with this Email is already exist");
 
             var hashPassword = _passwordHasher.HashPassword(password);
-            await _usersRepository.Add(Users.Create(Guid.NewGuid(), name, hashPassword, email));
+            Users admin = Users.Create(Guid.NewGuid(), name, hashPassword, email);
+            admin.SetRole(Core.Enums.Role.Admin);
+            await _usersRepository.Add(admin);
             _logger.LogInformation("Admin is created!");
         }
     }
