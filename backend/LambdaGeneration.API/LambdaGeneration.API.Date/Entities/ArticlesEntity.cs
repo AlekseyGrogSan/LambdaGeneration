@@ -10,8 +10,8 @@ namespace LambdaGeneration.API.Date.Entities
         public string ArticlePreview { get; set; } = string.Empty;
         public Guid AuthorID { get; set; }
         public DateTime CreatedDate { get; set; }
-        public int CountLikes { get; set; }
-        public int CountComments { get; set; }
+        public int CountLikes { get; set; } = 0;
+        public int CountComments { get; set; } = 0;
         public List<int> ArticleTags { get; set; } = new List<int>();
 
     }

@@ -1,0 +1,78 @@
+﻿using LambdaGeneration.API.Core.Models;
+using LambdaGeneration.API.Date.Entities;
+using Microsoft.EntityFrameworkCore;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Runtime.InteropServices;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace LambdaGeneration.API.Date.Repositories
+{
+    public class ArticlesRepository : IArticlesRepository
+    {
+        private readonly LambdaGenerationDbContext _context;
+
+        public ArticlesRepository(LambdaGenerationDbContext context)
+        {
+            _context = context;
+        }
+
+        public async Task Create(Articles article)
+        {
+            var article_entity = new ArticlesEntity
+            {
+                ArticleID = article.ArticleID,
+                ArticleTitle = article.ArticleTitle,
+                ArticleContent = article.ArticleContent,
+                ArticlePreview = article.ArticlePreview,
+                AuthorID = article.AuthorID,
+                CreatedDate = article.CreatedDate,
+                ArticleTags = article.ArticleTags
+            };
+
+            _context.Articles.Add(article_entity);
+            await _context.SaveChangesAsync();
+        }
+
+        //потом добавить пагинацию
+        public async Task<List<Articles>> GetAllArticles()
+        {
+            var articles_entity = await _context.Articles.ToListAsync();
+            var articles = articles_entity.Select(a => Articles.Map(a.ArticleID, 
+                a.ArticleTitle, 
+                a.ArticleContent,
+                a.ArticlePreview,
+                a.AuthorID,
+                a.CreatedDate)
+                ).ToList();
+            return articles;
+        }
+
+
+        public async Task Delete(Guid article_id)
+        {
+            await _context.Articles.Where(a => a.ArticleID == article_id).ExecuteDeleteAsync();
+            await _context.SaveChangesAsync();
+        }
+
+
+        public async Task<Articles?> GetById(Guid article_id)
+        {
+            var article_entity = await _context.Articles.FirstOrDefaultAsync(a => a.ArticleID == article_id);
+            if (article_entity == null)
+                return null;
+            return Articles.Map(article_entity.ArticleID,
+                article_entity.ArticleTitle,
+                article_entity.ArticleContent,
+                article_entity.ArticlePreview,
+                article_entity.AuthorID,
+                article_entity.CreatedDate
+                );
+        }
+
+
+
+    }
+}

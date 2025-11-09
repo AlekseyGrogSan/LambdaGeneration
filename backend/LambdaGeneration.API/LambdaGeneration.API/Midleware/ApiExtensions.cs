@@ -73,6 +73,8 @@ namespace LambdaGeneration.API.Midleware
             services.AddScoped<IPasswordHasher, PasswordHasher>();
             services.AddScoped<IJwtProvider, JwtProvider>();
             services.AddScoped<IAdminService, AdminService>();
+            services.AddScoped<IArticlesRepository, ArticlesRepository>();
+            services.AddScoped<IArticlesService, ArticlesService>();
             return services;
         }
 
