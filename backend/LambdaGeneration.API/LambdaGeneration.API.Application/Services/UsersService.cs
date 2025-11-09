@@ -16,7 +16,7 @@ namespace LambdaGeneration.API.Application.Services
             _jwtProvider = jwtProvider;
         }
 
-        public async Task Register(Guid id, string userName, string email, string password)
+        public async Task Register(Guid id, string userName, string email, string password, string aboutUser)
         {
             var userByEmail = await _usersRepository.GetByEmail(email);
             var userByName = await _usersRepository.GetByName(userName);
@@ -27,7 +27,7 @@ namespace LambdaGeneration.API.Application.Services
                 throw new ArgumentException("User with this Email is already exist");
 
             var hashedPassword = _passwordHasher.HashPassword(password);
-            var user = Users.Create(id, userName, hashedPassword, email);
+            var user = Users.Create(id, userName, hashedPassword, email, aboutUser);
             await _usersRepository.Add(user);
         }
 
@@ -55,6 +55,30 @@ namespace LambdaGeneration.API.Application.Services
             }
 
             await _usersRepository.Delete(id);
+        }
+
+        public async Task<Users> GetProfile(Guid userId)
+        {
+            var user = await _usersRepository.GetProfile(userId);
+
+            if (user == null)
+            {
+                throw new UnauthorizedAccessException("User is not exist!");
+            }
+
+            return user;
+        }
+
+        public async Task<(Users, string token)> Update(Guid id, string name, string email, string aboutUser)
+        {
+            var user = await _usersRepository.Update(id, name, email, aboutUser);
+
+            if (user == null)
+                throw new Exception("User is not exist!");
+
+            string token = _jwtProvider.Generate(user);
+
+            return (user, token);
         }
     }
 }

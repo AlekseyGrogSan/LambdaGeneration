@@ -1,10 +1,15 @@
 ﻿using LambdaGeneration.API.Application.Services;
+using LambdaGeneration.API.Core.Models;
 using LambdaGeneration.API.DTO.Request;
+using LambdaGeneration.API.DTO.Response;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity.Data;
 using Microsoft.AspNetCore.Mvc;
 using System.ComponentModel.DataAnnotations;
+using System.Net.WebSockets;
 using System.Runtime.InteropServices;
+using System.Security.Claims;
 
 // For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 
@@ -25,7 +30,7 @@ namespace LambdaGeneration.API.Controllers
         {
             try
             {
-                await _usersService.Register(Guid.NewGuid(), request.UserName, request.Email, request.Password);
+                await _usersService.Register(Guid.NewGuid(), request.UserName, request.Email, request.Password, request.aboutUser);
                 return Ok("You are registered!");
             }
             catch (Exception ex)
@@ -72,11 +77,13 @@ namespace LambdaGeneration.API.Controllers
 
         [HttpDelete]
         [Authorize]
-        public async Task<IActionResult> Delete([FromBody] DeleteUserRequest request, Guid id)
+        public async Task<IActionResult> Delete([FromBody] DeleteUserRequest request)
         {
             try
             {
-                await _usersService.Delete(id, request.email, request.password);
+                var userId = GetUserID();
+
+                await _usersService.Delete(userId, request.email, request.password);
 
                 HttpContext.Response.Cookies.Delete("auth_cookies",
                     new CookieOptions
@@ -93,11 +100,101 @@ namespace LambdaGeneration.API.Controllers
             }
         }
 
-        [HttpPost]
-        [Authorize(Policy = "Admin")]
-        public async Task<IActionResult> Test_Admin()
+        [HttpGet("MyProfile")]
+        [Authorize]
+        public async Task<ActionResult<MyProfileResponse>> GetMyProfile()
         {
-            return Ok("Ok");
+            try
+            {
+                var userId = GetUserID();
+
+                var user = await _usersService.GetProfile(userId);
+
+                var userResponse = new MyProfileResponse(
+                    user.UserID,
+                    user.UserName,
+                    user.Email,
+                    user.AboutUser,
+                    user.CreatedDate
+                    );
+
+                return Ok(userResponse);
+            }
+            catch (Exception ex) 
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+
+        [HttpGet("UserProfile/{id:guid}")]
+        [Authorize]
+        public async Task<ActionResult<UserProfileResponse>> GetUserProfile(Guid id)
+        {
+            try
+            { 
+                var user = await _usersService.GetProfile(id);
+
+                var userResponse = new UserProfileResponse(
+                    user.UserID,
+                    user.UserName,
+                    user.AboutUser,
+                    user.CreatedDate
+                    );
+
+                return Ok(userResponse);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+        [HttpPut]
+        [Authorize]
+        public async Task<ActionResult<MyProfileResponse>> Update([FromBody] UpdateUserRequest request)
+        {
+            try
+            {
+                var id = GetUserID();
+
+                if (request.email != User.FindFirst("UserEmail")?.Value)
+                {
+                    return BadRequest("It`s not your email!");
+                }
+                
+                (Users user, string token) = await _usersService.Update(id, request.name, request.email, request.aboutUser);
+
+                var userProfile = new MyProfileResponse(
+                    user.UserID,
+                    user.UserName,
+                    user.Email,
+                    user.AboutUser,
+                    user.CreatedDate
+                    );
+
+                HttpContext.Response.Cookies.Append("auth_cookies", token,
+                    new CookieOptions
+                    {
+                        HttpOnly = true,
+                        SameSite = SameSiteMode.Strict
+                    }
+                    );
+
+                return Ok(userProfile);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+        private Guid GetUserID()
+        {
+            var userClaims = User.FindFirst("UserId")?.Value;
+            Guid userId;
+            if (!Guid.TryParse(userClaims, out userId))
+            {
+                throw new UnauthorizedAccessException("Incorrect User!");
+            }
+            return userId;
         }
     }
 }

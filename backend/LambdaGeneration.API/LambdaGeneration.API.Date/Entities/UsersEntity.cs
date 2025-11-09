@@ -13,6 +13,7 @@ namespace LambdaGeneration.API.Date.Entities
         public Guid UserID { get; set; }
         public string UserName { get; set; } = string.Empty;    
         public string Email { get; set; } = string.Empty;
+        public string AboutUser { get; set; } = string.Empty;
         public string PasswordHash { get; set; } = string.Empty;
         public DateTime CreatedDate { get; set; }
         public int countArticles { get; set; }
