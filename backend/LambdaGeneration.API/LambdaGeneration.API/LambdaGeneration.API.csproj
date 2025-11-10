@@ -32,4 +32,8 @@
     <ProjectReference Include="..\LambdaGeneration.API.Infrastructure\LambdaGeneration.API.Infrastructure.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="wwwroot\" />
+  </ItemGroup>
+
 </Project>

@@ -43,5 +43,61 @@ namespace LambdaGeneration.API.Infrastructure
 
             return t;
         }
+
+        public string GenerateResetToken(string email) 
+        {
+            var signingCredentials = new SigningCredentials(
+               new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_jwtOptions.Value.SecretKey)),
+               SecurityAlgorithms.HmacSha256
+               );
+
+            Claim[] claims = {
+                 new Claim(ClaimTypes.Email, email),
+                 new Claim("purpose", "password_reset")
+            };
+
+            var token = new JwtSecurityToken(
+                claims: claims,
+                signingCredentials: signingCredentials,
+                expires: DateTime.UtcNow.AddHours(1)
+                );
+            
+            var t = new JwtSecurityTokenHandler().WriteToken(token);
+
+            return t;
+        }
+
+        public (bool isValid, string email) ValidateResetToken(string token)
+        {
+            try
+            {
+                var tokenHandler = new JwtSecurityTokenHandler();
+
+                var secretKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_jwtOptions.Value.SecretKey));
+
+               var parametrs = tokenHandler.ValidateToken(token, new TokenValidationParameters 
+                {
+                    ValidateIssuerSigningKey = true,
+                    IssuerSigningKey = secretKey,
+                    ValidateIssuer = false,
+                    ValidateAudience = false,
+                    ValidateLifetime = true,
+                    ClockSkew = TimeSpan.Zero
+                }, out SecurityToken validatedToken);
+
+                var email = parametrs.FindFirst(ClaimTypes.Email)?.Value;
+                var purpose = parametrs.FindFirst("purpose")?.Value;
+
+                if (purpose != "password_reset" || string.IsNullOrEmpty(email))
+                    return (false, email);
+
+                return (true, email);
+            }
+            catch 
+            {
+                return (false, null);
+            }
+
+        }
     }
 }

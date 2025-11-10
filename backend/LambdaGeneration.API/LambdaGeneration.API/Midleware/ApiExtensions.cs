@@ -1,4 +1,5 @@
-﻿using LambdaGeneration.API.Application.Interfaces.Services;
+﻿using LambdaGeneration.API.Application.Interfaces.Infrastructure;
+using LambdaGeneration.API.Application.Interfaces.Services;
 using LambdaGeneration.API.Application.Services;
 using LambdaGeneration.API.Core.Enums;
 using LambdaGeneration.API.Date;
@@ -73,6 +74,9 @@ namespace LambdaGeneration.API.Midleware
             services.AddScoped<IPasswordHasher, PasswordHasher>();
             services.AddScoped<IJwtProvider, JwtProvider>();
             services.AddScoped<IAdminService, AdminService>();
+            services.AddScoped<ISendEmail, SendEmail>();
+            services.AddScoped<IDataEncryption, DataEncryption>();
+            services.AddScoped<IPasswordResetService, PasswordResetService>();
             services.AddScoped<IArticlesRepository, ArticlesRepository>();
             services.AddScoped<IArticlesService, ArticlesService>();
 

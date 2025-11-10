@@ -4,6 +4,7 @@ using LambdaGeneration.API.Date.Repositories;
 using LambdaGeneration.API.Infrastructure;
 using LambdaGeneration.API.Midleware;
 using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
@@ -26,6 +27,12 @@ namespace LambdaGeneration.API
             builder.Services.Configure<JwtOptions>(builder.Configuration.GetSection("JwtOptions"));
 
             builder.Services.AddAplicationServices();
+
+            builder.Services.AddDataProtection()
+                .SetApplicationName("LambdaGeneration")
+                .SetDefaultKeyLifetime(TimeSpan.FromDays(90));
+
+            builder.Services.AddHttpContextAccessor();
 
             builder.Services.AddDbContext<LambdaGenerationDbContext>(options =>
                 options.UseNpgsql(builder.Configuration.GetConnectionString("LambdaGenerationDatabase")));
@@ -55,6 +62,7 @@ namespace LambdaGeneration.API
                 app.UseSwagger();
                 app.UseSwaggerUI();
             }
+            app.UseStaticFiles();
 
             app.UseHttpsRedirection();
 
