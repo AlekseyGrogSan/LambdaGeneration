@@ -4,6 +4,7 @@ using LambdaGeneration.API.DTO.Request;
 using LambdaGeneration.API.DTO.Response;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.IdentityModel.Tokens;
 using Org.BouncyCastle.Pkcs;
 
 namespace LambdaGeneration.API.Controllers
@@ -13,24 +14,59 @@ namespace LambdaGeneration.API.Controllers
     public class ArticlesController : ControllerBase
     {
         private readonly IArticlesService _articlesService;
-
-        public ArticlesController(IArticlesService articles_service)
+        private readonly IGigaChatModerationService _gaChatModerationService;
+        public ArticlesController(IArticlesService articles_service,
+            IGigaChatModerationService gigaChatModerationService)
         {
             _articlesService = articles_service;
+            _gaChatModerationService = gigaChatModerationService;
         }
 
         [HttpPost("create")]
         [Authorize]
         public async Task<IActionResult> Create([FromBody] CreateArticleRequest request)
         {
-            var author_id = GetUserID();
-            await _articlesService.Create(
-                request.article_title,
-                request.article_content,
-                request.article_preview,
-                author_id
-                );
-            return Ok("Article is create!");
+            try
+            {
+                var deskModeration = await _gaChatModerationService.ModerationContent(request.article_preview);
+
+                if (!deskModeration.IsApproved)
+                {
+                    return BadRequest(new
+                    {
+                        error = "Содержимое описания не прошло модерацию",
+                        reason = deskModeration.Reason,
+                        flags = deskModeration.Flags,
+                        field = "description"
+                    });
+                }
+
+                var contentModeration = await _gaChatModerationService.ModerationContent(request.article_content);
+
+                if (!contentModeration.IsApproved)
+                {
+                    return BadRequest(new
+                    {
+                        error = "Содержимое контента не прошло модерацию",
+                        reason = contentModeration.Reason,
+                        flags = contentModeration.Flags,
+                        field = "content"
+                    });
+                }
+
+                var author_id = GetUserID();
+                await _articlesService.Create(
+                    request.article_title,
+                    request.article_content,
+                    request.article_preview,
+                    author_id
+                    );
+                return Ok("Article is create!");
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
         }
 
         [HttpGet("getAll")]

@@ -75,6 +75,17 @@ namespace LambdaGeneration.API.Midleware
             services.AddScoped<IAdminService, AdminService>();
             services.AddScoped<IArticlesRepository, ArticlesRepository>();
             services.AddScoped<IArticlesService, ArticlesService>();
+
+            services.AddSingleton<IGigaChatModerationService>(provider =>
+            {
+                var config = provider.GetRequiredService<IConfiguration>();
+                return new GigaChatModerationService(
+                    config["GigaChat:ClientId"],
+                    config["GigaChat:ClientSecret"],
+                    config["GigaChat:Scope"] ?? "GigaChat"
+                );
+            });
+            services.AddHttpClient();
             return services;
         }
 
