@@ -4,6 +4,7 @@ using LambdaGeneration.API.DTO.Request;
 using LambdaGeneration.API.DTO.Response;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Org.BouncyCastle.Pkcs;
 
@@ -102,7 +103,36 @@ namespace LambdaGeneration.API.Controllers
                 return BadRequest(ex.Message);
             } 
         }
-        
 
+        [HttpPut("update")]
+        [Authorize]
+        public async Task<ActionResult<UpdateArticlesResponse>> Update(UpdateArticlesRequest request)
+        {
+            try 
+            {
+                var article = await _articlesService.Update(request.article_id, request.article_title, request.article_preview, request.article_content);
+                return Ok(new UpdateArticlesResponse(article.ArticleID, article.ArticleTitle, article.ArticlePreview, article.ArticleContent, article.CreatedDate));
+            }
+            catch (Exception ex)
+            { 
+                return BadRequest(ex.Message); 
+            }
+        }
+
+        [HttpGet("getAllMyArticles")]
+        [Authorize]
+        public async Task<ActionResult<GetArticlesResponse>> GetAllArticlesUser()
+        {
+            var article = await _articlesService.GetAllArticlesUser(GetUserID());
+            return Ok(new GetArticlesResponse(article));
+        }
+
+        [HttpGet("getAllOtherAuthor/{id:guid}")]
+        [Authorize]
+        public async Task<ActionResult<GetArticlesResponse>> GetAllArticlesOtherUser(Guid id)
+        {
+            var article = await _articlesService.GetAllArticlesUser(id);
+            return Ok(new GetArticlesResponse(article));
+        }
     }
 }

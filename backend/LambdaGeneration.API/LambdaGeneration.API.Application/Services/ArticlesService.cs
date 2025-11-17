@@ -46,6 +46,24 @@ namespace LambdaGeneration.API.Application.Services
             await _articlesRepository.Delete(article_id);
         }
 
+        public async Task<Articles?> Update(Guid article_id, string new_title, string new_content, string new_preview)
+        {
+            var a = await _articlesRepository.GetById(article_id);
+
+            if (a == null)
+            {
+                throw new ArgumentException("Article not exist!");
+            }
+            var article = await _articlesRepository.Update(article_id, new_title, new_content, new_preview);
+
+            return article;
+        }
+
+        public async Task<List<Articles>> GetAllArticlesUser(Guid author_id)
+        {
+            var all_articles = await _articlesRepository.GetAllArticlesUser(author_id);
+            return all_articles;    
+        }
 
 
     }

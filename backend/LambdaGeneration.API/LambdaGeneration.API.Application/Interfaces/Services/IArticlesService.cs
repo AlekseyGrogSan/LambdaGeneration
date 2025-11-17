@@ -9,5 +9,9 @@ namespace LambdaGeneration.API.Application.Interfaces.Services
         Task<List<Articles>> GetAllArticles();
 
         Task Delete(Guid article_id);
+
+        Task<Articles?> Update(Guid article_id, string new_title, string new_content, string new_preview);
+
+        Task<List<Articles>> GetAllArticlesUser(Guid author_id);
     }
 }

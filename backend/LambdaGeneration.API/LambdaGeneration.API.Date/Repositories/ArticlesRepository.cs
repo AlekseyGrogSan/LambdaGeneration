@@ -72,6 +72,35 @@ namespace LambdaGeneration.API.Date.Repositories
                 );
         }
 
+        public async Task<Articles?> Update(Guid article_id, string new_title, string new_content, string new_preview)
+        {
+            await _context.Articles
+                .Where(a => a.ArticleID == article_id)
+                .ExecuteUpdateAsync(setter => setter
+                .SetProperty(ar => ar.ArticleTitle, new_title)
+                .SetProperty(ar => ar.ArticleContent, new_content)
+                .SetProperty(ar => ar.ArticlePreview, new_preview)
+                );
+
+            await _context.SaveChangesAsync();
+
+            return await GetById(article_id);
+        }
+
+        public async Task<List<Articles>> GetAllArticlesUser(Guid author_id)
+        {
+            return await _context.Articles
+                .Where(a => a.AuthorID == author_id)
+                .Select(a => Articles.Map(a.ArticleID,
+                a.ArticleTitle,
+                a.ArticleContent,
+                a.ArticlePreview,
+                a.AuthorID,
+                a.CreatedDate)).
+                ToListAsync();
+        }
+
+
 
 
     }
