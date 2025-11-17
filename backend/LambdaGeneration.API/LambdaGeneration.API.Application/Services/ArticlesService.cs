@@ -6,7 +6,7 @@ using LambdaGeneration.API.Date.Repositories;
 
 namespace LambdaGeneration.API.Application.Services
 {
-    public class ArticlesService : IArticlesService
+    public class ArticlesService :  IArticlesService
     {
         private readonly IArticlesRepository _articlesRepository;
 

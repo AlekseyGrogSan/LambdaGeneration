@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html>
+ <head>
+  <meta charset="utf-8" />
+  <title>Profile</title>
+  <style>
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+html, body {
+    height: 100%; /* ← добавьте это */
+}
+
+body {
+    display: flex;
+    min-height: 100vh; /* ← и это */
+}
+
+.big {
+    display: flex;
+    flex-direction: column;
+    width: max-content;
+    flex: 1; /* ← чтобы занимал всё доступное пространство */
+}
+
+header {
+    display: flex;
+    background-color: gray;
+    height: 125px;
+    width: 100%; /* ← вместо auto */
+    justify-content: space-between; 
+    align-items: flex-start; 
+    flex-direction: row;
+}
+
+header .ikon {
+    width: 110px;
+    height: 110px;
+    border-radius: 100%;
+    background-color: black;
+    margin-top: 10px;
+    margin-left: 45px;
+    text-align: center;
+    color: aliceblue;
+    display: flex; 
+    align-items: center;
+    justify-content: center;
+}
+
+header .in {
+    display: flex;
+    flex-direction: column;
+    margin-left: 30px;
+    justify-content: space-between; 
+    height: 100%; 
+}
+
+header .name {
+    width: 450px;
+    height: 80px;
+    background-color: green;
+    border-radius: 5px;
+    margin-bottom: 10px;
+    margin-top: 10px;
+    text-align: center;
+    color: aliceblue;
+    display: flex; 
+    align-items: center;
+    justify-content: center;
+}
+
+header .info {
+    width: 450px;
+    height: 50px;
+    border-radius: 5px;
+    background-color: green;
+    text-align: center;
+    color: aliceblue;
+    display: flex; 
+    align-items: center;
+    justify-content: center;
+}
+
+header .desk {
+    align-self: flex-start; 
+    margin-top: 10px;
+    margin-right: 10px;
+    border-radius: 5px;
+    width: 550px;
+    height: 110px;
+    background-color: green;
+    text-align: center;
+    color: aliceblue;
+    display: flex; 
+    align-items: center;
+    justify-content: center;
+}
+
+aside {
+    display: flex;
+    flex-direction: column;
+    width: 100px;
+    background-color: green;
+    border: 1px solid black;  
+    order: 2;
+}
+
+aside div{
+    border: 1px solid black;
+    background-color: aqua;
+    border-radius: 50px;
+    margin-top: 100px;
+    margin-left: 30px;
+    width: 45px;
+    height: 45px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+main {
+    background-color: gray;
+    display: flex;
+    flex-direction: row;
+    border: 3px solid black;
+    height: 100vh; 
+    flex: 1; 
+}
+
+main div{
+    border: 4px solid white;
+    width: 90%;
+    margin: 20px;
+    border-radius: 5px;
+    background-color: antiquewhite;
+}
+  </style>
+ </head>
+ <body>
+    <div class="big">
+        <header>
+            <div class="ikon">
+                <img scr="" alt="profile">
+            </div>
+            <div class="in">
+                <div class="name">
+                    <p>Profile</p>
+                </div>
+                <div class="info">
+                    <p>Count article = 0</p>
+                </div>
+            </div>
+            <div class="desk">
+                <label>
+                    This is deskription of this profile
+                </label>
+            </div>
+        </header>
+        <main>
+            <div>
+                <p>First</p>
+            </div>
+            <div>
+                <p>Second</p>
+            </div>
+            <div>
+                <p>third</p>
+            </div>
+        </main>
+    </div>
+    <aside>
+        <div>
+            <p>main</p>
+        </div>
+        <div>
+            <p>profile</p>
+        </div>
+        <div>
+            <p>settings</p>
+        </div>
+    </aside>
+ </body>
+</html>
