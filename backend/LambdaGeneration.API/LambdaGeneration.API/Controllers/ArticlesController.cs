@@ -16,11 +16,15 @@ namespace LambdaGeneration.API.Controllers
     {
         private readonly IArticlesService _articlesService;
         private readonly IGigaChatModerationService _gaChatModerationService;
+        private readonly IRegexModerationService _regexModerationService;
+
         public ArticlesController(IArticlesService articles_service,
-            IGigaChatModerationService gigaChatModerationService)
+            IGigaChatModerationService gigaChatModerationService,
+            IRegexModerationService regexModerationService)
         {
             _articlesService = articles_service;
             _gaChatModerationService = gigaChatModerationService;
+            _regexModerationService = regexModerationService;
         }
 
         [HttpPost("create")]
@@ -29,6 +33,17 @@ namespace LambdaGeneration.API.Controllers
         {
             try
             {
+                var allow_article_moderation = await _regexModerationService.ModerateArticle(request.article_title, request.article_preview, request.article_content);
+                if (!allow_article_moderation.IsApproved)
+                {
+                    return BadRequest(new
+                    {
+                        error = "Статья не прошла проверку",
+                        reason = allow_article_moderation.Reason,
+                        suggestion = allow_article_moderation.Suggestions
+                    });
+                }
+
                 var deskModeration = await _gaChatModerationService.ModerationContent(request.article_preview);
 
                 if (!deskModeration.IsApproved)
@@ -70,14 +85,6 @@ namespace LambdaGeneration.API.Controllers
             }
         }
 
-        [HttpGet("getAll")]
-        [Authorize]
-        public async Task<ActionResult<GetArticlesResponse>> GetAllArticles()
-        {
-            var article_service = await _articlesService.GetAllArticles();
-            return Ok(new GetArticlesResponse(article_service));
-        }
-
         private Guid GetUserID()
         {
             var userClaims = User.FindFirst("UserId")?.Value;
@@ -110,7 +117,45 @@ namespace LambdaGeneration.API.Controllers
         {
             try 
             {
+                var allow_article_moderation = await _regexModerationService.ModerateArticle(request.article_title, request.article_preview, request.article_content);
+                if (!allow_article_moderation.IsApproved)
+                {
+                    return BadRequest(new
+                    {
+                        error = "Статья не прошла проверку",
+                        reason = allow_article_moderation.Reason,
+                        suggestion = allow_article_moderation.Suggestions
+                    });
+                }
+
+                var deskModeration = await _gaChatModerationService.ModerationContent(request.article_preview);
+
+                if (!deskModeration.IsApproved)
+                {
+                    return BadRequest(new
+                    {
+                        error = "Содержимое описания не прошло модерацию",
+                        reason = deskModeration.Reason,
+                        flags = deskModeration.Flags,
+                        field = "description"
+                    });
+                }
+
+                var contentModeration = await _gaChatModerationService.ModerationContent(request.article_content);
+
+                if (!contentModeration.IsApproved)
+                {
+                    return BadRequest(new
+                    {
+                        error = "Содержимое контента не прошло модерацию",
+                        reason = contentModeration.Reason,
+                        flags = contentModeration.Flags,
+                        field = "content"
+                    });
+                }
+
                 var article = await _articlesService.Update(request.article_id, request.article_title, request.article_preview, request.article_content);
+
                 return Ok(new UpdateArticlesResponse(article.ArticleID, article.ArticleTitle, article.ArticlePreview, article.ArticleContent, article.CreatedDate));
             }
             catch (Exception ex)
