@@ -86,12 +86,12 @@ namespace LambdaGeneration.API.Controllers
         }
 
         [HttpGet("getFirst")]
-        public async Task<ActionResult<GetArticlesResponse>> GetFirst()
+        public async Task<ActionResult<GetArticleResponse>> GetFirst()
         {
             try
             {
                 var article_service = await _articlesService.GetFirstArticle();
-                return Ok(new GetArticlesResponse(article_service));
+                return Ok(new GetArticleResponse(article_service));
             }
             catch (Exception ex) 
             {
@@ -100,12 +100,12 @@ namespace LambdaGeneration.API.Controllers
         }
 
         [HttpGet("getNext/{last_article_id:guid}")]
-        public async Task<ActionResult<GetArticlesResponse>> GetNext(Guid last_article_id)
+        public async Task<ActionResult<GetArticleResponse>> GetNext(Guid last_article_id)
         {
             try
             {
                 var article_service = await _articlesService.GetNextArticle(last_article_id);
-                return Ok(new GetArticlesResponse(article_service));
+                return Ok(new GetArticleResponse(article_service));
             }
             catch (Exception ex)
             {
@@ -114,12 +114,12 @@ namespace LambdaGeneration.API.Controllers
         }
 
         [HttpGet("getPrev/{last_article_id:guid}")]
-        public async Task<ActionResult<GetArticlesResponse>> GetPrev(Guid last_article_id)
+        public async Task<ActionResult<GetArticleResponse>> GetPrev(Guid last_article_id)
         {
             try
             {
                 var article_service = await _articlesService.GetPrevArticle(last_article_id);
-                return Ok(new GetArticlesResponse(article_service));
+                return Ok(new GetArticleResponse(article_service));
             }
             catch (Exception ex)
             {
