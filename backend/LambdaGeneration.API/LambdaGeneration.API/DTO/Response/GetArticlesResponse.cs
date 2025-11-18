@@ -2,5 +2,5 @@
 
 namespace LambdaGeneration.API.DTO.Response
 {
-    public record GetArticlesResponse(List<Articles> articles);
+    public record GetArticlesResponse(Articles article);
 }

@@ -29,11 +29,35 @@ namespace LambdaGeneration.API.Application.Services
                 );
         }
 
-        public async Task<List<Articles>> GetAllArticles()
+        public async Task<Articles> GetFirstArticle()
         {
-            return await _articlesRepository.GetAllArticles();
+            var article = await _articlesRepository.GetFirstArticle();
+
+            if (article == null)
+                throw new Exception("Articles is not existing");
+
+            return article;
         }
 
+        public async Task<Articles> GetNextArticle(Guid currentId)
+        {
+            var article = await _articlesRepository.GetNextArticle(currentId);
+
+            if (article == null)
+                throw new Exception("Articles is not existing");
+
+            return article;
+        }
+
+        public async Task<Articles> GetPrevArticle(Guid currentId)
+        {
+            var article = await _articlesRepository.GetPrevArticles(currentId);
+
+            if (article == null)
+                throw new Exception("Articles is not existing");
+
+            return article;
+        }
         public async Task Delete(Guid article_id)
         {
             var article = await _articlesRepository.GetById(article_id);

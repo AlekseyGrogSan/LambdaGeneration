@@ -36,20 +36,68 @@ namespace LambdaGeneration.API.Date.Repositories
             await _context.SaveChangesAsync();
         }
 
-        //потом добавить пагинацию
-        public async Task<List<Articles>> GetAllArticles()
+        public async Task<Articles?> GetFirstArticle()
         {
-            var articles_entity = await _context.Articles.ToListAsync();
-            var articles = articles_entity.Select(a => Articles.Map(a.ArticleID, 
-                a.ArticleTitle, 
-                a.ArticleContent,
-                a.ArticlePreview,
-                a.AuthorID,
-                a.CreatedDate)
-                ).ToList();
-            return articles;
+            var article_entity = await _context.Articles
+                .OrderBy(a => a.ArticleID)
+                .FirstOrDefaultAsync();
+
+            if (article_entity == null)
+                return null;
+
+            return Articles.Map(
+                article_entity.ArticleID,
+                article_entity.ArticleTitle,
+                article_entity.ArticleContent,
+                article_entity.ArticlePreview,
+                article_entity.AuthorID,
+                article_entity.CreatedDate
+            );
         }
 
+        public async Task<Articles?> GetNextArticle(Guid currentArticleId)
+        {
+            var article_entity = await _context.Articles
+                .Where(a => a.ArticleID > currentArticleId)
+                .OrderBy(a => a.ArticleID)
+                .FirstOrDefaultAsync();
+
+            if (article_entity == null)
+            {
+                return await GetFirstArticle();
+            }
+
+            return Articles.Map(
+                article_entity.ArticleID,
+                article_entity.ArticleTitle,
+                article_entity.ArticleContent,
+                article_entity.ArticlePreview,
+                article_entity.AuthorID,
+                article_entity.CreatedDate
+            );
+        }
+
+        public async Task<Articles?> GetPrevArticles(Guid currentArticleId)
+        {
+            var article_entity = await _context.Articles
+                .Where(a => a.ArticleID < currentArticleId)
+                .OrderByDescending(a => a.ArticleID)
+                .FirstOrDefaultAsync();
+
+            if (article_entity == null)
+            {
+                return await GetFirstArticle();
+            }
+
+            return Articles.Map(
+                article_entity.ArticleID,
+                article_entity.ArticleTitle,
+                article_entity.ArticleContent,
+                article_entity.ArticlePreview,
+                article_entity.AuthorID,
+                article_entity.CreatedDate
+            );
+        }
 
         public async Task Delete(Guid article_id)
         {

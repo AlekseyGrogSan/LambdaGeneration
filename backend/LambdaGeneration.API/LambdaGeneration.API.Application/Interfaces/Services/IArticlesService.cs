@@ -6,7 +6,9 @@ namespace LambdaGeneration.API.Application.Interfaces.Services
     {
         Task Create(string article_title, string article_content, string article_preview, Guid author_id);
 
-        Task<List<Articles>> GetAllArticles();
+        Task<Articles> GetFirstArticle();
+        Task<Articles> GetNextArticle(Guid currentId);
+        Task<Articles> GetPrevArticle(Guid currentId);
 
         Task Delete(Guid article_id);
 
