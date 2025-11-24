@@ -4,6 +4,7 @@ using System.Data;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using LambdaGeneration.API.Core.Enums;
 
 namespace LambdaGeneration.API.Core.Models
 {
@@ -20,6 +21,7 @@ namespace LambdaGeneration.API.Core.Models
             ArticleTitle = article_title;
             ArticleContent = article_content;
             ArticlePreview = article_preview;
+            ArticleTags = List<int>();
             AuthorID = author_id;
         }
 
@@ -28,6 +30,7 @@ namespace LambdaGeneration.API.Core.Models
             string article_content,
             string article_preview,
             Guid author_id, 
+            List<int> article_tags,
             DateTime created_date) 
         {
             CreatedDate = created_date;
@@ -35,6 +38,7 @@ namespace LambdaGeneration.API.Core.Models
             ArticleTitle = article_title;
             ArticleContent = article_content;
             ArticlePreview = article_preview;
+            ArticleTags = article_tags;
             AuthorID = author_id;
         }
 
@@ -52,12 +56,14 @@ namespace LambdaGeneration.API.Core.Models
             string article_title,
             string article_content,
             string article_preview,
+            List<int> article_tags,
             Guid author_id)
         {
             return new Articles(article_id,
             article_title,
             article_content,
             article_preview,
+            article_tags,
             author_id);
         }
 
@@ -67,6 +73,7 @@ namespace LambdaGeneration.API.Core.Models
             string article_content,
             string article_preview,
             Guid author_id,
+            List<int> article_tags,
             DateTime date_time)
         {
             return new Articles(article_id,
@@ -74,6 +81,7 @@ namespace LambdaGeneration.API.Core.Models
             article_content,
             article_preview,
             author_id, 
+            article_tags,
             date_time);
         }
 

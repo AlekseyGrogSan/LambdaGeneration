@@ -18,6 +18,7 @@ namespace LambdaGeneration.API.Application.Services
         public async Task Create(string article_title,
             string article_content,
             string article_preview,
+            List<int> article_tags,
             Guid author_id)
         {
             await _articlesRepository.Create(
@@ -25,6 +26,7 @@ namespace LambdaGeneration.API.Application.Services
                     article_title,
                     article_content,
                     article_preview,
+                    article_tags,
                     author_id)
                 );
         }
@@ -79,6 +81,18 @@ namespace LambdaGeneration.API.Application.Services
                 throw new ArgumentException("Article not exist!");
             }
             var article = await _articlesRepository.Update(article_id, new_title, new_content, new_preview);
+
+            return article;
+        }
+
+        public async Task<Articles?> UpdateTags(Guid article_id, List<int> new_tags)
+        {
+            var a = await _articlesRepository.GetById(article_id);
+            if (a == null)
+            {
+                throw new ArgumentException("Article not exist!");
+            }
+            var article = await _articlesRepository.Update(article_id, a.ArticleTitle, a.ArticleContent, a.ArticleContent, new_tags);
 
             return article;
         }

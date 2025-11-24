@@ -28,8 +28,8 @@ namespace LambdaGeneration.API.Date.Repositories
                 ArticleContent = article.ArticleContent,
                 ArticlePreview = article.ArticlePreview,
                 AuthorID = article.AuthorID,
-                CreatedDate = article.CreatedDate,
-                ArticleTags = article.ArticleTags
+                ArticleTags = article.ArticleTags,
+                CreatedDate = article.CreatedDate
             };
 
             _context.Articles.Add(article_entity);
@@ -51,6 +51,7 @@ namespace LambdaGeneration.API.Date.Repositories
                 article_entity.ArticleContent,
                 article_entity.ArticlePreview,
                 article_entity.AuthorID,
+                article_entity.ArticleTags,
                 article_entity.CreatedDate
             );
         }
@@ -73,6 +74,7 @@ namespace LambdaGeneration.API.Date.Repositories
                 article_entity.ArticleContent,
                 article_entity.ArticlePreview,
                 article_entity.AuthorID,
+                article_entity.ArticleTags,
                 article_entity.CreatedDate
             );
         }
@@ -95,6 +97,7 @@ namespace LambdaGeneration.API.Date.Repositories
                 article_entity.ArticleContent,
                 article_entity.ArticlePreview,
                 article_entity.AuthorID,
+                article_entity.ArticleTags,
                 article_entity.CreatedDate
             );
         }
@@ -116,11 +119,12 @@ namespace LambdaGeneration.API.Date.Repositories
                 article_entity.ArticleContent,
                 article_entity.ArticlePreview,
                 article_entity.AuthorID,
+                article_entity.ArticleTags,
                 article_entity.CreatedDate
                 );
         }
 
-        public async Task<Articles?> Update(Guid article_id, string new_title, string new_content, string new_preview)
+        public async Task<Articles?> Update(Guid article_id, string new_title, string new_content, string new_preview, List<int> new_tags)
         {
             await _context.Articles
                 .Where(a => a.ArticleID == article_id)
@@ -128,6 +132,7 @@ namespace LambdaGeneration.API.Date.Repositories
                 .SetProperty(ar => ar.ArticleTitle, new_title)
                 .SetProperty(ar => ar.ArticleContent, new_content)
                 .SetProperty(ar => ar.ArticlePreview, new_preview)
+                .SetProperty(ar => ar.ArticleTags, new_tags)
                 );
 
             await _context.SaveChangesAsync();
@@ -144,6 +149,7 @@ namespace LambdaGeneration.API.Date.Repositories
                 a.ArticleContent,
                 a.ArticlePreview,
                 a.AuthorID,
+                a.ArticleTags,
                 a.CreatedDate)).
                 ToListAsync();
         }

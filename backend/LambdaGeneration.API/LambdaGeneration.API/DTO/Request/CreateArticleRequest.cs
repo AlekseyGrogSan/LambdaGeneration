@@ -1,4 +1,4 @@
 ﻿namespace LambdaGeneration.API.DTO.Request
 {
-    public record CreateArticleRequest(string article_title, string article_preview, string article_content);
+    public record CreateArticleRequest(string article_title, string article_preview, string article_content, List<string> article_tags);
 }

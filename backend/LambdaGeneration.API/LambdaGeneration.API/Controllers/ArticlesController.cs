@@ -205,6 +205,14 @@ namespace LambdaGeneration.API.Controllers
             }
         }
 
+        [HttpPut("updatetags")]
+        [Authorize]
+        public async Task<ActionResult<UpdateTagsArticlesRequest>> UpdateTags(UpdateTagsArticlesRequest request)
+        {
+            var articles = await _articlesService.UpdateTags();
+            return Ok(UpdateTagsArticlesRequest());
+        }
+
         [HttpGet("getAllMyArticles")]
         [Authorize]
         public async Task<ActionResult<GetArticlesResponse>> GetAllArticlesUser()

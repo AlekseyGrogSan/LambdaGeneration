@@ -116,6 +116,82 @@ namespace LambdaGeneration.API.Midleware
             };
         }
 
+        public static string FromTags(this Tags tags)
+        {
+            return tags switch
+            {
+                // Programming Languages
+                Tags.CSharp => "C#",
+                Tags.Java => "Java",
+                Tags.Python => "Python",
+                Tags.JavaScript => "JavaScript",
+                Tags.TypeScript => "TypeScript",
+                Tags.Go => "Go",
+                Tags.Rust => "Rust",
+                Tags.Kotlin => "Kotlin",
+                Tags.Swift => "Swift",
+                Tags.PHP => "PHP",
+                Tags.CPlusPlus => "C++",
+                Tags.C => "C",
+                Tags.Ruby => "Ruby",
+
+                // Frameworks and Libraries
+                Tags.DotNet => ".NET",
+                Tags.ASPNET => "ASP.NET",
+                Tags.EntityFramework => "Entity Framework",
+                Tags.Spring => "Spring",
+                Tags.React => "React",
+                Tags.Angular => "Angular",
+                Tags.Vue => "Vue",
+                Tags.NodeJS => "Node.js",
+                Tags.Django => "Django",
+                Tags.Flask => "Flask",
+
+                Tags.Math => "Math",
+                Tags.DataStructures => "Data Structures",
+                Tags.LLM => "LLM",
+                Tags.ML => "ML"
+            };
+        }
+
+        public static Tags ToTags(string tagsString)
+        {
+            return tagsString.ToLower() switch
+            {
+                // Programming Languages
+                "C#" => Tags.CSharp,
+                "Java" => Tags.Java,
+                "Python" => Tags.Python,
+                "JavaScript" => Tags.JavaScript,
+                "TypeScript" => Tags.TypeScript,
+                "Go" => Tags.Go,
+                "Rust" => Tags.Rust,
+                "Kotlin" => Tags.Kotlin,
+                "Swift" => Tags.Swift,
+                "PHP" => Tags.PHP,
+                "C++" => Tags.CPlusPlus,
+                "C" => Tags.C,
+                "Ruby" => Tags.Ruby,
+
+                // Frameworks and Libraries
+                ".NET" => Tags.DotNet,
+                "ASP.NET" => Tags.ASPNET,
+                "Entity Framework" => Tags.EntityFramework,
+                "Spring" => Tags.Spring,
+                "React" => Tags.React,
+                "Angular" => Tags.Angular,
+                "Vue" => Tags.Vue,
+                "Node.js" => Tags.NodeJS,
+                "Django" => Tags.Django,
+                "Flask" => Tags.Flask,
+
+                "Math" => Tags.Math,
+                "Data Structures" => Tags.DataStructures,
+                "LLM" => Tags.LLM,
+                "ML" => Tags.ML
+            };
+        }
+
         public static async Task InitialAdmin(this IHost host)
         {
             using (var scope = host.Services.CreateScope()) 

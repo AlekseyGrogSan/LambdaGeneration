@@ -4,7 +4,7 @@ namespace LambdaGeneration.API.Application.Interfaces.Services
 {
     public interface IArticlesService
     {
-        Task Create(string article_title, string article_content, string article_preview, Guid author_id);
+        Task Create(string article_title, string article_content, string article_preview, List<int> article_tags, Guid author_id);
 
         Task<Articles> GetFirstArticle();
         Task<Articles> GetNextArticle(Guid currentId);
@@ -13,6 +13,7 @@ namespace LambdaGeneration.API.Application.Interfaces.Services
         Task Delete(Guid article_id);
 
         Task<Articles?> Update(Guid article_id, string new_title, string new_content, string new_preview);
+        Task<Articles?> UpdateTags(Guid article_id, List<int> new_tags);
 
         Task<List<Articles>> GetAllArticlesUser(Guid author_id);
     }
