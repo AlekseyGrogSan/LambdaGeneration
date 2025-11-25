@@ -1,17 +1,14 @@
 import React, { useState } from 'react';
 import {
     Box, AppBar, Toolbar, InputBase, IconButton, Button, Typography, Link as MuiLink,
-    // Модальные окна пока не импортируем
 } from '@mui/material';
 import SearchIcon from '@mui/icons-material/Search';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import PersonIcon from '@mui/icons-material/Person';
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 import NotificationsIcon from '@mui/icons-material/Notifications';
-
-// Дочерние компоненты пока не импортируем/используем
-// import PostCard from './PostCard';
-// import PostDetailPage from './PostDetailPage';
+import PostCard from './PostCard';
+import PostDetailPage from './PostDetailPage';
 
 
 // --- СТИЛИ ДЛЯ ПОЛЕЙ ВВОДА (Будет использоваться в модальных окнах, пока пустая) ---
@@ -79,18 +76,18 @@ const PostPage = () => {
                     </Toolbar>
                 </AppBar>
 
-                {/* 2. Основной контент: Условный рендеринг (Заглушки PostCard/PostDetailPage) */}
+                {/* 2. Основной контент: Условный рендеринг */}
                 {isViewingDetailPage ? (
-                    // Детальный вид: заглушка
-                    <Box sx={{ p: 4, color: 'white', textAlign: 'center' }}>Детальная страница (ID: {selectedPostId})</Box>
+                    // >>>>> ИЗМЕНЕНИЕ C1.3: Используем PostDetailPage
+                    <PostDetailPage post={selectedPost} onBack={handleBackToFeed} onLike={handleLikeToggle} />
                 ) : (
-                    // Лента: заглушка
                     <Box
                         sx={{ height: feedHeight, display: 'flex', flexDirection: 'column', alignItems: 'center', overflowY: 'scroll', scrollSnapType: 'y mandatory', }}
                     >
                         {posts.map(post => (
                             <Box key={post.id} sx={{ scrollSnapAlign: 'start', height: '100%', width: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center', padding: 2, }}>
-                                <Button onClick={() => handlePostClick(post.id)}>Перейти к посту {post.id}</Button>
+                                {/* >>>>> ИЗМЕНЕНИЕ C1.3: Используем PostCard */}
+                                <PostCard {...post} onClick={handlePostClick} onLike={handleLikeToggle} />
                             </Box>
                         ))}
                     </Box>
