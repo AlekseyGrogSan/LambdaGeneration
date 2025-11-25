@@ -108,7 +108,7 @@ namespace LambdaGeneration.API.Controllers
 
                 for (int i = 0; i < article_service.ArticleTags.Count; i++)
                 {
-                    ArticleTagsResponse[i] = ApiExtensions.FromTags(article_service.ArticleTags[i]);
+                    ArticleTagsResponse.Add(ApiExtensions.FromTags(article_service.ArticleTags[i]));
                 }
 
                 return Ok(new GetArticleResponse(article_service.ArticleID, article_service.ArticleTitle, article_service.ArticlePreview, article_service.ArticleContent, ArticleTagsResponse, article_service.CreatedDate));
@@ -248,7 +248,7 @@ namespace LambdaGeneration.API.Controllers
 
         [HttpPut("updatetags")]
         [Authorize]
-        public async Task<ActionResult<UpdateTagsArticlesResponse>> UpdateTags(UpdateTagsArticlesRequest request)
+        public async Task<ActionResult<UpdateArticlesResponse>> UpdateTags(UpdateTagsArticlesRequest request)
         {
             var ArticleIntTags = new List<int>();
 
@@ -267,16 +267,28 @@ namespace LambdaGeneration.API.Controllers
         [Authorize]
         public async Task<ActionResult<GetArticlesResponse>> GetAllArticlesUser()
         {
-            var article = await _articlesService.GetAllArticlesUser(GetUserID());
-            return Ok(new GetArticlesResponse(article));
+            var articles = await _articlesService.GetAllArticlesUser(GetUserID());
+            return Ok(new GetArticlesResponse(articles.Select(a =>
+                new GetArticleResponse(a.ArticleID,
+                    a.ArticleTitle,
+                    a.ArticlePreview,
+                    a.ArticleContent,
+                    a.ArticleTags.Select(t => ApiExtensions.FromTags(t)).ToList(),
+                    a.CreatedDate)).ToList()));
         }
 
         [HttpGet("getAllOtherAuthor/{id:guid}")]
         [Authorize]
         public async Task<ActionResult<GetArticlesResponse>> GetAllArticlesOtherUser(Guid id)
         {
-            var article = await _articlesService.GetAllArticlesUser(id);
-            return Ok(new GetArticlesResponse(article));
+            var articles = await _articlesService.GetAllArticlesUser(id);
+            return Ok(new GetArticlesResponse(articles.Select(a =>
+                new GetArticleResponse(a.ArticleID,
+                    a.ArticleTitle,
+                    a.ArticlePreview,
+                    a.ArticleContent,
+                    a.ArticleTags.Select(t => ApiExtensions.FromTags(t)).ToList(),
+                    a.CreatedDate)).ToList()));
         }
     }
 }
