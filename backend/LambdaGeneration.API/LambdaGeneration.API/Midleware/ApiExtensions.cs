@@ -116,79 +116,79 @@ namespace LambdaGeneration.API.Midleware
             };
         }
 
-        public static string FromTags(this Tags tags)
+        public static string FromTags(this int tags)
         {
             return tags switch
             {
                 // Programming Languages
-                Tags.CSharp => "C#",
-                Tags.Java => "Java",
-                Tags.Python => "Python",
-                Tags.JavaScript => "JavaScript",
-                Tags.TypeScript => "TypeScript",
-                Tags.Go => "Go",
-                Tags.Rust => "Rust",
-                Tags.Kotlin => "Kotlin",
-                Tags.Swift => "Swift",
-                Tags.PHP => "PHP",
-                Tags.CPlusPlus => "C++",
-                Tags.C => "C",
-                Tags.Ruby => "Ruby",
+                1 => "C#",
+                2 => "Java",
+                3 => "Python",
+                4 => "JavaScript",
+                5 => "TypeScript",
+                6 => "Go",
+                7 => "Rust",
+                8 => "Kotlin",
+                9 => "Swift",
+                10 => "PHP",
+                11 => "C++",
+                12 => "C",
+                13 => "Ruby",
 
                 // Frameworks and Libraries
-                Tags.DotNet => ".NET",
-                Tags.ASPNET => "ASP.NET",
-                Tags.EntityFramework => "Entity Framework",
-                Tags.Spring => "Spring",
-                Tags.React => "React",
-                Tags.Angular => "Angular",
-                Tags.Vue => "Vue",
-                Tags.NodeJS => "Node.js",
-                Tags.Django => "Django",
-                Tags.Flask => "Flask",
+                14 => ".NET",
+                15 => "ASP.NET",
+                16 => "Entity Framework",
+                17 => "Spring",
+                18 => "React",
+                19 => "Angular",
+                20 => "Vue",
+                21 => "Node.js",
+                22 => "Django",
+                23 => "Flask",
 
-                Tags.Math => "Math",
-                Tags.DataStructures => "Data Structures",
-                Tags.LLM => "LLM",
-                Tags.ML => "ML"
+                24 => "Math",
+                25 => "Data Structures",
+                26 => "LLM",
+                27 => "ML"
             };
         }
 
-        public static Tags ToTags(string tagsString)
+        public static int ToTags(string tagsString)
         {
             return tagsString.ToLower() switch
             {
                 // Programming Languages
-                "C#" => Tags.CSharp,
-                "Java" => Tags.Java,
-                "Python" => Tags.Python,
-                "JavaScript" => Tags.JavaScript,
-                "TypeScript" => Tags.TypeScript,
-                "Go" => Tags.Go,
-                "Rust" => Tags.Rust,
-                "Kotlin" => Tags.Kotlin,
-                "Swift" => Tags.Swift,
-                "PHP" => Tags.PHP,
-                "C++" => Tags.CPlusPlus,
-                "C" => Tags.C,
-                "Ruby" => Tags.Ruby,
+                "C#" => 1,
+                "Java" => 2,
+                "Python" => 3,
+                "JavaScript" => 4,
+                "TypeScript" => 5,
+                "Go" => 6,
+                "Rust" => 7,
+                "Kotlin" => 8,
+                "Swift" => 9,
+                "PHP" => 10,
+                "C++" => 11,
+                "C" => 12,
+                "Ruby" => 13,
 
                 // Frameworks and Libraries
-                ".NET" => Tags.DotNet,
-                "ASP.NET" => Tags.ASPNET,
-                "Entity Framework" => Tags.EntityFramework,
-                "Spring" => Tags.Spring,
-                "React" => Tags.React,
-                "Angular" => Tags.Angular,
-                "Vue" => Tags.Vue,
-                "Node.js" => Tags.NodeJS,
-                "Django" => Tags.Django,
-                "Flask" => Tags.Flask,
+                ".NET" => 14,
+                "ASP.NET" => 15,
+                "Entity Framework" => 16,
+                "Spring" => 17,
+                "React" => 18,
+                "Angular" => 19,
+                "Vue" => 20,
+                "Node.js" => 21,
+                "Django" => 22,
+                "Flask" => 23,
 
-                "Math" => Tags.Math,
-                "Data Structures" => Tags.DataStructures,
-                "LLM" => Tags.LLM,
-                "ML" => Tags.ML
+                "Math" => 24,
+                "Data Structures" => 25,
+                "LLM" => 26,
+                "ML" => 27
             };
         }
 

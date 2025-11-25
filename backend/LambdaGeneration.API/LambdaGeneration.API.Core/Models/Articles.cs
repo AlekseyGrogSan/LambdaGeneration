@@ -14,6 +14,7 @@ namespace LambdaGeneration.API.Core.Models
             string article_title,
             string article_content,
             string article_preview,
+            List<int> article_tags,
             Guid author_id)
         {
             CreatedDate = DateTime.UtcNow;
@@ -21,7 +22,7 @@ namespace LambdaGeneration.API.Core.Models
             ArticleTitle = article_title;
             ArticleContent = article_content;
             ArticlePreview = article_preview;
-            ArticleTags = List<int>();
+            ArticleTags = article_tags;
             AuthorID = author_id;
         }
 

@@ -80,7 +80,7 @@ namespace LambdaGeneration.API.Application.Services
             {
                 throw new ArgumentException("Article not exist!");
             }
-            var article = await _articlesRepository.Update(article_id, new_title, new_content, new_preview);
+            var article = await _articlesRepository.Update(article_id, new_title, new_content, new_preview, a.ArticleTags);
 
             return article;
         }

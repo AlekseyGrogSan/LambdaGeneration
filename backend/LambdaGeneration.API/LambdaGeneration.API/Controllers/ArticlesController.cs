@@ -2,11 +2,14 @@
 using LambdaGeneration.API.Core.Models;
 using LambdaGeneration.API.DTO.Request;
 using LambdaGeneration.API.DTO.Response;
+using LambdaGeneration.API.Midleware;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata.Conventions;
 using Microsoft.IdentityModel.Tokens;
 using Org.BouncyCastle.Pkcs;
+using System.Security.Cryptography.Xml;
 
 namespace LambdaGeneration.API.Controllers
 {
@@ -70,11 +73,19 @@ namespace LambdaGeneration.API.Controllers
                     });
                 }
 
+                var ArticleIntTags = new List<int>();
+
+                for (var i = 0;  i < request.article_tags.Count; i++)
+                {
+                    ArticleIntTags[i] = ApiExtensions.ToTags(request.article_tags[i]);
+                }
+                
                 var author_id = GetUserID();
                 await _articlesService.Create(
                     request.article_title,
                     request.article_content,
                     request.article_preview,
+                    ArticleIntTags,
                     author_id
                     );
                 return Ok("Article is create!");
@@ -91,7 +102,15 @@ namespace LambdaGeneration.API.Controllers
             try
             {
                 var article_service = await _articlesService.GetFirstArticle();
-                return Ok(new GetArticleResponse(article_service));
+
+                var ArticleTagsResponse = new List<string>();
+
+                for (int i = 0; i < article_service.ArticleTags.Count; i++)
+                {
+                    ArticleTagsResponse[i] = ApiExtensions.FromTags(article_service.ArticleTags[i]);
+                }
+
+                return Ok(new GetArticleResponse(article_service.ArticleID, article_service.ArticleTitle, article_service.ArticlePreview, article_service.ArticleContent, ArticleTagsResponse, article_service.CreatedDate));
             }
             catch (Exception ex) 
             {
@@ -105,7 +124,14 @@ namespace LambdaGeneration.API.Controllers
             try
             {
                 var article_service = await _articlesService.GetNextArticle(last_article_id);
-                return Ok(new GetArticleResponse(article_service));
+                var ArticleTagsResponse = new List<string>();
+
+                for (int i = 0; i < article_service.ArticleTags.Count; i++)
+                {
+                    ArticleTagsResponse[i] = ApiExtensions.FromTags(article_service.ArticleTags[i]);
+                }
+
+                return Ok(new GetArticleResponse(article_service.ArticleID, article_service.ArticleTitle, article_service.ArticlePreview, article_service.ArticleContent, ArticleTagsResponse, article_service.CreatedDate));
             }
             catch (Exception ex)
             {
@@ -119,7 +145,14 @@ namespace LambdaGeneration.API.Controllers
             try
             {
                 var article_service = await _articlesService.GetPrevArticle(last_article_id);
-                return Ok(new GetArticleResponse(article_service));
+                var ArticleTagsResponse = new List<string>();
+
+                for (int i = 0; i < article_service.ArticleTags.Count; i++)
+                {
+                    ArticleTagsResponse[i] = ApiExtensions.FromTags(article_service.ArticleTags[i]);
+                }
+
+                return Ok(new GetArticleResponse(article_service.ArticleID, article_service.ArticleTitle, article_service.ArticlePreview, article_service.ArticleContent, ArticleTagsResponse, article_service.CreatedDate));
             }
             catch (Exception ex)
             {
@@ -197,7 +230,14 @@ namespace LambdaGeneration.API.Controllers
 
                 var article = await _articlesService.Update(request.article_id, request.article_title, request.article_preview, request.article_content);
 
-                return Ok(new UpdateArticlesResponse(article.ArticleID, article.ArticleTitle, article.ArticlePreview, article.ArticleContent, article.CreatedDate));
+                var ArticleTagsResponse = new List<string>();
+
+                for (int i = 0; i < article.ArticleTags.Count; i++)
+                {
+                    ArticleTagsResponse[i] = ApiExtensions.FromTags(article.ArticleTags[i]);
+                }
+
+                return Ok(new UpdateArticlesResponse(article.ArticleID, article.ArticleTitle, article.ArticlePreview, article.ArticleContent, ArticleTagsResponse, article.CreatedDate));
             }
             catch (Exception ex)
             { 
@@ -207,10 +247,25 @@ namespace LambdaGeneration.API.Controllers
 
         [HttpPut("updatetags")]
         [Authorize]
-        public async Task<ActionResult<UpdateTagsArticlesRequest>> UpdateTags(UpdateTagsArticlesRequest request)
+        public async Task<ActionResult<UpdateTagsArticlesResponse>> UpdateTags(UpdateTagsArticlesRequest request)
         {
-            var articles = await _articlesService.UpdateTags();
-            return Ok(UpdateTagsArticlesRequest());
+            var ArticleIntTags = new List<int>();
+
+            for (var i = 0; i < ArticleIntTags.Count; i++)
+            {
+                ArticleIntTags[i] = ApiExtensions.ToTags(request.article_tags[i]);
+            }
+
+            var articles = await _articlesService.UpdateTags(request.article_id, ArticleIntTags);
+
+            var ArticleResponseTags = new List<string>();
+
+            for (var i = 0; i < ArticleIntTags.Count; i++)
+            {
+                ArticleResponseTags[i] = ApiExtensions.FromTags(ArticleIntTags[i]);
+            }
+
+            return Ok(new UpdateTagsArticlesResponse(request.article_id, ArticleResponseTags));
         }
 
         [HttpGet("getAllMyArticles")]

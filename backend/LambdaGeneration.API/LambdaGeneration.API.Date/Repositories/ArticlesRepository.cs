@@ -28,8 +28,8 @@ namespace LambdaGeneration.API.Date.Repositories
                 ArticleContent = article.ArticleContent,
                 ArticlePreview = article.ArticlePreview,
                 AuthorID = article.AuthorID,
-                ArticleTags = article.ArticleTags,
-                CreatedDate = article.CreatedDate
+                CreatedDate = article.CreatedDate,
+                ArticleTags = article.ArticleTags
             };
 
             _context.Articles.Add(article_entity);
