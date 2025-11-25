@@ -10,5 +10,14 @@
     "type": "git",
     "url": "https://github.com/AlekseyGrogSan/LambdaGeneration.git"
   },
-  "private": true
+  "private": true,
+  "dependencies": {
+    "@emotion/react": "^11.14.0",
+    "@emotion/styled": "^11.14.1",
+    "@mui/icons-material": "^7.3.5",
+    "@mui/material": "^7.3.5",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0",
+    "react-scripts": "^5.0.1"
+  }
 }

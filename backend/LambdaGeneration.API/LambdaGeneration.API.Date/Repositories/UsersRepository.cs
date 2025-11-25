@@ -32,7 +32,6 @@ namespace LambdaGeneration.API.Date.Repositories
             _context.Users.Add(userEntity);
 
             await _context.SaveChangesAsync();
-            return userEntity.UserID;
         }
 
         public async Task<Users?> GetByEmail(string email)
@@ -117,30 +116,6 @@ namespace LambdaGeneration.API.Date.Repositories
             await _context.Users
                 .Where(u => u.UserID == id)
                 .ExecuteUpdateAsync(setter => setter.SetProperty(u => u.PasswordHash, newPasswordHash));
-            await _context.SaveChangesAsync();
-        }
-
-        public async Task<Users?> GetByName(string name)
-        {
-            var userEntity = await _context.Users
-                .AsNoTracking()
-                .FirstOrDefaultAsync(u => u.UserName == name);
-            if (userEntity == null)
-                return null;
-            return Users.Create(
-                userEntity.UserID,
-                userEntity.UserName,
-                userEntity.PasswordHash,
-                userEntity.Email
-            );
-        }
-        public async Task Delete(Guid id)
-        {
-            var userEntity = await _context.Users.AsNoTracking().FirstOrDefaultAsync(u => u.UserID == id);
-
-            if (userEntity == null)
-                throw new Exception("User doesn`t exist");
-            _context.Users.Remove(userEntity);
             await _context.SaveChangesAsync();
         }
     }

@@ -53,21 +53,5 @@ namespace LambdaGeneration.API.Core.Models
         {
             IsBanned = !IsBanned;
         }
-
-        public static Users Map(Guid id, string username, string hashpassword, string email, Role role)
-        {
-            Users user = new Users(id, username, hashpassword, email);
-            user.Role = role;
-            return user;
-        }
-        public void SetRole(Role role)
-        {
-            Role = role;
-        }
-
-        public void SetBanned()
-        {
-            IsBanned = !IsBanned;
-        }
     }
 }
