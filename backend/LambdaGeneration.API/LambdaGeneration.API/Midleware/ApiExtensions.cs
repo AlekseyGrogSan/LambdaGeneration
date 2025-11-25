@@ -150,13 +150,15 @@ namespace LambdaGeneration.API.Midleware
                 24 => "Math",
                 25 => "Data Structures",
                 26 => "LLM",
-                27 => "ML"
+                27 => "ML",
+
+                _ => "Unknown"
             };
         }
 
         public static int ToTags(string tagsString)
         {
-            return tagsString.ToLower() switch
+            return tagsString switch
             {
                 // Programming Languages
                 "C#" => 1,
@@ -188,7 +190,9 @@ namespace LambdaGeneration.API.Midleware
                 "Math" => 24,
                 "Data Structures" => 25,
                 "LLM" => 26,
-                "ML" => 27
+                "ML" => 27,
+
+                _ => -1
             };
         }
 

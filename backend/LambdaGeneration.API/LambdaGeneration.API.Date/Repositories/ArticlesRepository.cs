@@ -154,8 +154,5 @@ namespace LambdaGeneration.API.Date.Repositories
                 ToListAsync();
         }
 
-
-
-
     }
 }
