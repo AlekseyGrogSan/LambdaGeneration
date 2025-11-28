@@ -1,15 +1,62 @@
-﻿﻿services:
+﻿version: '3.8'
+
+services:
+  # 1. СЕРВИС БАЗЫ ДАННЫХ
   postgres:
     container_name: postgres
     image: postgres:16
     environment:
       POSTGRES_DB: "db"
       POSTGRES_USER: "postgres"
-      POSTGRES_PASSWORD: "123"  
+      POSTGRES_PASSWORD: "123"
     volumes:
-      - postgres-data:/var/lib/postgresql/data  # Для 16 версии оставляем старый путь
+      - postgres-data:/var/lib/postgresql/data
     ports:
       - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  # 2. СЕРВИС ASP.NET ПРИЛОЖЕНИЯ
+  app:
+    container_name: app
+    build:
+      context: ..
+      dockerfile: ./LambdaGeneration.API/Dockerfile
+    ports:
+      - "8080:8080"
+    environment:
+      ASPNETCORE_ENVIRONMENT: "Development"
+      ASPNETCORE_URLS: "http://+:8080" 
+      
+      # Переопределение Connection String
+      ConnectionStrings__LambdaGenerationDatabase: "Host=postgres;Port=5432;Database=db;Username=postgres;Password=123"
+      
+      # Переопределение секретов
+      JwtOptions__SecretKey: "myveryprettysweetkittenkeymyveryprettysweetkittenkeymyveryprettysweetkittenkey"
+      AdminConfig__Password: "Litle_Foxsy_1234"
+      EmailSettings__Password: "bnopipeyouxspygu"
+      GigaChat__ClientSecret: "MDE5YTc0NzAtZjE2NS03MjAzLWI3OWItYzZlOGFhNjdkZmM2OmVkZmMwNDk0LWIyNDYtNGQ5ZS05ZjU1LWZiZDk5ZDM3YzJlYw=="
+      
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+
+  # 3. СЕРВИС Nginx
+  nginx:
+    container_name: nginx
+    image: nginx:latest
+    ports:
+      - "80:80"
+    volumes:
+      # Проверьте, что папка 'nginx' и файл 'nginx.conf' существуют
+      - ./nginx/nginx.conf:/etc/nginx/conf.d/default.conf 
+    depends_on:
+      - app
     restart: unless-stopped
 
 volumes:

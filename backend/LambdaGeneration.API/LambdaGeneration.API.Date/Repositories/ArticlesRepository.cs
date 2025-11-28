@@ -132,8 +132,13 @@ namespace LambdaGeneration.API.Date.Repositories
                 .SetProperty(ar => ar.ArticleTitle, new_title)
                 .SetProperty(ar => ar.ArticleContent, new_content)
                 .SetProperty(ar => ar.ArticlePreview, new_preview)
-                .SetProperty(ar => ar.ArticleTags, new_tags)
                 );
+            var article_tags_entity = await _context.Articles.FirstOrDefaultAsync(a => a.ArticleID == article_id);
+
+            if (article_tags_entity != null)
+            {
+                article_tags_entity.ArticleTags = new_tags;
+            }
 
             await _context.SaveChangesAsync();
 

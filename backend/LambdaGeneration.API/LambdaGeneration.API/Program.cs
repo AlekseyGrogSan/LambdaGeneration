@@ -53,6 +53,13 @@ namespace LambdaGeneration.API
 
             var app = builder.Build();
 
+            using (var scope = app.Services.CreateScope())
+            {
+                var dbContext = scope.ServiceProvider.GetRequiredService<LambdaGenerationDbContext>();
+                
+                dbContext.Database.Migrate();
+            }
+
             await app.InitialAdmin();
 
             // Configure the HTTP request pipeline.
