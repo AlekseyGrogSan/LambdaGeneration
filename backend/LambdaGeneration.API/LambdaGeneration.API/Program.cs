@@ -21,8 +21,25 @@ namespace LambdaGeneration.API
             // Add services to the container.
             
             builder.Services.AddControllers();
+            builder.Services.AddHttpContextAccessor();
             builder.Services.AddOpenApi();
             builder.Services.AddSwaggerGen();
+
+            builder.Services.AddCors(options =>
+            {
+                options.AddPolicy(name: "AllowFrontend",
+                                  policy =>
+                                  {
+                                      // Разрешаем запросы с порта, где работает React (обычно 3000)
+                                      policy.WithOrigins("http://localhost:3000")
+                                            // Обязательно для передачи кук (auth_cookies)
+                                            .AllowCredentials()
+                                            // Разрешаем все заголовки
+                                            .AllowAnyHeader()
+                                            // Разрешаем все методы (GET, POST, PUT, DELETE)
+                                            .AllowAnyMethod();
+                                  });
+            });
 
             builder.Services.Configure<JwtOptions>(builder.Configuration.GetSection("JwtOptions"));
 
@@ -59,6 +76,9 @@ namespace LambdaGeneration.API
                 
                 dbContext.Database.Migrate();
             }
+            app.UseMiddleware<LowerCaseRouteMiddleware>();
+
+            app.UseRouting();
 
             await app.InitialAdmin();
 
@@ -70,6 +90,8 @@ namespace LambdaGeneration.API
                 app.UseSwaggerUI();
             }
             app.UseStaticFiles();
+
+            app.UseCors("AllowFrontend");
 
             app.UseHttpsRedirection();
 

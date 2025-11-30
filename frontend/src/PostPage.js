@@ -26,6 +26,9 @@ import CameraAltIcon from '@mui/icons-material/CameraAlt';
 import PostCard from './PostCard';
 import PostDetailPage from './PostDetailPage';
 
+// Базовый URL для API(пока http://localhost:5113/api)
+const API_BASE_URL = 'http://localhost:5113/api';
+
 // --- СТИЛИ ДЛЯ ПОЛЕЙ ВВОДА (Input Styles) ---
 const inputStyle = {
     // Общие стили для полей ввода Material UI в стиле "filled"
@@ -57,117 +60,462 @@ const inputStyle = {
 };
 
 // --- КОМПОНЕНТ: Регистрация (RegistrationModal) ---
-const RegistrationModal = ({ open, handleClose }) => {
-    const theme = useTheme();
-    const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+// --- КОМПОНЕНТ: RegistrationModal (Обновлен для логики) ---
+const RegistrationModal = ({ open, handleClose, onForgotPassword }) => {
+    // Внутреннее состояние для переключения между Регистрацией и Входом
+    const [isRegisterMode, setIsRegisterMode] = useState(true); 
+    const [formData, setFormData] = useState({
+        userName: '',
+        email: '',
+        password: '',
+        aboutUser: '', // Только для регистрации
+    });
+    const [error, setError] = useState('');
+    
+    // Внимание: inputStyle должен быть доступен в этой области видимости
 
-    // Стиль для контейнера формы с правой стороны модального окна
-    const formContainerStyle = {
+    const modalStyle = {
+        position: 'absolute',
+        top: '50%',
+        left: '50%',
+        transform: 'translate(-50%, -50%)',
+        width: { xs: '90%', sm: '400px' },
+        bgcolor: '#383838',
+        borderRadius: '16px',
+        boxShadow: 24,
+        p: 4,
+        color: '#ffffff',
         display: 'flex',
         flexDirection: 'column',
-        justifyContent: 'center',
-        padding: { xs: 3, md: 5 },
-        backgroundColor: '#383838',
-        borderRadius: { xs: 0, md: '0 16px 16px 0' },
-        height: '100%',
-        gap: 1.5,
+        gap: 2,
+    };
+    
+    const handleChange = (e) => {
+        setFormData({ ...formData, [e.target.name]: e.target.value });
     };
 
-    // Стиль для градиентной рекламной области с левой стороны
-    const gradientContainerStyle = {
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        setError('');
+        
+        const endpoint = isRegisterMode ? `${API_BASE_URL}/users/register` : `${API_BASE_URL}/users/login`;
+        const payload = isRegisterMode
+            ? { 
+                UserName: formData.userName, 
+                Email: formData.email, 
+                Password: formData.password, 
+                aboutUser: formData.aboutUser 
+            } // Соответствует RegisterUserRequest.cs
+            : { 
+                Email: formData.email, 
+                Password: formData.password 
+            }; // Соответствует LoginUserRequest.cs
+
+        try {
+            const response = await fetch(endpoint, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(payload),
+            });
+
+            if (response.ok) {
+                // Если вход успешен, бэкенд возвращает куки (auth_cookies)
+                if (!isRegisterMode) {
+                    alert('Вход успешен! Куки установлены.');
+                    // Здесь можно перезагрузить страницу или обновить состояние пользователя
+                } else {
+                    alert('Регистрация успешна!');
+                    // После регистрации можно автоматически переключиться на вход
+                    setIsRegisterMode(false); 
+                }
+                handleClose();
+
+            } else {
+                const errorData = await response.json();
+                setError(errorData.message || 'Произошла ошибка на сервере.');
+            }
+        } catch (err) {
+            setError('Не удалось подключиться к API.');
+        }
+    };
+
+    return (
+        <Modal open={open} onClose={handleClose} aria-labelledby="modal-title">
+            <Box sx={modalStyle} component="form" onSubmit={handleSubmit}>
+                <Typography id="modal-title" variant="h5" component="h2" sx={{ color: '#ffffff', fontWeight: 300, textAlign: 'center', marginBottom: 1 }}>
+                    {isRegisterMode ? 'Регистрация' : 'Вход'}
+                </Typography>
+                
+                {error && <Typography color="error" sx={{ textAlign: 'center' }}>{error}</Typography>}
+
+                {/* Поля для регистрации */}
+                {isRegisterMode && (
+                    <TextField
+                        label="Имя пользователя"
+                        name="userName"
+                        variant="filled"
+                        fullWidth
+                        sx={inputStyle}
+                        value={formData.userName}
+                        onChange={handleChange}
+                        required
+                    />
+                )}
+                
+                {/* Общие поля */}
+                <TextField 
+                    label="Email" 
+                    name="email"
+                    variant="filled" 
+                    fullWidth 
+                    type="email"
+                    sx={inputStyle}
+                    value={formData.email}
+                    onChange={handleChange}
+                    required
+                />
+                <TextField 
+                    label="Пароль" 
+                    name="password"
+                    variant="filled" 
+                    fullWidth 
+                    type="password"
+                    sx={inputStyle}
+                    value={formData.password}
+                    onChange={handleChange}
+                    required
+                />
+                
+                {/* Поле "О себе" только для регистрации */}
+                {isRegisterMode && (
+                    <TextField 
+                        label="О себе (кратко)" 
+                        name="aboutUser"
+                        variant="filled" 
+                        fullWidth 
+                        multiline 
+                        rows={2} 
+                        sx={inputStyle}
+                        value={formData.aboutUser}
+                        onChange={handleChange}
+                    />
+                )}
+
+                <Button
+                    type="submit"
+                    variant="contained"
+                    fullWidth
+                    sx={{
+                        marginTop: 1,
+                        backgroundColor: '#00bfa5',
+                        '&:hover': { backgroundColor: '#009688' },
+                        color: '#ffffff',
+                        padding: '12px 0',
+                        fontWeight: 'bold',
+                        fontSize: '1rem',
+                        borderRadius: '8px'
+                    }}
+                >
+                    {isRegisterMode ? 'Зарегистрироваться' : 'Войти'}
+                </Button>
+                
+                {/* Секция переключения режимов */}
+                <Box sx={{ marginTop: 2, textAlign: 'center' }}>
+                    <Typography variant="body2" sx={{ color: '#bdbdbd' }}>
+                        {isRegisterMode ? 'Уже есть аккаунт?' : 'Нет аккаунта?'}{' '}
+                        <MuiLink 
+                            component="span" 
+                            onClick={() => {
+                                setIsRegisterMode(!isRegisterMode); // Переключаем режим
+                                setFormData({ userName: '', email: '', password: '', aboutUser: '' }); // Сброс полей
+                                setError('');
+                            }} 
+                            sx={{ color: '#00bfa5', cursor: 'pointer', underline: 'hover', fontWeight: 'bold' }}
+                        >
+                            {isRegisterMode ? 'Войти' : 'Зарегистрироваться'}
+                        </MuiLink>
+                    </Typography>
+                    
+                    {/* Ссылка "Забыли пароль?" отображается только в режиме Входа */}
+                    {!isRegisterMode && (
+                        <MuiLink 
+                            component="span" 
+                            onClick={() => { 
+                                handleClose(); // Закрываем модальное окно регистрации/входа
+                                onForgotPassword(); // Открываем модальное окно "Забыли пароль?"
+                            }} 
+                            sx={{ color: '#bdbdbd', cursor: 'pointer', underline: 'hover', display: 'block', marginTop: 1, fontSize: '0.8rem' }}
+                        >
+                            Забыли пароль?
+                        </MuiLink>
+                    )}
+                </Box>
+            </Box>
+        </Modal>
+    );
+};
+
+// --- КОМПОНЕНТ: Запрос ссылки на сброс пароля (ForgotPasswordModal) ---
+const ForgotPasswordModal = ({ open, handleClose }) => {
+    const [email, setEmail] = useState('');
+    const [message, setMessage] = useState('');
+    const [error, setError] = useState('');
+    const [isSent, setIsSent] = useState(false); 
+    const [isLoading, setIsLoading] = useState(false);
+    const [lastSentEmail, setLastSentEmail] = useState('');
+
+    const modalStyle = {
+        position: 'absolute',
+        top: '50%',
+        left: '50%',
+        transform: 'translate(-50%, -50%)',
+        width: { xs: '90%', sm: '400px' },
+        bgcolor: '#383838',
+        borderRadius: '16px',
+        boxShadow: 24,
+        p: 4,
+        color: '#ffffff',
         display: 'flex',
         flexDirection: 'column',
-        justifyContent: 'flex-end',
-        padding: 4,
-        background: 'linear-gradient(135deg, #00838f 0%, #00bfa5 100%)',
-        borderRadius: { xs: 0, md: '16px 0 0 16px' },
-        height: '100%',
-        minHeight: { xs: '200px', md: '500px' }
+        gap: 2,
+    };
+    
+    // Внимание: inputStyle должен быть доступен в этой области видимости
+
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        setMessage('');
+        setError('');
+        setIsLoading(true); // <--- Устанавливаем загрузку
+
+        // Соответствует ForgotPasswordRequest.cs
+        const payload = { email: email }; 
+
+        try {
+            const response = await fetch(`${API_BASE_URL}/password/forgot-password`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(payload),
+            });
+
+            if (response.ok) {
+                // УСПЕХ
+                setIsSent(true); // <--- Устанавливаем флаг успеха
+                setLastSentEmail(email); // <--- Сохраняем почту
+                // Удаляем setTimeout(handleClose, 3000), чтобы пользователь сам закрыл или сбросил.
+            } else {
+                const errorData = await response.json();
+                setError(errorData.message || 'Ошибка при отправке ссылки.');
+                // Не закрываем окно, чтобы пользователь мог исправить ошибку.
+            }
+        } catch (err) {
+            setError('Не удалось подключиться к API.');
+        } finally {
+            setIsLoading(false); // <--- Снимаем загрузку
+        }
+    };
+
+    // ---ФУНКЦИЯ: Сброс состояния для ввода новой почты ---
+    const handleResetForNewEmail = () => {
+        setIsSent(false); // <--- Сбрасываем флаг успеха
+        setEmail('');     // Очищаем поле ввода
+        setError('');
+        setMessage('');
+        setLastSentEmail('');
+    };
+
+    // --- РЕНДЕРИНГ СООБЩЕНИЯ ОБ УСПЕХЕ ---
+    if (isSent) {
+        return (
+            <Modal open={open} onClose={handleClose} aria-labelledby="forgot-password-modal-title">
+                <Box sx={modalStyle}>
+                    <Typography variant="h5" component="h2" sx={{ color: '#ffffff', fontWeight: 300, textAlign: 'center', marginBottom: 2 }}>
+                        Забыли пароль?
+                    </Typography>
+                    
+                    <Typography sx={{ color: '#00bfa5', textAlign: 'center', fontWeight: 'bold' }}>
+                        Ссылка для сброса пароля отправлена на вашу почту!
+                    </Typography>
+                    
+                    <Typography variant="body2" sx={{ color: '#bdbdbd', textAlign: 'center', marginBottom: 2 }}>
+                        Проверьте адрес: {lastSentEmail}
+                    </Typography>
+                    
+                    {/* КНОПКА ИСПРАВЛЕНИЯ: Сбрасывает isSent в false */}
+                    <Button
+                        variant="outlined"
+                        fullWidth
+                        sx={{ 
+                            color: '#00bfa5', 
+                            borderColor: '#00bfa5', 
+                            mt: 2 
+                        }}
+                        onClick={handleResetForNewEmail}
+                    >
+                        Запросить для другого аккаунта
+                    </Button>
+                    
+                    <Button
+                        variant="text"
+                        fullWidth
+                        sx={{ color: '#bdbdbd' }}
+                        onClick={handleClose}
+                    >
+                        Закрыть
+                    </Button>
+                </Box>
+            </Modal>
+        );
+    }
+    
+    // --- РЕНДЕРИНГ ФОРМЫ ВВОДА (Если isSent === false) ---
+    return (
+        <Modal open={open} onClose={handleClose} aria-labelledby="forgot-password-modal-title">
+            <Box sx={modalStyle} component="form" onSubmit={handleSubmit}>
+                {/* ... (остальной код формы ввода, как у вас) ... */}
+                
+                {/* Уберите 'disabled={!!message}' и замените на 'disabled={isLoading}' */}
+                <TextField 
+                    variant="filled" // Использовать заполненный вариант
+                    label="Ваша Почта"
+                    sx={{ ...inputStyle, marginBottom: 2 }} // Применяем общий стиль
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    required
+                    disabled={isLoading} // <--- ИСПОЛЬЗУЕМ ФЛАГ ЗАГРУЗКИ
+                />
+
+                <Button
+                    type="submit"
+                    variant="contained" // Основная кнопка
+                    fullWidth
+                    sx={{ 
+                        backgroundColor: '#00bfa5', 
+                        '&:hover': { backgroundColor: '#00a38f' },
+                        color: 'white',
+                        fontWeight: 'bold',
+                        mt: 1, // Margin Top
+                        mb: 2  // Margin Bottom
+                    }}
+                    disabled={isLoading}
+                >
+                    {isLoading ? 'Отправка...' : 'Отправить ссылку'}
+                </Button>
+                
+                {/* ... (Отмена) ... */}
+            </Box>
+        </Modal>
+    );
+};
+// --- КОМПОНЕНТ: Сброс пароля (ResetPasswordModal) ---
+const ResetPasswordModal = ({ open, handleClose }) => {
+    const [newPassword, setNewPassword] = useState('');
+    const [confirmPassword, setConfirmPassword] = useState('');
+    const [error, setError] = useState('');
+    const [message, setMessage] = useState('');
+
+    const modalStyle = { /* ... скопируйте modalStyle из других компонентов ... */ };
+    
+    // Внимание: inputStyle должен быть доступен в этой области видимости
+    
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        setError('');
+        setMessage('');
+
+        if (newPassword !== confirmPassword) {
+            setError('Пароли не совпадают.');
+            return;
+        }
+
+        // Соответствует ResetPasswordRequest.cs: public record ResetPasswordRequest(string newPassword);
+        const payload = { newPassword: newPassword }; 
+
+        try {
+            const response = await fetch(`${API_BASE_URL}/password/reset-password`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(payload),
+            });
+
+            if (response.ok) {
+                setMessage('Ваш пароль успешно изменен. Можете войти.');
+                // Закрываем модал через 3 секунды
+                setTimeout(handleClose, 3000); 
+            } else {
+                const errorData = await response.json();
+                setError(errorData.message || 'Ошибка сброса пароля. Возможно, ссылка устарела.');
+            }
+        } catch (err) {
+            setError('Не удалось подключиться к API.');
+        }
     };
 
     return (
         <Modal
             open={open}
             onClose={handleClose}
-            aria-labelledby="registration-modal-title"
-            sx={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                padding: { xs: 0, md: 2 },
-            }}
+            aria-labelledby="reset-password-modal-title"
         >
-            {/* Контейнер для двухколоночной сетки (форма и градиент) */}
-            <Box
-                sx={{
-                    display: 'grid',
-                    gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' },
-                    maxWidth: { xs: '100%', md: '1000px' },
-                    width: '100%',
-                    maxHeight: { xs: '100vh', md: 'auto' },
-                    height: { xs: '100vh', md: '600px' },
-                    boxShadow: '0 4px 20px rgba(0, 0, 0, 0.5)',
-                    borderRadius: { xs: 0, md: '16px' },
-                    overflow: 'hidden',
-                }}
-            >
-                <Box sx={gradientContainerStyle}>
-                    {/* Текст внутри градиентного блока */}
-                    <Typography
-                        variant="caption"
-                        sx={{ color: 'rgba(255, 255, 255, 0.7)', textAlign: 'center', fontStyle: 'italic', fontSize: '0.8rem' }}
-                    >
-                        к во вкладке браузера отвечает парны
-                    </Typography>
-                </Box>
+            <Box sx={modalStyle} component="form" onSubmit={handleSubmit}>
+                <Typography id="reset-password-modal-title" variant="h5" component="h2" sx={{ color: '#ffffff', fontWeight: 300, textAlign: 'center', marginBottom: 2 }}>
+                    Установите новый пароль
+                </Typography>
+                
+                {/* Сообщения об ошибке/успехе */}
+                {error && <Typography color="error" sx={{ textAlign: 'center' }}>{error}</Typography>}
+                {message && <Typography sx={{ color: '#00bfa5', textAlign: 'center' }}>{message}</Typography>}
 
-                {/* Форма регистрации */}
-                <Box sx={formContainerStyle}>
-                    <Typography
-                        variant="h4"
-                        component="h1"
-                        gutterBottom
-                        sx={{ color: '#ffffff', fontWeight: 300, marginBottom: 4, textAlign: isMobile ? 'center' : 'left' }}
-                    >
-                        Регистрация
-                    </Typography>
+                {/* Поле для ввода нового пароля */}
+                <TextField 
+                    label="Новый пароль" 
+                    variant="filled" 
+                    fullWidth 
+                    type="password" 
+                    sx={inputStyle} 
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    required
+                    disabled={!!message}
+                />
+                
+                {/* Поле для повтора пароля */}
+                <TextField 
+                    label="Повторите новый пароль" 
+                    variant="filled" 
+                    fullWidth 
+                    type="password" 
+                    sx={inputStyle} 
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    required
+                    disabled={!!message}
+                />
 
-                    {/* Поля ввода */}
-                    <TextField label="NickName" variant="filled" fullWidth sx={inputStyle} />
-                    <TextField label="Почта" variant="filled" fullWidth type="email" sx={inputStyle} />
-                    <TextField label="Номер телефона" variant="filled" fullWidth type="tel" sx={inputStyle} />
-                    <TextField label="Пароль" variant="filled" fullWidth type="password" sx={inputStyle} />
-                    <TextField label="Повторите пароль" variant="filled" fullWidth type="password" sx={inputStyle} />
-
-                    {/* Кнопка отправки формы */}
-                    <Button
-                        variant="contained"
-                        fullWidth
-                        sx={{
-                            marginTop: 1,
-                            marginBottom: 1,
-                            backgroundColor: '#00bfa5',
-                            '&:hover': { backgroundColor: '#009688' },
-                            color: '#ffffff',
-                            padding: '12px 0',
-                            fontWeight: 'bold',
-                            fontSize: '1rem',
-                            borderRadius: '8px'
-                        }}
-                    >
-                        Зарегистрироваться
-                    </Button>
-
-                    {/* Ссылка для перехода на вход */}
-                    <Box sx={{ marginTop: 2, textAlign: isMobile ? 'center' : 'left' }}>
-                        <Typography variant="body2" sx={{ color: '#bdbdbd' }}>
-                            Уже есть аккаунт?{' '}
-                            <MuiLink component="span" onClick={handleClose} sx={{ color: '#00bfa5', cursor: 'pointer', underline: 'hover' }}>
-                                Войти
-                            </MuiLink>
-                        </Typography>
-                    </Box>
-                </Box>
+                <Button
+                    type="submit"
+                    variant="contained"
+                    fullWidth
+                    disabled={!!message}
+                    sx={{
+                        marginTop: 1,
+                        backgroundColor: '#00bfa5',
+                        '&:hover': { backgroundColor: '#009688' },
+                        color: '#ffffff',
+                        padding: '12px 0',
+                        fontWeight: 'bold',
+                        fontSize: '1rem',
+                        borderRadius: '8px'
+                    }}
+                >
+                    Изменить пароль
+                </Button>
             </Box>
         </Modal>
     );
@@ -319,7 +667,8 @@ const PostPage = () => {
     // Состояния для управления видимостью модальных окон
     const [isModalOpen, setIsModalOpen] = useState(false); // Регистрация
     const [isPostModalOpen, setIsPostModalOpen] = useState(false); // Создание поста
-
+    const [isForgotModalOpen, setIsForgotModalOpen] = useState(false); // Сброс пароля
+    
     // Состояние для управления навигацией: хранит ID поста, который нужно показать подробно
     const [selectedPostId, setSelectedPostId] = useState(null);
 
@@ -328,6 +677,8 @@ const PostPage = () => {
     const handleClose = () => setIsModalOpen(false);
     const handlePostOpen = () => setIsPostModalOpen(true);
     const handlePostClose = () => setIsPostModalOpen(false);
+    const handleForgotOpen = () => setIsForgotModalOpen(true);
+    const handleForgotClose = () => setIsForgotModalOpen(false); 
 
     /**
      * Функция для имитации переключения лайка (без реальной БД).
@@ -510,8 +861,19 @@ const PostPage = () => {
             </Box>
 
             {/* -------------------- РЕНДЕРИНГ МОДАЛЬНЫХ ОКОН -------------------- */}
-            <RegistrationModal open={isModalOpen} handleClose={handleClose} />
-            <PostCreationModal open={isPostModalOpen} handleClose={handlePostClose} />
+            <RegistrationModal
+                open={isModalOpen}
+                handleClose={handleClose}
+                onForgotPassword={handleForgotOpen}
+            />
+            <PostCreationModal
+                open={isPostModalOpen}
+                handleClose={handlePostClose}
+            />
+            <ForgotPasswordModal
+                open={isForgotModalOpen}
+                handleClose={handleForgotClose}
+            />
         </Box>
     );
 };
