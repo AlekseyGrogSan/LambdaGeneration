@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useCallback } from 'react';
 import {
     Box,
     AppBar,
@@ -21,6 +21,16 @@ import PersonIcon from '@mui/icons-material/Person';
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 import NotificationsIcon from '@mui/icons-material/Notifications';
 import CameraAltIcon from '@mui/icons-material/CameraAlt';
+
+// --- НОВЫЕ ИМПОРТЫ ДЛЯ РЕДАКТОРА ---
+import FormatBoldIcon from '@mui/icons-material/FormatBold';
+import FormatItalicIcon from '@mui/icons-material/FormatItalic';
+import FormatUnderlinedIcon from '@mui/icons-material/FormatUnderlined';
+import LinkIcon from '@mui/icons-material/Link';
+import TitleIcon from '@mui/icons-material/Title';
+import FormatListBulletedIcon from '@mui/icons-material/FormatListBulleted';
+import FormatListNumberedIcon from '@mui/icons-material/FormatListNumbered';
+// ------------------------------------
 
 // Импорт дочерних компонентов
 import PostCard from './PostCard';
@@ -64,7 +74,7 @@ const inputStyle = {
 // --- КОМПОНЕНТ: RegistrationModal (Обновлен для логики) ---
 const RegistrationModal = ({ open, handleClose, onForgotPassword }) => {
     // Внутреннее состояние для переключения между Регистрацией и Входом
-    const [isRegisterMode, setIsRegisterMode] = useState(true); 
+    const [isRegisterMode, setIsRegisterMode] = useState(true);
     const [formData, setFormData] = useState({
         userName: '',
         email: '',
@@ -72,7 +82,7 @@ const RegistrationModal = ({ open, handleClose, onForgotPassword }) => {
         aboutUser: '', // Только для регистрации
     });
     const [error, setError] = useState('');
-    
+
     // Внимание: inputStyle должен быть доступен в этой области видимости
 
     const modalStyle = {
@@ -90,7 +100,7 @@ const RegistrationModal = ({ open, handleClose, onForgotPassword }) => {
         flexDirection: 'column',
         gap: 2,
     };
-    
+
     const handleChange = (e) => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
     };
@@ -98,18 +108,18 @@ const RegistrationModal = ({ open, handleClose, onForgotPassword }) => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         setError('');
-        
+
         const endpoint = isRegisterMode ? `${API_BASE_URL}/users/register` : `${API_BASE_URL}/users/login`;
         const payload = isRegisterMode
-            ? { 
-                UserName: formData.userName, 
-                Email: formData.email, 
-                Password: formData.password, 
-                aboutUser: formData.aboutUser 
+            ? {
+                UserName: formData.userName,
+                Email: formData.email,
+                Password: formData.password,
+                aboutUser: formData.aboutUser
             } // Соответствует RegisterUserRequest.cs
-            : { 
-                Email: formData.email, 
-                Password: formData.password 
+            : {
+                Email: formData.email,
+                Password: formData.password
             }; // Соответствует LoginUserRequest.cs
 
         try {
@@ -129,7 +139,7 @@ const RegistrationModal = ({ open, handleClose, onForgotPassword }) => {
                 } else {
                     alert('Регистрация успешна!');
                     // После регистрации можно автоматически переключиться на вход
-                    setIsRegisterMode(false); 
+                    setIsRegisterMode(false);
                 }
                 handleClose();
 
@@ -148,7 +158,7 @@ const RegistrationModal = ({ open, handleClose, onForgotPassword }) => {
                 <Typography id="modal-title" variant="h5" component="h2" sx={{ color: '#ffffff', fontWeight: 300, textAlign: 'center', marginBottom: 1 }}>
                     {isRegisterMode ? 'Регистрация' : 'Вход'}
                 </Typography>
-                
+
                 {error && <Typography color="error" sx={{ textAlign: 'center' }}>{error}</Typography>}
 
                 {/* Поля для регистрации */}
@@ -164,40 +174,40 @@ const RegistrationModal = ({ open, handleClose, onForgotPassword }) => {
                         required
                     />
                 )}
-                
+
                 {/* Общие поля */}
-                <TextField 
-                    label="Email" 
+                <TextField
+                    label="Email"
                     name="email"
-                    variant="filled" 
-                    fullWidth 
+                    variant="filled"
+                    fullWidth
                     type="email"
                     sx={inputStyle}
                     value={formData.email}
                     onChange={handleChange}
                     required
                 />
-                <TextField 
-                    label="Пароль" 
+                <TextField
+                    label="Пароль"
                     name="password"
-                    variant="filled" 
-                    fullWidth 
+                    variant="filled"
+                    fullWidth
                     type="password"
                     sx={inputStyle}
                     value={formData.password}
                     onChange={handleChange}
                     required
                 />
-                
+
                 {/* Поле "О себе" только для регистрации */}
                 {isRegisterMode && (
-                    <TextField 
-                        label="О себе (кратко)" 
+                    <TextField
+                        label="О себе (кратко)"
                         name="aboutUser"
-                        variant="filled" 
-                        fullWidth 
-                        multiline 
-                        rows={2} 
+                        variant="filled"
+                        fullWidth
+                        multiline
+                        rows={2}
                         sx={inputStyle}
                         value={formData.aboutUser}
                         onChange={handleChange}
@@ -221,32 +231,32 @@ const RegistrationModal = ({ open, handleClose, onForgotPassword }) => {
                 >
                     {isRegisterMode ? 'Зарегистрироваться' : 'Войти'}
                 </Button>
-                
+
                 {/* Секция переключения режимов */}
                 <Box sx={{ marginTop: 2, textAlign: 'center' }}>
                     <Typography variant="body2" sx={{ color: '#bdbdbd' }}>
                         {isRegisterMode ? 'Уже есть аккаунт?' : 'Нет аккаунта?'}{' '}
-                        <MuiLink 
-                            component="span" 
+                        <MuiLink
+                            component="span"
                             onClick={() => {
                                 setIsRegisterMode(!isRegisterMode); // Переключаем режим
                                 setFormData({ userName: '', email: '', password: '', aboutUser: '' }); // Сброс полей
                                 setError('');
-                            }} 
+                            }}
                             sx={{ color: '#00bfa5', cursor: 'pointer', underline: 'hover', fontWeight: 'bold' }}
                         >
                             {isRegisterMode ? 'Войти' : 'Зарегистрироваться'}
                         </MuiLink>
                     </Typography>
-                    
+
                     {/* Ссылка "Забыли пароль?" отображается только в режиме Входа */}
                     {!isRegisterMode && (
-                        <MuiLink 
-                            component="span" 
-                            onClick={() => { 
+                        <MuiLink
+                            component="span"
+                            onClick={() => {
                                 handleClose(); // Закрываем модальное окно регистрации/входа
                                 onForgotPassword(); // Открываем модальное окно "Забыли пароль?"
-                            }} 
+                            }}
                             sx={{ color: '#bdbdbd', cursor: 'pointer', underline: 'hover', display: 'block', marginTop: 1, fontSize: '0.8rem' }}
                         >
                             Забыли пароль?
@@ -263,7 +273,7 @@ const ForgotPasswordModal = ({ open, handleClose }) => {
     const [email, setEmail] = useState('');
     const [message, setMessage] = useState('');
     const [error, setError] = useState('');
-    const [isSent, setIsSent] = useState(false); 
+    const [isSent, setIsSent] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
     const [lastSentEmail, setLastSentEmail] = useState('');
 
@@ -282,7 +292,7 @@ const ForgotPasswordModal = ({ open, handleClose }) => {
         flexDirection: 'column',
         gap: 2,
     };
-    
+
     // Внимание: inputStyle должен быть доступен в этой области видимости
 
     const handleSubmit = async (e) => {
@@ -292,7 +302,7 @@ const ForgotPasswordModal = ({ open, handleClose }) => {
         setIsLoading(true); // <--- Устанавливаем загрузку
 
         // Соответствует ForgotPasswordRequest.cs
-        const payload = { email: email }; 
+        const payload = { email: email };
 
         try {
             const response = await fetch(`${API_BASE_URL}/password/forgot-password`, {
@@ -337,29 +347,29 @@ const ForgotPasswordModal = ({ open, handleClose }) => {
                     <Typography variant="h5" component="h2" sx={{ color: '#ffffff', fontWeight: 300, textAlign: 'center', marginBottom: 2 }}>
                         Забыли пароль?
                     </Typography>
-                    
+
                     <Typography sx={{ color: '#00bfa5', textAlign: 'center', fontWeight: 'bold' }}>
                         Ссылка для сброса пароля отправлена на вашу почту!
                     </Typography>
-                    
+
                     <Typography variant="body2" sx={{ color: '#bdbdbd', textAlign: 'center', marginBottom: 2 }}>
                         Проверьте адрес: {lastSentEmail}
                     </Typography>
-                    
+
                     {/* КНОПКА ИСПРАВЛЕНИЯ: Сбрасывает isSent в false */}
                     <Button
                         variant="outlined"
                         fullWidth
-                        sx={{ 
-                            color: '#00bfa5', 
-                            borderColor: '#00bfa5', 
-                            mt: 2 
+                        sx={{
+                            color: '#00bfa5',
+                            borderColor: '#00bfa5',
+                            mt: 2
                         }}
                         onClick={handleResetForNewEmail}
                     >
                         Запросить для другого аккаунта
                     </Button>
-                    
+
                     <Button
                         variant="text"
                         fullWidth
@@ -372,15 +382,15 @@ const ForgotPasswordModal = ({ open, handleClose }) => {
             </Modal>
         );
     }
-    
+
     // --- РЕНДЕРИНГ ФОРМЫ ВВОДА (Если isSent === false) ---
     return (
         <Modal open={open} onClose={handleClose} aria-labelledby="forgot-password-modal-title">
             <Box sx={modalStyle} component="form" onSubmit={handleSubmit}>
                 {/* ... (остальной код формы ввода, как у вас) ... */}
-                
+
                 {/* Уберите 'disabled={!!message}' и замените на 'disabled={isLoading}' */}
-                <TextField 
+                <TextField
                     variant="filled" // Использовать заполненный вариант
                     label="Ваша Почта"
                     sx={{ ...inputStyle, marginBottom: 2 }} // Применяем общий стиль
@@ -394,8 +404,8 @@ const ForgotPasswordModal = ({ open, handleClose }) => {
                     type="submit"
                     variant="contained" // Основная кнопка
                     fullWidth
-                    sx={{ 
-                        backgroundColor: '#00bfa5', 
+                    sx={{
+                        backgroundColor: '#00bfa5',
                         '&:hover': { backgroundColor: '#00a38f' },
                         color: 'white',
                         fontWeight: 'bold',
@@ -406,7 +416,7 @@ const ForgotPasswordModal = ({ open, handleClose }) => {
                 >
                     {isLoading ? 'Отправка...' : 'Отправить ссылку'}
                 </Button>
-                
+
                 {/* ... (Отмена) ... */}
             </Box>
         </Modal>
@@ -419,10 +429,24 @@ const ResetPasswordModal = ({ open, handleClose }) => {
     const [error, setError] = useState('');
     const [message, setMessage] = useState('');
 
-    const modalStyle = { /* ... скопируйте modalStyle из других компонентов ... */ };
-    
+    const modalStyle = {
+        position: 'absolute',
+        top: '50%',
+        left: '50%',
+        transform: 'translate(-50%, -50%)',
+        width: { xs: '90%', sm: '400px' },
+        bgcolor: '#383838',
+        borderRadius: '16px',
+        boxShadow: 24,
+        p: 4,
+        color: '#ffffff',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 2,
+    };
+
     // Внимание: inputStyle должен быть доступен в этой области видимости
-    
+
     const handleSubmit = async (e) => {
         e.preventDefault();
         setError('');
@@ -434,7 +458,7 @@ const ResetPasswordModal = ({ open, handleClose }) => {
         }
 
         // Соответствует ResetPasswordRequest.cs: public record ResetPasswordRequest(string newPassword);
-        const payload = { newPassword: newPassword }; 
+        const payload = { newPassword: newPassword };
 
         try {
             const response = await fetch(`${API_BASE_URL}/password/reset-password`, {
@@ -448,7 +472,7 @@ const ResetPasswordModal = ({ open, handleClose }) => {
             if (response.ok) {
                 setMessage('Ваш пароль успешно изменен. Можете войти.');
                 // Закрываем модал через 3 секунды
-                setTimeout(handleClose, 3000); 
+                setTimeout(handleClose, 3000);
             } else {
                 const errorData = await response.json();
                 setError(errorData.message || 'Ошибка сброса пароля. Возможно, ссылка устарела.');
@@ -468,31 +492,31 @@ const ResetPasswordModal = ({ open, handleClose }) => {
                 <Typography id="reset-password-modal-title" variant="h5" component="h2" sx={{ color: '#ffffff', fontWeight: 300, textAlign: 'center', marginBottom: 2 }}>
                     Установите новый пароль
                 </Typography>
-                
+
                 {/* Сообщения об ошибке/успехе */}
                 {error && <Typography color="error" sx={{ textAlign: 'center' }}>{error}</Typography>}
                 {message && <Typography sx={{ color: '#00bfa5', textAlign: 'center' }}>{message}</Typography>}
 
                 {/* Поле для ввода нового пароля */}
-                <TextField 
-                    label="Новый пароль" 
-                    variant="filled" 
-                    fullWidth 
-                    type="password" 
-                    sx={inputStyle} 
+                <TextField
+                    label="Новый пароль"
+                    variant="filled"
+                    fullWidth
+                    type="password"
+                    sx={inputStyle}
                     value={newPassword}
                     onChange={(e) => setNewPassword(e.target.value)}
                     required
                     disabled={!!message}
                 />
-                
+
                 {/* Поле для повтора пароля */}
-                <TextField 
-                    label="Повторите новый пароль" 
-                    variant="filled" 
-                    fullWidth 
-                    type="password" 
-                    sx={inputStyle} 
+                <TextField
+                    label="Повторите новый пароль"
+                    variant="filled"
+                    fullWidth
+                    type="password"
+                    sx={inputStyle}
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
                     required
@@ -522,8 +546,131 @@ const ResetPasswordModal = ({ open, handleClose }) => {
     );
 };
 
-// --- КОМПОНЕНТ: Создание поста (PostCreationModal) ---
+// --- НОВЫЙ КОМПОНЕНТ: Панель Инструментов Редактора ---
+const EditorToolbar = ({ editorRef }) => {
+    // Функция для применения команды форматирования (document.execCommand)
+    // Используем useCallback, чтобы избежать лишних перерендеров
+    const applyCommand = useCallback((command, value = null) => {
+        // Устанавливаем фокус на редактор перед выполнением команды
+        if (editorRef.current) {
+            editorRef.current.focus();
+        }
+        // execCommand - ключевая нативная функция для форматирования contenteditable
+        document.execCommand(command, false, value);
+    }, [editorRef]);
+
+    // Обработчик для вставки ссылки
+    const handleInsertLink = () => {
+        const url = prompt('Введите URL ссылки:');
+        if (url) {
+            applyCommand('createLink', url);
+        }
+    };
+
+    // Обработчик для вставки заголовка (H2)
+    const handleInsertHeading = () => {
+        // formatBlock используется для тегов блочного уровня (H1, H2, P, DIV)
+        applyCommand('formatBlock', '<h2>');
+    };
+
+
+    return (
+        <Box
+            sx={{
+                display: 'flex',
+                gap: 1,
+                padding: 1,
+                backgroundColor: '#555555',
+                borderRadius: '8px 8px 0 0',
+                border: '1px solid #444444'
+            }}
+        >
+            {/* 1. Жирный */}
+            <IconButton
+                size="small"
+                onClick={() => applyCommand('bold')}
+                sx={{ color: '#ffffff', '&:hover': { backgroundColor: '#666666' } }}
+            >
+                <FormatBoldIcon />
+            </IconButton>
+
+            {/* 2. Курсив */}
+            <IconButton
+                size="small"
+                onClick={() => applyCommand('italic')}
+                sx={{ color: '#ffffff', '&:hover': { backgroundColor: '#666666' } }}
+            >
+                <FormatItalicIcon />
+            </IconButton>
+
+            {/* 3. Подчеркивание */}
+            <IconButton
+                size="small"
+                onClick={() => applyCommand('underline')}
+                sx={{ color: '#ffffff', '&:hover': { backgroundColor: '#666666' } }}
+            >
+                <FormatUnderlinedIcon />
+            </IconButton>
+
+            {/* 4. Ссылка */}
+            <IconButton
+                size="small"
+                onClick={handleInsertLink}
+                sx={{ color: '#00bfa5', '&:hover': { backgroundColor: '#666666' } }}
+            >
+                <LinkIcon />
+            </IconButton>
+
+            {/* 5. Заголовок (Тег оглавления, H2) */}
+            <IconButton
+                size="small"
+                onClick={handleInsertHeading}
+                sx={{ color: '#ffeb3b', '&:hover': { backgroundColor: '#666666' } }}
+            >
+                <TitleIcon />
+            </IconButton>
+
+            {/* 6. Маркированный список */}
+            <IconButton
+                size="small"
+                onClick={() => applyCommand('insertUnorderedList')}
+                sx={{ color: '#ffffff', '&:hover': { backgroundColor: '#666666' } }}
+            >
+                <FormatListBulletedIcon />
+            </IconButton>
+
+            {/* 7. Нумерованный список */}
+            <IconButton
+                size="small"
+                onClick={() => applyCommand('insertOrderedList')}
+                sx={{ color: '#ffffff', '&:hover': { backgroundColor: '#666666' } }}
+            >
+                <FormatListNumberedIcon />
+            </IconButton>
+        </Box>
+    );
+};
+
+
+// --- ОБНОВЛЕННЫЙ КОМПОНЕНТ: Создание поста (PostCreationModal) ---
 const PostCreationModal = ({ open, handleClose }) => {
+    // 1. Состояние для заголовка
+    const [title, setTitle] = useState('');
+    // 2. Состояние для контента поста (будет хранить HTML)
+    const [content, setContent] = useState('');
+    // 3. Состояние для файла (заглушка)
+    const [file, setFile] = useState(null);
+
+    // Ссылка на DOM-элемент редактора (div с contenteditable)
+    const editorRef = useRef(null);
+
+    // Обработчик ввода: обновляет состояние 'content' при изменении содержимого
+    const handleContentChange = () => {
+        if (editorRef.current) {
+            // Сохраняем внутренний HTML-код редактора
+            setContent(editorRef.current.innerHTML);
+        }
+    };
 
     // Стили для центрирования и оформления модального окна
     const modalStyle = {
@@ -531,7 +678,7 @@ const PostCreationModal = ({ open, handleClose }) => {
         top: '50%',
         left: '50%',
         transform: 'translate(-50%, -50%)',
-        width: { xs: '90%', sm: '600px', md: '700px' },
+        width: { xs: '90%', sm: '600px', md: '800px' },
         bgcolor: '#383838',
         borderRadius: '16px',
         boxShadow: 24,
@@ -557,6 +704,26 @@ const PostCreationModal = ({ open, handleClose }) => {
         minHeight: '100px',
     };
 
+    // --- ОБРАБОТЧИК СОХРАНЕНИЯ ---
+    const handlePublish = () => {
+        // Здесь выполняется логика отправки данных на сервер
+        console.log('--- ДАННЫЕ ПОСТА ДЛЯ ОТПРАВКИ ---');
+        console.log('Заголовок:', title);
+        console.log('Файл:', file ? file.name : 'Нет файла');
+        // Содержимое поста (content) уже в формате HTML и готово к сохранению в БД
+        console.log('HTML-содержимое:', content);
+
+        // Очистка и закрытие
+        setTitle('');
+        setContent('');
+        setFile(null);
+        if (editorRef.current) {
+            editorRef.current.innerHTML = '<Typography sx={{ color: "#bdbdbd" }}>Введите текст поста...</Typography>'; // Очищаем содержимое редактора
+        }
+        handleClose();
+    };
+
+
     return (
         <Modal
             open={open}
@@ -574,31 +741,54 @@ const PostCreationModal = ({ open, handleClose }) => {
                     variant="filled"
                     fullWidth
                     sx={inputStyle}
+                    value={title}
+                    onChange={(e) => setTitle(e.target.value)}
                 />
 
-                {/* Область для прикрепления файла (картинка/видео) */}
-                <Box sx={uploadAreaStyle}>
-                    <CloudUploadIcon sx={{ fontSize: 40, color: '#00bfa5', mb: 1 }} />
-                    <Typography variant="body1" sx={{ color: '#bdbdbd' }}>
-                        Нажмите или перетащите файл (Изображение/Видео)
-                    </Typography>
-                    {/* Скрытый input для выбора файла */}
-                    <input type="file" hidden accept="image/*,video/*" />
+                {/* --- 1. Панель Инструментов --- */}
+                <EditorToolbar editorRef={editorRef} />
+
+                {/* --- 2. Область Редактирования (contenteditable) --- */}
+                <Box
+                    ref={editorRef}
+                    contentEditable={true} // Ключевой атрибут!
+                    onInput={handleContentChange} // Обновляем состояние при любом изменении
+                    sx={{
+                        minHeight: '200px',
+                        padding: 2,
+                        // Стиль поля ввода для соответствия inputStyle
+                        backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                        border: '1px solid #444444',
+                        borderRadius: '0 0 8px 8px',
+                        color: '#ffffff',
+                        outline: 'none', // Убрать стандартное синее выделение фокуса
+                        cursor: 'text',
+                        // Стили для отображения форматированного текста внутри редактора
+                        '& *': {
+                            color: 'inherit', // Наследуем белый цвет
+                        },
+                        '& a': {
+                            color: '#00bfa5', // Ссылки выделяем цветом
+                        },
+                        '& h2': {
+                            fontSize: '1.5rem',
+                            fontWeight: 'bold',
+                            margin: '0.5em 0',
+                            color: '#ffeb3b', // Заголовок выделяем цветом
+                        },
+                        '& ul, & ol': {
+                            marginLeft: '20px',
+                        }
+                    }}
+                >
+                    <Typography sx={{ color: '#bdbdbd' }}>Введите текст поста...</Typography>
                 </Box>
-
-                {/* Поле для ввода основного текста поста */}
-                <TextField
-                    label="Введите текст поста (до 10000 символов)"
-                    variant="filled"
-                    fullWidth
-                    multiline
-                    rows={8}
-                    sx={inputStyle}
-                />
 
                 <Button
                     variant="contained"
                     fullWidth
+                    onClick={handlePublish}
+                    disabled={!title || !content} // Отключаем, если нет заголовка или текста
                     sx={{
                         marginTop: 1,
                         backgroundColor: '#00bfa5',
@@ -609,7 +799,6 @@ const PostCreationModal = ({ open, handleClose }) => {
                         fontSize: '1rem',
                         borderRadius: '8px'
                     }}
-                    onClick={handleClose}
                 >
                     Опубликовать
                 </Button>

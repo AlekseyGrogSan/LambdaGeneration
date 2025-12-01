@@ -5,27 +5,32 @@ import {
     CardMedia,
     Typography,
     IconButton,
+    Chip, // <-- НОВЫЙ ИМПОРТ: Для отображения тегов
 } from '@mui/material';
 import FavoriteIcon from '@mui/icons-material/Favorite';
 import ChatBubbleOutlineIcon from '@mui/icons-material/ChatBubbleOutline';
 import SendIcon from '@mui/icons-material/Send';
 import CameraAltIcon from '@mui/icons-material/CameraAlt';
 
+// --- ОБЩИЙ МАССИВ ЦВЕТОВ ДЛЯ ТЕГОВ (дублирован для корректного отображения) ---
+const TAG_COLORS = [
+    '#ff6f00', // Оранжевый
+    '#00e676', // Зеленый
+    '#2979ff', // Синий
+    '#ff1744', // Красный
+    '#e040fb', // Фиолетовый
+    '#00bcd4', // Голубой
+];
+// -------------------------------------------------------------------------
+
+
 /**
  * PostCard - Компонент для отображения краткой информации о посте в ленте.
- * Вся карточка является кликабельной для перехода на детальную страницу.
- * * @param {object} props - Свойства компонента.
- * @param {number} props.id - ID поста.
- * @param {string} props.nickname - Имя пользователя.
- * @param {string} props.title - Заголовок поста.
- * @param {string} props.imageUrl - URL изображения поста.
- * @param {number} props.likesCount - Количество лайков.
- * @param {number} props.commentsCount - Количество комментариев.
- * @param {boolean} props.isLiked - Флаг: поставлен ли лайк текущим пользователем.
- * @param {function} props.onClick - Обработчик клика по карточке (для навигации).
- * @param {function} props.onLike - Обработчик переключения лайка.
+ * @param {object} props - Свойства компонента.
+ * // ... (другие props)
+ * @param {string[]} props.tags - Список тегов поста.
  */
-const PostCard = ({ id, nickname, title, imageUrl, likesCount, commentsCount, isLiked, onClick, onLike }) => {
+const PostCard = ({ id, nickname, title, imageUrl, likesCount, commentsCount, isLiked, onClick, onLike, tags = [] }) => {
     return (
         <Card
             // Основной обработчик: переход на детальную страницу при клике на карточку
@@ -78,11 +83,26 @@ const PostCard = ({ id, nickname, title, imageUrl, likesCount, commentsCount, is
                 image={imageUrl || 'путь_к_заглушке.jpg'}
                 alt={title}
                 sx={{
-
                     objectFit: 'cover',
-                    // Другие стили, если необходимы
                 }}
             />
+
+            {/* Секция тегов - НОВАЯ */}
+            <Box sx={{ padding: '8px 16px', display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+                {tags.map((tag, index) => (
+                    <Chip
+                        key={tag}
+                        label={`#${tag}`}
+                        size="small"
+                        sx={{
+                            // Циклический выбор цвета
+                            backgroundColor: TAG_COLORS[index % TAG_COLORS.length],
+                            color: 'white',
+                            fontWeight: 'bold'
+                        }}
+                    />
+                ))}
+            </Box>
 
             {/* Секция заголовка и кнопок действий */}
             <Box sx={{ padding: 2, color: 'white' }}>
