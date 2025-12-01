@@ -163,7 +163,7 @@ const PostDetailPage = ({ post, onBack, onLike }) => {
 
             {/* Секция комментариев */}
             <Box sx={{ p: 2, borderTop: '1px solid #333' }}>
-                <Typography variant="h6" sx={{ color: 'white', mb: 2 }}>Комментарии (MOCK)</Typography>
+                <Typography variant="h6" sx={{ color: 'white', mb: 2 }}>Комментарии</Typography>
                 <TextField
                     label="Написать комментарий..."
                     variant="filled"

@@ -739,24 +739,7 @@ const PostPage = () => {
 
                 {/* 1. Верхняя панель (AppBar) */}
                 <AppBar position="static" sx={{ backgroundColor: '#333333', borderRadius: '0', boxShadow: '0 2px 5px rgba(0,0,0,0.3)' }}>
-                    <Toolbar>
-                        {/* Поле поиска */}
-                        <InputBase
-                            placeholder="Поиск"
-                            sx={{
-                                flexGrow: 1,
-                                color: 'white',
-                                backgroundColor: '#555555',
-                                borderRadius: '8px',
-                                padding: '5px 15px',
-                                marginRight: 2
-                            }}
-                            startAdornment={<SearchIcon sx={{ color: '#00bfa5', marginRight: 1 }} />}
-                        />
-                        <IconButton color="inherit">
-                            <MoreVertIcon sx={{ color: '#00bfa5' }} />
-                        </IconButton>
-                    </Toolbar>
+
                 </AppBar>
 
                 {/* 2. Основной контент: Условный рендеринг */}
@@ -823,7 +806,6 @@ const PostPage = () => {
                 {/* Навигационные кнопки (с использованием flexGrow для растягивания) */}
                 <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1, flexGrow: 1 }}>
                     <Button variant="contained" sx={sidebarButtonStyle}>Категории</Button>
-                    <Button variant="contained" sx={sidebarButtonStyle}>Статьи</Button>
                     <Button variant="contained" sx={sidebarButtonStyle}>Полезные материалы</Button>
                     <Button variant="contained" sx={sidebarButtonStyle}>FAQ</Button>
                 </Box>
