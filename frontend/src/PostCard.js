@@ -74,12 +74,13 @@ const PostCard = ({ id, nickname, title, imageUrl, likesCount, commentsCount, is
             {/* Изображение поста */}
             <CardMedia
                 component="img"
-                image={imageUrl}
+                height="400"
+                image={imageUrl || 'путь_к_заглушке.jpg'}
                 alt={title}
                 sx={{
-                    height: 'auto',
-                    maxHeight: 500,
-                    objectFit: 'cover'
+
+                    objectFit: 'cover',
+                    // Другие стили, если необходимы
                 }}
             />
 

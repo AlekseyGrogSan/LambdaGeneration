@@ -25,6 +25,7 @@ import CameraAltIcon from '@mui/icons-material/CameraAlt';
 // Импорт дочерних компонентов
 import PostCard from './PostCard';
 import PostDetailPage from './PostDetailPage';
+import ProfileModal from './ProfileModal';
 
 // Базовый URL для API(пока http://localhost:5113/api)
 const API_BASE_URL = 'http://localhost:5113/api';
@@ -668,7 +669,8 @@ const PostPage = () => {
     const [isModalOpen, setIsModalOpen] = useState(false); // Регистрация
     const [isPostModalOpen, setIsPostModalOpen] = useState(false); // Создание поста
     const [isForgotModalOpen, setIsForgotModalOpen] = useState(false); // Сброс пароля
-    
+    const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
+
     // Состояние для управления навигацией: хранит ID поста, который нужно показать подробно
     const [selectedPostId, setSelectedPostId] = useState(null);
 
@@ -678,7 +680,9 @@ const PostPage = () => {
     const handlePostOpen = () => setIsPostModalOpen(true);
     const handlePostClose = () => setIsPostModalOpen(false);
     const handleForgotOpen = () => setIsForgotModalOpen(true);
-    const handleForgotClose = () => setIsForgotModalOpen(false); 
+    const handleForgotClose = () => setIsForgotModalOpen(false);
+    const handleProfileOpen = () => setIsProfileModalOpen(true);
+    const handleProfileClose = () => setIsProfileModalOpen(false);
 
     /**
      * Функция для имитации переключения лайка (без реальной БД).
@@ -819,7 +823,7 @@ const PostPage = () => {
                     gap: 1,
                     marginBottom: 2,
                 }}>
-                    <Button variant="outlined" sx={profileButtonStyle} startIcon={<PersonIcon />}>Мой профиль</Button>
+                    <Button variant="outlined" sx={profileButtonStyle} startIcon={<PersonIcon />} onClick={handleProfileOpen}>Мой профиль</Button>
                     <Button variant="outlined" sx={profileButtonStyle} startIcon={<CloudUploadIcon />} onClick={handlePostOpen}>
                         Опубликовать
                     </Button>
@@ -854,6 +858,13 @@ const PostPage = () => {
             <ForgotPasswordModal
                 open={isForgotModalOpen}
                 handleClose={handleForgotClose}
+            />
+
+            <ProfileModal
+                open={isProfileModalOpen}
+                handleClose={handleProfileClose}
+                // Здесь можно передать никнейм текущего пользователя, если он известен
+                nickname="Ваш_Ник"
             />
         </Box>
     );
