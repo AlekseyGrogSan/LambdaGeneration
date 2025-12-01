@@ -841,7 +841,6 @@ const PostPage = () => {
                     <Button variant="outlined" sx={profileButtonStyle} startIcon={<CloudUploadIcon />} onClick={handlePostOpen}>
                         Опубликовать
                     </Button>
-                    <Button variant="outlined" sx={profileButtonStyle} startIcon={<NotificationsIcon />}>Уведомления</Button>
                 </Box>
 
                 {/* Секция входа/регистрации */}
