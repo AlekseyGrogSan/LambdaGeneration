@@ -148,7 +148,7 @@ const RegistrationModal = ({ open, handleClose, onForgotPassword }) => {
                 setError(errorData.message || 'Произошла ошибка на сервере.');
             }
         } catch (err) {
-            setError('Не удалось подключиться к API.');
+            setError(err.message || 'Ошибка сети. Проверьте подключение к интернету.');
         }
     };
 
