@@ -21,7 +21,7 @@ const TAG_COLORS = [
     '#00bcd4', 
 ];
 
-// ✅ ФИКС: ВЫНОСИМ СТИЛЬ МЕТКИ ЗА ПРЕДЕЛЫ КОМПОНЕНТА
+// ФИКС: ВЫНОСИМ СТИЛЬ МЕТКИ ЗА ПРЕДЕЛЫ КОМПОНЕНТА
 const labelStyle = { 
     color: '#00bfa5', 
     display: 'block', 
@@ -31,12 +31,21 @@ const labelStyle = {
     fontSize: '0.9rem' 
 };
 
+// Функция для генерации цвета тега по его содержимому
+const getTagColor = (tag, index) => {
+    const hash = tag.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+    return TAG_COLORS[(hash + index) % TAG_COLORS.length];
+};
+
 /**
  * PostCard - Компонент для отображения краткой информации о посте в ленте.
+ * Принимает props.sx для кастомизации стилей (например, фиксированная высота)
  */
 const PostCard = ({ 
     id, 
     nickname, 
+    authorId,
+    onAuthorClick,
     title, 
     article_preview, 
     likesCount, 
@@ -44,29 +53,25 @@ const PostCard = ({
     isLiked, 
     onClick, 
     onLike, 
-    tags = [] 
+    tags = [],
+    sx = {} // <-- Принимаем кастомные стили, включая фиксированную высоту
 }) => {
-
-    const getTagColor = (tag, index) => {
-        const hash = tag.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
-        return TAG_COLORS[(hash + index) % TAG_COLORS.length];
-    };
-
     return (
         <Card 
             sx={{
                 width: '100%',
-                backgroundColor: '#1f1f1f',
+                backgroundColor: '#2c2c2c', 
                 borderRadius: '12px',
-                height: '85vh', 
+                height: '85vh', // По умолчанию для ленты
                 minHeight: 'unset', 
-                cursor: 'pointer',
+                cursor: onClick ? 'pointer' : 'default',
                 transition: 'box-shadow 0.3s',
                 '&:hover': {
                     boxShadow: '0 8px 16px rgba(0, 0, 0, 0.4)',
                 },
                 display: 'flex',
                 flexDirection: 'column',
+                ...sx // <-- Применяем кастомные стили (например, height: '100%')
             }}
             onClick={onClick}
         >
@@ -76,7 +81,16 @@ const PostCard = ({
                 <Box>
                     <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 1.5 }}>
                         
-                        <Box>
+                        {/* КЛИКАБЕЛЬНЫЙ БЛОК АВТОРА */}
+                        <Box
+                            onClick={(e) => { 
+                                e.stopPropagation(); 
+                                if (onAuthorClick && authorId) {
+                                    onAuthorClick(authorId);
+                                }
+                            }}
+                            sx={{ cursor: onAuthorClick && authorId ? 'pointer' : 'default' }}
+                        >
                             {/* МЕТКА: АВТОР */}
                             <Typography variant="body2" sx={labelStyle}>
                                 Автор
@@ -117,10 +131,19 @@ const PostCard = ({
                     <Typography variant="body2" sx={labelStyle}>
                         Название
                     </Typography>
-                    {/* ✅ ПРОВЕРКА: САМО НАЗВАНИЕ */}
+                    {/* САМО НАЗВАНИЕ */}
                     <Typography 
                         variant="h5" 
-                        sx={{ color: 'white', fontWeight: 'bold' }}
+                        sx={{ 
+                            color: 'white', 
+                            fontWeight: 'bold',
+                            // Ограничение по строкам для заголовка
+                            overflow: 'hidden', 
+                            textOverflow: 'ellipsis', 
+                            display: '-webkit-box', 
+                            WebkitLineClamp: 2, 
+                            WebkitBoxOrient: 'vertical',
+                        }}
                     >
                         {title} 
                     </Typography>
@@ -132,7 +155,7 @@ const PostCard = ({
                     <Typography variant="body2" sx={labelStyle}>
                         Описание
                     </Typography>
-                    {/* ✅ ФИКС: САМО ОПИСАНИЕ (ПРЕВЬЮ) */}
+                    {/* САМО ОПИСАНИЕ (ПРЕВЬЮ) */}
                     <Typography 
                         variant="body1" 
                         dangerouslySetInnerHTML={{ __html: article_preview }}
@@ -141,9 +164,8 @@ const PostCard = ({
                             overflow: 'hidden', 
                             textOverflow: 'ellipsis', 
                             display: '-webkit-box', 
-                            WebkitLineClamp: 15, // Указываем, сколько строк показывать
+                            WebkitLineClamp: 15, // Адаптировано
                             WebkitBoxOrient: 'vertical',
-                            // ... (другие стили для HTML)
                         }}
                     />
                 </Box>
@@ -163,7 +185,9 @@ const PostCard = ({
                     <Box sx={{ display: 'flex', alignItems: 'center' }}>
                         <IconButton
                             sx={{ color: isLiked ? '#ff1744' : 'white' }}
-                            onClick={(e) => { e.stopPropagation(); onLike(id); }}
+                            // Если onLike не передан (например, в модалке), кнопка неактивна
+                            onClick={onLike ? (e) => { e.stopPropagation(); onLike(id); } : (e) => { e.stopPropagation(); }}
+                            disabled={!onLike}
                         >
                             <FavoriteIcon sx={{ fontSize: 30 }} />
                         </IconButton>
