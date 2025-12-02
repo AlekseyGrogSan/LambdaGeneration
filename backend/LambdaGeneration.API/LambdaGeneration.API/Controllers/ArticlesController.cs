@@ -89,7 +89,38 @@ namespace LambdaGeneration.API.Controllers
                     ArticleIntTags,
                     author_id
                     );
-                return Ok("Article is create!");
+                Console.WriteLine("СТАТЬЯ СОЗДАНА АЛИЛУЯ!!!!!!!!!!!!!!!!!!!!!!!");
+                return Ok();
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+
+        // Внутри класса ArticlesController:
+        [HttpGet("getAll")]
+        public async Task<ActionResult<GetArticlesResponse>> GetAllArticles()
+        {
+            try
+            {
+                // ВАЖНО: Предполагается, что в IArticlesService есть метод GetAllArticles()
+                var allArticles = await _articlesService.GetAllArticles();
+
+                // Преобразуем список статей в формат DTO для ответа
+                var responseArticles = allArticles.Select(a =>
+                    new GetArticleResponse(
+                        a.ArticleID,
+                        a.AuthorID,
+                        a.ArticleTitle,
+                        a.ArticlePreview,
+                        a.ArticleContent,
+                        a.ArticleTags.Select(t => ApiExtensions.FromTags(t)).ToList(),
+                        a.CreatedDate)
+                ).ToList();
+
+                // Оборачиваем в GetArticlesResponse
+                return Ok(new GetArticlesResponse(responseArticles));
             }
             catch (Exception ex)
             {
@@ -111,7 +142,7 @@ namespace LambdaGeneration.API.Controllers
                     ArticleTagsResponse.Add(ApiExtensions.FromTags(article_service.ArticleTags[i]));
                 }
 
-                return Ok(new GetArticleResponse(article_service.ArticleID, article_service.ArticleTitle, article_service.ArticlePreview, article_service.ArticleContent, ArticleTagsResponse, article_service.CreatedDate));
+                return Ok(new GetArticleResponse(article_service.ArticleID, article_service.AuthorID ,article_service.ArticleTitle, article_service.ArticlePreview, article_service.ArticleContent, ArticleTagsResponse, article_service.CreatedDate));
             }
             catch (Exception ex) 
             {
@@ -132,7 +163,7 @@ namespace LambdaGeneration.API.Controllers
                     ArticleTagsResponse.Add(ApiExtensions.FromTags(article_service.ArticleTags[i]));
                 }
 
-                return Ok(new GetArticleResponse(article_service.ArticleID, article_service.ArticleTitle, article_service.ArticlePreview, article_service.ArticleContent, ArticleTagsResponse, article_service.CreatedDate));
+                return Ok(new GetArticleResponse(article_service.ArticleID, article_service.AuthorID ,article_service.ArticleTitle, article_service.ArticlePreview, article_service.ArticleContent, ArticleTagsResponse, article_service.CreatedDate));
             }
             catch (Exception ex)
             {
@@ -153,7 +184,7 @@ namespace LambdaGeneration.API.Controllers
                     ArticleTagsResponse.Add(ApiExtensions.FromTags(article_service.ArticleTags[i]));
                 }
 
-                return Ok(new GetArticleResponse(article_service.ArticleID, article_service.ArticleTitle, article_service.ArticlePreview, article_service.ArticleContent, ArticleTagsResponse, article_service.CreatedDate));
+                return Ok(new GetArticleResponse(article_service.ArticleID, article_service.AuthorID, article_service.ArticleTitle, article_service.ArticlePreview, article_service.ArticleContent, ArticleTagsResponse, article_service.CreatedDate));
             }
             catch (Exception ex)
             {
@@ -270,6 +301,7 @@ namespace LambdaGeneration.API.Controllers
             var articles = await _articlesService.GetAllArticlesUser(GetUserID());
             return Ok(new GetArticlesResponse(articles.Select(a =>
                 new GetArticleResponse(a.ArticleID,
+                    a.AuthorID,
                     a.ArticleTitle,
                     a.ArticlePreview,
                     a.ArticleContent,
@@ -284,6 +316,7 @@ namespace LambdaGeneration.API.Controllers
             var articles = await _articlesService.GetAllArticlesUser(id);
             return Ok(new GetArticlesResponse(articles.Select(a =>
                 new GetArticleResponse(a.ArticleID,
+                    a.AuthorID,
                     a.ArticleTitle,
                     a.ArticlePreview,
                     a.ArticleContent,

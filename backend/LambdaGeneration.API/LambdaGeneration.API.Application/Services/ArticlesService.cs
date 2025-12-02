@@ -103,6 +103,10 @@ namespace LambdaGeneration.API.Application.Services
             return all_articles;    
         }
 
-
+        public async Task<List<Articles>> GetAllArticles()
+        {
+            var all_articles = await _articlesRepository.GetAllArticles();
+            return all_articles;
+        }
     }
 }

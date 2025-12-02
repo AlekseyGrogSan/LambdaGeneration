@@ -1,11 +1,11 @@
 import React from 'react';
 import {
     Box,
-    CardMedia,
     Typography,
     IconButton,
     Button,
-    TextField
+    TextField,
+    Chip
 } from '@mui/material';
 import FavoriteIcon from '@mui/icons-material/Favorite';
 import ChatBubbleOutlineIcon from '@mui/icons-material/ChatBubbleOutline';
@@ -13,138 +13,172 @@ import SendIcon from '@mui/icons-material/Send';
 import PersonIcon from '@mui/icons-material/Person';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 
+// --- ОБЩИЙ МАССИВ ЦВЕТОВ ДЛЯ ТЕГОВ ---
+const TAG_COLORS = [
+    '#ff6f00', 
+    '#00e676', 
+    '#2979ff', 
+    '#ff1744', 
+    '#e040fb', 
+    '#00bcd4', 
+];
+
+const commentInputStyle = {
+    '& .MuiFilledInput-root': {
+        backgroundColor: '#2c2c2c',
+        color: 'white',
+        '&:hover': { backgroundColor: '#3a3a3a' },
+        '&.Mui-focused': { backgroundColor: '#3a3a3a' },
+    },
+    '& .MuiInputLabel-root': { color: '#bdbdbd' },
+};
+
+// ✅ ФИКС: ВЫНОСИМ СТИЛЬ МЕТКИ ЗА ПРЕДЕЛЫ КОМПОНЕНТА ДЛЯ ИЗБЕЖАНИЯ NO-UNDEF
+const labelStyle = { 
+    color: '#00bfa5', 
+    display: 'block', 
+    mb: 0.5, 
+    textTransform: 'uppercase', 
+    fontWeight: 'bold',
+    fontSize: '0.9rem' 
+};
+
 /**
  * PostDetailPage - Компонент для отображения полного поста.
- * Внешний вид адаптирован под стиль карточки (PostCard).
- * @param {object} props.post - Объект поста со всеми данными (title, imageUrl, isLiked, counts).
- * @param {function} props.onBack - Функция для возврата к ленте.
- * @param {function} props.onLike - Функция для переключения лайка.
  */
 const PostDetailPage = ({ post, onBack, onLike }) => {
+    
+    if (!post) return <Box sx={{ color: 'white' }}>Пост не найден.</Box>;
 
-    // Проверка наличия данных
-    if (!post) {
-        return (
-            <Box sx={{ p: 4, color: 'white', textAlign: 'center' }}>
-                <Typography variant="h6">Пост не найден.</Typography>
-                {/* Кнопка "Вернуться к ленте" в блоке ошибки удалена */}
-            </Box>
-        );
-    }
-
-    // Стили для поля ввода комментария, чтобы соответствовали PostPage
-    const commentInputStyle = {
-        '& .MuiFilledInput-root': {
-            backgroundColor: 'rgba(255, 255, 255, 0.1)',
-            color: '#ffffff',
-            borderRadius: '8px',
-        },
-        '& .MuiInputLabel-root': {
-            color: '#bdbdbd',
-        },
-        // Убираем нижнюю линию у filled input для более чистого вида
-        '& .MuiFilledInput-underline:before': { borderBottom: 'none' },
-        '& .MuiFilledInput-underline:after': { borderBottom: 'none' },
-    };
-
-    // Стили для контейнера с текстом поста/описанием (соответствует фону)
-    const descriptionBoxStyle = {
-        backgroundColor: '#121212', // Фон страницы, чтобы описание не выделялось отдельным блоком
-        color: 'white',
-        padding: '0 16px', // Отступы только слева и справа
-        textAlign: 'left',
-        mt: 2,
-        mb: 2,
+    const getTagColor = (tag, index) => {
+        const hash = tag.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+        return TAG_COLORS[(hash + index) % TAG_COLORS.length];
     };
 
     return (
-        // Главный контейнер поста, оформлен как большая "карточка"
-        <Box
+        <Box 
             sx={{
-                backgroundColor: '#1e1e1e', // Фон, как у карточки
-                minHeight: '100vh',
-                maxWidth: '800px',
-                margin: '20px auto', // Центрируем и добавляем отступы
-                borderRadius: '8px',
-                boxShadow: '0 4px 12px rgba(0, 0, 0, 0.4)', // Добавляем тень
-                overflow: 'hidden' // Обрезаем углы изображения
+                backgroundColor: '#1f1f1f',
+                borderRadius: '12px',
+                boxShadow: '0 4px 12px rgba(0, 0, 0, 0.5)',
+                m: 2, 
+                pb: 2, 
+                color: 'white'
             }}
         >
-
-            {/* HEADER: Кнопка "Назад" и информация о пользователе */}
-            <Box
-                sx={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    p: 2,
-                    borderBottom: '1px solid #333',
-                    backgroundColor: '#1e1e1e', // Сохраняем фон карточки
-                }}
-            >
-                {/* ⬅️ Кнопка НАЗАД */}
-                <IconButton
-                    onClick={onBack}
-                    sx={{ color: '#00bfa5', mr: 1 }}
-                >
+            {/* Кнопка "Назад" */}
+            <Box sx={{ p: 2, borderBottom: '1px solid #333', display: 'flex', alignItems: 'center' }}>
+                <IconButton onClick={onBack} sx={{ color: '#00bfa5' }}>
                     <ArrowBackIcon />
                 </IconButton>
-
-                {/* Иконка профиля */}
-                <IconButton sx={{ color: '#bdbdbd', mr: 1, p: 0 }}>
-                    <PersonIcon />
-                </IconButton>
-
-                {/* НИКНЕЙМ */}
-                <Typography variant="h6" sx={{ color: 'white', fontWeight: 'bold' }}>
-                    {post.nickname}
-                </Typography>
-
+                <Typography variant="h6" sx={{ color: 'white', ml: 1 }}>Назад к ленте</Typography>
             </Box>
 
-            {/* Изображение поста */}
-            <CardMedia
-                component="img"
-                image={post.imageUrl}
-                alt={post.title}
-                sx={{
-                    width: '100%',
-                    maxHeight: '70vh',
-                    objectFit: 'cover',
-                }}
-            />
-
-            {/* Заголовок и Описание */}
-            <Box sx={{ p: 2, pt: 1 }}>
-                {/* ЗАГОЛОВОК */}
-                <Typography variant="h5" sx={{ color: 'white', fontWeight: 'bold', mb: 1 }}>
+            <Box sx={{ p: 2 }}>
+                
+                {/* МЕТКА "НАЗВАНИЕ" */}
+                <Typography variant="body2" sx={labelStyle}>
+                    Название
+                </Typography>
+                {/* Заголовок */}
+                <Typography variant="h4" sx={{ fontWeight: 'bold', mb: 2 }}>
                     {post.title}
                 </Typography>
 
-                {/* ОПИСАНИЕ (MOCK) - Вставляем прямо в Box с отступами, без отдельного background */}
-                <Typography variant="body1" sx={{ color: 'white', mt: 1 }}>
-                    Это полное описание поста: Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.
+                {/* МЕТКА "АВТОР" */}
+                <Typography variant="body2" sx={labelStyle}>
+                    Автор
                 </Typography>
+
+                {/* Информация об авторе (увеличенный размер + иконка) */}
+                <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                    <PersonIcon sx={{ color: '#00bfa5', mr: 1, fontSize: 36 }} /> 
+                    <Typography 
+                        variant="h5" 
+                        sx={{ color: '#00bfa5', fontWeight: 'bold' }}
+                    >
+                        @{post.nickname}
+                    </Typography>
+                </Box>
+                
+                {/* БЛОК ОПИСАНИЯ АВТОРА */}
+                {post.authorBio && post.authorBio !== 'Описание недоступно.' && (
+                    <Box sx={{ mb: 3 }}>
+                        {/* МЕТКА "ОПИСАНИЕ" */}
+                        <Typography variant="body2" sx={labelStyle}>
+                            Описание
+                        </Typography>
+                        <Typography 
+                            variant="body1" 
+                            sx={{ 
+                                color: 'white', 
+                                borderLeft: '3px solid #00bfa5', 
+                                pl: 1.5, 
+                                fontStyle: 'italic' 
+                            }}
+                        >
+                            {post.authorBio}
+                        </Typography>
+                    </Box>
+                )}
+                
+                {/* Теги */}
+                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mb: 3 }}>
+                    {post.tags.map((tag, index) => (
+                        <Chip
+                            key={index}
+                            label={tag}
+                            sx={{
+                                backgroundColor: getTagColor(tag, index),
+                                color: 'white',
+                                fontWeight: 'bold',
+                            }}
+                        />
+                    ))}
+                </Box>
+
+                {/* ОСНОВНОЙ КОНТЕНТ СТАТЬИ (Рендеринг HTML) */}
+                <Box 
+                    dangerouslySetInnerHTML={{ __html: post.article_content }}
+                    sx={{ 
+                        color: 'white', 
+                        lineHeight: 1.6, 
+                        whiteSpace: 'pre-wrap', 
+                        // Стили для корректного отображения тегов 
+                        // ✅ УВЕЛИЧЕННЫЕ РАЗМЕРЫ ШРИФТОВ
+                        '& h1': { fontSize: '2.4rem', mt: 3, mb: 1, color: '#00bfa5' },
+                        '& h2': { fontSize: '2rem', mt: 2, mb: 1, color: 'white' },
+                        '& h3': { fontSize: '1.7rem', mt: 1.5, mb: 0.5, color: 'white' },
+                        '& p': { marginBottom: 1, marginTop: 1, fontSize: '1.15rem' }, // Основное изменение здесь
+                        '& strong': { fontWeight: 'bold', color: 'white' },
+                    }}
+                />
+
             </Box>
 
-
-            {/* Панель действий: Лайки, Комментарии, Репост (Как в PostCard) */}
-            <Box sx={{ p: 2, display: 'flex', gap: 3, alignItems: 'center', borderTop: '1px solid #333' }}>
-
-                {/* 1. Блок Лайк (Иконка + Счетчик) */}
+            {/* Панель взаимодействия */}
+            <Box sx={{ 
+                p: 2, 
+                borderTop: '1px solid #333', 
+                display: 'flex', 
+                gap: 3,
+                alignItems: 'center' 
+            }}>
+                
+                {/* 1. Лайки */}
                 <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                    <IconButton
-                        // Цвет иконки зависит от состояния isLiked
-                        sx={{ color: post.isLiked ? 'red' : 'white', p: 0.5 }} // Уменьшаем padding иконки
-                        onClick={() => onLike(post.id)}
+                    <IconButton 
+                        onClick={onLike}
+                        sx={{ color: post.isLiked ? '#ff1744' : 'white', p: 0.5 }}
                     >
-                        <FavoriteIcon sx={{ fontSize: 24 }} /> {/* Уменьшаем размер иконки */}
+                        <FavoriteIcon sx={{ fontSize: 24 }} />
                     </IconButton>
                     <Typography variant="subtitle1" sx={{ color: 'white', fontWeight: 'bold', ml: 0.5 }}>
                         {post.likesCount}
                     </Typography>
                 </Box>
 
-                {/* 2. Комментарии: Иконка и Счетчик */}
+                {/* 2. Комментарии */}
                 <Box sx={{ display: 'flex', alignItems: 'center' }}>
                     <IconButton sx={{ color: '#00bfa5', p: 0.5 }}>
                         <ChatBubbleOutlineIcon sx={{ fontSize: 24 }} />
@@ -169,7 +203,6 @@ const PostDetailPage = ({ post, onBack, onLike }) => {
                     variant="filled"
                     fullWidth
                     margin="normal"
-                    // Используем объединенный стиль для поля ввода
                     sx={commentInputStyle}
                 />
             </Box>

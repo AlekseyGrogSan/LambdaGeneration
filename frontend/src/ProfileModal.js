@@ -16,12 +16,12 @@ import PostCard from './PostCard'; // <-- ИМПОРТ PostCard для отоб�
 
 // --- ЗАГЛУШКА ДАННЫХ ---
 const mockUserPosts = [
-    { id: 101, title: 'Мой первый пост', imageUrl: 'https://picsum.photos/300/300?random=1', likesCount: 5, commentsCount: 2, isLiked: true, nickname: 'Имя Пользователя' },
-    { id: 102, title: 'Второй пост о React', imageUrl: 'https://picsum.photos/300/300?random=2', likesCount: 15, commentsCount: 5, isLiked: false, nickname: 'Имя Пользователя' },
-    { id: 103, title: 'Закат в горах', imageUrl: 'https://picsum.photos/300/300?random=3', likesCount: 8, commentsCount: 1, isLiked: true, nickname: 'Имя Пользователя' },
-    { id: 104, title: 'Новый код', imageUrl: 'https://picsum.photos/300/300?random=4', likesCount: 22, commentsCount: 7, isLiked: false, nickname: 'Имя Пользователя' },
-    { id: 105, title: 'Прогулка с друзьями', imageUrl: 'https://picsum.photos/300/300?random=5', likesCount: 12, commentsCount: 3, isLiked: true, nickname: 'Имя Пользователя' },
-    { id: 106, title: 'Рабочий стол', imageUrl: 'https://picsum.photos/300/300?random=6', likesCount: 9, commentsCount: 0, isLiked: false, nickname: 'Имя Пользователя' },
+    { id: 101, title: 'Мой первый пост', imageUrl: 'https://picsum.photos/300/300?random=1', likesCount: 5, commentsCount: 2, isLiked: true, nickname: 'Имя Пользователя', tags: ['IT', 'Музыка'] },
+    { id: 102, title: 'Второй пост о React', imageUrl: 'https://picsum.photos/300/300?random=2', likesCount: 15, commentsCount: 5, isLiked: false, nickname: 'Имя Пользователя', tags: ['Разработка'] },
+    { id: 103, title: 'Закат в горах', imageUrl: 'https://picsum.photos/300/300?random=3', likesCount: 8, commentsCount: 1, isLiked: true, nickname: 'Имя Пользователя', tags: ['Путешествия'] },
+    { id: 104, title: 'Новый код', imageUrl: 'https://picsum.photos/300/300?random=4', likesCount: 22, commentsCount: 7, isLiked: false, nickname: 'Имя Пользователя', tags: ['IT', 'Наука'] },
+    { id: 105, title: 'Прогулка с друзьями', imageUrl: 'https://picsum.photos/300/300?random=5', likesCount: 12, commentsCount: 3, isLiked: true, nickname: 'Имя Пользователя', tags: ['Еда'] },
+    { id: 106, title: 'Рабочий стол', imageUrl: 'https://picsum.photos/300/300?random=6', likesCount: 9, commentsCount: 0, isLiked: false, nickname: 'Имя Пользователя', tags: ['Дизайн'] },
 ];
 
 // Обновленные стили для модального окна (шире и прокручиваемое)
@@ -125,7 +125,7 @@ const ProfileModal = ({
                 {/* Сетка постов пользователя (Grid) */}
                 <Grid container spacing={1} sx={{ px: 1, pb: 2 }}>
                     {mockUserPosts.map((post) => (
-                        <Grid item xs={4} key={post.id}> {/* <-- 4 из 12 колонок = 3 поста в ряд */}
+                        <Grid item xs={12} sm={6} md={4} key={post.id} onClick={() => handlePostClick(post.id)}>
                             <PostCard
                                 id={post.id}
                                 nickname={post.nickname}
@@ -134,6 +134,7 @@ const ProfileModal = ({
                                 likesCount={post.likesCount}
                                 commentsCount={post.commentsCount}
                                 isLiked={post.isLiked}
+                                tags={post.tags} // <--- ПЕРЕДАЕМ ТЕГИ
                                 onClick={handlePostClick}
                                 onLike={handlePostLike}
                                 isProfileView={true} // <--- ПЕРЕДАЕМ ФЛАГ, ЧТО ЭТО ПРОФИЛЬ

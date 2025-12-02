@@ -39,6 +39,13 @@ namespace LambdaGeneration.API.Date.Repositories
             return await _context.Articles.Where(a => a.ArticleID == articleId).Select(a => a.CountLikes).FirstOrDefaultAsync();
         }
 
+        public async Task<bool> IsArticleLiked(Guid articleId, Guid authorId)
+        {
+            var isLiked = await _context.Likes
+                .AnyAsync(l => l.ArticleId == articleId && l.AuthorId == authorId);
+            return isLiked;
+        }
+
         public async Task<int> UnLike(Guid articleId, Guid authorId)
         {
             await _context.Articles

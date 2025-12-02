@@ -7,5 +7,6 @@ namespace LambdaGeneration.API.Date.Repositories
         Task<int> Like(Guid articleId, Guid authorId);
         Task<int> UnLike(Guid articleId, Guid authorId);
         Task<bool> IsLiked(Guid articleId, Guid authorId);
+        Task<bool> IsArticleLiked(Guid articleId, Guid authorId);
     }
 }

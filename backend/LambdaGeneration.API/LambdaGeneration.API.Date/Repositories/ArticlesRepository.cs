@@ -159,5 +159,17 @@ namespace LambdaGeneration.API.Date.Repositories
                 ToListAsync();
         }
 
+        public async Task<List<Articles>> GetAllArticles()
+        {
+            return await _context.Articles
+                .Select(a => Articles.Map(a.ArticleID,
+                a.ArticleTitle,
+                a.ArticleContent,
+                a.ArticlePreview,
+                a.AuthorID,
+                a.ArticleTags,
+                a.CreatedDate)).
+                ToListAsync();
+        }
     }
 }

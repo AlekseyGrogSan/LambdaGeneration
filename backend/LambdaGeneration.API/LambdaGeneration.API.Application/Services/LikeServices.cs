@@ -68,5 +68,15 @@ namespace LambdaGeneration.API.Application.Services
 
             return await _likeRepository.GetCountLikes(id);
         }
+
+        public async Task<bool> IsArticleLiked(Guid articleId, Guid authorId)
+        {
+            var articles = await _articlesRepository.GetById(articleId);
+            if (articles == null)
+            {
+                throw new Exception("Article not found");
+            }
+            return await _likeRepository.IsArticleLiked(articleId, authorId);
+        }
     }
 }

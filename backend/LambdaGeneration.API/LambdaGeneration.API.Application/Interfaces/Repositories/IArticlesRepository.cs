@@ -14,5 +14,7 @@ namespace LambdaGeneration.API.Date.Repositories
         Task<Articles?> Update(Guid article_id, string new_title, string new_content, string new_preview, List<int> new_tags);
 
         Task<List<Articles>> GetAllArticlesUser(Guid author_id);
+
+        Task<List<Articles>> GetAllArticles();
     }
 }

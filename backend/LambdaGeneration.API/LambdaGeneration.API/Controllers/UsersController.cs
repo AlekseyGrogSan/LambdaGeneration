@@ -52,7 +52,7 @@ namespace LambdaGeneration.API.Controllers
                     new CookieOptions
                     {
                         HttpOnly = true,
-                        SameSite = SameSiteMode.Strict
+                        SameSite = SameSiteMode.Lax
                     }
                 );
             return Ok();
@@ -70,7 +70,7 @@ namespace LambdaGeneration.API.Controllers
                 new CookieOptions
                 {
                     HttpOnly = true,
-                    SameSite = SameSiteMode.Strict
+                    SameSite = SameSiteMode.Lax
                 });
             return Ok("You exist!");
         }
@@ -89,7 +89,7 @@ namespace LambdaGeneration.API.Controllers
                     new CookieOptions
                     {
                         HttpOnly = true,
-                        SameSite = SameSiteMode.Strict
+                        SameSite = SameSiteMode.Lax
                     });
 
                 return Ok();
@@ -127,7 +127,6 @@ namespace LambdaGeneration.API.Controllers
         }
 
         [HttpGet("UserProfile/{id:guid}")]
-        [Authorize]
         public async Task<ActionResult<UserProfileResponse>> GetUserProfile(Guid id)
         {
             try
@@ -175,7 +174,7 @@ namespace LambdaGeneration.API.Controllers
                     new CookieOptions
                     {
                         HttpOnly = true,
-                        SameSite = SameSiteMode.Strict
+                        SameSite = SameSiteMode.Lax
                     }
                     );
 

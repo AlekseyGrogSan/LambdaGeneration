@@ -5,6 +5,9 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace LambdaGeneration.API.Controllers
 {
+    // Атрибуты роутинга должны быть здесь:
+    [Route("api/[controller]")]
+    [ApiController]
     public class LikeController : ControllerBase
     {
         private readonly ILikeServices _likeServices;
@@ -21,8 +24,9 @@ namespace LambdaGeneration.API.Controllers
             try
             {
                 int countLikes = await _likeServices.Like(id, GetUserID());
-
-                return Ok(countLikes);
+                // ИСПРАВЛЕНИЕ: Возвращаем DTO LikesCount
+                Console.WriteLine("Поставлен лайк!!!!!!!!!!!!!!!!");
+                return Ok(new LikesCount(countLikes));
             }
             catch (Exception ex)
             {
@@ -37,7 +41,8 @@ namespace LambdaGeneration.API.Controllers
             try
             {
                 int countLikes = await _likeServices.UnLike(id, GetUserID());
-                return Ok(countLikes);
+                // ИСПРАВЛЕНИЕ: Возвращаем DTO LikesCount
+                return Ok(new LikesCount(countLikes));
             }
             catch (Exception ex)
             {
@@ -51,7 +56,8 @@ namespace LambdaGeneration.API.Controllers
             try
             {
                 int countLikes = await _likeServices.GetCountLikes(id);
-                return Ok(countLikes);
+                // ИСПРАВЛЕНИЕ: Возвращаем DTO LikesCount
+                return Ok(new LikesCount(countLikes));
             }
             catch (Exception ex)
             {
@@ -59,6 +65,30 @@ namespace LambdaGeneration.API.Controllers
             }
         }
 
+        [HttpGet("isLiked/{id:guid}")]
+        [Authorize]
+        public async Task<ActionResult<IsLikedResponse>> IsLiked(Guid id)
+        {
+            try
+            {
+                bool isLikedStatus = await _likeServices.IsArticleLiked(id, GetUserID());
+
+                // Возвращаем DTO, которое соответствует ожидаемому формату на фронтенде
+                return Ok(new IsLikedResponse(isLikedStatus));
+            }
+            catch (UnauthorizedAccessException)
+            {
+
+                return Unauthorized();
+            }
+            catch (Exception ex)
+            {
+                // Общая ошибка сервера
+                return BadRequest(ex.Message);
+            }
+        }
+
+        // ... (метод GetUserID остается без изменений)
         private Guid GetUserID()
         {
             var userClaims = User.FindFirst("UserId")?.Value;

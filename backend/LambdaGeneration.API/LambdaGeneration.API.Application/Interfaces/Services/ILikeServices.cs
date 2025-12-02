@@ -5,5 +5,6 @@
         Task<int> GetCountLikes(Guid id);
         Task<int> Like(Guid articleId, Guid authorId);
         Task<int> UnLike(Guid articleId, Guid authorId);
+        Task<bool> IsArticleLiked(Guid articleId, Guid authorId);
     }
 }
