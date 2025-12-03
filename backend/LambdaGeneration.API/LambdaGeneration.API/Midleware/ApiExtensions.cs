@@ -9,6 +9,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
+using System.IO;
 
 namespace LambdaGeneration.API.Midleware
 {
@@ -195,6 +196,84 @@ namespace LambdaGeneration.API.Midleware
                 _ => -1
             };
         }
+
+        public static async Task SeedArticlesFromTxt(this IHost host, string adminEmail, string filePath)
+        {
+            using (var scope = host.Services.CreateScope())
+            {
+                var services = scope.ServiceProvider;
+                var logger = services.GetRequiredService<ILogger<IHost>>();
+                var articlesService = services.GetRequiredService<IArticlesService>();
+
+                var usersRepository = services.GetRequiredService<IUsersRepository>();
+
+                try
+                {
+                    var admin = await usersRepository.GetByEmail(adminEmail);
+
+                    if (admin == null)
+                    {
+                        logger.LogWarning($"Админ с email {adminEmail} не найден. Статьи не созданы.");
+                        return;
+                    }
+
+                    if (!File.Exists(filePath))
+                    {
+                        logger.LogWarning($"Файл {filePath} не найден.");
+                        return;
+                    }
+
+                    var lines = await File.ReadAllLinesAsync(filePath);
+                    int count = 0;
+
+                    foreach (var line in lines)
+                    {
+                        if (string.IsNullOrWhiteSpace(line)) continue;
+
+                        var parts = line.Split('|');
+
+                        if (parts.Length < 4)
+                        {
+                            logger.LogWarning($"Некорректный формат строки: {line.Substring(0, Math.Min(line.Length, 20))}...");
+                            continue;
+                        }
+
+                        string title = parts[0].Trim();
+                        string preview = parts[1].Trim();
+                        string tagsRaw = parts[2].Trim();
+                        string content = parts[3].Trim();
+
+
+                        List<int> tagIds = new List<int>();
+                        var tagNames = tagsRaw.Split(',').Select(t => t.Trim());
+
+                        foreach (var tagName in tagNames)
+                        {
+                            int tagId = ToTags(tagName);
+                            if (tagId != -1)
+                            {
+                                tagIds.Add(tagId);
+                            }
+                        }
+
+                        if (tagIds.Count == 0)
+                        {
+                            tagIds.Add(1);
+                        }
+
+                        await articlesService.Create(title, content, preview, tagIds, admin.UserID);
+                        count++;
+                    }
+
+                    logger.LogInformation($"Успешно загружено {count} статей из файла.");
+                }
+                catch (Exception ex)
+                {
+                    logger.LogError($"Ошибка при создании статей: {ex.Message}");
+                }
+            }
+        }
+
 
         public static async Task InitialAdmin(this IHost host)
         {

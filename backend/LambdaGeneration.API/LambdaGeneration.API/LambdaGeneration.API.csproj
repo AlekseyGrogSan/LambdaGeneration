@@ -33,10 +33,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="wwwroot\" />
-  </ItemGroup>
-
-  <ItemGroup>
     <ProjectReference Include="..\LambdaGeneration.API.Date\LambdaGeneration.API.Date.csproj" />
     <ProjectReference Include="..\LambdaGeneration.API.Infrastructure\LambdaGeneration.API.Infrastructure.csproj" />
   </ItemGroup>
