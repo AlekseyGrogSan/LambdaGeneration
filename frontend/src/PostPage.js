@@ -17,6 +17,9 @@ import ProfileModal from './ProfileModal';
 import RegistrationModal from './RegistrationModal';
 import ForgotPasswordModal from './ForgotPasswordModal';
 import PostCreationModal from './PostCreationModal';
+import CategoryModal from './CategoryModal'; 
+import ResourcesModal from './ResourcesModal';
+import FaqModal from './FaqModal';
 
 const API_BASE_URL = 'http://localhost:5113/api';
 
@@ -65,7 +68,7 @@ const profileButtonStyle = {
 };
 
 // --- КОМПОНЕНТ SIDEBAR (Обновленный) ---
-const Sidebar = ({ handleOpen, handleProfileOpen, handlePostOpen, currentUser }) => (
+const Sidebar = ({ handleOpen, handleProfileOpen, handlePostOpen, handleCategoryOpen, handleResourcesOpen, handleFaqOpen, currentUser }) => (
     <Box sx={sidebarStyle}>
         <Typography variant="h5" sx={{ color: '#00bfa5', fontWeight: 'bold', textAlign: 'center', mb: 4, letterSpacing: 1 }}>
             Lyambda
@@ -89,9 +92,10 @@ const Sidebar = ({ handleOpen, handleProfileOpen, handlePostOpen, currentUser })
         )}
 
         <Box sx={{ display: 'flex', flexDirection: 'column', flexGrow: 1 }}> 
-            <Button variant="contained" sx={sidebarButtonStyle}>Категории</Button>
-            <Button variant="contained" sx={sidebarButtonStyle}>Полезные материалы</Button>
-            <Button variant="contained" sx={sidebarButtonStyle}>FAQ</Button>
+            {/* ✅ ОБНОВЛЕННЫЕ КНОПКИ */}
+            <Button variant="contained" sx={sidebarButtonStyle} onClick={handleCategoryOpen}>Категории</Button> 
+            <Button variant="contained" sx={sidebarButtonStyle} onClick={handleResourcesOpen}>Полезные материалы</Button>
+            <Button variant="contained" sx={sidebarButtonStyle} onClick={handleFaqOpen}>FAQ</Button>
         </Box>
 
         <Box sx={{ mt: 'auto' }}> 
@@ -125,6 +129,9 @@ const PostPage = () => {
     const [isPostModalOpen, setIsPostModalOpen] = useState(false);
     const [isForgotModalOpen, setIsForgotModalOpen] = useState(false);
     const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
+    const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
+    const [isResourcesModalOpen, setIsResourcesModalOpen] = useState(false);
+    const [isFaqModalOpen, setIsFaqModalOpen] = useState(false);
     
     // Data states
     const [viewedProfileId, setViewedProfileId] = useState(null); 
@@ -185,6 +192,15 @@ const PostPage = () => {
     const handlePostClose = () => setIsPostModalOpen(false);
     const handleForgotOpen = () => setIsForgotModalOpen(true);
     const handleForgotClose = () => setIsForgotModalOpen(false);
+
+    const handleCategoryOpen = () => setIsCategoryModalOpen(true);
+    const handleCategoryClose = () => setIsCategoryModalOpen(false);
+    
+    const handleResourcesOpen = () => setIsResourcesModalOpen(true);
+    const handleResourcesClose = () => setIsResourcesModalOpen(false);
+    
+    const handleFaqOpen = () => setIsFaqModalOpen(true);
+    const handleFaqClose = () => setIsFaqModalOpen(false);
 
     const handleProfileOpen = () => {
         if (!currentUser) {
@@ -384,6 +400,9 @@ const PostPage = () => {
                         <PostDetailPage
                             post={selectedPost}
                             onBack={handleBackToFeed}
+                            nickname={selectedPost.nickname}
+                            authorId={selectedPost.author_id} 
+                            onAuthorClick={handleOtherAuthorProfileOpen} 
                             onLike={() => handleLikeToggle(selectedPost.article_id, selectedPost.isLiked)}
                         />
                     </Box>
@@ -422,7 +441,11 @@ const PostPage = () => {
                 handleOpen={handleOpen} 
                 handleProfileOpen={handleProfileOpen} 
                 handlePostOpen={handlePostOpen}
-                currentUser={currentUser} // Передаем текущего юзера
+                handleCategoryOpen={handleCategoryOpen} 
+                handleResourcesOpen={handleResourcesOpen} 
+                handleFaqOpen={handleFaqOpen}
+                currentUser={currentUser}
+                
             />
             
             <RegistrationModal 
@@ -447,6 +470,12 @@ const PostPage = () => {
                 onUnauthorized={handleOpen}
                 onLogout={handleLogout} // ✅ ПЕРЕДАЕМ НОВУЮ ФУНКЦИЮ СЮДА
             />
+
+            {/* ✅ НОВЫЕ КОМПОНЕНТЫ-ЗАГЛУШКИ */}
+            <CategoryModal open={isCategoryModalOpen} handleClose={handleCategoryClose} />
+            <ResourcesModal open={isResourcesModalOpen} handleClose={handleResourcesClose} />
+            <FaqModal open={isFaqModalOpen} handleClose={handleFaqClose} />
+            
         </Box>
     );
 };

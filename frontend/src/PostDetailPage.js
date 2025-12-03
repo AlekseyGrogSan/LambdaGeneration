@@ -46,7 +46,15 @@ const labelStyle = {
 /**
  * PostDetailPage - Компонент для отображения полного поста.
  */
-const PostDetailPage = ({ post, onBack, onLike }) => {
+const PostDetailPage = ({
+    post,
+    onBack,
+    onLike,
+    onAuthorClick,
+    nickname, 
+    authorId,
+    
+}) => {
     
     if (!post) return <Box sx={{ color: 'white' }}>Пост не найден.</Box>;
 
@@ -86,41 +94,30 @@ const PostDetailPage = ({ post, onBack, onLike }) => {
                 </Typography>
 
                 {/* МЕТКА "АВТОР" */}
-                <Typography variant="body2" sx={labelStyle}>
-                    Автор
-                </Typography>
-
-                {/* Информация об авторе (увеличенный размер + иконка) */}
-                <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                    <PersonIcon sx={{ color: '#00bfa5', mr: 1, fontSize: 36 }} /> 
-                    <Typography 
-                        variant="h5" 
-                        sx={{ color: '#00bfa5', fontWeight: 'bold' }}
-                    >
-                        @{post.nickname}
-                    </Typography>
-                </Box>
-                
-                {/* БЛОК ОПИСАНИЯ АВТОРА */}
-                {post.authorBio && post.authorBio !== 'Описание недоступно.' && (
-                    <Box sx={{ mb: 3 }}>
-                        {/* МЕТКА "ОПИСАНИЕ" */}
-                        <Typography variant="body2" sx={labelStyle}>
-                            Описание
-                        </Typography>
-                        <Typography 
-                            variant="body1" 
-                            sx={{ 
-                                color: 'white', 
-                                borderLeft: '3px solid #00bfa5', 
-                                pl: 1.5, 
-                                fontStyle: 'italic' 
+                {/* КЛИКАБЕЛЬНЫЙ БЛОК АВТОРА */}
+                        <Box
+                            onClick={(e) => { 
+                                e.stopPropagation(); 
+                                if (onAuthorClick && authorId) {
+                                    onAuthorClick(authorId);
+                                }
                             }}
+                            sx={{ cursor: onAuthorClick && authorId ? 'pointer' : 'default' }}
                         >
-                            {post.authorBio}
-                        </Typography>
-                    </Box>
-                )}
+                            {/* МЕТКА: АВТОР */}
+                            <Typography variant="body2" sx={labelStyle}>
+                                Автор
+                            </Typography>
+                            <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                                <PersonIcon sx={{ color: '#00bfa5', mr: 1, fontSize: 30 }} />
+                                <Typography 
+                                    variant="h6" 
+                                    sx={{ color: '#00bfa5', fontWeight: 'bold' }}
+                                >
+                                    {nickname}
+                                </Typography>
+                            </Box>
+                        </Box>
                 
                 {/* Теги */}
                 <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mb: 3 }}>

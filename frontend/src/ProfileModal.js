@@ -72,7 +72,7 @@ const getAuthHeaders = () => {
     };
 };
 
-const ProfileModal = ({ open, handleClose, userId, onUnauthorized, onLogout }) => {
+const ProfileModal = ({ open, handleClose, userId, onUnauthorized, onLogout, onPostClick }) => {
     const isMyProfile = userId === null; 
     const [profileData, setProfileData] = useState(null);
     const [userPosts, setUserPosts] = useState([]);
@@ -362,9 +362,22 @@ const ProfileModal = ({ open, handleClose, userId, onUnauthorized, onLogout }) =
                                             <PostCard
                                                 {...post}
                                                 // [FIX] Передаем стиль для карточки, чтобы она занимала 100% высоты контейнера
-                                                sx={{ height: '100%' }}
-                                                onClick={() => {}} 
+                                                sx={{ height: '100%' }} 
                                                 onLike={() => {}}
+                                                onClick={() => {
+                                                    if (isMyProfile) {
+                                                        // Если это свой профиль, открываем модалку для редактирования
+                                                        setEditingPost(post);
+                                                    } else {
+                                                        // Если это чужой профиль, закрываем текущую модалку 
+                                                        // и вызываем функцию для открытия страницы поста
+                                                        handleClose(); 
+                                                        if (onPostClick) {
+                                                            onPostClick(post);
+                                                        }
+                                                    }
+                                                }}
+                                                onEdit={() => setEditingPost(post)}
                                             />
                                             
                                             {/* Оверлей с кнопкой редактирования (только для моих постов) */}

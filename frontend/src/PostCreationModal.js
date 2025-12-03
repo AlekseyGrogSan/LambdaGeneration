@@ -43,6 +43,26 @@ const inputStyle = {
         '&.Mui-focused': {
             backgroundColor: 'rgba(255, 255, 255, 0.2)',
         },
+        // ✅ ДОБАВЛЕНО: Активируем прокрутку внутри инпута
+        overflowY: 'auto', 
+        
+        // =========================================================
+        // !!! КРАСИВАЯ ПОЛОСА ПРОКРУТКИ ДЛЯ МУЛЬТИЛАЙН ИНПУТОВ !!!
+        // =========================================================
+        '&::-webkit-scrollbar': {
+            width: '8px', // Ширина полосы
+        },
+        '&::-webkit-scrollbar-track': {
+            background: 'rgba(255, 255, 255, 0.05)', // Цвет фона трека
+            borderRadius: '10px',
+        },
+        '&::-webkit-scrollbar-thumb': {
+            background: '#00bfa5', // Цвет самого ползунка (фирменный цвет)
+            borderRadius: '10px',
+        },
+        '&::-webkit-scrollbar-thumb:hover': {
+            background: '#009688', // Цвет ползунка при наведении
+        },
     },
     // Стили для меток (label)
     '& .MuiInputLabel-root': {
@@ -57,6 +77,8 @@ const inputStyle = {
     },
     '& .MuiInputBase-input': {
         padding: '16px 12px 16px 12px',
+        // ✅ ДОБАВЛЕНО: Ограничиваем высоту для превью, чтобы активировать скролл
+        maxHeight: '4.5em', // Ограничиваем высоту примерно 4-мя строками
     },
 };
 
@@ -166,7 +188,6 @@ const EditorToolbar = ({ editorRef }) => {
 
 
 // --- ОБНОВЛЕННЫЙ КОМПОНЕНТ: Создание поста (PostCreationModal) ---
-// ✅ ИЗМЕНЕНИЕ: Добавлен пропс onPostSuccess
 const PostCreationModal = ({ open, handleClose, onUnauthorized, onPostSuccess }) => {
     // 1. Состояние для заголовка
     const [title, setTitle] = useState('');
@@ -356,7 +377,10 @@ const PostCreationModal = ({ open, handleClose, onUnauthorized, onPostSuccess })
                     value={preview}
                     onChange={(e) => setPreview(e.target.value)}
                     multiline
-                    rows={2}
+                    // Добавляем rows, чтобы задать начальную высоту и активировать прокрутку при необходимости
+                    rows={2} 
+                    // ✅ ДОБАВЛЕНО: Ограничивает высоту 4-мя строками, после чего появляется скролл (совместно с maxHeight в inputStyle)
+                    maxRows={4} 
                 />
 
                 {/* --- СЕКЦИЯ РЕДАКТОРА ТЕКСТА (с красивым скроллом) --- */}
