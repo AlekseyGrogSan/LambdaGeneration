@@ -16,6 +16,7 @@ namespace LambdaGeneration.API.Application.Interfaces.Services
         Task<Articles?> UpdateTags(Guid article_id, List<int> new_tags);
 
         Task<List<Articles>> GetAllArticlesUser(Guid author_id);
-        Task<List<Articles>> GetAllArticles();
+
+        Task<List<Articles>> GetArticlesPage(int pageNumber, int pageSize);
     }
 }

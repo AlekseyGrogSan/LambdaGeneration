@@ -21,6 +21,13 @@ namespace LambdaGeneration.API.Date.Repositories
 
         public async Task Create(Articles article)
         {
+            if (article.ArticleTags.Contains(0))
+            {
+                while (article.ArticleTags.Contains(0))
+                {
+                    article.ArticleTags.Remove(0);
+                }
+            }
             var article_entity = new ArticlesEntity
             {
                 ArticleID = article.ArticleID,
@@ -124,7 +131,7 @@ namespace LambdaGeneration.API.Date.Repositories
                 );
         }
 
-        public async Task<Articles?> Update(Guid article_id, string new_title, string new_content, string new_preview, List<int> new_tags)
+        public async Task<Articles?> Update(Guid article_id, string new_title, string new_content, string new_preview)
         {
             await _context.Articles
                 .Where(a => a.ArticleID == article_id)
@@ -133,16 +140,45 @@ namespace LambdaGeneration.API.Date.Repositories
                 .SetProperty(ar => ar.ArticleContent, new_content)
                 .SetProperty(ar => ar.ArticlePreview, new_preview)
                 );
-            var article_tags_entity = await _context.Articles.FirstOrDefaultAsync(a => a.ArticleID == article_id);
-
-            if (article_tags_entity != null)
-            {
-                article_tags_entity.ArticleTags = new_tags;
-            }
 
             await _context.SaveChangesAsync();
 
-            return await GetById(article_id);
+            var article_entity = await _context.Articles.FirstOrDefaultAsync(a => a.ArticleID == article_id);
+
+            return Articles.Map(
+                article_entity.ArticleID,
+                article_entity.ArticleTitle,
+                article_entity.ArticleContent,
+                article_entity.ArticlePreview,
+                article_entity.AuthorID,
+                article_entity.ArticleTags,
+                article_entity.CreatedDate
+            );
+        }
+
+        public async Task<Articles?> UpdateTags(Guid article_id, List<int> new_tags)
+        {
+            var article_entity = await _context.Articles.FirstOrDefaultAsync(a => a.ArticleID == article_id);
+            if (article_entity.ArticleTags.Contains(0))
+            {
+                while (article_entity.ArticleTags.Contains(0))
+                {
+                    article_entity.ArticleTags.Remove(0);
+                }
+            }
+            if (article_entity == null)
+                return null;
+            article_entity.ArticleTags = new_tags;
+            await _context.SaveChangesAsync();
+            return Articles.Map(
+                article_entity.ArticleID,
+                article_entity.ArticleTitle,
+                article_entity.ArticleContent,
+                article_entity.ArticlePreview,
+                article_entity.AuthorID,
+                article_entity.ArticleTags,
+                article_entity.CreatedDate
+            );
         }
 
         public async Task<List<Articles>> GetAllArticlesUser(Guid author_id)
@@ -159,17 +195,25 @@ namespace LambdaGeneration.API.Date.Repositories
                 ToListAsync();
         }
 
-        public async Task<List<Articles>> GetAllArticles()
+        public async Task<List<Articles>> GetArticlesPage(int pageNumber, int pageSize)
         {
+            // Расчет смещения
+            int skip = (pageNumber - 1) * pageSize;
+
             return await _context.Articles
-                .Select(a => Articles.Map(a.ArticleID,
-                a.ArticleTitle,
-                a.ArticleContent,
-                a.ArticlePreview,
-                a.AuthorID,
-                a.ArticleTags,
-                a.CreatedDate)).
-                ToListAsync();
+                // Сортировка от новых к старым
+                .OrderByDescending(a => a.CreatedDate)
+                .Skip(skip) // Пропустить
+                .Take(pageSize) // Взять
+                .Select(a => Articles.Map(
+                    a.ArticleID,
+                    a.ArticleTitle,
+                    a.ArticleContent,
+                    a.ArticlePreview,
+                    a.AuthorID,
+                    a.ArticleTags,
+                    a.CreatedDate))
+                .ToListAsync();
         }
     }
 }

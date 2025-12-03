@@ -10,16 +10,21 @@ import {
     TextField,
     CircularProgress,
     Alert,
+    Dialog,         
+    DialogTitle,    
+    DialogContent,  
+    DialogActions   
 } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
 import LogoutIcon from '@mui/icons-material/Logout';
 import EditIcon from '@mui/icons-material/Edit';
 import SaveIcon from '@mui/icons-material/Save'; 
 import AccountCircleIcon from '@mui/icons-material/AccountCircle';
+import DeleteIcon from '@mui/icons-material/Delete'; 
 import PostCard from './PostCard'; 
-import EditArticleModal from './EditArticleModal'; // [NEW] Импорт нового компонента
+import EditArticleModal from './EditArticleModal'; 
 
-const API_BASE_URL = 'http://localhost:5113/api';
+const API_BASE_URL = '/api';
 
 const modalStyle = {
     position: 'absolute',
@@ -30,13 +35,12 @@ const modalStyle = {
     maxHeight: '90vh', 
     backgroundColor: '#1e1e1e', 
     border: '1px solid #333',
-    borderRadius: '16px', // Более скругленные углы
+    borderRadius: '16px', 
     boxShadow: '0 10px 40px rgba(0, 0, 0, 0.7)',
-    padding: '0', // Паддинг убран, чтобы скролл был красивым по краям
+    padding: '0', 
     color: 'white',
     overflowY: 'auto',
     
-    // [FIX] Красивый скроллбар как в PostCreationModal
     '&::-webkit-scrollbar': {
         width: '8px',
     },
@@ -57,18 +61,23 @@ const inputStyle = {
     '& .MuiFilledInput-root': {
         backgroundColor: '#2c2c2c',
         color: 'white',
-        fontSize: '1.1rem', // Увеличенный шрифт ввода
+        fontSize: '1.1rem', 
         '&:hover': { backgroundColor: '#3a3a3a' },
         '&.Mui-focused': { backgroundColor: '#3a3a3a' }
     },
     '& .MuiInputLabel-root': { color: '#bdbdbd' },
 };
 
+const cardContainerStyle = { 
+    height: '420px', 
+    position: 'relative',
+    // ✅ ВОССТАНОВЛЕНО: Стиль для показа оверлея при наведении
+    '&:hover .edit-overlay': { opacity: 1 } 
+};
+
 const getAuthHeaders = () => {
-    const token = localStorage.getItem('authToken'); 
     return { 
         'Content-Type': 'application/json', 
-        ...(token && { 'Authorization': `Bearer ${token}` }) 
     };
 };
 
@@ -78,14 +87,19 @@ const ProfileModal = ({ open, handleClose, userId, onUnauthorized, onLogout, onP
     const [userPosts, setUserPosts] = useState([]);
     const [isLoading, setIsLoading] = useState(false);
     
-    // Редактирование профиля
     const [isEditingProfile, setIsEditingProfile] = useState(false);
     const [editData, setEditData] = useState({ name: '', email: '', aboutUser: '' });
     
-    // Редактирование статьи (Модальное окно)
-    const [editingPost, setEditingPost] = useState(null); // Объект статьи для редактирования
+    const [editingPost, setEditingPost] = useState(null); 
+    
+    const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
+    const [deleteConfirmData, setDeleteConfirmData] = useState({ email: '', password: '' });
+    const [isDeletingUser, setIsDeletingUser] = useState(false);
+    const [deleteError, setDeleteError] = useState(null);
     
     const [error, setError] = useState(null);
+
+    // --- FETCHING LOGIC ---
 
     const fetchProfileData = async () => {
         if (!open) return;
@@ -94,8 +108,7 @@ const ProfileModal = ({ open, handleClose, userId, onUnauthorized, onLogout, onP
         try {
             let profileEndpoint = '';
             let postsEndpoint = '';
-            const headers = getAuthHeaders(); 
-            const fetchOptions = { headers, credentials: 'include' };
+            const fetchOptions = { credentials: 'include' };
             
             if (isMyProfile) {
                 profileEndpoint = `${API_BASE_URL}/Users/MyProfile`; 
@@ -163,7 +176,7 @@ const ProfileModal = ({ open, handleClose, userId, onUnauthorized, onLogout, onP
         }
     }, [open, userId]);
 
-    // [FIX] Исправленный метод сохранения профиля
+    // --- PROFILE UPDATE LOGIC (опущен для краткости) ---
     const handleSaveProfile = async () => {
         setIsLoading(true);
         setError(null);
@@ -174,7 +187,6 @@ const ProfileModal = ({ open, handleClose, userId, onUnauthorized, onLogout, onP
                 aboutUser: editData.aboutUser
             }; 
 
-            // [FIX] URL изменен на /Users (без /update), Метод изменен на PUT
             const response = await fetch(`${API_BASE_URL}/Users`, {
                 method: 'PUT', 
                 headers: getAuthHeaders(),
@@ -183,6 +195,8 @@ const ProfileModal = ({ open, handleClose, userId, onUnauthorized, onLogout, onP
             });
             
             if (response.status === 401 || response.status === 403) {
+                 handleClose(); 
+                 if (onUnauthorized) onUnauthorized();
                  throw new Error('Сессия истекла.');
             }
 
@@ -206,30 +220,90 @@ const ProfileModal = ({ open, handleClose, userId, onUnauthorized, onLogout, onP
         }
     };
 
-    // Callback после успешного обновления статьи из модального окна
+    // --- ARTICLE HANDLERS (опущен для краткости) ---
+    
     const handleArticleUpdateSuccess = (articleId, updatedData) => {
         setUserPosts(prevPosts => 
-            prevPosts.map(post => 
-                post.id === articleId ? { 
-                    ...post, 
-                    title: updatedData.article_title || updatedData.articleTitle,
-                    article_preview: updatedData.article_preview || updatedData.articlePreview,
-                    article_content: updatedData.article_content || updatedData.articleContent,
-                    tags: updatedData.article_tags || updatedData.articleTags
-                } : post
-            )
+            prevPosts.map(post => {
+                if (post.id === articleId) {
+                    return { 
+                        ...post, 
+                        title: updatedData.article_title || updatedData.articleTitle || post.title,
+                        article_preview: updatedData.article_preview || updatedData.articlePreview || post.article_preview,
+                        article_content: updatedData.article_content || updatedData.articleContent || post.article_content,
+                        tags: updatedData.article_tags || updatedData.articleTags || post.tags
+                    };
+                }
+                return post;
+            })
         );
     };
+    
+    const handleArticleDeleteSuccess = (articleId) => {
+        setUserPosts(prevPosts => prevPosts.filter(post => post.id !== articleId));
+        setEditingPost(null); 
+    };
 
-    if (!profileData && isLoading) return null; // Или лоадер
+    // --- USER DELETE LOGIC (опущен для краткости) ---
+    
+    const handleDeleteUserOpen = () => {
+        if (!isMyProfile) return;
+        setIsDeleteConfirmOpen(true);
+        setDeleteError(null);
+        setDeleteConfirmData({ email: profileData?.email || '', password: '' }); 
+    }
+    const handleDeleteUserClose = () => setIsDeleteConfirmOpen(false);
+
+    const handleConfirmDeleteUser = async () => {
+        if (!profileData || deleteConfirmData.email !== profileData.email) {
+            setDeleteError('Email не совпадает с вашим текущим email.');
+            return;
+        }
+        
+        setIsDeletingUser(true);
+        setDeleteError(null);
+
+        try {
+            const requestBody = {
+                email: deleteConfirmData.email,
+                password: deleteConfirmData.password 
+            };
+            
+            const response = await fetch(`${API_BASE_URL}/Users`, {
+                method: 'DELETE', 
+                headers: getAuthHeaders(),
+                credentials: 'include',
+                body: JSON.stringify(requestBody)
+            });
+
+            if (response.status === 401 || response.status === 403) {
+                 throw new Error('Неверный пароль или сессия истекла. Попробуйте войти снова.');
+            }
+
+            if (!response.ok) {
+                const errorText = await response.text();
+                try {
+                    const errorJson = JSON.parse(errorText);
+                    throw new Error(errorJson.message || errorJson.error || 'Не удалось удалить аккаунт.');
+                } catch {
+                    throw new Error(errorText || 'Не удалось удалить аккаунт.');
+                }
+            }
+            
+            handleDeleteUserClose();
+            handleClose(); 
+            if (onLogout) onLogout(); 
+
+        } catch (err) {
+            setDeleteError(err.message);
+        } finally {
+            setIsDeletingUser(false);
+        }
+    };
+    
+    if (!profileData && isLoading) return null; 
     if (!profileData) return null;
 
-    // [FIX] Фиксированная высота для карточек в сетке
-    const cardContainerStyle = { 
-        height: '420px', // Единая высота для всех карточек
-        position: 'relative',
-        '&:hover .edit-overlay': { opacity: 1 } // Показываем кнопку редактирования при наведении
-    };
 
     return (
         <>
@@ -243,12 +317,12 @@ const ProfileModal = ({ open, handleClose, userId, onUnauthorized, onLogout, onP
                         <CloseIcon />
                     </IconButton>
 
-                    {/* --- ВЕРХНЯЯ ЧАСТЬ ПРОФИЛЯ --- */}
+                    {/* --- ВЕРХНЯЯ ЧАСТЬ ПРОФИЛЯ (ИМЯ/EMAIL/ДАТА) --- */}
                     <Box sx={{ p: 4, display: 'flex', flexDirection: 'column', alignItems: 'center', background: 'linear-gradient(180deg, #252525 0%, #1e1e1e 100%)' }}>
                         
                         <AccountCircleIcon sx={{ fontSize: 100, color: '#00bfa5', mb: 2 }} />
 
-                        {/* Редактирование Имени и Email */}
+                        {/* ✅ ВОССТАНОВЛЕНО: Отображение имени и email (если не редактируется) */}
                         {isMyProfile && isEditingProfile ? (
                             <Box sx={{ width: '100%', maxWidth: 500, display: 'flex', flexDirection: 'column', gap: 2 }}>
                                 <TextField
@@ -269,7 +343,6 @@ const ProfileModal = ({ open, handleClose, userId, onUnauthorized, onLogout, onP
                                 />
                             </Box>
                         ) : (
-                            // [FIX] Увеличенные шрифты
                             <>
                                 <Typography variant="h4" sx={{ color: 'white', fontWeight: 'bold', mb: 0.5 }}>
                                     {profileData.name}
@@ -286,7 +359,6 @@ const ProfileModal = ({ open, handleClose, userId, onUnauthorized, onLogout, onP
                             На сайте с {new Date(profileData.createDate).toLocaleDateString()}
                         </Typography>
 
-                        {/* Кнопки управления профилем */}
                         {isMyProfile && (
                             <Box sx={{ mt: 3 }}>
                                 {isEditingProfile ? (
@@ -339,7 +411,7 @@ const ProfileModal = ({ open, handleClose, userId, onUnauthorized, onLogout, onP
                                 sx={{ maxWidth: 800, margin: '0 auto', ...inputStyle }}
                             />
                         ) : (
-                            // [FIX] Увеличенный шрифт описания
+                            // ✅ ИСПРАВЛЕНО: Теперь здесь только один компонент
                             <Typography variant="h6" sx={{ color: 'white', lineHeight: 1.6, maxWidth: 800, margin: '0 auto', fontWeight: 300 }}>
                                 {profileData.aboutUser || (isMyProfile ? 'Добавьте информацию о себе, чтобы другие пользователи узнали вас лучше.' : 'Пользователь не добавил описание.')}
                             </Typography>
@@ -347,7 +419,7 @@ const ProfileModal = ({ open, handleClose, userId, onUnauthorized, onLogout, onP
                     </Box>
 
                     <Divider sx={{ backgroundColor: '#333' }} />
-
+                    
                     {/* --- ПУБЛИКАЦИИ --- */}
                     <Box sx={{ p: 4 }}>
                         <Typography variant="h4" sx={{ mb: 3, color: '#00bfa5', fontWeight: 'bold' }}>
@@ -361,26 +433,23 @@ const ProfileModal = ({ open, handleClose, userId, onUnauthorized, onLogout, onP
                                         <Box sx={cardContainerStyle}>
                                             <PostCard
                                                 {...post}
-                                                // [FIX] Передаем стиль для карточки, чтобы она занимала 100% высоты контейнера
                                                 sx={{ height: '100%' }} 
-                                                onLike={() => {}}
+                                                onLike={() => {}} 
                                                 onClick={() => {
                                                     if (isMyProfile) {
-                                                        // Если это свой профиль, открываем модалку для редактирования
-                                                        setEditingPost(post);
+                                                        // В своем профиле клик открывает модалку редактирования
+                                                        setEditingPost(post); 
                                                     } else {
-                                                        // Если это чужой профиль, закрываем текущую модалку 
-                                                        // и вызываем функцию для открытия страницы поста
+                                                        // В чужом профиле клик открывает PostDetailPage
                                                         handleClose(); 
                                                         if (onPostClick) {
                                                             onPostClick(post);
                                                         }
                                                     }
                                                 }}
-                                                onEdit={() => setEditingPost(post)}
                                             />
                                             
-                                            {/* Оверлей с кнопкой редактирования (только для моих постов) */}
+                                            {/* ✅ ВОССТАНОВЛЕНО: Оверлей с кнопкой редактирования при наведении (только для моих постов) */}
                                             {isMyProfile && (
                                                 <Box 
                                                     className="edit-overlay"
@@ -394,7 +463,7 @@ const ProfileModal = ({ open, handleClose, userId, onUnauthorized, onLogout, onP
                                                         display: 'flex',
                                                         justifyContent: 'center',
                                                         alignItems: 'center',
-                                                        opacity: 0,
+                                                        opacity: 0, // Изначально скрыто
                                                         transition: 'opacity 0.2s',
                                                         borderRadius: '12px',
                                                         zIndex: 2
@@ -421,13 +490,13 @@ const ProfileModal = ({ open, handleClose, userId, onUnauthorized, onLogout, onP
                         </Grid>
                     </Box>
 
-                    {/* --- КНОПКА ВЫХОДА --- */}
+
+                    {/* --- КНОПКИ УПРАВЛЕНИЯ АККАУНТОМ --- */}
                     {isMyProfile && (
-                        <Box sx={{ p: 3, display: 'flex', justifyContent: 'center', borderTop: '1px solid #333' }}>
+                        <Box sx={{ p: 3, display: 'flex', justifyContent: 'center', gap: 3, borderTop: '1px solid #333' }}>
                             <Button
                                 variant="text"
                                 startIcon={<LogoutIcon />}
-                                // ✅ 3. ИСПОЛЬЗУЕМ ПРОПС onLogout НАПРЯМУЮ
                                 onClick={onLogout} 
                                 sx={{
                                     color: '#ff5252',
@@ -437,19 +506,89 @@ const ProfileModal = ({ open, handleClose, userId, onUnauthorized, onLogout, onP
                             >
                                 Выйти из аккаунта
                             </Button>
+                            
+                            <Button
+                                variant="outlined"
+                                startIcon={<DeleteIcon />}
+                                onClick={handleDeleteUserOpen} 
+                                sx={{
+                                    color: '#ff5252',
+                                    borderColor: '#ff5252',
+                                    fontSize: '1.1rem',
+                                    '&:hover': { 
+                                        backgroundColor: 'rgba(255, 82, 82, 0.1)',
+                                        borderColor: '#ff5252' 
+                                    }
+                                }}
+                            >
+                                Удалить аккаунт
+                            </Button>
                         </Box>
                     )}
                 </Box>
             </Modal>
 
-            {/* --- ОТДЕЛЬНОЕ МОДАЛЬНОЕ ОКНО ДЛЯ РЕДАКТИРОВАНИЯ СТАТЬИ --- */}
-            {/* Оно рендерится поверх профиля благодаря z-index Material UI */}
+            {/* --- МОДАЛЬНОЕ ОКНО ДЛЯ РЕДАКТИРОВАНИЯ СТАТЬИ --- */}
             <EditArticleModal 
                 open={!!editingPost}
                 handleClose={() => setEditingPost(null)}
                 post={editingPost}
                 onUpdateSuccess={handleArticleUpdateSuccess}
+                onDeleteSuccess={handleArticleDeleteSuccess} 
             />
+            
+            {/* --- МОДАЛЬНОЕ ОКНО ДЛЯ УДАЛЕНИЯ ПОЛЬЗОВАТЕЛЯ --- */}
+            <Dialog 
+                open={isDeleteConfirmOpen} 
+                onClose={handleDeleteUserClose}
+                PaperProps={{ sx: { backgroundColor: '#1e1e1e', color: 'white', borderRadius: '12px' } }}
+            >
+                <DialogTitle sx={{ color: '#ff5252', fontWeight: 'bold' }}>
+                    Подтвердите удаление аккаунта
+                </DialogTitle>
+                <DialogContent>
+                    {deleteError && <Alert severity="error" sx={{ mb: 2 }}>{deleteError}</Alert>}
+                    <Typography sx={{ color: '#bdbdbd', mb: 2 }}>
+                        Это действие **необратимо**. Все ваши публикации и данные будут удалены. 
+                        Для подтверждения введите ваш Email и Пароль.
+                    </Typography>
+                    
+                    <TextField
+                        label="Ваш Email"
+                        type="email"
+                        fullWidth
+                        margin="normal"
+                        value={deleteConfirmData.email}
+                        onChange={(e) => setDeleteConfirmData({...deleteConfirmData, email: e.target.value})}
+                        variant="filled"
+                        sx={inputStyle}
+                        InputProps={{ readOnly: true }} 
+                    />
+                    <TextField
+                        label="Ваш Пароль"
+                        type="password"
+                        fullWidth
+                        margin="normal"
+                        value={deleteConfirmData.password}
+                        onChange={(e) => setDeleteConfirmData({...deleteConfirmData, password: e.target.value})}
+                        variant="filled"
+                        sx={inputStyle}
+                    />
+                </DialogContent>
+                <DialogActions sx={{ p: 3 }}>
+                    <Button onClick={handleDeleteUserClose} sx={{ color: '#00bfa5' }}>
+                        Отмена
+                    </Button>
+                    <Button 
+                        onClick={handleConfirmDeleteUser} 
+                        color="error"
+                        variant="contained"
+                        disabled={isDeletingUser || deleteConfirmData.email !== profileData?.email || deleteConfirmData.password.length === 0}
+                    >
+                        {isDeletingUser ? <CircularProgress size={24} sx={{ color: 'white' }} /> : 'Удалить аккаунт'}
+                    </Button>
+                </DialogActions>
+            </Dialog>
         </>
     );
 };

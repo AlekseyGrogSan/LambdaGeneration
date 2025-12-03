@@ -21,7 +21,7 @@ import CategoryModal from './CategoryModal';
 import ResourcesModal from './ResourcesModal';
 import FaqModal from './FaqModal';
 
-const API_BASE_URL = 'http://localhost:5113/api';
+const API_BASE_URL = '/api';
 
 // --- СТИЛИ САЙДБАРА ---
 const sidebarStyle = {
@@ -138,6 +138,11 @@ const PostPage = () => {
     const [articles, setArticles] = useState([]); 
     const [currentUser, setCurrentUser] = useState(null); // Текущий залогиненный пользователь
     
+    // ✅ НОВЫЕ СОСТОЯНИЯ ДЛЯ ПАГИНАЦИИ (Infinite Scroll)
+    const [pageNumber, setPageNumber] = useState(1);
+    const [hasMore, setHasMore] = useState(true); // Есть ли еще данные для загрузки
+    const pageSize = 5; // Размер страницы. Убедитесь, что он соответствует бэкенду.
+    
     // UI states
     const [isLoading, setIsLoading] = useState(false); 
     const [error, setError] = useState(null);
@@ -175,7 +180,7 @@ const PostPage = () => {
     useEffect(() => {
         const init = async () => {
             await checkAuth(); // Сначала проверяем кто мы
-            await fetchAllArticles(); // Потом грузим статьи (уже с куками если есть)
+            await fetchArticlesPage(1); // ✅ Грузим первую страницу
         };
         init();
     }, []);
@@ -185,7 +190,7 @@ const PostPage = () => {
     const handleClose = () => { 
         setIsModalOpen(false); 
         // Если окно закрылось (например, после успешного входа/регистрации внутри модалки), проверим auth снова
-        checkAuth().then(isAuth => { if(isAuth) fetchAllArticles(); });
+        checkAuth().then(isAuth => { if(isAuth) fetchArticlesPage(1); }); // ✅ Обновляем вызов
     };
     
     const handlePostOpen = () => setIsPostModalOpen(true);
@@ -216,7 +221,7 @@ const PostPage = () => {
         setIsProfileModalOpen(false);
         setViewedProfileId(null);
         // Обновляем ленту, вдруг в профиле мы что-то изменили
-        fetchAllArticles(); 
+        fetchArticlesPage(1); // ✅ Обновляем вызов
     };
     
     const handleOtherAuthorProfileOpen = (userId) => {
@@ -252,8 +257,8 @@ const PostPage = () => {
         } finally {
             // 2. В любом случае очищаем состояние на фронтенде
             localStorage.removeItem('authToken'); // На всякий случай, если используете
-            setCurrentUser(null); // <--- ЭТО КЛЮЧЕВОЕ ИЗМЕНЕНИЕ
-            handleProfileClose(); // Закрываем модальное окно профиля
+            setCurrentUser(null); 
+            handleProfileClose(); 
         }
     };
 
@@ -266,6 +271,39 @@ const PostPage = () => {
             }
         }
     }, [isViewingDetailPage, lastViewedArticleId]);
+
+    // ✅ НОВЫЙ useEffect для Scroll-Based Pagination (Бесконечный скролл)
+    useEffect(() => {
+        const container = articlesContainerRef.current;
+        if (container) {
+            // Добавляем обработчик
+            container.addEventListener('scroll', handleScroll);
+        }
+        
+        return () => {
+            if (container) {
+                container.removeEventListener('scroll', handleScroll);
+            }
+        };
+    }, [isLoading, hasMore, pageNumber, isViewingDetailPage]); // Зависимости важны
+
+    // ✅ ОБРАБОТЧИК СКРОЛЛА (Эмуляция свайпа вниз для подгрузки)
+    const handleScroll = () => {
+        const container = articlesContainerRef.current;
+        
+        // Должен срабатывать только когда мы не на детальной странице
+        if (container && !isViewingDetailPage) {
+            const { scrollTop, scrollHeight, clientHeight } = container;
+            
+            // Проверяем, что пользователь прокрутил почти до самого низа (90% контента)
+            const isNearBottom = scrollTop + clientHeight >= scrollHeight * 0.9; 
+
+            if (isNearBottom && !isLoading && hasMore) {
+                console.log('Свайп вниз обнаружен, загружаем следующую страницу...');
+                fetchArticlesPage(pageNumber + 1);
+            }
+        }
+    };
 
     // --- DATA FETCHING ---
     
@@ -305,28 +343,51 @@ const PostPage = () => {
         };
     };
 
-    const fetchAllArticles = async () => {
+    // УДАЛЯЕМ fetchAllArticles и заменяем на fetchArticlesPage:
+
+    // ✅ НОВАЯ ФУНКЦИЯ ЗАГРУЗКИ СТРАНИЦЫ
+    const fetchArticlesPage = async (page) => {
+        // Защита от повторной загрузки или загрузки несуществующих страниц
+        if (isLoading || (!hasMore && page > pageNumber)) return; 
+
         setIsLoading(true);
         setError(null);
+        
         try {
-            const response = await fetch(`${API_BASE_URL}/Articles/getAll`);
-            if (!response.ok) throw new Error('Ошибка загрузки ленты');
+            const url = `${API_BASE_URL}/Articles/getPaginated?page=${page}&size=${pageSize}`;
             
-            const { articles: data } = await response.json(); 
+            const response = await fetch(url);
+            if (!response.ok) {
+                throw new Error(`Ошибка загрузки статей: ${response.statusText}`);
+            }
             
-            if (!data || data.length === 0) {
-                setArticles([]);
-                return;
+            const data = await response.json(); 
+            const newArticlesRaw = data.articles || [];
+            
+            // Если мы получили меньше, чем размер страницы, значит, это последняя страница
+            if (newArticlesRaw.length < pageSize) {
+                setHasMore(false);
             }
 
-            const enrichedArticlesPromises = data.map(enrichArticleData);
-            const enrichedArticles = await Promise.all(enrichedArticlesPromises);
+            const enrichedArticles = await Promise.all(newArticlesRaw.map(enrichArticleData));
             
-            setArticles(enrichedArticles);
+            setArticles(prevArticles => {
+                if (page === 1) {
+                    // При первой загрузке или после создания поста - заменяем
+                    return enrichedArticles;
+                } else {
+                    // При скролле вниз - добавляем новые статьи в конец
+                    const existingIds = new Set(prevArticles.map(a => a.article_id));
+                    const uniqueNewArticles = enrichedArticles.filter(a => !existingIds.has(a.article_id));
+                    return [...prevArticles, ...uniqueNewArticles];
+                }
+            });
+
+            setPageNumber(page);
 
         } catch (err) {
             console.error(err);
-            setError('Не удалось загрузить ленту.');
+            setError('Не удалось загрузить статьи.');
         } finally {
             setIsLoading(false);
         }
@@ -340,6 +401,13 @@ const PostPage = () => {
                 ? { ...a, isLiked: !currentIsLiked, likesCount: currentIsLiked ? a.likesCount - 1 : a.likesCount + 1 }
                 : a
         ));
+
+        // Обновление selectedPost для детальной страницы
+        if (selectedPost && selectedPost.article_id === rawId) {
+             setSelectedPost(prev => 
+                ({ ...prev, isLiked: !currentIsLiked, likesCount: currentIsLiked ? prev.likesCount - 1 : prev.likesCount + 1 })
+            );
+        }
 
         const endpoint = currentIsLiked ? 'unLike' : 'like';
         try {
@@ -355,6 +423,11 @@ const PostPage = () => {
                         ? { ...a, isLiked: currentIsLiked, likesCount: currentIsLiked ? a.likesCount + 1 : a.likesCount - 1 }
                         : a
                 ));
+                 if (selectedPost && selectedPost.article_id === rawId) {
+                    setSelectedPost(prev => 
+                        ({ ...prev, isLiked: currentIsLiked, likesCount: currentIsLiked ? prev.likesCount + 1 : prev.likesCount - 1 })
+                    );
+                }
                 handleOpen(); // Открыть окно входа
                 return; 
             }
@@ -382,7 +455,7 @@ const PostPage = () => {
                 sx={{ 
                     flex: 1, 
                     height: '100vh', 
-                    overflowY: 'scroll', 
+                    overflowY: 'auto', // ✅ ИЗМЕНЕНИЕ: включаем 'auto' для работы scroll event
                     scrollSnapType: 'y mandatory', 
                     '&::-webkit-scrollbar': { display: 'none' }, 
                     msOverflowStyle: 'none', 
@@ -409,7 +482,8 @@ const PostPage = () => {
                     </Box>
                 ) : (
                     <Box sx={{ width: '100%', maxWidth: '650px', pb: 5 }}>
-                        {isLoading && <Typography sx={{color:'white', textAlign:'center', pt: 4}}><CircularProgress sx={{ color: '#00bfa5' }} /></Typography>}
+                        {/* Индикаторы загрузки: один для первичной, другой для infinite scroll */}
+                        {articles.length === 0 && isLoading && <Typography sx={{color:'white', textAlign:'center', pt: 4}}><CircularProgress sx={{ color: '#00bfa5' }} /></Typography>}
                         {!isLoading && articles.length === 0 && !error && <Typography sx={{color:'white', textAlign:'center', pt: 4}}>Статей пока нет.</Typography>}
                         
                         {articles.map((post) => (
@@ -434,6 +508,17 @@ const PostPage = () => {
                                 />
                             </Box>
                         ))}
+                        
+                        {/* Индикатор загрузки для Infinite Scroll */}
+                        {isLoading && articles.length > 0 && (
+                            <Box sx={{ display: 'flex', justifyContent: 'center', py: 2 }}>
+                                <CircularProgress size={30} sx={{ color: '#00bfa5' }} />
+                            </Box>
+                        )}
+                        
+                        {/* Сообщение о конце ленты */}
+                        {!hasMore && articles.length > 0 && <Typography sx={{color:'white', textAlign:'center', py: 4}}>Это все статьи!</Typography>}
+                        {error && <Typography color="error" sx={{ textAlign: 'center', pt: 4 }}>{error}</Typography>}
                     </Box>
                 )}
             </Box>
@@ -459,7 +544,13 @@ const PostPage = () => {
                 open={isPostModalOpen} 
                 handleClose={handlePostClose} 
                 onUnauthorized={handleOpen}
-                onPostSuccess={fetchAllArticles} 
+                onPostSuccess={() => {
+                    setArticles([]); // Сброс статей
+                    setPageNumber(1); // Сброс страницы
+                    setHasMore(true); // Сброс флага
+                    // Загружаем первую страницу, чтобы увидеть новый пост
+                    setTimeout(() => fetchArticlesPage(1), 0);
+                }} 
             />
             
             <ForgotPasswordModal open={isForgotModalOpen} handleClose={handleForgotClose} />
@@ -469,7 +560,7 @@ const PostPage = () => {
                 handleClose={handleProfileClose} 
                 userId={viewedProfileId} 
                 onUnauthorized={handleOpen}
-                onLogout={handleLogout} // ✅ ПЕРЕДАЕМ НОВУЮ ФУНКЦИЮ СЮДА
+                onLogout={handleLogout} 
             />
 
             {/* ✅ НОВЫЕ КОМПОНЕНТЫ-ЗАГЛУШКИ */}

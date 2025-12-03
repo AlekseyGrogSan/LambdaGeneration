@@ -80,7 +80,7 @@ namespace LambdaGeneration.API.Application.Services
             {
                 throw new ArgumentException("Article not exist!");
             }
-            var article = await _articlesRepository.Update(article_id, new_title, new_content, new_preview, a.ArticleTags);
+            var article = await _articlesRepository.Update(article_id, new_title, new_content, new_preview);
 
             return article;
         }
@@ -92,7 +92,7 @@ namespace LambdaGeneration.API.Application.Services
             {
                 throw new ArgumentException("Article not exist!");
             }
-            var article = await _articlesRepository.Update(article_id, a.ArticleTitle, a.ArticleContent, a.ArticleContent, new_tags);
+            var article = await _articlesRepository.UpdateTags(article_id, new_tags);
 
             return article;
         }
@@ -103,10 +103,14 @@ namespace LambdaGeneration.API.Application.Services
             return all_articles;    
         }
 
-        public async Task<List<Articles>> GetAllArticles()
+        public async Task<List<Articles>> GetArticlesPage(int pageNumber, int pageSize)
         {
-            var all_articles = await _articlesRepository.GetAllArticles();
-            return all_articles;
+            if (pageNumber < 1 || pageSize < 1)
+            {
+                throw new ArgumentException("Page number and size must be positive.");
+            }
+
+            return await _articlesRepository.GetArticlesPage(pageNumber, pageSize);
         }
     }
 }

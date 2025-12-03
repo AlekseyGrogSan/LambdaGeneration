@@ -89,38 +89,7 @@ namespace LambdaGeneration.API.Controllers
                     ArticleIntTags,
                     author_id
                     );
-                Console.WriteLine("СТАТЬЯ СОЗДАНА АЛИЛУЯ!!!!!!!!!!!!!!!!!!!!!!!");
                 return Ok();
-            }
-            catch (Exception ex)
-            {
-                return BadRequest(ex.Message);
-            }
-        }
-
-        // Внутри класса ArticlesController:
-        [HttpGet("getAll")]
-        public async Task<ActionResult<GetArticlesResponse>> GetAllArticles()
-        {
-            try
-            {
-                // ВАЖНО: Предполагается, что в IArticlesService есть метод GetAllArticles()
-                var allArticles = await _articlesService.GetAllArticles();
-
-                // Преобразуем список статей в формат DTO для ответа
-                var responseArticles = allArticles.Select(a =>
-                    new GetArticleResponse(
-                        a.ArticleID,
-                        a.AuthorID,
-                        a.ArticleTitle,
-                        a.ArticlePreview,
-                        a.ArticleContent,
-                        a.ArticleTags.Select(t => ApiExtensions.FromTags(t)).ToList(),
-                        a.CreatedDate)
-                ).ToList();
-
-                // Оборачиваем в GetArticlesResponse
-                return Ok(new GetArticlesResponse(responseArticles));
             }
             catch (Exception ex)
             {
@@ -209,7 +178,7 @@ namespace LambdaGeneration.API.Controllers
             try
             {
                 await _articlesService.Delete(id);
-                return Ok("Article is delete!");
+                return Ok("Article is deleted!");
             }
             catch (Exception ex)
             {
@@ -260,7 +229,7 @@ namespace LambdaGeneration.API.Controllers
                     });
                 }
 
-                var article = await _articlesService.Update(request.article_id, request.article_title, request.article_preview, request.article_content);
+                var article = await _articlesService.Update(request.article_id, request.article_title, request.article_content, request.article_preview);
 
                 var ArticleTagsResponse = new List<string>();
 
@@ -322,6 +291,28 @@ namespace LambdaGeneration.API.Controllers
                     a.ArticleContent,
                     a.ArticleTags.Select(t => ApiExtensions.FromTags(t)).ToList(),
                     a.CreatedDate)).ToList()));
+        }
+
+        [HttpGet("getPaginated")]
+        public async Task<ActionResult<GetArticlesResponse>> GetArticlesPage([FromQuery] int page = 1, [FromQuery] int size = 10)
+        {
+            try
+            {
+                var articles = await _articlesService.GetArticlesPage(page, size);
+
+                return Ok(new GetArticlesResponse(articles.Select(a =>
+                    new GetArticleResponse(a.ArticleID,
+                        a.AuthorID,
+                        a.ArticleTitle,
+                        a.ArticlePreview,
+                        a.ArticleContent,
+                        a.ArticleTags.Select(t => ApiExtensions.FromTags(t)).ToList(),
+                        a.CreatedDate)).ToList()));
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(ex.Message);
+            }
         }
     }
 }

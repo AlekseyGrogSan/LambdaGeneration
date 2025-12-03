@@ -4,27 +4,40 @@ WORKDIR /app
 EXPOSE 8080
 EXPOSE 8081
 
-
-# Этот этап используется для сборки проекта службы
+# -------------------------------------------------------------------
+# ЭТАП 1: СБОРКА (BUILD STAGE)
+# -------------------------------------------------------------------
 FROM mcr.microsoft.com/dotnet/sdk:9.0-noble AS build
 ARG BUILD_CONFIGURATION=Release
 WORKDIR /src
-COPY ["LambdaGeneration.API/LambdaGeneration.API.csproj", "LambdaGeneration.API/"]
-COPY ["LambdaGeneration.API.Application/LambdaGeneration.API.Application.csproj", "LambdaGeneration.API.Application/"]
-COPY ["LambdaGeneration.API.Core/LambdaGeneration.API.Core.csproj", "LambdaGeneration.API.Core/"]
-COPY ["LambdaGeneration.API.Date/LambdaGeneration.API.Date.csproj", "LambdaGeneration.API.Date/"]
-COPY ["LambdaGeneration.API.Infrastructure/LambdaGeneration.API.Infrastructure.csproj", "LambdaGeneration.API.Infrastructure/"]
-RUN dotnet restore "./LambdaGeneration.API/LambdaGeneration.API.csproj"
-COPY . .
-WORKDIR "/src/LambdaGeneration.API"
-RUN dotnet build "./LambdaGeneration.API.csproj" -c $BUILD_CONFIGURATION -o /app/build
 
-# Этот этап используется для публикации проекта службы, который будет скопирован на последний этап
+# 1. КОПИРУЕМ ВЕСЬ КОД БЭКЕНДА СРАЗУ
+# Копируем локальную папку 'backend' в контейнер /src/backend.
+COPY backend backend 
+
+# 2. УСТАНАВЛИВАЕМ РАБОЧУЮ ДИРЕКТОРИЮ
+# ЭТО КРИТИЧЕСКИЙ ШАГ: УКАЗЫВАЕТ НА ПАПКУ, ГДЕ ЛЕЖИТ ГЛАВНЫЙ .csproj
+# Путь внутри контейнера: /src/backend/LambdaGeneration.API/LambdaGeneration.API
+WORKDIR "/src/backend/LambdaGeneration.API/LambdaGeneration.API"
+
+# 3. RESTORE (Находит все .csproj в текущей директории и поддиректориях)
+RUN dotnet restore
+
+# 4. BUILD
+# Собирает главный проект LambdaGeneration.API.csproj в текущей WORKDIR
+RUN dotnet build "LambdaGeneration.API.csproj" -c $BUILD_CONFIGURATION -o /app/build
+
+# -------------------------------------------------------------------
+# ЭТАП 2: ПУБЛИКАЦИЯ (PUBLISH STAGE)
+# -------------------------------------------------------------------
 FROM build AS publish
 ARG BUILD_CONFIGURATION=Release
-RUN dotnet publish "./LambdaGeneration.API.csproj" -c $BUILD_CONFIGURATION -o /app/publish /p:UseAppHost=false
+# Путь к проекту уже находится в WORKDIR
+RUN dotnet publish "LambdaGeneration.API.csproj" -c $BUILD_CONFIGURATION -o /app/publish /p:UseAppHost=false
 
-# Этот этап используется в рабочей среде или при запуске из VS в обычном режиме (по умолчанию, когда конфигурация отладки не используется)
+# -------------------------------------------------------------------
+# ЭТАП 3: ФИНАЛЬНЫЙ ОБРАЗ (FINAL IMAGE)
+# -------------------------------------------------------------------
 FROM base AS final
 WORKDIR /app
 COPY --from=publish /app/publish .

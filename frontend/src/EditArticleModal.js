@@ -9,13 +9,15 @@ import {
     Alert,
     Chip,
     ToggleButton,
-    ToggleButtonGroup
+    ToggleButtonGroup,
+    CircularProgress // Добавлен импорт для использования в кнопке
 } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
 import SaveIcon from '@mui/icons-material/Save';
 import DoneIcon from '@mui/icons-material/Done';
 import EditNoteIcon from '@mui/icons-material/EditNote';
 import LabelIcon from '@mui/icons-material/Label';
+import DeleteIcon from '@mui/icons-material/Delete'; // ✅ ИМПОРТ: Иконка для удаления
 
 // Иконки редактора
 import FormatBoldIcon from '@mui/icons-material/FormatBold';
@@ -26,7 +28,7 @@ import TitleIcon from '@mui/icons-material/Title';
 import FormatListBulletedIcon from '@mui/icons-material/FormatListBulleted';
 import FormatListNumberedIcon from '@mui/icons-material/FormatListNumbered';
 
-const API_BASE_URL = 'http://localhost:5113/api';
+const API_BASE_URL = '/api';
 
 // ТЕ ЖЕ ТЕГИ, ЧТО И ПРИ СОЗДАНИИ
 const AVAILABLE_TAGS = [
@@ -89,11 +91,14 @@ const getAuthHeaders = () => {
     const token = localStorage.getItem('authToken');
     return {
         'Content-Type': 'application/json',
-        ...(token && { 'Authorization': `Bearer ${token}` })
+        // Мы используем 'credentials: include' для куки, но заголовок Content-Type все равно нужен
+        // Токен Authorization (если используется)
+        ...(token && { 'Authorization': `Bearer ${token}` }) 
     };
 };
 
-const EditArticleModal = ({ open, handleClose, post, onUpdateSuccess }) => {
+// ✅ ДОБАВЛЕН onDeleteSuccess
+const EditArticleModal = ({ open, handleClose, post, onUpdateSuccess, onDeleteSuccess }) => {
     // Режим: 'content' или 'tags'
     const [editMode, setEditMode] = useState('content');
 
@@ -145,6 +150,41 @@ const EditArticleModal = ({ open, handleClose, post, onUpdateSuccess }) => {
         });
     };
 
+    // ✅ НОВЫЙ МЕТОД: Удаление статьи
+    const handleDeleteArticle = async () => {
+        if (!window.confirm("Вы уверены, что хотите удалить эту статью? Это действие необратимо.")) {
+            return;
+        }
+
+        setIsLoading(true);
+        setError(null); 
+        setSuccessMsg(''); 
+
+        try {
+            // Используется ваш маршрут DELETE /Articles/delete/{id}
+            const response = await fetch(`${API_BASE_URL}/Articles/delete/${post.id}`, { 
+                method: 'DELETE', 
+                credentials: 'include' // Важно для куки-авторизации
+            });
+
+            if (response.ok) {
+                // Успех: вызываем колбэк для обновления списка статей в ProfileModal и закрываемся
+                onDeleteSuccess(post.id); 
+                handleClose(); 
+            } else if (response.status === 403) {
+                 throw new Error("У вас нет прав для удаления этой статьи. (Вы не автор)");
+            } else {
+                const errorText = await response.text();
+                throw new Error(`Ошибка удаления: ${errorText || response.statusText}`);
+            }
+        } catch (err) {
+            setError(err.message);
+        } finally {
+            setIsLoading(false);
+        }
+    };
+    
+    // МЕТОД: Сохранение контента
     const handleSaveContent = async () => {
         setIsLoading(true); setError(null); setSuccessMsg('');
         try {
@@ -176,6 +216,7 @@ const EditArticleModal = ({ open, handleClose, post, onUpdateSuccess }) => {
         }
     };
 
+    // МЕТОД: Сохранение тегов
     const handleSaveTags = async () => {
         setIsLoading(true); setError(null); setSuccessMsg('');
         try {
@@ -192,6 +233,7 @@ const EditArticleModal = ({ open, handleClose, post, onUpdateSuccess }) => {
             if (!response.ok) throw new Error('Ошибка обновления тегов');
             const updatedData = await response.json();
 
+            // Передаем только article_tags для обновления
             onUpdateSuccess(post.id, { article_tags: updatedData.article_tags });
             setSuccessMsg('Теги успешно обновлены!');
         } catch (err) {
@@ -315,7 +357,7 @@ const EditArticleModal = ({ open, handleClose, post, onUpdateSuccess }) => {
                             fullWidth
                             sx={{ mt: 1, py: 1.5, bgcolor: '#00bfa5', '&:hover': { bgcolor: '#00897b' }, fontWeight: 'bold' }}
                         >
-                            {isLoading ? 'Сохранение...' : 'Сохранить изменения в статье'}
+                            {isLoading ? <CircularProgress size={24} color="inherit" /> : 'Сохранить изменения в статье'}
                         </Button>
                     </Box>
                 )}
@@ -369,10 +411,29 @@ const EditArticleModal = ({ open, handleClose, post, onUpdateSuccess }) => {
                             fullWidth
                             sx={{ py: 1.5, bgcolor: '#00bfa5', '&:hover': { bgcolor: '#00897b' }, fontWeight: 'bold' }}
                         >
-                            {isLoading ? 'Сохранение...' : 'Сохранить новые теги'}
+                            {isLoading ? <CircularProgress size={24} color="inherit" /> : 'Сохранить новые теги'}
                         </Button>
                     </Box>
                 )}
+                
+                {/* ✅ БЛОК ДЕЙСТВИЙ: Кнопка Удалить */}
+                <Box sx={{ mt: 3, pt: 2, borderTop: '1px solid #444', display: 'flex', justifyContent: 'flex-end' }}>
+                    <Button 
+                        onClick={handleDeleteArticle} 
+                        color="error"
+                        startIcon={<DeleteIcon />}
+                        disabled={isLoading}
+                        variant="outlined"
+                        sx={{ 
+                            '&:hover': { backgroundColor: 'rgba(255, 82, 82, 0.1)', borderColor: '#ff5252' },
+                            borderColor: '#ff5252',
+                            color: '#ff5252',
+                            fontSize: '1rem'
+                        }}
+                    >
+                        Удалить статью
+                    </Button>
+                </Box>
             </Box>
         </Modal>
     );
