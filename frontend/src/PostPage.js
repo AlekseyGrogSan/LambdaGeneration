@@ -396,7 +396,7 @@ const PostPage = () => {
             >
                 
                 {isViewingDetailPage && selectedPost ? (
-                    <Box sx={{ width: '100%', maxWidth: '650px' }}>
+                    <Box sx={{ width: '100%', maxWidth: '680px' }}>
                         <PostDetailPage
                             post={selectedPost}
                             onBack={handleBackToFeed}
@@ -404,6 +404,7 @@ const PostPage = () => {
                             authorId={selectedPost.author_id} 
                             onAuthorClick={handleOtherAuthorProfileOpen} 
                             onLike={() => handleLikeToggle(selectedPost.article_id, selectedPost.isLiked)}
+                            containerRef={articlesContainerRef} // <-- Передаем реф контейнера
                         />
                     </Box>
                 ) : (

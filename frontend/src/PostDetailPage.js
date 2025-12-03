@@ -1,4 +1,4 @@
-import React from 'react';
+import React, {useEffect} from 'react';
 import {
     Box,
     Typography,
@@ -53,8 +53,19 @@ const PostDetailPage = ({
     onAuthorClick,
     nickname, 
     authorId,
-    
+    containerRef, // <-- Новый пропс: реф контейнера ленты
 }) => {
+    
+    // Исправленный useEffect: скроллим контейнер ленты
+    useEffect(() => {
+        if (containerRef && containerRef.current) {
+            // Прокручиваем контейнер ленты к самому верху
+            containerRef.current.scrollTop = 0;
+        } else {
+            // Fallback: прокручиваем окно браузера
+            window.scrollTo(0, 0);
+        }
+    }, [containerRef]); // Зависимость от containerRef
     
     if (!post) return <Box sx={{ color: 'white' }}>Пост не найден.</Box>;
 
@@ -62,11 +73,12 @@ const PostDetailPage = ({
         const hash = tag.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
         return TAG_COLORS[(hash + index) % TAG_COLORS.length];
     };
+    
 
     return (
         <Box 
             sx={{
-                backgroundColor: '#1f1f1f',
+                backgroundColor: '#2c2c2c',
                 borderRadius: '12px',
                 boxShadow: '0 4px 12px rgba(0, 0, 0, 0.5)',
                 m: 2, 
