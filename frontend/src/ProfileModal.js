@@ -442,7 +442,7 @@ const ProfileModal = ({ open, handleClose, userId, onUnauthorized, onLogout, onP
                                                     } else {
                                                         // В чужом профиле клик открывает PostDetailPage
                                                         handleClose(); 
-                                                        if (onPostClick) {
+                                                        if (onPostClick){
                                                             onPostClick(post);
                                                         }
                                                     }

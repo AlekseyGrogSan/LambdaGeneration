@@ -561,6 +561,7 @@ const PostPage = () => {
                 userId={viewedProfileId} 
                 onUnauthorized={handleOpen}
                 onLogout={handleLogout} 
+                onPostClick={handlePostClick}
             />
 
             {/* ✅ НОВЫЕ КОМПОНЕНТЫ-ЗАГЛУШКИ */}

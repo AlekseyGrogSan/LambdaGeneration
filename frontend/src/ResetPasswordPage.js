@@ -83,7 +83,7 @@ function ResetPasswordPage() {
         const startSession = async () => {
             try {
                 // Вызываем эндпоинт 'start-session' на бэкенде
-                const response = await fetch(`${API_BASE_URL}/api/Password/start-session?data=${tokenData}`, {
+                const response = await fetch(`${API_BASE_URL}/Password/start-session?data=${tokenData}`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     credentials: 'include'
@@ -125,7 +125,7 @@ function ResetPasswordPage() {
 
         try {
             // Вызываем эндпоинт 'reset-password' на бэкенде
-            const response = await fetch(`${API_BASE_URL}/api/Password/reset-password`, {
+            const response = await fetch(`${API_BASE_URL}/Password/reset-password`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
