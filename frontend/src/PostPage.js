@@ -562,6 +562,8 @@ const PostPage = () => {
                 onUnauthorized={handleOpen}
                 onLogout={handleLogout} 
                 onPostClick={handlePostClick}
+                onLikes={handleLikeToggle}
+                openProfile={handleOtherAuthorProfileOpen}
             />
 
             {/* ✅ НОВЫЕ КОМПОНЕНТЫ-ЗАГЛУШКИ */}

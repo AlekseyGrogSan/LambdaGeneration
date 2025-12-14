@@ -98,7 +98,7 @@ namespace LambdaGeneration.API.Date.Repositories
                 userEntity.CreatedDate
                 );
         }
-        public async Task<Users?> Update(Guid id, string email, string name, string aboutUser)
+        public async Task<Users?> Update(Guid id, string name, string email, string aboutUser)
         {
             await _context.Users
                 .Where(u => u.UserID == id)

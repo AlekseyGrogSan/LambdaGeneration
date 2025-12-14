@@ -22,18 +22,18 @@ services:
 
   # 2. СЕРВИС БЭКЕНДА (ASP.NET Core API)
   app:
-   container_name: app
-   build:
+    container_name: app
+    build:
       context: .
       dockerfile: ./backend/LambdaGeneration.API/LambdaGeneration.API/Dockerfile
-   ports:
+    ports:
       - "8080:8080"
     # КРИТИЧЕСКОЕ ИСПРАВЛЕНИЕ: Чтение ВСЕХ переменных из .env
-   env_file:
+    env_file:
       - .env
 
-   environment:
-      ConnectionStrings__LambdaGenerationDatabase: Host=postgres;Port=5432;Database=${POSTGRES_DB};Username=${POSTGRES_>
+    environment:
+      ConnectionStrings__LambdaGenerationDatabase: Host=postgres;Port=5432;Database=db;Username=postgres;Password=123
       # Настройки JWT
       JwtOptions__SecretKey: ${JWTOPTIONS__SECRETKEY}
       JwtOptions__Issuer: ${JWTOPTIONS__ISSUER}
@@ -61,10 +61,10 @@ services:
       # URL клиента
       ClientUrl: ${CLIENTURL}
 
-   depends_on:
+    depends_on:
       postgres:
         condition: service_healthy
-   restart: always
+    restart: always
 
   # 3. СЕРВИС ФРОНТЕНДА (React Build + Nginx)
   frontend:
@@ -73,7 +73,7 @@ services:
       context: ./frontend
       dockerfile: Dockerfile.frontend
     ports:
-      - "80:80"
+      - "8088:80"
     volumes:
       - ./nginx/nginx.conf:/etc/nginx/conf.d/default.conf:ro
     depends_on:

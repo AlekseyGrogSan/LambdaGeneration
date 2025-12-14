@@ -34,7 +34,6 @@ const modalStyle = {
     width: { xs: '95%', sm: 1000, md: 1200 }, 
     maxHeight: '90vh', 
     backgroundColor: '#1e1e1e', 
-    border: '1px solid #333',
     borderRadius: '16px', 
     boxShadow: '0 10px 40px rgba(0, 0, 0, 0.7)',
     padding: '0', 
@@ -81,7 +80,7 @@ const getAuthHeaders = () => {
     };
 };
 
-const ProfileModal = ({ open, handleClose, userId, onUnauthorized, onLogout, onPostClick }) => {
+const ProfileModal = ({ open, handleClose, userId, onUnauthorized, onLogout, onPostClick, onLikes, openProfile }) => {
     const isMyProfile = userId === null; 
     const [profileData, setProfileData] = useState(null);
     const [userPosts, setUserPosts] = useState([]);
@@ -148,13 +147,15 @@ const ProfileModal = ({ open, handleClose, userId, onUnauthorized, onLogout, onP
             
             const postsJson = await postsResponse.json(); 
             const formattedPosts = (postsJson.articles || []).map(article => ({
-                id: article.article_id,
+                id: article.article_id,           // Используется для ключей React
+                article_id: article.article_id,   // ВАЖНО: Используется для API лайков в PostPage
+                author_id: article.author_id,
                 authorId: article.author_id,
                 nickname: profileJson.name || 'Автор', 
                 title: article.article_title,
                 article_preview: article.article_preview, 
                 article_content: article.article_content, 
-                likesCount: article.likes_count || 0,
+                likesCount: article.countLikes || 0,
                 commentsCount: article.comments_count || 0,
                 isLiked: article.is_liked || false,
                 tags: article.article_tags || [],
@@ -433,8 +434,8 @@ const ProfileModal = ({ open, handleClose, userId, onUnauthorized, onLogout, onP
                                         <Box sx={cardContainerStyle}>
                                             <PostCard
                                                 {...post}
-                                                sx={{ height: '100%' }} 
-                                                onLike={() => {}} 
+                                                sx = {{ height: '100%' }}
+                                                authorId={post.author_id} 
                                                 onClick={() => {
                                                     if (isMyProfile) {
                                                         // В своем профиле клик открывает модалку редактирования
@@ -447,6 +448,7 @@ const ProfileModal = ({ open, handleClose, userId, onUnauthorized, onLogout, onP
                                                         }
                                                     }
                                                 }}
+                                                onLike={() => onLikes(post.article_id, post.isLiked)}
                                             />
                                             
                                             {/* ✅ ВОССТАНОВЛЕНО: Оверлей с кнопкой редактирования при наведении (только для моих постов) */}

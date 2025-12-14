@@ -43,72 +43,6 @@ namespace LambdaGeneration.API.Date.Repositories
             await _context.SaveChangesAsync();
         }
 
-        public async Task<Articles?> GetFirstArticle()
-        {
-            var article_entity = await _context.Articles
-                .OrderBy(a => a.ArticleID)
-                .FirstOrDefaultAsync();
-
-            if (article_entity == null)
-                return null;
-
-            return Articles.Map(
-                article_entity.ArticleID,
-                article_entity.ArticleTitle,
-                article_entity.ArticleContent,
-                article_entity.ArticlePreview,
-                article_entity.AuthorID,
-                article_entity.ArticleTags,
-                article_entity.CreatedDate
-            );
-        }
-
-        public async Task<Articles?> GetNextArticle(Guid currentArticleId)
-        {
-            var article_entity = await _context.Articles
-                .Where(a => a.ArticleID > currentArticleId)
-                .OrderBy(a => a.ArticleID)
-                .FirstOrDefaultAsync();
-
-            if (article_entity == null)
-            {
-                return await GetFirstArticle();
-            }
-
-            return Articles.Map(
-                article_entity.ArticleID,
-                article_entity.ArticleTitle,
-                article_entity.ArticleContent,
-                article_entity.ArticlePreview,
-                article_entity.AuthorID,
-                article_entity.ArticleTags,
-                article_entity.CreatedDate
-            );
-        }
-
-        public async Task<Articles?> GetPrevArticles(Guid currentArticleId)
-        {
-            var article_entity = await _context.Articles
-                .Where(a => a.ArticleID < currentArticleId)
-                .OrderByDescending(a => a.ArticleID)
-                .FirstOrDefaultAsync();
-
-            if (article_entity == null)
-            {
-                return await GetFirstArticle();
-            }
-
-            return Articles.Map(
-                article_entity.ArticleID,
-                article_entity.ArticleTitle,
-                article_entity.ArticleContent,
-                article_entity.ArticlePreview,
-                article_entity.AuthorID,
-                article_entity.ArticleTags,
-                article_entity.CreatedDate
-            );
-        }
-
         public async Task Delete(Guid article_id)
         {
             await _context.Articles.Where(a => a.ArticleID == article_id).ExecuteDeleteAsync();
@@ -127,7 +61,8 @@ namespace LambdaGeneration.API.Date.Repositories
                 article_entity.ArticlePreview,
                 article_entity.AuthorID,
                 article_entity.ArticleTags,
-                article_entity.CreatedDate
+                article_entity.CreatedDate,
+                article_entity.CountLikes
                 );
         }
 
@@ -152,7 +87,8 @@ namespace LambdaGeneration.API.Date.Repositories
                 article_entity.ArticlePreview,
                 article_entity.AuthorID,
                 article_entity.ArticleTags,
-                article_entity.CreatedDate
+                article_entity.CreatedDate,
+                article_entity.CountLikes
             );
         }
 
@@ -177,7 +113,8 @@ namespace LambdaGeneration.API.Date.Repositories
                 article_entity.ArticlePreview,
                 article_entity.AuthorID,
                 article_entity.ArticleTags,
-                article_entity.CreatedDate
+                article_entity.CreatedDate,
+                article_entity.CountLikes
             );
         }
 
@@ -191,7 +128,8 @@ namespace LambdaGeneration.API.Date.Repositories
                 a.ArticlePreview,
                 a.AuthorID,
                 a.ArticleTags,
-                a.CreatedDate)).
+                a.CreatedDate,
+                a.CountLikes)).
                 ToListAsync();
         }
 
@@ -212,7 +150,8 @@ namespace LambdaGeneration.API.Date.Repositories
                     a.ArticlePreview,
                     a.AuthorID,
                     a.ArticleTags,
-                    a.CreatedDate))
+                    a.CreatedDate,
+                    a.CountLikes))
                 .ToListAsync();
         }
     }

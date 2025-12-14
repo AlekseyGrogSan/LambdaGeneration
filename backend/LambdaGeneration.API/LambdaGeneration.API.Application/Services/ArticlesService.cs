@@ -30,40 +30,11 @@ namespace LambdaGeneration.API.Application.Services
                     author_id)
                 );
         }
-
-        public async Task<Articles> GetFirstArticle()
-        {
-            var article = await _articlesRepository.GetFirstArticle();
-
-            if (article == null)
-                throw new Exception("Articles is not existing");
-
-            return article;
-        }
-
-        public async Task<Articles> GetNextArticle(Guid currentId)
-        {
-            var article = await _articlesRepository.GetNextArticle(currentId);
-
-            if (article == null)
-                throw new Exception("Articles is not existing");
-
-            return article;
-        }
-
-        public async Task<Articles> GetPrevArticle(Guid currentId)
-        {
-            var article = await _articlesRepository.GetPrevArticles(currentId);
-
-            if (article == null)
-                throw new Exception("Articles is not existing");
-
-            return article;
-        }
-        public async Task Delete(Guid article_id)
+        public async Task Delete(Guid article_id, Guid authorId)
         {
             var article = await _articlesRepository.GetById(article_id);
-
+            if (article.AuthorID != authorId)
+                throw new Exception("Fuck You, Hacker!");
             if (article == null)
             {
                 throw new ArgumentException("Article not exist!");
@@ -72,10 +43,11 @@ namespace LambdaGeneration.API.Application.Services
             await _articlesRepository.Delete(article_id);
         }
 
-        public async Task<Articles?> Update(Guid article_id, string new_title, string new_content, string new_preview)
+        public async Task<Articles?> Update(Guid article_id, Guid authorId, string new_title, string new_content, string new_preview)
         {
             var a = await _articlesRepository.GetById(article_id);
-
+            if (a.AuthorID != authorId)
+                throw new Exception("Fuck You, Hacker!");
             if (a == null)
             {
                 throw new ArgumentException("Article not exist!");

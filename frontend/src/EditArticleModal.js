@@ -32,10 +32,10 @@ const API_BASE_URL = '/api';
 
 // ТЕ ЖЕ ТЕГИ, ЧТО И ПРИ СОЗДАНИИ
 const AVAILABLE_TAGS = [
-    'CSharp', 'Java', 'Python', 'JavaScript', 'TypeScript', 'Go', 'Rust', 'Kotlin',
-    'Swift', 'PHP', 'C++', 'C', 'Ruby', 'DotNet', 'ASPNET', 'Math',
-    'EntityFramework', 'Spring', 'React', 'Angular', 'Vue', 'NodeJS',
-    'Django', 'Flask', 'Math', 'DataStructures', 'LLM', 'ML'
+    'C#', 'Java', 'Python', 'JavaScript', 'TypeScript', 'Go', 'Rust', 'Kotlin',
+    'Swift', 'PHP', 'C++', 'C', 'Ruby', '.NET', 'ASPNET', 'Math',
+    'Entity Framework', 'Spring', 'React', 'Angular', 'Vue', 'NodeJS',
+    'Django', 'Flask', 'Math', 'Data Structures', 'LLM', 'ML'
 ];
 
 const modalStyle = {

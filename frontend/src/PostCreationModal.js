@@ -24,10 +24,10 @@ const API_BASE_URL = '/api';
 
 // --- СПИСОК ДОСТУПНЫХ ТЕГОВ ---
 const AVAILABLE_TAGS = [
-    'CSharp', 'Java', 'Python', 'JavaScript', 'TypeScript', 'Go', 'Rust', 'Kotlin',
-    'Swift', 'PHP', 'CPlusPlus', 'C', 'Ruby', 'DotNet', 'ASPNET',
-    'EntityFramework', 'Spring', 'React', 'Angular', 'Vue', 'NodeJS',
-    'Django', 'Flask', 'Math', 'DataStructures', 'LLM', 'ML'
+    'C#', 'Java', 'Python', 'JavaScript', 'TypeScript', 'Go', 'Rust', 'Kotlin',
+    'Swift', 'PHP', 'C++', 'C', 'Ruby', '.NET', 'ASPNET',
+    'Entity Framework', 'Spring', 'React', 'Angular', 'Vue', 'NodeJS',
+    'Django', 'Flask', 'Math', 'Data Structures', 'LLM', 'ML'
 ];
 
 // --- СТИЛИ ДЛЯ ПОЛЕЙ ВВОДА (Input Styles) ---
