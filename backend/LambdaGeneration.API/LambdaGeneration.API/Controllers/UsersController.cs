@@ -11,7 +11,7 @@ using System.Net.WebSockets;
 using System.Runtime.InteropServices;
 using System.Security.Claims;
 
-// For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
+//Добавить модерацию для инфы пользователя
 
 namespace LambdaGeneration.API.Controllers
 {

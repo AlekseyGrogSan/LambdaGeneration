@@ -47,7 +47,7 @@ namespace LambdaGeneration.API.Controllers
                         suggestion = allow_article_moderation.Suggestions
                     });
                 }
-
+                //Переделать модерацию на бэке
                 var deskModeration = await _gaChatModerationService.ModerationContent(request.article_preview);
 
                 if (!deskModeration.IsApproved)
@@ -128,7 +128,7 @@ namespace LambdaGeneration.API.Controllers
         {
             try 
             {
-                //Добавить проверку по ID юзера
+                
                 var allow_article_moderation = await _regexModerationService.ModerateArticle(request.article_title, request.article_preview, request.article_content);
                 if (!allow_article_moderation.IsApproved)
                 {
