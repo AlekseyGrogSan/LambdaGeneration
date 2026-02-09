@@ -84,102 +84,88 @@ const inputStyle = {
 
 // --- КОМПОНЕНТ: Панель Инструментов Редактора ---
 const EditorToolbar = ({ editorRef }) => {
-    // Функция для применения команды форматирования (document.execCommand)
+    const [activeStyles, setActiveStyles] = useState({
+        bold: false,
+        italic: false,
+        underline: false,
+        listBulleted: false,
+        listNumbered: false,
+        h2: false
+    });
+
+    // Функция проверки: какие стили активны в месте курсора
+    const updateToolbarStatus = useCallback(() => {
+        setActiveStyles({
+            bold: document.queryCommandState('bold'),
+            italic: document.queryCommandState('italic'),
+            underline: document.queryCommandState('underline'),
+            listBulleted: document.queryCommandState('insertUnorderedList'),
+            listNumbered: document.queryCommandState('insertOrderedList'),
+            
+            h2: document.queryCommandValue('formatBlock') === 'h2'
+        });
+    }, []);
+
+
+    React.useEffect(() => {
+        const editor = editorRef.current;
+        if (!editor) return;
+        
+        editor.addEventListener('mouseup', updateToolbarStatus);
+        editor.addEventListener('keyup', updateToolbarStatus);
+
+        return () => {
+            editor.removeEventListener('mouseup', updateToolbarStatus);
+            editor.removeEventListener('keyup', updateToolbarStatus);
+        };
+    }, [editorRef, updateToolbarStatus]);
+
     const applyCommand = useCallback((command, value = null) => {
-        // Устанавливаем фокус на редактор перед выполнением команды
         if (editorRef.current) {
             editorRef.current.focus();
         }
-        // execCommand - ключевая нативная функция для форматирования contenteditable
         document.execCommand(command, false, value);
-    }, [editorRef]);
-
-    // Обработчик для вставки ссылки
-    const handleInsertLink = () => {
-        const url = prompt('Введите URL ссылки:');
-        if (url) {
-            applyCommand('createLink', url);
-        }
-    };
-
-    // Обработчик для вставки заголовка (H2)
-    const handleInsertHeading = () => {
-        // formatBlock используется для тегов блочного уровня (H1, H2, P, DIV)
-        applyCommand('formatBlock', '<h2>');
-    };
-
+        updateToolbarStatus();
+    }, [editorRef, updateToolbarStatus]);
+    
+    const getButtonStyle = (isActive, activeColor = '#00bfa5') => ({
+        color: isActive ? activeColor : '#ffffff',
+        backgroundColor: isActive ? 'rgba(255, 255, 255, 0.15)' : 'transparent',
+        borderRadius: '4px',
+        transition: 'all 0.2s',
+        '&:hover': { backgroundColor: '#666666' }
+    });
 
     return (
-        <Box
-            sx={{
-                display: 'flex',
-                gap: 1,
-                padding: 1,
-                backgroundColor: '#555555',
-                borderRadius: '8px 8px 0 0',
-                border: '1px solid #444444'
-            }}
-        >
-            {/* 1. Жирный */}
-            <IconButton
-                size="small"
-                onClick={() => applyCommand('bold')}
-                sx={{ color: '#ffffff', '&:hover': { backgroundColor: '#666666' } }}
-            >
+        <Box sx={{ display: 'flex', gap: 1, padding: 1, backgroundColor: '#555555', borderRadius: '8px 8px 0 0', border: '1px solid #444444' }}>
+            <IconButton size="small" onClick={() => applyCommand('bold')} sx={getButtonStyle(activeStyles.bold)}>
                 <FormatBoldIcon />
             </IconButton>
 
-            {/* 2. Курсив */}
-            <IconButton
-                size="small"
-                onClick={() => applyCommand('italic')}
-                sx={{ color: '#ffffff', '&:hover': { backgroundColor: '#666666' } }}
-            >
+            <IconButton size="small" onClick={() => applyCommand('italic')} sx={getButtonStyle(activeStyles.italic)}>
                 <FormatItalicIcon />
             </IconButton>
 
-            {/* 3. Подчеркивание */}
-            <IconButton
-                size="small"
-                onClick={() => applyCommand('underline')}
-                sx={{ color: '#ffffff', '&:hover': { backgroundColor: '#666666' } }}
-            >
+            <IconButton size="small" onClick={() => applyCommand('underline')} sx={getButtonStyle(activeStyles.underline)}>
                 <FormatUnderlinedIcon />
             </IconButton>
 
-            {/* 4. Ссылка */}
-            <IconButton
-                size="small"
-                onClick={handleInsertLink}
-                sx={{ color: '#00bfa5', '&:hover': { backgroundColor: '#666666' } }}
-            >
+            <IconButton size="small" onClick={() => {
+                const url = prompt('Введите URL:');
+                if (url) applyCommand('createLink', url);
+            }} sx={{ color: '#00bfa5' }}>
                 <LinkIcon />
             </IconButton>
 
-            {/* 5. Заголовок (Тег оглавления, H2) */}
-            <IconButton
-                size="small"
-                onClick={handleInsertHeading}
-                sx={{ color: '#ffeb3b', '&:hover': { backgroundColor: '#666666' } }}
-            >
+            <IconButton size="small" onClick={() => applyCommand('formatBlock', '<h2>')} sx={getButtonStyle(activeStyles.h2, '#ffeb3b')}>
                 <TitleIcon />
             </IconButton>
 
-            {/* 6. Маркированный список */}
-            <IconButton
-                size="small"
-                onClick={() => applyCommand('insertUnorderedList')}
-                sx={{ color: '#ffffff', '&:hover': { backgroundColor: '#666666' } }}
-            >
+            <IconButton size="small" onClick={() => applyCommand('insertUnorderedList')} sx={getButtonStyle(activeStyles.listBulleted)}>
                 <FormatListBulletedIcon />
             </IconButton>
 
-            {/* 7. Нумерованный список */}
-            <IconButton
-                size="small"
-                onClick={() => applyCommand('insertOrderedList')}
-                sx={{ color: '#ffffff', '&:hover': { backgroundColor: '#666666' } }}
-            >
+            <IconButton size="small" onClick={() => applyCommand('insertOrderedList')} sx={getButtonStyle(activeStyles.listNumbered)}>
                 <FormatListNumberedIcon />
             </IconButton>
         </Box>
