@@ -48,29 +48,16 @@ namespace LambdaGeneration.API.Controllers
                     });
                 }
                 //Переделать модерацию на бэке
-                var deskModeration = await _gaChatModerationService.ModerationContent(request.article_preview);
+                var moderationContext = $"{request.article_title} \n {request.article_preview} \n {request.article_content}";
+                var resultModeration = await _gaChatModerationService.ModerationContent(moderationContext);
 
-                if (!deskModeration.IsApproved)
+                if (!resultModeration.IsApproved) 
                 {
-                    return BadRequest(new
-                    {
-                        error = "Содержимое описания не прошло модерацию",
-                        reason = deskModeration.Reason,
-                        flags = deskModeration.Flags,
-                        field = "description"
-                    });
-                }
-
-                var contentModeration = await _gaChatModerationService.ModerationContent(request.article_content);
-
-                if (!contentModeration.IsApproved)
-                {
-                    return BadRequest(new
-                    {
-                        error = "Содержимое контента не прошло модерацию",
-                        reason = contentModeration.Reason,
-                        flags = contentModeration.Flags,
-                        field = "content"
+                    return BadRequest(new {
+                        error = "Статья не прошла проверку",
+                        reason = resultModeration.Reason,
+                        flags = resultModeration.Flags,
+                        field = "post"
                     });
                 }
 
@@ -140,29 +127,17 @@ namespace LambdaGeneration.API.Controllers
                     });
                 }
 
-                var deskModeration = await _gaChatModerationService.ModerationContent(request.article_preview);
+                var moderationContext = $"{request.article_title} \n {request.article_preview} \n {request.article_content}";
+                var resultModeration = await _gaChatModerationService.ModerationContent(moderationContext);
 
-                if (!deskModeration.IsApproved)
+                if (!resultModeration.IsApproved)
                 {
                     return BadRequest(new
                     {
-                        error = "Содержимое описания не прошло модерацию",
-                        reason = deskModeration.Reason,
-                        flags = deskModeration.Flags,
-                        field = "description"
-                    });
-                }
-
-                var contentModeration = await _gaChatModerationService.ModerationContent(request.article_content);
-
-                if (!contentModeration.IsApproved)
-                {
-                    return BadRequest(new
-                    {
-                        error = "Содержимое контента не прошло модерацию",
-                        reason = contentModeration.Reason,
-                        flags = contentModeration.Flags,
-                        field = "content"
+                        error = "Статья не прошла проверку",
+                        reason = resultModeration.Reason,
+                        flags = resultModeration.Flags,
+                        field = "post"
                     });
                 }
 

@@ -217,9 +217,6 @@ const PostCreationModal = ({ open, handleClose, onUnauthorized, onPostSuccess })
         maxHeight: '90vh', 
         overflowY: 'auto',
         
-        // =========================================================
-        // !!! КРАСИВАЯ ПОЛОСА ПРОКРУТКИ ДЛЯ ВСЕГО МОДАЛЬНОГО ОКНА !!!
-        // =========================================================
         '&::-webkit-scrollbar': {
             width: '8px', // Ширина полосы
         },
