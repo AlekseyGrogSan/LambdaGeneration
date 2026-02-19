@@ -10,5 +10,6 @@ namespace LambdaGeneration.API.Application.Services
         Task Delete(Guid id, string email, string password);
         Task<Users> GetProfile(Guid id);
         Task<(Users, string token)> Update(Guid id, string name, string email, string aboutUser);
+        Task checkedUser(string email, string userName);
     }
 }

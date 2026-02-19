@@ -3,7 +3,7 @@ import { useSearchParams, useNavigate } from 'react-router-dom';
 import { Box, Typography, TextField, Button } from '@mui/material';
 
 // Установите здесь базовый URL вашего API (например, где запущен ваш C# проект)
-const API_BASE_URL = '/api'; // Убедитесь, что это правильный URL!
+const API_BASE_URL = 'http://localhost:5113/api'; // Убедитесь, что это правильный URL!
 
 // Определяем состояния, в которых может находиться страница
 const STATES = {

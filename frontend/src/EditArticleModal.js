@@ -28,7 +28,7 @@ import TitleIcon from '@mui/icons-material/Title';
 import FormatListBulletedIcon from '@mui/icons-material/FormatListBulleted';
 import FormatListNumberedIcon from '@mui/icons-material/FormatListNumbered';
 
-const API_BASE_URL = '/api';
+const API_BASE_URL = 'http://localhost:5113/api';
 
 // ТЕ ЖЕ ТЕГИ, ЧТО И ПРИ СОЗДАНИИ
 const AVAILABLE_TAGS = [

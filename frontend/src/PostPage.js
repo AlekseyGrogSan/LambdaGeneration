@@ -21,7 +21,7 @@ import CategoryModal from './CategoryModal';
 import ResourcesModal from './ResourcesModal';
 import FaqModal from './FaqModal';
 
-const API_BASE_URL = '/api';
+const API_BASE_URL = 'http://localhost:5113/api';
 
 // --- СТИЛИ САЙДБАРА ---
 const sidebarStyle = {

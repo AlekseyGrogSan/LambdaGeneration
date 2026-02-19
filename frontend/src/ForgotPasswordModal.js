@@ -8,7 +8,7 @@ import {
 } from '@mui/material';
 
 // Базовый URL для API
-const API_BASE_URL = '/api';
+const API_BASE_URL = 'http://localhost:5113/api';
 
 // --- СТИЛИ ДЛЯ ПОЛЕЙ ВВОДА (Input Styles) ---
 const inputStyle = {

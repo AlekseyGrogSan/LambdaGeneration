@@ -50,6 +50,15 @@ namespace LambdaGeneration.API
                 .SetDefaultKeyLifetime(TimeSpan.FromDays(90));
 
             builder.Services.AddHttpContextAccessor();
+            builder.Services.AddMemoryCache();
+
+            builder.Services.AddDistributedMemoryCache();
+            builder.Services.AddSession(options =>
+            {
+                options.IdleTimeout = TimeSpan.FromMinutes(30);
+                options.Cookie.HttpOnly = true;
+                options.Cookie.IsEssential = true;
+            });
 
             builder.Services.AddDbContext<LambdaGenerationDbContext>(options =>
                 options.UseNpgsql(builder.Configuration.GetConnectionString("LambdaGenerationDatabase")));
@@ -95,7 +104,7 @@ namespace LambdaGeneration.API
                 app.UseSwaggerUI();
             }
             app.UseStaticFiles();
-
+            app.UseSession();
             app.UseCors("AllowFrontend");
 
             app.UseHttpsRedirection();

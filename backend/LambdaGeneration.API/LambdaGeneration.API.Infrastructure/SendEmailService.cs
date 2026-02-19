@@ -65,6 +65,48 @@ namespace LambdaGeneration.API.Application.Services
             }
         }
 
+        public async Task<bool> SendVerifyEmail(string email, string code)
+        {
+            var subject = "Подтверждение почты";
+            var body = $@"<!DOCTYPE html>
+            <html>
+            <head>
+                <meta charset='utf-8'>
+                <style>
+                    body {{ font-family: Arial, sans-serif; color: #333; }}
+                    .container {{ max-width: 600px; margin: 0 auto; padding: 20px; }}
+                    .header {{ background: #007bff; color: white; padding: 20px; text-align: center; }}
+                    .content {{ padding: 20px; background: #f9f9f9; }}
+                    .button {{ display: inline-block; padding: 12px 24px; background: #007bff; 
+                              color: white; text-decoration: none; border-radius: 5px; margin: 15px 0; }}
+                    .footer {{ padding: 20px; text-align: center; font-size: 12px; color: #666; }}
+                </style>
+            </head>
+            <body>
+                <div class='container'>
+                    <div class='header'>
+                        <h1>Подтверждение почты</h1>
+                    </div>
+                    <div class='content'>
+                        <p>Здравствуйте!</p>
+                        <p>Вы регистрируетесь на сайте, для этого необходимо подтвердить почту</p>
+                        <p>Введите следующий код на сайте:</p>
+                        <p style='word-break: break-all; background: #eee; padding: 10px; border-radius: 3px;'>
+                            {code}
+                        </p>
+                        <p><strong>Ссылка действительна в течение 15 минут.</strong></p>
+                        <p>Если вы не регистрируетесь, проигнорируйте это письмо.</p>
+                    </div>
+                    <div class='footer'>
+                        <p>© {DateTime.Now.Year} Lambda Generation. Все права защищены.</p>
+                    </div>
+                </div>
+            </body>
+            </html>";
+
+            return await SendEmailAsync(email, subject, body);
+        }
+
         public async Task<bool> SendPasswordResetEmail(string email, string resetLink)
         {
             var subject = "Восстановление пароля";
@@ -103,7 +145,7 @@ namespace LambdaGeneration.API.Application.Services
                         <p>Если вы не запрашивали восстановление пароля, проигнорируйте это письмо.</p>
                     </div>
                     <div class='footer'>
-                        <p>© {DateTime.Now.Year} My Application. Все права защищены.</p>
+                        <p>© {DateTime.Now.Year} Lambda Generation. Все права защищены.</p>
                     </div>
                 </div>
             </body>

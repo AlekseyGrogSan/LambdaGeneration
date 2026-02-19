@@ -1,4 +1,6 @@
-﻿using LambdaGeneration.API.Application.Services;
+﻿using LambdaGeneration.API.Application.Interfaces.Infrastructure;
+using LambdaGeneration.API.Application.Interfaces.Services;
+using LambdaGeneration.API.Application.Services;
 using LambdaGeneration.API.Core.Models;
 using LambdaGeneration.API.DTO.Request;
 using LambdaGeneration.API.DTO.Response;
@@ -10,6 +12,7 @@ using System.ComponentModel.DataAnnotations;
 using System.Net.WebSockets;
 using System.Runtime.InteropServices;
 using System.Security.Claims;
+using System.Text.Json;
 
 //Добавить модерацию для инфы пользователя
 
@@ -20,9 +23,13 @@ namespace LambdaGeneration.API.Controllers
     public class UsersController : ControllerBase
     {
         private readonly IUsersService _usersService;
-        public UsersController(IUsersService usersService)
+        private readonly ISendEmail _sendEmail;
+        private readonly IVerifyCodeService _verifiCode;
+        public UsersController(IUsersService usersService, IVerifyCodeService verifyCode, ISendEmail sendEmail)
         {
             _usersService = usersService;
+            _sendEmail = sendEmail;
+            _verifiCode = verifyCode;
         }
 
         [HttpPost("register")]
@@ -30,13 +37,60 @@ namespace LambdaGeneration.API.Controllers
         {
             try
             {
-                await _usersService.Register(Guid.NewGuid(), request.UserName, request.Email, request.Password, request.aboutUser);
-                return Ok("You are registered!");
+                if (!ModelState.IsValid)
+                {
+                    return BadRequest(ModelState);
+                }
+
+                await _usersService.checkedUser(request.Email, request.UserName);
+
+                var code = _verifiCode.GeneratedCodeAttribute(email : request.Email);
+
+                await _sendEmail.SendVerifyEmail(request.Email, code);
+
+                HttpContext.Session.SetString("pending-email", request.Email);
+                HttpContext.Session.SetString("pending-data", JsonSerializer.Serialize(request));
+
+                return Ok("Письмо отправлено вам на почту!");
         }
             catch (Exception ex)
             {
                 return BadRequest(ex.Message);
             }
+        }
+
+        [HttpPost("verify-email")]
+        public async Task<IActionResult> VerifyEmail(VerifyEmail verifyRequest)
+        {
+            try
+            {
+                if (!_verifiCode.VerifyCode(verifyRequest.Email, verifyRequest.Code))
+                    return BadRequest("Неверный или просроченный код!");
+
+                var pendingData = HttpContext.Session.GetString("pending-data");
+                if (string.IsNullOrEmpty(pendingData))
+                    return BadRequest("Данные регистрации не найдены");
+
+                var registDTO = JsonSerializer.Deserialize<RegisterUserRequest>(pendingData);
+
+                await _usersService.Register(Guid.NewGuid(), registDTO.UserName, registDTO.Email, registDTO.Password, registDTO.aboutUser);
+
+                HttpContext.Session.Remove("peding-data");
+
+                return Ok("Регистрация успешка!");
+            }
+            catch
+            {
+                return BadRequest("Ошибка верификации или регистрации");
+            }
+        }
+
+        [HttpPost("resend-code")]
+        public async Task<IActionResult> ResendCode([FromBody] string email)
+        {
+            var code = _verifiCode.GeneratedCodeAttribute(email);
+            await _sendEmail.SendVerifyEmail(email, code);
+            return Ok("Код отправлен повторно!");
         }
 
         [HttpPost("login")]

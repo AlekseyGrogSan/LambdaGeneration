@@ -24,7 +24,7 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import PostCard from './PostCard'; 
 import EditArticleModal from './EditArticleModal'; 
 
-const API_BASE_URL = '/api';
+const API_BASE_URL = 'http://localhost:5113/api';
 
 const modalStyle = {
     position: 'absolute',
