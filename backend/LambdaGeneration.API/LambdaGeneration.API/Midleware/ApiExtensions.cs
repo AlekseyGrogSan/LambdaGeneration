@@ -84,6 +84,8 @@ namespace LambdaGeneration.API.Midleware
             services.AddScoped<ILikeServices, LikeServices>();
             services.AddScoped<IRegexModerationService, RegexModerationService>();
             services.AddScoped<IVerifyCodeService, VerifyCodeService>();
+            services.AddScoped<ICommentsRepository, CommentsRepository>();
+            services.AddScoped<ICommentsService, CommentsService>();
 
             services.AddSingleton<IGigaChatModerationService>(provider =>
             {
