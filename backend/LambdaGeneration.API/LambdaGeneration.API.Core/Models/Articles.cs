@@ -10,6 +10,7 @@ namespace LambdaGeneration.API.Core.Models
 {
     public class Articles
     {
+        //Для создания
         private Articles(Guid article_id,
             string article_title,
             string article_content,
@@ -26,6 +27,7 @@ namespace LambdaGeneration.API.Core.Models
             AuthorID = author_id;
         }
 
+        //Для мэпинга
         private Articles(Guid article_id,
             string article_title,
             string article_content,
