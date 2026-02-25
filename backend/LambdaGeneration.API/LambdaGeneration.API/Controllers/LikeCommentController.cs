@@ -1,4 +1,5 @@
 ﻿using LambdaGeneration.API.Application.Interfaces.Services;
+using LambdaGeneration.API.Application.Services;
 using LambdaGeneration.API.DTO.Response;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -7,13 +8,15 @@ namespace LambdaGeneration.API.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class LikeController : ControllerBase
+    public class LikeCommentController : ControllerBase
     {
-        private readonly ILikeServices _likeServices;
+        private readonly ILikeCommentService _likeCommentService;
+        private readonly ILogger<LikeCommentController> _logger;
 
-        public LikeController(ILikeServices likeServices)
+        public LikeCommentController(ILikeCommentService likeCommentService, ILogger<LikeCommentController> logger)
         {
-            _likeServices = likeServices;
+            _likeCommentService = likeCommentService;
+            _logger = logger;
         }
 
         [Authorize]
@@ -22,11 +25,12 @@ namespace LambdaGeneration.API.Controllers
         {
             try
             {
-                int countLikes = await _likeServices.Like(id, GetUserID());
+                int countLikes = await _likeCommentService.Like(id, GetUserID());
                 return Ok(new LikesCount(countLikes));
             }
             catch (Exception ex)
             {
+                _logger.LogWarning("Попытка лайкнуть уже лайкнутый комментарий");
                 return BadRequest(ex.Message);
             }
         }
@@ -37,25 +41,12 @@ namespace LambdaGeneration.API.Controllers
         {
             try
             {
-                int countLikes = await _likeServices.UnLike(id, GetUserID());
+                int countLikes = await _likeCommentService.UnLike(id, GetUserID());
                 return Ok(new LikesCount(countLikes));
             }
             catch (Exception ex)
             {
-                return BadRequest(ex.Message);
-            }
-        }
-
-        [HttpGet("getLikes/{id:guid}")]
-        public async Task<ActionResult<LikesCount>> GetCountLikes(Guid id)
-        {
-            try
-            {
-                int countLikes = await _likeServices.GetCountLikes(id);
-                return Ok(new LikesCount(countLikes));
-            }
-            catch (Exception ex)
-            {
+                _logger.LogWarning("Попытка убрать лайк, который он не ставили на комментарий");
                 return BadRequest(ex.Message);
             }
         }
@@ -66,7 +57,7 @@ namespace LambdaGeneration.API.Controllers
         {
             try
             {
-                bool isLikedStatus = await _likeServices.IsArticleLiked(id, GetUserID());
+                bool isLikedStatus = await _likeCommentService.IsCommentLiked(id, GetUserID());
 
                 return Ok(new IsLikedResponse(isLikedStatus));
             }

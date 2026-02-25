@@ -42,6 +42,73 @@ namespace LambdaGeneration.API.Application.Services
             AddPattern(@"\bdamn\b");
             AddPattern(@"\bcunt\b");
 
+            AddPattern(@".*[гg][аaа][вv][нn][оo0]\w*.*");      // говно
+            AddPattern(@".*[рp][аaа][кkк][оo0][лl]\w*.*");    // ракoл (гомосек)
+            AddPattern(@".*[пp][иi][дd][аaа][рp][аaа][сc]\w*.*"); // пидорас
+            AddPattern(@".*[мm][уy][дd][аaа][кkк]\w*.*");      // мудак
+            AddPattern(@".*[гg][нn][иi][дd][аaа]\w*.*");       // гнида
+            AddPattern(@".*[тt][вv][аaа][рp][ьь]\w*.*");       // тварь
+            AddPattern(@".*[мm][уy][сc][оo0][рp]\w*.*");       // мусор (в значении "полиция")
+            AddPattern(@".*[пp][еe][дd][аaа][лl]\w*.*");       // педал (педофил)
+            AddPattern(@".*[гg][еe][йy]\w*.*");                 // гей
+            AddPattern(@".*[лl][еe][з3][бb][иi][аaа][нn]\w*.*"); // лесбиян
+
+            AddPattern(@".*[хx][аa][з3][яя][еe][вv][аa]\w*.*"); // хазяева (оскорбление)
+            AddPattern(@".*[жж][иi][дd]\w*.*");                 // жид (оскорбление евреев)
+            AddPattern(@".*[хx][аa][чч]\w*.*");                  // хач (оскорбление кавказцев)
+            AddPattern(@".*[чч][уy][рp][кk][аa]\w*.*");          // чурка (оскорбление азиатов)
+            AddPattern(@".*[нn][иi][гg][еe][рp]\w*.*");          // нигер
+            AddPattern(@".*[пp][оo][нn][еe][дd][еe][лl][ьь][нn][иi][кk]\w*.*"); // понедельник (кодовое)
+
+            AddPattern(@".*[тt][еe][рp][аa][кk][тt]\w*.*");      // теракт
+            AddPattern(@".*[вv][зз][рp][ыы][вv]\w*.*");          // взрыв
+            AddPattern(@".*[уy][бb][иi][йy][сc][тt][вv][оo]\w*.*"); // убийство
+            AddPattern(@".*[рp][аa][сc][сc][тt][рp][еe][лl]\w*.*"); // расстрел
+            AddPattern(@".*[пp][аa][кk][еe][тt]\w*.*");          // пакет (возможно, оружие)
+
+            AddPattern(@".*[нn][аa][рp][кk][оo][тt][иi][кk][иi]\w*.*"); // наркотики
+            AddPattern(@".*[тt][рp][аa][вv][аa]\w*.*");            // трава (марихуана)
+            AddPattern(@".*[шш][ыы][рp][еe][вv][оo]\w*.*");        // ширево
+            AddPattern(@".*[кk][оo][кk][сc]\w*.*");                // кокс (кокаин)
+            AddPattern(@".*[гg][еe][рp][оo][иi][нn]\w*.*");        // героин
+            AddPattern(@".*[сc][пp][аa][йy][сc]\w*.*");            // спайс
+            AddPattern(@".*[мm][дd][мm][аa]\w*.*");                // МДМА
+
+            AddPattern(@".*[пp][оo][рp][нn][оo]\w*.*");           // порно
+            AddPattern(@".*[сc][еe][кk][сc]\w*.*");               // секс
+            AddPattern(@".*[пp][рp][оo][сc][тt][иi][тt][уy][тt][кk][иi]\w*.*"); // проститутки
+            AddPattern(@".*[иi][нn][тt][иi][мm]\w*.*");            // интим
+            AddPattern(@".*[эe][сc][кk][оo][рp][тt]\w*.*");        // эскорт
+
+            AddPattern(@"\bnazi\w*\b");
+            AddPattern(@"\bfaggot\w*\b");
+            AddPattern(@"\brapist\w*\b");
+            AddPattern(@"\bmurder\w*\b");
+            AddPattern(@"\bkill\w*\b");
+            AddPattern(@"\bterrorist\w*\b");
+            AddPattern(@"\bisis\b");
+            AddPattern(@"\bal qaeda\b");
+            AddPattern(@"\bhitler\b");
+            AddPattern(@"\bwhite power\b");
+
+            AddPattern(@".*[лl][оo][хx]\w*.*");                  // лох
+            AddPattern(@".*[пp][оo][дd][оo][нn][оo][кk]\w*.*");   // подонок
+            AddPattern(@".*[сc][кk][оo][тt][иi][нn][аa]\w*.*");   // скотина
+            AddPattern(@".*[сc][вv][оo][лl][оo][чч]\w*.*");       // сволочь
+            AddPattern(@".*[мm][еe][рp][зз][аa][вv][еe][цc]\w*.*"); // мерзавец
+
+            AddPattern(@".*[уy][бb][еe][йy]\w*.*");               // убей
+            AddPattern(@".*[вv][зз][оo][рp][вv][иi]\w*.*");       // взорви
+            AddPattern(@".*[уy][нn][иi][чч][тt][оo][жж][ьь]\w*.*"); // уничтожь
+            AddPattern(@".*[сc][жж][иi][гg][аa][йy]\w*.*");       // сжигай
+            AddPattern(@".*[рp][аa][сc][пp][иi][лl][иi]\w*.*");   // распили
+
+            AddPattern(@".*[хx][аa][чч][иi][кk]\w*.*");           // хачик
+            AddPattern(@".*[чч][уy][рp][кk][аa]\w*.*");           // чурка
+            AddPattern(@".*[нn][еe][гg][рp]\w*.*");               // негр
+            AddPattern(@".*[жж][иi][дd][оo][вv][сc][кk][иi][йy]\w*.*"); // жидовский
+            AddPattern(@".*[цc][вv][иi][лl][ьь][нn][ыy][еe]\w*.*"); // цвильные (оскорбление)
+
         }
 
         private void AddPattern(string pattern, RegexOptions options = RegexOptions.IgnoreCase)
@@ -79,6 +146,26 @@ namespace LambdaGeneration.API.Application.Services
 
                 return result;
             });
+        }
+
+        public async Task<ModerationRegex> ModerationComment(string content)
+        {
+            var res = new ModerationRegex();
+            var parts = new List<ModerationRegex>();
+
+            parts.Add(await ModerateContent(content));
+
+            foreach (var part in parts)
+            {
+                res.Reason.AddRange(part.Reason);
+            }
+
+            res.IsApproved = parts.All(p => p.IsApproved);
+
+            if (res.Reason.Count > 0)
+                res.Suggestions = "Удалите недопустимые слова из комментария!";
+
+            return res;
         }
 
 
