@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using LambdaGeneration.API.Date;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -12,9 +13,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace LambdaGeneration.API.Date.Migrations
 {
     [DbContext(typeof(LambdaGenerationDbContext))]
-    partial class LambdaGenerationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260225171022_LikeCommets")]
+    partial class LikeCommets
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

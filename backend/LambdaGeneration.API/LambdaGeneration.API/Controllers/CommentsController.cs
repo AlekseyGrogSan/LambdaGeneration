@@ -13,6 +13,7 @@ namespace LambdaGeneration.API.Controllers
     {
         private readonly ILogger<CommentsController> _logger;
         private readonly ICommentsService _commentsService;
+        private readonly IRegexModerationService _regexModeration;
         private Guid GetUserID()
         {
             var userClaims = User.FindFirst("UserId")?.Value;
@@ -24,10 +25,11 @@ namespace LambdaGeneration.API.Controllers
             return userId;
         }
 
-        public CommentsController(ILogger<CommentsController> logger, ICommentsService commentsService) 
+        public CommentsController(ILogger<CommentsController> logger, ICommentsService commentsService, IRegexModerationService regexModeration) 
         {
             _logger = logger;
             _commentsService = commentsService;
+            _regexModeration = regexModeration;
         }
 
         [HttpPost("create-comment")]
@@ -36,7 +38,7 @@ namespace LambdaGeneration.API.Controllers
         {
             try
             {
-                var moderation = true;
+                var moderation = _regexModeration.ModerationComment(request.Content).Result.IsApproved;
 
                 var comment = await _commentsService.CreateCommentAsync(request.ArticleId, GetUserID(), request.Content, request.ParentId, moderation);
 
@@ -99,7 +101,9 @@ namespace LambdaGeneration.API.Controllers
         {
             try
             {
-                var commentUpdate = await _commentsService.UpdateCommentByIdAsync(request.CommentId, GetUserID(), request.content, true);
+                var moderation = _regexModeration.ModerationComment(request.content).Result.IsApproved;
+
+                var commentUpdate = await _commentsService.UpdateCommentByIdAsync(request.CommentId, GetUserID(), request.content, moderation);
 
                 if (commentUpdate == null)
                     return BadRequest("Ошибка на стороне сервера при редактировании комментария");

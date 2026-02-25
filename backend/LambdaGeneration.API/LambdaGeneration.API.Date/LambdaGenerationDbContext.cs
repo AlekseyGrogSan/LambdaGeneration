@@ -14,7 +14,7 @@ namespace LambdaGeneration.API.Date
         public DbSet<UsersEntity> Users { get; set; }
         public DbSet<LikeEntity> Likes { get; set; }
         public DbSet<CommentsEntity> Comments { get; set; }
-
+        public DbSet<LikeCommentEntity> LikeComment { get; set; }
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
@@ -22,6 +22,7 @@ namespace LambdaGeneration.API.Date
             modelBuilder.ApplyConfiguration<UsersEntity>(new Configurations.UsersConfiguration());
             modelBuilder.ApplyConfiguration<LikeEntity>(new Configurations.LikesConfiguration());
             modelBuilder.ApplyConfiguration<CommentsEntity>(new Configurations.CommentsConfiguration());
+            modelBuilder.ApplyConfiguration<LikeCommentEntity>(new Configurations.LikeCommentConfiguration());
             modelBuilder.ApplyConfigurationsFromAssembly(typeof(LambdaGenerationDbContext).Assembly);
         }
 
