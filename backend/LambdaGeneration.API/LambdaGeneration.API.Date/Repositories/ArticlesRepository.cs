@@ -1,6 +1,7 @@
 ﻿using LambdaGeneration.API.Core.Models;
 using LambdaGeneration.API.Date.Entities;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata.Conventions;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -139,7 +140,6 @@ namespace LambdaGeneration.API.Date.Repositories
 
         public async Task<List<Articles>> GetArticlesPage(int pageNumber, int pageSize)
         {
-            // Расчет смещения
             int skip = (pageNumber - 1) * pageSize;
 
             return await _context.Articles
@@ -157,6 +157,58 @@ namespace LambdaGeneration.API.Date.Repositories
                     a.CreatedDate,
                     a.CountLikes,
                     a.CountComments))
+                .ToListAsync();
+        }
+
+        public async Task<List<Articles>> GetRecommentationArticles(Guid userId, int page, int countPages)
+        {
+            var relevatArticlesTags = await _context.Likes.AsNoTracking()
+                .Where(l => l.AuthorId == userId)
+                .SelectMany(l => l.Articles.ArticleTags)
+                .Distinct()
+                .ToListAsync();
+
+            if (!relevatArticlesTags.Any())
+            {
+                return await GetRandomArticles(page, countPages);
+            }
+            int skip = (page - 1) * countPages;
+
+            return await _context.Articles
+                // Сортировка от новых к старым
+                .Where(a => a.ArticleTags.Any(tag => relevatArticlesTags.Contains(tag)))
+                .Skip(skip) // Пропустить
+                .Take(countPages) // Взять
+                .Select(a => Articles.Map(
+                    a.ArticleID,
+                    a.ArticleTitle,
+                    a.ArticleContent,
+                    a.ArticlePreview,
+                    a.AuthorID,
+                    a.ArticleTags,
+                    a.CreatedDate,
+                    a.CountLikes))
+                .ToListAsync();
+        }
+
+        public async Task<List<Articles>> GetRandomArticles(int page, int countPages)
+        {
+            int skip = (page - 1) * countPages;
+
+            return await _context.Articles
+                // Берем рандомные статьи как дефолтное значение
+                .OrderBy(a => EF.Functions.Random())
+                .Skip(skip) // Пропустить
+                .Take(countPages) // Взять
+                .Select(a => Articles.Map(
+                    a.ArticleID,
+                    a.ArticleTitle,
+                    a.ArticleContent,
+                    a.ArticlePreview,
+                    a.AuthorID,
+                    a.ArticleTags,
+                    a.CreatedDate,
+                    a.CountLikes))
                 .ToListAsync();
         }
     }

@@ -11,5 +11,6 @@ namespace LambdaGeneration.API.Date.Entities
         public Guid Id { get; set; }
         public Guid ArticleId { get; set; }
         public Guid AuthorId { get; set; }
+        public ArticlesEntity Articles { get; set; }
     }
 }

@@ -15,5 +15,7 @@ namespace LambdaGeneration.API.Date.Repositories
         Task<List<Articles>> GetAllArticlesUser(Guid author_id);
 
         Task<List<Articles>> GetArticlesPage(int pageNumber, int pageSize);
+        Task<List<Articles>> GetRecommentationArticles(Guid userId, int page, int countPages);
+        Task<List<Articles>> GetRandomArticles(int page, int countPages);
     }
 }

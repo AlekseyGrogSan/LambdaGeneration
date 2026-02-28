@@ -74,15 +74,5 @@ namespace LambdaGeneration.API.Application.Services
             var all_articles = await _articlesRepository.GetAllArticlesUser(author_id);
             return all_articles;    
         }
-
-        public async Task<List<Articles>> GetArticlesPage(int pageNumber, int pageSize)
-        {
-            if (pageNumber < 1 || pageSize < 1)
-            {
-                throw new ArgumentException("Page number and size must be positive.");
-            }
-
-            return await _articlesRepository.GetArticlesPage(pageNumber, pageSize);
-        }
     }
 }

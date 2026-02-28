@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using LambdaGeneration.API.Date;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -12,9 +13,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace LambdaGeneration.API.Date.Migrations
 {
     [DbContext(typeof(LambdaGenerationDbContext))]
-    partial class LambdaGenerationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260228102403_ConectLikeAndArticle")]
+    partial class ConectLikeAndArticle
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -64,72 +67,6 @@ namespace LambdaGeneration.API.Date.Migrations
                     b.HasIndex("AuthorID");
 
                     b.ToTable("Articles");
-                });
-
-            modelBuilder.Entity("LambdaGeneration.API.Date.Entities.CommentsEntity", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<Guid>("ArticleId")
-                        .HasColumnType("uuid");
-
-                    b.Property<Guid>("AuthorId")
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("Content")
-                        .IsRequired()
-                        .HasMaxLength(1000)
-                        .HasColumnType("character varying(1000)");
-
-                    b.Property<int>("CountLikes")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer")
-                        .HasDefaultValue(0);
-
-                    b.Property<DateTime>("DatePublish")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<bool>("IsApproved")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("boolean")
-                        .HasDefaultValue(false);
-
-                    b.Property<bool>("IsUpdate")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("boolean")
-                        .HasDefaultValue(false);
-
-                    b.Property<Guid?>("ParentCommentId")
-                        .HasColumnType("uuid");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex(new[] { "ArticleId" }, "IX_Article_Id");
-
-                    b.HasIndex(new[] { "AuthorId" }, "IX_Author_Id");
-
-                    b.HasIndex(new[] { "ParentCommentId" }, "IX_Parent_Comment");
-
-                    b.ToTable("Comments");
-                });
-
-            modelBuilder.Entity("LambdaGeneration.API.Date.Entities.LikeCommentEntity", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<Guid>("AuthorId")
-                        .HasColumnType("uuid");
-
-                    b.Property<Guid>("CommentId")
-                        .HasColumnType("uuid");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("LikeComment");
                 });
 
             modelBuilder.Entity("LambdaGeneration.API.Date.Entities.LikeEntity", b =>
@@ -231,21 +168,6 @@ namespace LambdaGeneration.API.Date.Migrations
             modelBuilder.Entity("LambdaGeneration.API.Date.Entities.ArticlesEntity", b =>
                 {
                     b.Navigation("Likes");
-                });
-
-            modelBuilder.Entity("LambdaGeneration.API.Date.Entities.CommentsEntity", b =>
-                {
-                    b.HasOne("LambdaGeneration.API.Date.Entities.CommentsEntity", "ParentComment")
-                        .WithMany("Replies")
-                        .HasForeignKey("ParentCommentId")
-                        .OnDelete(DeleteBehavior.Restrict);
-
-                    b.Navigation("ParentComment");
-                });
-
-            modelBuilder.Entity("LambdaGeneration.API.Date.Entities.CommentsEntity", b =>
-                {
-                    b.Navigation("Replies");
                 });
 
             modelBuilder.Entity("LambdaGeneration.API.Date.Entities.UsersEntity", b =>
