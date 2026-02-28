@@ -10,6 +10,6 @@ namespace LambdaGeneration.API.Application.Interfaces.Services
         Task<Articles?> UpdateTags(Guid article_id, List<int> new_tags);
         Task<List<Articles>> GetAllArticlesUser(Guid author_id);
         Task<List<Articles>> GetArticlesPage(int pageNumber, int pageSize);
-        Task<List<Articles>> SearchArticlesAsync(string? searchTerm, int pageNumber);
+        Task<List<Articles>> SearchArticlesAsync(string? searchTerm, int pageNumber, int countPages);
     }
 }

@@ -232,11 +232,11 @@ namespace LambdaGeneration.API.Controllers
         }
 
         [HttpGet("search")]
-        public async Task<ActionResult<GetArticlesResponse>> SearchArticles([FromQuery] string? q, [FromQuery] int page = 1)
+        public async Task<ActionResult<GetArticlesResponse>> SearchArticles([FromQuery] string? q, [FromQuery] int page = 1, [FromQuery] int countPages = 10)
         {
             try
             {
-                var articles = await _articlesService.SearchArticlesAsync(q, page);
+                var articles = await _articlesService.SearchArticlesAsync(q, page, countPages);
 
                 if (articles == null || !articles.Any())
                     return NotFound(new { message = $"Статьи по вашему запросу не найдены" });

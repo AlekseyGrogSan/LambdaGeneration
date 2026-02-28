@@ -1,6 +1,7 @@
 ﻿using LambdaGeneration.API.Core.Models;
 using LambdaGeneration.API.Date.Entities;
 using Microsoft.EntityFrameworkCore;
+using Nestor.Nyms;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -157,23 +158,28 @@ namespace LambdaGeneration.API.Date.Repositories
 
         public async Task<List<Articles>> SearchArticles(string searchTerm, int pageNumber, int pageSize = 10)
         {
-            // 1. Расчет смещения
-            int skip = (pageNumber - 1) * pageSize;
-
-            // 2. Базовый запрос
-            var query = _context.Articles.AsNoTracking();
-
-            // 3. Фильтрация (если поисковый запрос не пустой)
-            if (!string.IsNullOrWhiteSpace(searchTerm))
+            //Фильтрация (если поисковый запрос не пустой)
+            if (string.IsNullOrWhiteSpace(searchTerm))
             {
-                // Приводим к нижнему регистру для надежности
-                string term = searchTerm.Trim().ToLower();
-
-                query = query.Where(a => a.ArticleTitle.ToLower().Contains(term) ||
-                                         a.ArticleContent.ToLower().Contains(term));
+                return null;
             }
 
-            // 4. Сортировка, пагинация и маппинг
+            int skip = (pageNumber - 1) * pageSize;
+
+            var query = _context.Articles.AsNoTracking();
+
+            // Приводим к нижнему регистру для надежности
+            string stringTerms = searchTerm.Trim().ToLower();
+            List<string> terms = stringTerms.Split(new[] { ',', ' ', '!', '?' }, StringSplitOptions.RemoveEmptyEntries).ToList();
+
+            var expandedTerms = await ExpandTerms(terms);
+
+            // Поиск по оригинальным терминам + синонимам
+            query = query.Where(a =>
+                expandedTerms.Any(t => a.ArticleTitle.ToLower().Contains(t)) ||
+                expandedTerms.Any(t => a.ArticleContent.ToLower().Contains(t))
+            );
+
             return await query
                 .OrderByDescending(a => a.CreatedDate)
                 .Skip(skip)
@@ -188,6 +194,66 @@ namespace LambdaGeneration.API.Date.Repositories
                     a.CreatedDate,
                     a.CountLikes))
                 .ToListAsync();
+        }
+
+        // Улучшенный метод расширения терминов
+        private async Task<List<string>> ExpandTerms(List<string> terms)
+        {
+            var synonymDictionary = new Dictionary<string, List<string>>
+            {
+                // Python - теперь есть все три варианта как ключи!
+                ["python"] = new() { "python", "питон", "пайтон" },
+                ["питон"] = new() { "python", "питон", "пайтон" },
+                ["пайтон"] = new() { "python", "питон", "пайтон" },
+
+                // C#
+                ["c#"] = new() { "c#", "си шарп", "csharp", "сишарп" },
+                ["csharp"] = new() { "c#", "си шарп", "csharp", "сишарп" },
+                ["сишарп"] = new() { "c#", "си шарп", "csharp", "сишарп" },
+                ["си шарп"] = new() { "c#", "си шарп", "csharp", "сишарп" },
+
+                // Java
+                ["java"] = new() { "java", "джава" },
+                ["джава"] = new() { "java", "джава" },
+
+                //С++
+                ["С++"] = new() { "C++","сиплюсплюс", "плюсики", "cplusplus" },
+                ["сиплюсплюс"] = new() { "C++", "сиплюсплюс", "плюсики", "cplusplus" },
+                ["плюсы"] = new() { "C++", "сиплюсплюс", "плюсики", "cplusplus" },
+                ["плюсики"] = new() { "C++", "сиплюсплюс", "плюсики", "cplusplus" },
+                ["cplusplus"] = new() { "C++", "сиплюсплюс", "плюсики", "cplusplus" },
+
+                // JavaScript
+                ["javascript"] = new() { "javascript", "js", "джаваскрипт" },
+                ["js"] = new() { "javascript", "js", "джаваскрипт" },
+                ["джаваскрипт"] = new() { "javascript", "js", "джаваскрипт" },
+
+                // .NET
+                [".net"] = new() { ".net", "dotnet", "дотнет" },
+                ["dotnet"] = new() { ".net", "dotnet", "дотнет" },
+                ["дотнет"] = new() { ".net", "dotnet", "дотнет" },
+
+                // IT
+                ["it"] = new() { "it", "айти" },
+                ["айти"] = new() { "it", "айти" }
+            };
+
+            var expanded = new HashSet<string>();
+
+            foreach (var term in terms)
+            {
+                if (synonymDictionary.TryGetValue(term, out var synonyms))
+                { 
+                    foreach (var synonym in synonyms)
+                        expanded.Add(synonym.ToLower());
+                }
+                else
+                {
+                    expanded.Add(term);
+                }
+            }
+
+            return expanded.ToList();
         }
     }
 }
