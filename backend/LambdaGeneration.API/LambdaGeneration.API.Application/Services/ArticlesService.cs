@@ -81,7 +81,7 @@ namespace LambdaGeneration.API.Application.Services
                 throw new ArgumentException("Article not exist");
             return article;
         }
-        public async Task<List<Articles>> SearchArticlesAsync(string searchTerm, int pageNumber)
+        public async Task<List<Articles>> SearchArticlesAsync(string searchTerm, int pageNumber, int countPages)
         {
             if (string.IsNullOrEmpty(searchTerm))
             {
@@ -92,7 +92,7 @@ namespace LambdaGeneration.API.Application.Services
                 throw new ArgumentException("Page number must be positive.");
             }
 
-            return await _articlesRepository.SearchArticles(searchTerm, pageNumber);
+            return await _articlesRepository.SearchArticles(searchTerm, pageNumber, countPages);
         }
     }
 }

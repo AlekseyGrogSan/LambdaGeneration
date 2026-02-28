@@ -12,5 +12,6 @@ namespace LambdaGeneration.API.Application.Interfaces.Services
         Task<List<Articles>> GetArticlesPage(int pageNumber, int pageSize);
         Task<List<Articles>> SearchArticlesAsync(string? searchTerm, int pageNumber);
         Task<Articles> GetArticleByIdAsync(Guid articleId);
+        Task<List<Articles>> SearchArticlesAsync(string? searchTerm, int pageNumber, int countPages);
     }
 }
