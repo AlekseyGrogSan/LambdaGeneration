@@ -154,5 +154,40 @@ namespace LambdaGeneration.API.Date.Repositories
                     a.CountLikes))
                 .ToListAsync();
         }
+
+        public async Task<List<Articles>> SearchArticles(string searchTerm, int pageNumber, int pageSize = 10)
+        {
+            // 1. Расчет смещения
+            int skip = (pageNumber - 1) * pageSize;
+
+            // 2. Базовый запрос
+            var query = _context.Articles.AsNoTracking();
+
+            // 3. Фильтрация (если поисковый запрос не пустой)
+            if (!string.IsNullOrWhiteSpace(searchTerm))
+            {
+                // Приводим к нижнему регистру для надежности
+                string term = searchTerm.Trim().ToLower();
+
+                query = query.Where(a => a.ArticleTitle.ToLower().Contains(term) ||
+                                         a.ArticleContent.ToLower().Contains(term));
+            }
+
+            // 4. Сортировка, пагинация и маппинг
+            return await query
+                .OrderByDescending(a => a.CreatedDate)
+                .Skip(skip)
+                .Take(pageSize)
+                .Select(a => Articles.Map(
+                    a.ArticleID,
+                    a.ArticleTitle,
+                    a.ArticleContent,
+                    a.ArticlePreview,
+                    a.AuthorID,
+                    a.ArticleTags,
+                    a.CreatedDate,
+                    a.CountLikes))
+                .ToListAsync();
+        }
     }
 }

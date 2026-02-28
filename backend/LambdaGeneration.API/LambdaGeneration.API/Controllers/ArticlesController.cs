@@ -1,4 +1,5 @@
 ﻿using LambdaGeneration.API.Application.Interfaces.Services;
+using LambdaGeneration.API.Application.Services;
 using LambdaGeneration.API.Core.Enums;
 using LambdaGeneration.API.Core.Models;
 using LambdaGeneration.API.DTO.Request;
@@ -213,6 +214,32 @@ namespace LambdaGeneration.API.Controllers
             try
             {
                 var articles = await _articlesService.GetArticlesPage(page, size);
+
+                return Ok(new GetArticlesResponse(articles.Select(a =>
+                    new GetArticleResponse(a.ArticleID,
+                        a.AuthorID,
+                        a.ArticleTitle,
+                        a.ArticlePreview,
+                        a.ArticleContent,
+                        a.ArticleTags.Select(t => ApiExtensions.FromTags(t)).ToList(),
+                        a.CreatedDate,
+                        a.CountLikes)).ToList()));
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+
+        [HttpGet("search")]
+        public async Task<ActionResult<GetArticlesResponse>> SearchArticles([FromQuery] string? q, [FromQuery] int page = 1)
+        {
+            try
+            {
+                var articles = await _articlesService.SearchArticlesAsync(q, page);
+
+                if (articles == null || !articles.Any())
+                    return NotFound(new { message = $"Статьи по вашему запросу не найдены" });
 
                 return Ok(new GetArticlesResponse(articles.Select(a =>
                     new GetArticleResponse(a.ArticleID,

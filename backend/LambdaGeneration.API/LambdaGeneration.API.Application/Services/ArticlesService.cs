@@ -84,5 +84,18 @@ namespace LambdaGeneration.API.Application.Services
 
             return await _articlesRepository.GetArticlesPage(pageNumber, pageSize);
         }
+        public async Task<List<Articles>> SearchArticlesAsync(string searchTerm, int pageNumber)
+        {
+            if (string.IsNullOrEmpty(searchTerm))
+            {
+                throw new ArgumentException("Search query must not be empty.");
+            }
+            if (pageNumber < 1)
+            {
+                throw new ArgumentException("Page number must be positive.");
+            }
+
+            return await _articlesRepository.SearchArticles(searchTerm, pageNumber);
+        }
     }
 }
