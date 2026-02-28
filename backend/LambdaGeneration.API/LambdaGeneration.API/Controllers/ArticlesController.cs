@@ -21,14 +21,17 @@ namespace LambdaGeneration.API.Controllers
         private readonly IArticlesService _articlesService;
         private readonly IGigaChatModerationService _gaChatModerationService;
         private readonly IRegexModerationService _regexModerationService;
+        private readonly IRecommendationService _recommendationService;
 
         public ArticlesController(IArticlesService articles_service,
             IGigaChatModerationService gigaChatModerationService,
-            IRegexModerationService regexModerationService)
+            IRegexModerationService regexModerationService,
+            IRecommendationService recommendationService)
         {
             _articlesService = articles_service;
             _gaChatModerationService = gigaChatModerationService;
             _regexModerationService = regexModerationService;
+            _recommendationService = recommendationService;
         }
 
         [HttpPost("create")]
@@ -208,11 +211,18 @@ namespace LambdaGeneration.API.Controllers
         }
 
         [HttpGet("getPaginated")]
-        public async Task<ActionResult<GetArticlesResponse>> GetArticlesPage([FromQuery] int page = 1, [FromQuery] int size = 10)
+        public async Task<ActionResult<GetArticlesResponse>> GetArticlesPage([FromQuery] string typePagination = "random", [FromQuery] int page = 1, [FromQuery] int size = 10)
         {
             try
             {
-                var articles = await _articlesService.GetArticlesPage(page, size);
+                List<Articles> articles = typePagination switch
+                {
+                    "recommend" => await _recommendationService.GetRecmmedationArticlesAsync(GetUserID(), page, size),
+                    _ => await _recommendationService.GetRandomArticlesAsync(page, size),
+                };
+
+                if (articles == null || articles.Count == 0)
+                    return BadRequest("Статьи скорее всего отсутсвуют :(((");
 
                 return Ok(new GetArticlesResponse(articles.Select(a =>
                     new GetArticleResponse(a.ArticleID,

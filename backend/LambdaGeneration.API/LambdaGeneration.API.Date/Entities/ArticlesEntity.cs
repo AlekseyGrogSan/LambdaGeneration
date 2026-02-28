@@ -13,5 +13,7 @@ namespace LambdaGeneration.API.Date.Entities
         public int CountLikes { get; set; } = 0;
         public int CountComments { get; set; } = 0;
         public List<int> ArticleTags { get; set; } = new List<int>();
+        //Фиктивный список для связи БД лайков и статей, в бизнес-модели не используется
+        public List<LikeEntity> Likes { get; set; }
     }
 }
