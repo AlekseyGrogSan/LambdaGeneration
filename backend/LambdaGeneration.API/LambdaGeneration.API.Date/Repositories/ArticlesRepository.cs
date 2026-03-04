@@ -162,23 +162,32 @@ namespace LambdaGeneration.API.Date.Repositories
 
         public async Task<List<Articles>> GetRecommentationArticles(Guid userId, int page, int countPages)
         {
-            var relevatArticlesTags = await _context.Likes.AsNoTracking()
+            // 1. Получаем статьи, которые лайкнул пользователь
+            var likedArticles = await _context.Likes
+                .AsNoTracking()
                 .Where(l => l.AuthorId == userId)
-                .SelectMany(l => l.Articles.ArticleTags)
-                .Distinct()
+                .Select(l => l.Articles)
                 .ToListAsync();
 
-            if (!relevatArticlesTags.Any())
+            // 2. Собираем теги в памяти
+            var relevantArticlesTags = likedArticles
+                .SelectMany(a => a.ArticleTags)
+                .Distinct()
+                .ToList();
+
+            if (!relevantArticlesTags.Any())
             {
                 return await GetRandomArticles(page, countPages);
             }
+
             int skip = (page - 1) * countPages;
 
+            // 3. Теперь фильтруем статьи по тегам
             return await _context.Articles
-                // Сортировка от новых к старым
-                .Where(a => a.ArticleTags.Any(tag => relevatArticlesTags.Contains(tag)))
-                .Skip(skip) // Пропустить
-                .Take(countPages) // Взять
+                .Where(a => a.ArticleTags.Any(tag => relevantArticlesTags.Contains(tag)))
+                .OrderByDescending(a => a.CreatedDate)
+                .Skip(skip)
+                .Take(countPages)
                 .Select(a => Articles.Map(
                     a.ArticleID,
                     a.ArticleTitle,

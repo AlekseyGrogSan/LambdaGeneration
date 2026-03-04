@@ -508,8 +508,9 @@ const PostPage = () => {
     const [currentUser, setCurrentUser] = useState(null);
     
     const [pageNumber, setPageNumber] = useState(1);
-    const [hasMore, setHasMore] = useState(true);
-    const pageSize = 5;
+    const [hasMore, setHasMore] = useState(true); // Есть ли еще данные для загрузки
+    const pageSize = 10; // Размер страницы. Убедитесь, что он соответствует бэкенду.
+    const [paginationType, setPaginationType] = useState('random'); // random | recommend
     
     const [isLoading, setIsLoading] = useState(false); 
     const [error, setError] = useState(null);
@@ -616,6 +617,16 @@ const PostPage = () => {
         setShouldOpenComments(false);
     };
 
+    const handlePaginationTypeChange = (type) => {
+        if (type === paginationType || isLoading) return;
+
+        setPaginationType(type);
+        setArticles([]);
+        setPageNumber(1);
+        setHasMore(true);
+        fetchArticlesPage(1, type);
+    };
+
     const handleLogout = async () => {
         try {
             await fetch(`${API_BASE_URL}/Users/logout`, { 
@@ -705,16 +716,18 @@ const PostPage = () => {
     };
 
 
-    const fetchArticlesPage = async (page) => {
+    // ✅ НОВАЯ ФУНКЦИЯ ЗАГРУЗКИ СТРАНИЦЫ
+    const fetchArticlesPage = async (page, type = paginationType) => {
+        // Защита от повторной загрузки или загрузки несуществующих страниц
         if (isLoading || (!hasMore && page > pageNumber)) return; 
 
         setIsLoading(true);
         setError(null);
         
         try {
-            const url = `${API_BASE_URL}/Articles/getPaginated?page=${page}&size=${pageSize}`;
-            
-            const response = await fetch(url);
+            const url = `${API_BASE_URL}/Articles/getPaginated?typePagination=${type}&page=${page}&size=${pageSize}`;
+            const fetchOptions = { credentials: 'include' };
+            const response = await fetch(url, fetchOptions);
             if (!response.ok) {
                 throw new Error(`Ошибка загрузки статей: ${response.statusText}`);
             }
@@ -1247,12 +1260,93 @@ const PostPage = () => {
                     scrollbarWidth: 'none', 
                     display: 'flex', 
                     flexDirection: 'column', 
-                    alignItems: 'center', 
-                    scrollBehavior: 'smooth', 
+                    alignItems: 'center',
+                    scrollBehavior: 'smooth',
+                    position: 'relative',
                 }}
                 ref={articlesContainerRef} 
             >
                 
+                {/* ✅ ФИКСИРОВАННЫЙ ПЕРЕКЛЮЧАТЕЛЬ С LIQUID GLASS */}
+                <Box 
+                    sx={{ 
+                        position: 'sticky',
+                        top: 0,
+                        width: '100%',
+                        display: 'flex',
+                        justifyContent: 'center',
+                        pt: 2,
+                        pb: 2,
+                        zIndex: 10,
+                    }}
+                >
+                    <Box sx={{ 
+                        display: 'flex', 
+                        gap: 2,
+                        backdropFilter: 'blur(10px)',
+                        backgroundColor: 'rgba(18, 18, 18, 0.7)',
+                        borderRadius: '30px',
+                        padding: '8px 12px',
+                        border: '1px solid rgba(0, 191, 165, 0.2)',
+                        boxShadow: '0 8px 32px rgba(0, 191, 165, 0.1)',
+                    }}>
+                        <Button
+                            variant={paginationType === 'random' ? 'contained' : 'outlined'}
+                            onClick={() => handlePaginationTypeChange('random')}
+                            sx={{ 
+                                textTransform: 'none',
+                                borderRadius: '25px',
+                                px: 3,
+                                py: 1,
+                                fontWeight: 'bold',
+                                transition: 'all 0.3s ease',
+                                ...(paginationType === 'random' ? {
+                                    backgroundColor: '#00bfa5',
+                                    color: '#000',
+                                    '&:hover': { backgroundColor: '#00d4b4' }
+                                } : {
+                                    borderColor: '#00bfa5',
+                                    color: '#00bfa5',
+                                    '&:hover': { 
+                                        backgroundColor: 'rgba(0, 191, 165, 0.12)',
+                                        borderColor: '#00d4b4',
+                                        color: '#00d4b4'
+                                    }
+                                })
+                            }}
+                        >
+                            Случайные
+                        </Button>
+                        <Button
+                            variant={paginationType === 'recommend' ? 'contained' : 'outlined'}
+                            onClick={() => handlePaginationTypeChange('recommend')}
+                            sx={{ 
+                                textTransform: 'none',
+                                borderRadius: '25px',
+                                px: 3,
+                                py: 1,
+                                fontWeight: 'bold',
+                                transition: 'all 0.3s ease',
+                                ...(paginationType === 'recommend' ? {
+                                    backgroundColor: '#00bfa5',
+                                    color: '#000',
+                                    '&:hover': { backgroundColor: '#00d4b4' }
+                                } : {
+                                    borderColor: '#00bfa5',
+                                    color: '#00bfa5',
+                                    '&:hover': { 
+                                        backgroundColor: 'rgba(0, 191, 165, 0.12)',
+                                        borderColor: '#00d4b4',
+                                        color: '#00d4b4'
+                                    }
+                                })
+                            }}
+                        >
+                            Рекомендации
+                        </Button>
+                    </Box>
+                </Box>
+
                 {isViewingDetailPage && selectedPost ? (
                     <Box sx={{ width: '100%', maxWidth: '680px' }}>
                         <PostDetailPage
