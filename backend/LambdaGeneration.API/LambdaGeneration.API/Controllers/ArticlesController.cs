@@ -234,7 +234,7 @@ namespace LambdaGeneration.API.Controllers
                         a.CreatedDate,
                         a.CountLikes, a.CountComments)).ToList()));
             }
-            catch (ArgumentException ex)
+            catch (Exception ex)
             {
                 return BadRequest(ex.Message);
             }

@@ -14,7 +14,7 @@ namespace LambdaGeneration.API.Date.Configurations
         public void Configure(EntityTypeBuilder<LikeEntity> builder)
         {
             builder.HasKey(like => like.Id);
-            builder.HasOne<ArticlesEntity>()
+            builder.HasOne(l => l.Articles)
                 .WithMany(a => a.Likes)
                 .HasForeignKey(l => l.ArticleId)
                 .OnDelete(DeleteBehavior.Cascade);
