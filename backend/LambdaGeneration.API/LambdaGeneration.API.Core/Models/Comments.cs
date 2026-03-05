@@ -11,7 +11,7 @@ namespace LambdaGeneration.API.Core.Models
     public class Comments
     {
         //Для создания
-        private Comments(Guid id ,Guid authorId, Guid articleId, string content, bool isAprovded, Guid? parentCommId, bool hasReplies)
+        private Comments(Guid id ,Guid authorId, Guid articleId, string content, bool isAprovded, Guid? parentCommId, bool hasReplies_)
         {
             DatePublish = DateTime.UtcNow;
             Id = id; AuthorId = authorId;
@@ -19,7 +19,7 @@ namespace LambdaGeneration.API.Core.Models
             Content = content;
             ParentCommentId = parentCommId;
             IsApproved = isAprovded;
-            hasReplies = hasReplies;
+            hasReplies = hasReplies_;
         }
 
         //Для мэпинга 
@@ -32,12 +32,12 @@ namespace LambdaGeneration.API.Core.Models
             DateTime DatePublish,
             int countLikes,
             bool isUpdate,
-            bool hasReplies
+            bool hasReplies_
             )
         {
             Id = id; AuthorId = authorId;
             ArticleId = articleId; Content = content;
-            hasReplies = hasReplies;
+            hasReplies = hasReplies_;
             ParentCommentId = parentCommId;
             CountLikes = countLikes;
             IsUpdate = isUpdate;

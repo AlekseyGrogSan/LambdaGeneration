@@ -101,6 +101,8 @@ namespace LambdaGeneration.API.Controllers
         {
             try
             {
+                if (string.IsNullOrEmpty(request.content))
+                    return BadRequest();
                 var moderation = _regexModeration.ModerationComment(request.content).Result.IsApproved;
 
                 var commentUpdate = await _commentsService.UpdateCommentByIdAsync(request.CommentId, GetUserID(), request.content, moderation);
