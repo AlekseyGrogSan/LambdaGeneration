@@ -62,7 +62,8 @@ namespace LambdaGeneration.API.Date.Repositories
                 article_entity.AuthorID,
                 article_entity.ArticleTags,
                 article_entity.CreatedDate,
-                article_entity.CountLikes
+                article_entity.CountLikes,
+                article_entity.CountComments
                 );
         }
 
@@ -88,7 +89,8 @@ namespace LambdaGeneration.API.Date.Repositories
                 article_entity.AuthorID,
                 article_entity.ArticleTags,
                 article_entity.CreatedDate,
-                article_entity.CountLikes
+                article_entity.CountLikes,
+                article_entity.CountComments
             );
         }
 
@@ -114,7 +116,8 @@ namespace LambdaGeneration.API.Date.Repositories
                 article_entity.AuthorID,
                 article_entity.ArticleTags,
                 article_entity.CreatedDate,
-                article_entity.CountLikes
+                article_entity.CountLikes,
+                article_entity.CountComments
             );
         }
 
@@ -129,7 +132,8 @@ namespace LambdaGeneration.API.Date.Repositories
                 a.AuthorID,
                 a.ArticleTags,
                 a.CreatedDate,
-                a.CountLikes)).
+                a.CountLikes,
+                a.CountComments)).
                 ToListAsync();
         }
 
@@ -151,7 +155,8 @@ namespace LambdaGeneration.API.Date.Repositories
                     a.AuthorID,
                     a.ArticleTags,
                     a.CreatedDate,
-                    a.CountLikes))
+                    a.CountLikes,
+                    a.CountComments))
                 .ToListAsync();
         }
     }

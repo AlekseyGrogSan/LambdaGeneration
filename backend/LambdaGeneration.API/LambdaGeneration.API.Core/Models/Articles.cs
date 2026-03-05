@@ -25,6 +25,7 @@ namespace LambdaGeneration.API.Core.Models
             ArticlePreview = article_preview;
             ArticleTags = article_tags;
             AuthorID = author_id;
+            CountComments = 0;
         }
 
         //Для мэпинга
@@ -35,7 +36,8 @@ namespace LambdaGeneration.API.Core.Models
             Guid author_id, 
             List<int> article_tags,
             DateTime created_date, 
-            int countLikes) 
+            int countLikes,
+            int countComments) 
         {
             CreatedDate = created_date;
             ArticleID = article_id;
@@ -57,6 +59,7 @@ namespace LambdaGeneration.API.Core.Models
         public DateTime CreatedDate { get; }
         public List<int> ArticleTags { get; } = new List<int>();
         public int CountLikes { get; } = 0;
+        public int CountComments { get; } = 0;
 
         public static Articles Create(Guid article_id,
             string article_title,
@@ -81,7 +84,8 @@ namespace LambdaGeneration.API.Core.Models
             Guid author_id,
             List<int> article_tags,
             DateTime date_time,
-            int countLikes)
+            int countLikes,
+            int countComments)
         {
             return new Articles(article_id,
             article_title,
@@ -90,7 +94,8 @@ namespace LambdaGeneration.API.Core.Models
             author_id, 
             article_tags,
             date_time,
-            countLikes);
+            countLikes,
+            countComments);
         }
     }
 }

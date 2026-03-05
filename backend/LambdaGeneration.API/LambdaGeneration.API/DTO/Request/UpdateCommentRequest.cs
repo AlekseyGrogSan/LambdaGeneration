@@ -8,6 +8,6 @@ namespace LambdaGeneration.API.DTO.Request
         public Guid CommentId { get; set; }
         [Required]
         [StringLength(1000, MinimumLength = 5)]
-        public string content;
+        public string content { get; set; }
     }
 }

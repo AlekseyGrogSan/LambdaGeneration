@@ -53,6 +53,7 @@ const PostCard = ({
     isLiked, 
     onClick, 
     onLike, 
+    onCommentClick,
     tags = [],
     sx = {} // <-- Принимаем кастомные стили, включая фиксированную высоту
 }) => {
@@ -198,7 +199,15 @@ const PostCard = ({
 
                     {/* Комментарии */}
                     <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                        <IconButton sx={{ color: '#00bfa5'}} onClick={(e) => { e.stopPropagation(); console.log('Коммент!'); }}>
+                        <IconButton
+                            sx={{ color: '#00bfa5'}}
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                if (onCommentClick) {
+                                    onCommentClick();
+                                }
+                            }}
+                        >
                             <ChatBubbleOutlineIcon sx={{ fontSize: 30 }} />
                         </IconButton>
                         <Typography variant="subtitle1" sx={{ color: 'white', fontWeight: 'bold' }}>

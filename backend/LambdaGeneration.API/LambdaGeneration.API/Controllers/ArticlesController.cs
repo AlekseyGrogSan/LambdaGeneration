@@ -150,7 +150,7 @@ namespace LambdaGeneration.API.Controllers
                     ArticleTagsResponse.Add(ApiExtensions.FromTags(article.ArticleTags[i]));
                 }
 
-                return Ok(new UpdateArticlesResponse(article.ArticleID, article.ArticleTitle, article.ArticlePreview, article.ArticleContent, ArticleTagsResponse, article.CreatedDate, article.CountLikes));
+                return Ok(new UpdateArticlesResponse(article.ArticleID, article.ArticleTitle, article.ArticlePreview, article.ArticleContent, ArticleTagsResponse, article.CreatedDate, article.CountLikes, article.CountComments));
             }   
             catch (Exception ex)
             { 
@@ -172,7 +172,7 @@ namespace LambdaGeneration.API.Controllers
             var articles = await _articlesService.UpdateTags(request.article_id, ArticleIntTags);
 
             return Ok(new UpdateArticlesResponse(articles.ArticleID, articles.ArticleTitle, articles.ArticlePreview, articles.ArticleContent,
-                articles.ArticleTags.Select(t => ApiExtensions.FromTags(t)).ToList(), articles.CreatedDate, articles.CountLikes));
+                articles.ArticleTags.Select(t => ApiExtensions.FromTags(t)).ToList(), articles.CreatedDate, articles.CountLikes, articles.CountComments));
         }
 
         [HttpGet("getAllMyArticles")]
@@ -188,7 +188,7 @@ namespace LambdaGeneration.API.Controllers
                     a.ArticleContent,
                     a.ArticleTags.Select(t => ApiExtensions.FromTags(t)).ToList(),
                     a.CreatedDate,
-                    a.CountLikes)).ToList()));
+                    a.CountLikes, a.CountComments)).ToList()));
         }
 
         [HttpGet("getAllOtherAuthor/{id:guid}")]
@@ -204,7 +204,7 @@ namespace LambdaGeneration.API.Controllers
                     a.ArticleContent,
                     a.ArticleTags.Select(t => ApiExtensions.FromTags(t)).ToList(),
                     a.CreatedDate,
-                    a.CountLikes)).ToList()));
+                    a.CountLikes, a.CountComments)).ToList()));
         }
 
         [HttpGet("getPaginated")]
@@ -222,7 +222,7 @@ namespace LambdaGeneration.API.Controllers
                         a.ArticleContent,
                         a.ArticleTags.Select(t => ApiExtensions.FromTags(t)).ToList(),
                         a.CreatedDate,
-                        a.CountLikes)).ToList()));
+                        a.CountLikes, a.CountComments)).ToList()));
             }
             catch (ArgumentException ex)
             {

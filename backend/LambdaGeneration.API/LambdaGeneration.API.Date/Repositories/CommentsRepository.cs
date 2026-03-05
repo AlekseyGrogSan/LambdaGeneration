@@ -32,6 +32,10 @@ namespace LambdaGeneration.API.Date.Repositories
                 IsUpdate = comment.IsUpdate
             };
 
+            await _context.Articles.Where(a => a.ArticleID == comment.ArticleId)
+                .ExecuteUpdateAsync(setter => 
+                    setter.SetProperty(a => a.CountComments, a => a.CountComments+1));
+
             _context.Comments.Add(commentEntity);
             await _context.SaveChangesAsync();
             return comment;
@@ -149,13 +153,21 @@ namespace LambdaGeneration.API.Date.Repositories
 
         public async Task<bool> DeleteCommentAsync(Guid idComment)
         {
+            var comment_to_del = await _context.Comments.AsNoTracking().FirstOrDefaultAsync(c => c.Id == idComment);
             int res = await _context.Comments.Where(c => c.Id == idComment).ExecuteDeleteAsync();
+            await _context.Articles.Where(a => a.ArticleID == comment_to_del.ArticleId)
+                .ExecuteUpdateAsync(setter => 
+                    setter.SetProperty(a => a.CountComments, a => a.CountComments - 1));
             return res > 0;
         }
 
         public async Task<bool> SoftDeleteCommentAsync(Guid idComment)
         {
-            int res = await _context.Comments.Where(c => c.Id == idComment).ExecuteUpdateAsync(setter => setter.SetProperty(c => c.Content, "Комментарий был удален"));
+            var comment_to_del = await _context.Comments.AsNoTracking().FirstOrDefaultAsync(c => c.Id == idComment);
+            int res = await _context.Comments.Where(c => c.Id == idComment).ExecuteDeleteAsync();
+            await _context.Articles.Where(a => a.ArticleID == comment_to_del.ArticleId)
+                .ExecuteUpdateAsync(setter =>
+                    setter.SetProperty(a => a.CountComments, a => a.CountComments - 1));
             return res > 0;
         }
     }

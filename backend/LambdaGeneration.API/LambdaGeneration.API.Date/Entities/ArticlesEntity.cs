@@ -13,6 +13,5 @@ namespace LambdaGeneration.API.Date.Entities
         public int CountLikes { get; set; } = 0;
         public int CountComments { get; set; } = 0;
         public List<int> ArticleTags { get; set; } = new List<int>();
-
     }
 }
