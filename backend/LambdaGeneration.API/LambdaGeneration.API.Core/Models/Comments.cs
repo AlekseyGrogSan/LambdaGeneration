@@ -29,7 +29,7 @@ namespace LambdaGeneration.API.Core.Models
             string content,
             bool isAprovded,
             Guid? parentCommId,
-            DateTime DatePublish,
+            DateTime datePublish,
             int countLikes,
             bool isUpdate,
             bool hasReplies_
@@ -41,6 +41,7 @@ namespace LambdaGeneration.API.Core.Models
             ParentCommentId = parentCommId;
             CountLikes = countLikes;
             IsUpdate = isUpdate;
+            DatePublish = datePublish;
         }
         public Guid Id { get; }
         public Guid AuthorId { get; }
