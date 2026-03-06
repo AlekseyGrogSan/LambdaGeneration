@@ -118,5 +118,71 @@ namespace LambdaGeneration.API.Date.Repositories
                 .ExecuteUpdateAsync(setter => setter.SetProperty(u => u.PasswordHash, newPasswordHash));
             await _context.SaveChangesAsync();
         }
+
+        public async Task Subscribe(Guid followerId, Guid followingId)
+        {
+            if (followerId == followingId)
+                throw new ArgumentException("You can not subscribe to yourself");
+
+            var usersExist = await _context.Users
+                .Where(u => u.UserID == followerId || u.UserID == followingId)
+                .CountAsync();
+
+            if (usersExist < 2)
+                throw new Exception("User not found");
+
+            var alreadySubscribed = await _context.Subscriptions
+                .AnyAsync(s => s.FollowerId == followerId && s.FollowingId == followingId);
+
+            if (alreadySubscribed)
+                throw new ArgumentException("Subscription already exists");
+
+            _context.Subscriptions.Add(new SubscriptionEntity
+            {
+                FollowerId = followerId,
+                FollowingId = followingId
+            });
+
+            await _context.SaveChangesAsync();
+        }
+
+        public async Task Unsubscribe(Guid followerId, Guid followingId)
+        {
+            var subscription = await _context.Subscriptions
+                .FirstOrDefaultAsync(s => s.FollowerId == followerId && s.FollowingId == followingId);
+
+            if (subscription == null)
+                throw new Exception("Subscription not found");
+
+            _context.Subscriptions.Remove(subscription);
+            await _context.SaveChangesAsync();
+        }
+
+        public async Task<int> GetSubscribersCount(Guid userId)
+        {
+            return await _context.Subscriptions
+                .CountAsync(s => s.FollowingId == userId);
+        }
+
+        public async Task<List<Users>> GetFollowing(Guid userId)
+        {
+            var followingUsers = await _context.Subscriptions
+                .Where(s => s.FollowerId == userId)
+                .Select(s => s.Following)
+                .AsNoTracking()
+                .ToListAsync();
+
+            return followingUsers
+                .Select(userEntity => Users.Map(
+                    userEntity.UserID,
+                    userEntity.UserName,
+                    userEntity.PasswordHash,
+                    userEntity.Email,
+                    (Role)userEntity.Role,
+                    userEntity.AboutUser,
+                    userEntity.CreatedDate
+                ))
+                .ToList();
+        }
     }
 }

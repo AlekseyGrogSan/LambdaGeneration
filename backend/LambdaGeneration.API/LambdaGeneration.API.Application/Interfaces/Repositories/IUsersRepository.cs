@@ -11,5 +11,9 @@ namespace LambdaGeneration.API.Date.Repositories
         Task<Users?> GetProfile(Guid id);
         Task<Users?> Update(Guid id, string name, string email, string aboutUser);
         Task ChangePassword(Guid id, string newPasswordHash);
+        Task Subscribe(Guid followerId, Guid followingId);
+        Task Unsubscribe(Guid followerId, Guid followingId);
+        Task<int> GetSubscribersCount(Guid userId);
+        Task<List<Users>> GetFollowing(Guid userId);
     }
 }

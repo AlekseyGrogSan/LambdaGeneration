@@ -163,13 +163,15 @@ namespace LambdaGeneration.API.Controllers
                 var userId = GetUserID();
 
                 var user = await _usersService.GetProfile(userId);
+                var subscribersCount = await _usersService.GetSubscribersCount(userId);
 
                 var userResponse = new MyProfileResponse(
                     user.UserID,
                     user.UserName,
                     user.Email,
                     user.AboutUser,
-                    user.CreatedDate
+                    user.CreatedDate,
+                    subscribersCount
                     );
 
                 return Ok(userResponse);
@@ -186,12 +188,14 @@ namespace LambdaGeneration.API.Controllers
             try
             { 
                 var user = await _usersService.GetProfile(id);
+                var subscribersCount = await _usersService.GetSubscribersCount(id);
 
                 var userResponse = new UserProfileResponse(
                     user.UserID,
                     user.UserName,
                     user.AboutUser,
-                    user.CreatedDate
+                    user.CreatedDate,
+                    subscribersCount
                     );
 
                 return Ok(userResponse);
@@ -215,13 +219,15 @@ namespace LambdaGeneration.API.Controllers
                 }
                 
                 (Users user, string token) = await _usersService.Update(id, request.name, request.email, request.aboutUser);
+                var subscribersCount = await _usersService.GetSubscribersCount(id);
 
                 var userProfile = new MyProfileResponse(
                     user.UserID,
                     user.UserName,
                     user.Email,
                     user.AboutUser,
-                    user.CreatedDate
+                    user.CreatedDate,
+                    subscribersCount
                     );
 
                 HttpContext.Response.Cookies.Append("auth_cookies", token,
@@ -233,6 +239,59 @@ namespace LambdaGeneration.API.Controllers
                     );
 
                 return Ok(userProfile);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+
+        [HttpPost("subscribe/{id:guid}")]
+        [Authorize]
+        public async Task<IActionResult> Subscribe(Guid id)
+        {
+            try
+            {
+                var followerId = GetUserID();
+                await _usersService.Subscribe(followerId, id);
+                return Ok();
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+
+        [HttpDelete("unsubscribe/{id:guid}")]
+        [Authorize]
+        public async Task<IActionResult> Unsubscribe(Guid id)
+        {
+            try
+            {
+                var followerId = GetUserID();
+                await _usersService.Unsubscribe(followerId, id);
+                return Ok();
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+
+        [HttpGet("following")]
+        [Authorize]
+        public async Task<ActionResult<List<FollowingUserResponse>>> GetFollowing()
+        {
+            try
+            {
+                var userId = GetUserID();
+                var following = await _usersService.GetFollowing(userId);
+
+                var response = following
+                    .Select(user => new FollowingUserResponse(user.UserID, user.UserName, user.AboutUser))
+                    .ToList();
+
+                return Ok(response);
             }
             catch (Exception ex)
             {
