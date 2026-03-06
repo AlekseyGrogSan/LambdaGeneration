@@ -11,5 +11,9 @@ namespace LambdaGeneration.API.Application.Services
         Task<Users> GetProfile(Guid id);
         Task<(Users, string token)> Update(Guid id, string name, string email, string aboutUser);
         Task checkedUser(string email, string userName);
+        Task Subscribe(Guid followerId, Guid followingId);
+        Task Unsubscribe(Guid followerId, Guid followingId);
+        Task<int> GetSubscribersCount(Guid userId);
+        Task<List<Users>> GetFollowing(Guid userId);
     }
 }

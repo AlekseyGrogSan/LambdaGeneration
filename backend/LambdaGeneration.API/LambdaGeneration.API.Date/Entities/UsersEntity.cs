@@ -21,6 +21,8 @@ namespace LambdaGeneration.API.Date.Entities
         public int Role { get; set; }
         public bool IsBanned { get; set; } = false;
         public List<ArticlesEntity> Articles { get; set; } = new List<ArticlesEntity>();
+        public List<SubscriptionEntity> Followers { get; set; } = new List<SubscriptionEntity>();
+        public List<SubscriptionEntity> Following { get; set; } = new List<SubscriptionEntity>();
     }
 
 }
