@@ -1,13 +1,7 @@
 ﻿using LambdaGeneration.API.Core.Models;
 using LambdaGeneration.API.Date.Entities;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Metadata.Conventions;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Runtime.InteropServices;
-using System.Text;
-using System.Threading.Tasks;
+using Npgsql.EntityFrameworkCore.PostgreSQL;
 
 namespace LambdaGeneration.API.Date.Repositories
 {
@@ -173,7 +167,7 @@ namespace LambdaGeneration.API.Date.Repositories
             var relevantArticlesTags = likedArticles
                 .SelectMany(a => a.ArticleTags)
                 .Distinct()
-                .ToList();
+                .ToArray();
 
             if (!relevantArticlesTags.Any())
             {
@@ -183,9 +177,12 @@ namespace LambdaGeneration.API.Date.Repositories
             int skip = (page - 1) * countPages;
 
             // 3. Теперь фильтруем статьи по тегам
-            return await _context.Articles
-                .Where(a => a.ArticleTags.Any(tag => relevantArticlesTags.Contains(tag)))
+            var articles = await _context.Articles
                 .OrderByDescending(a => a.CreatedDate)
+                .ToListAsync();
+
+            var result = articles
+                .Where(a => a.ArticleTags.Any(tag => relevantArticlesTags.Contains(tag)))
                 .Skip(skip)
                 .Take(countPages)
                 .Select(a => Articles.Map(
@@ -196,8 +193,11 @@ namespace LambdaGeneration.API.Date.Repositories
                     a.AuthorID,
                     a.ArticleTags,
                     a.CreatedDate,
-                    a.CountLikes))
-                .ToListAsync();
+                    a.CountLikes,
+                    a.CountComments))
+                .ToList();
+
+            return result;
         }
 
         public async Task<List<Articles>> GetRandomArticles(int page, int countPages)
@@ -217,7 +217,8 @@ namespace LambdaGeneration.API.Date.Repositories
                     a.AuthorID,
                     a.ArticleTags,
                     a.CreatedDate,
-                    a.CountLikes))
+                    a.CountLikes,
+                    a.CountComments))
                 .ToListAsync();
         }
     }

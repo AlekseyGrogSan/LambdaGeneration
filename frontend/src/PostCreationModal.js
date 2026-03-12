@@ -20,7 +20,7 @@ import FormatListBulletedIcon from '@mui/icons-material/FormatListBulleted';
 import FormatListNumberedIcon from '@mui/icons-material/FormatListNumbered';
 
 // Базовый URL для API (должен быть определен в реальном приложении)
-const API_BASE_URL = '/api';
+const API_BASE_URL = 'http://localhost:5113/api';
 
 // --- СПИСОК ДОСТУПНЫХ ТЕГОВ ---
 const AVAILABLE_TAGS = [
