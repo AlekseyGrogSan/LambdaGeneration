@@ -185,7 +185,7 @@ const PostCard = ({
                     {/* Лайки */}
                     <Box sx={{ display: 'flex', alignItems: 'center' }}>
                         <IconButton
-                            sx={{ color: isLiked ? '#ff1744' : 'white' }}
+                            sx={{ color: isLiked ? '#ff1744' : '#00bfa5' }}
                             // Если onLike не передан (например, в модалке), кнопка неактивна
                             onClick={onLike ? (e) => { e.stopPropagation(); onLike(id); } : (e) => { e.stopPropagation(); }}
                             disabled={!onLike}

@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+﻿import React, { useEffect, useRef, useState } from 'react';
 import {
     Box,
     Typography,
@@ -86,7 +86,7 @@ const CommentItem = ({
 }) => (
     <Box
         sx={{
-            ml: depth * 2,
+            ml: Math.min(depth, 3) * 1.5,
             mt: 1.5,
             pl: 1.5,
             borderLeft: depth > 0 ? '2px solid #3f3f3f' : 'none',
@@ -206,6 +206,12 @@ const CommentItem = ({
                         label="Ответить"
                         value={replyInputs[comment.commentId] || ''}
                         onChange={(e) => onReplyTextChange(comment.commentId, e.target.value)}
+                        onKeyDown={(e) => {
+                            if (e.key === 'Enter' && !e.shiftKey) {
+                                e.preventDefault();
+                                onReplySubmit(comment.commentId, replyInputs[comment.commentId] || '');
+                            }
+                        }}
                         sx={commentInputStyle}
                     />
                     <Button
@@ -789,6 +795,12 @@ const PostDetailPage = ({
                             fullWidth
                             value={newCommentText}
                             onChange={(e) => setNewCommentText(e.target.value)}
+                            onKeyDown={(e) => {
+                                if (e.key === 'Enter' && !e.shiftKey) {
+                                    e.preventDefault();
+                                    handleCreateRootComment();
+                                }
+                            }}
                             sx={commentInputStyle}
                         />
 

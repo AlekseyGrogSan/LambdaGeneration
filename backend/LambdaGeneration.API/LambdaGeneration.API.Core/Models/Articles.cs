@@ -47,6 +47,7 @@ namespace LambdaGeneration.API.Core.Models
             ArticleTags = article_tags;
             AuthorID = author_id;
             CountLikes = countLikes;
+            CountComments = countComments;
         }
 
 

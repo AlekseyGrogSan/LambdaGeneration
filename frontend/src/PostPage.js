@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react'; 
+import React, { useState, useEffect, useRef, useCallback } from 'react'; 
 import { 
     Box,
     Button,
@@ -113,6 +113,27 @@ const profileButtonStyle = {
     '&:hover': { borderColor: '#00897b', color: '#00897b', backgroundColor: 'rgba(0, 191, 165, 0.08)' },
 };
 
+const scrollbarStyle = {
+    '&::-webkit-scrollbar': {
+        width: '8px', // Ширина вертикального скролла
+    },
+    '&::-webkit-scrollbar-track': {
+        background: '#1a1a1a', // Цвет дорожки (чуть темнее фона)
+        borderRadius: '10px',
+    },
+    '&::-webkit-scrollbar-thumb': {
+        background: '#00bfa5', // Цвет ползунка (ваш основной зеленый)
+        borderRadius: '10px',
+        border: '2px solid #1a1a1a', // Отступ вокруг ползунка, чтобы он казался тоньше
+    },
+    '&::-webkit-scrollbar-thumb:hover': {
+        background: '#009e8a', // Цвет при наведении
+    },
+    // Для Firefox
+    scrollbarWidth: 'thin',
+    scrollbarColor: '#00bfa5 #1a1a1a',
+};
+
 const Sidebar = ({ handleOpen, handleProfileOpen, handlePostOpen, handleCategoryOpen, handleResourcesOpen, handleFaqOpen, currentUser }) => (
     <Box sx={sidebarStyle}>
         <Typography variant="h5" sx={{ color: '#00bfa5', fontWeight: 'bold', textAlign: 'center', mb: 4, letterSpacing: 1 }}>
@@ -185,7 +206,7 @@ const FeedCommentItem = ({
 }) => (
     <Box
         sx={{
-            ml: depth * 1.5,
+            ml: Math.min(depth, 3) * 1.2,
             mt: 1.5,
             pl: 1.2,
             borderLeft: depth > 0 ? '2px solid #3f3f3f' : 'none',
@@ -309,6 +330,12 @@ const FeedCommentItem = ({
                         label="Ответить"
                         value={replyInputs[comment.commentId] || ''}
                         onChange={(e) => onReplyTextChange(comment.commentId, e.target.value)}
+                        onKeyDown={(e) => {
+                            if (e.key === 'Enter' && !e.shiftKey) {
+                                e.preventDefault();
+                                onReplySubmit(comment.commentId, replyInputs[comment.commentId] || '');
+                            }
+                        }}
                         sx={commentInputStyle}
                     />
                     <Button
@@ -355,27 +382,30 @@ const FeedCommentItem = ({
             )}
         </Box>
 
-        {comment.repliesOpen && comment.replies?.map((reply) => (
-            <FeedCommentItem
-                key={reply.commentId}
-                comment={reply}
-                depth={depth + 1}
-                currentUserId={currentUserId}
-                replyInputs={replyInputs}
-                replyEditorOpen={replyEditorOpen}
-                editInputs={editInputs}
-                editEditorOpen={editEditorOpen}
-                onReplyTextChange={onReplyTextChange}
-                onToggleReplyEditor={onToggleReplyEditor}
-                onReplySubmit={onReplySubmit}
-                onEditTextChange={onEditTextChange}
-                onToggleEditEditor={onToggleEditEditor}
-                onEditSubmit={onEditSubmit}
-                onDeleteComment={onDeleteComment}
-                onLikeToggle={onLikeToggle}
-                onToggleReplies={onToggleReplies}
-            />
-        ))}
+        {comment.repliesOpen && comment.replies?.map((reply) => {
+            const newDepth = depth + 1;
+            return (
+                <FeedCommentItem
+                    key={reply.commentId}
+                    comment={reply}
+                    depth={newDepth}
+                    currentUserId={currentUserId}
+                    replyInputs={replyInputs}
+                    replyEditorOpen={replyEditorOpen}
+                    editInputs={editInputs}
+                    editEditorOpen={editEditorOpen}
+                    onReplyTextChange={onReplyTextChange}
+                    onToggleReplyEditor={onToggleReplyEditor}
+                    onReplySubmit={onReplySubmit}
+                    onEditTextChange={onEditTextChange}
+                    onToggleEditEditor={onToggleEditEditor}
+                    onEditSubmit={onEditSubmit}
+                    onDeleteComment={onDeleteComment}
+                    onLikeToggle={onLikeToggle}
+                    onToggleReplies={onToggleReplies}
+                />
+            );
+        })}
     </Box>
 );
 
@@ -436,6 +466,12 @@ const CommentsFeedSidebar = ({
                     fullWidth
                     value={newCommentText}
                     onChange={(e) => onNewCommentTextChange(e.target.value)}
+                    onKeyDown={(e) => {
+                        if (e.key === 'Enter' && !e.shiftKey) {
+                            e.preventDefault();
+                            onCreateRootComment();
+                        }
+                    }}
                     sx={commentInputStyle}
                 />
                 <Button
@@ -456,7 +492,7 @@ const CommentsFeedSidebar = ({
             )}
         </Box>
 
-        <Box sx={{ flex: 1, overflowY: 'auto', p: 1.5 }}>
+        <Box sx={{ flex: 1, overflowY: 'auto', p: 1.5, ...scrollbarStyle}}>
             {commentsLoading ? (
                 <Box sx={{ py: 3, textAlign: 'center' }}>
                     <CircularProgress size={26} sx={{ color: '#00bfa5' }} />
@@ -532,6 +568,7 @@ const PostPage = () => {
     const articlesContainerRef = useRef(null); 
     const postRefs = useRef({}); 
     const setPostRef = (id) => (el) => { postRefs.current[id] = el; };
+    const lastCenteredIdRef = useRef(null);
 
     
     const checkAuth = async () => {
@@ -651,20 +688,7 @@ const PostPage = () => {
         }
     }, [isViewingDetailPage, lastViewedArticleId]);
 
-    useEffect(() => {
-        const container = articlesContainerRef.current;
-        if (container) {
-            container.addEventListener('scroll', handleScroll);
-        }
-        
-        return () => {
-            if (container) {
-                container.removeEventListener('scroll', handleScroll);
-            }
-        };
-    }, [isLoading, hasMore, pageNumber, isViewingDetailPage]);
-
-    const handleScroll = () => {
+    const handleScroll = useCallback(() => {
         const container = articlesContainerRef.current;
         
         if (container && !isViewingDetailPage) {
@@ -676,8 +700,60 @@ const PostPage = () => {
                 console.log('Достигнут низ ленты, загружаем следующую страницу...');
                 fetchArticlesPage(pageNumber + 1);
             }
+            // If user scrolled the feed while comments sidebar is open,
+            // update the comments panel to the post currently centered in view.
+            if (activeCommentsPost) {
+                try {
+                    const containerRect = container.getBoundingClientRect();
+                    const containerCenterY = containerRect.top + container.clientHeight / 2;
+                    let closestId = null;
+                    let closestDist = Infinity;
+
+                    Object.entries(postRefs.current).forEach(([id, el]) => {
+                        if (!el) return;
+                        const elRect = el.getBoundingClientRect();
+                        const elCenter = elRect.top + (elRect.height || 0) / 2;
+                        const dist = Math.abs(elCenter - containerCenterY);
+                        if (dist < closestDist) {
+                            closestDist = dist;
+                            closestId = id;
+                        }
+                    });
+
+                    const centeredId = closestId ? closestId : null; // keep as string key
+                    if (centeredId && String(centeredId) !== String(activeCommentsPost?.article_id)) {
+                        lastCenteredIdRef.current = centeredId;
+                        const newPost = articles.find(a => String(a.article_id) === String(centeredId));
+                        if (newPost) {
+                            setActiveCommentsPost(newPost);
+                            setFeedNewCommentText('');
+                            setFeedReplyInputs({});
+                            setFeedReplyEditorOpen({});
+                            setFeedEditEditorOpen({});
+                            setFeedEditInputs({});
+                            // load comments for the newly centered post (async, don't await)
+                            void loadFeedCommentsForPost(newPost);
+                        }
+                    }
+                } catch (e) {
+                    // swallow errors from measuring DOM during scroll
+                }
+            }
         }
-    };
+    }, [activeCommentsPost, isViewingDetailPage, isLoading, hasMore, pageNumber, articles]);
+
+    useEffect(() => {
+        const container = articlesContainerRef.current;
+        if (container) {
+            container.addEventListener('scroll', handleScroll);
+        }
+        
+        return () => {
+            if (container) {
+                container.removeEventListener('scroll', handleScroll);
+            }
+        };
+    }, [handleScroll]);
 
     
     const enrichArticleData = async (article) => {
@@ -742,7 +818,7 @@ const PostPage = () => {
             const enrichedArticles = await Promise.all(newArticlesRaw.map(enrichArticleData));
             
             setArticles(prevArticles => {
-                if (page === 1) {
+                if (page === 1) { 
                     return enrichedArticles;
                 } else {
                     const existingIds = new Set(prevArticles.map(a => a.article_id));
@@ -1267,85 +1343,86 @@ const PostPage = () => {
                 ref={articlesContainerRef} 
             >
                 
-                {/* ✅ ФИКСИРОВАННЫЙ ПЕРЕКЛЮЧАТЕЛЬ С LIQUID GLASS */}
-                <Box 
-                    sx={{ 
-                        position: 'sticky',
-                        top: 0,
-                        width: '100%',
-                        display: 'flex',
-                        justifyContent: 'center',
-                        pt: 2,
-                        pb: 2,
-                        zIndex: 10,
-                    }}
-                >
-                    <Box sx={{ 
-                        display: 'flex', 
-                        gap: 2,
-                        backdropFilter: 'blur(10px)',
-                        backgroundColor: 'rgba(18, 18, 18, 0.7)',
-                        borderRadius: '30px',
-                        padding: '8px 12px',
-                        border: '1px solid rgba(0, 191, 165, 0.2)',
-                        boxShadow: '0 8px 32px rgba(0, 191, 165, 0.1)',
-                    }}>
-                        <Button
-                            variant={paginationType === 'random' ? 'contained' : 'outlined'}
-                            onClick={() => handlePaginationTypeChange('random')}
-                            sx={{ 
-                                textTransform: 'none',
-                                borderRadius: '25px',
-                                px: 3,
-                                py: 1,
-                                fontWeight: 'bold',
-                                transition: 'all 0.3s ease',
-                                ...(paginationType === 'random' ? {
-                                    backgroundColor: '#00bfa5',
-                                    color: '#000',
-                                    '&:hover': { backgroundColor: '#00d4b4' }
-                                } : {
-                                    borderColor: '#00bfa5',
-                                    color: '#00bfa5',
-                                    '&:hover': { 
-                                        backgroundColor: 'rgba(0, 191, 165, 0.12)',
-                                        borderColor: '#00d4b4',
-                                        color: '#00d4b4'
-                                    }
-                                })
-                            }}
-                        >
-                            Случайные
-                        </Button>
-                        <Button
-                            variant={paginationType === 'recommend' ? 'contained' : 'outlined'}
-                            onClick={() => handlePaginationTypeChange('recommend')}
-                            sx={{ 
-                                textTransform: 'none',
-                                borderRadius: '25px',
-                                px: 3,
-                                py: 1,
-                                fontWeight: 'bold',
-                                transition: 'all 0.3s ease',
-                                ...(paginationType === 'recommend' ? {
-                                    backgroundColor: '#00bfa5',
-                                    color: '#000',
-                                    '&:hover': { backgroundColor: '#00d4b4' }
-                                } : {
-                                    borderColor: '#00bfa5',
-                                    color: '#00bfa5',
-                                    '&:hover': { 
-                                        backgroundColor: 'rgba(0, 191, 165, 0.12)',
-                                        borderColor: '#00d4b4',
-                                        color: '#00d4b4'
-                                    }
-                                })
-                            }}
-                        >
-                            Рекомендации
-                        </Button>
+                {!isViewingDetailPage && (
+                    <Box 
+                        sx={{ 
+                            position: 'sticky',
+                            top: 0,
+                            width: '100%',
+                            display: 'flex',
+                            justifyContent: 'center',
+                            pt: 2,
+                            pb: 2,
+                            zIndex: 10,
+                        }}
+                    >
+                        <Box sx={{ 
+                            display: 'flex', 
+                            gap: 2,
+                            backdropFilter: 'blur(10px)',
+                            backgroundColor: 'rgba(18, 18, 18, 0.7)',
+                            borderRadius: '30px',
+                            padding: '8px 12px',
+                            border: '1px solid rgba(0, 191, 165, 0.2)',
+                            boxShadow: '0 8px 32px rgba(0, 191, 165, 0.1)',
+                        }}>
+                            <Button
+                                variant={paginationType === 'random' ? 'contained' : 'outlined'}
+                                onClick={() => handlePaginationTypeChange('random')}
+                                sx={{ 
+                                    textTransform: 'none',
+                                    borderRadius: '25px',
+                                    px: 3,
+                                    py: 1,
+                                    fontWeight: 'bold',
+                                    transition: 'all 0.3s ease',
+                                    ...(paginationType === 'random' ? {
+                                        backgroundColor: '#00bfa5',
+                                        color: '#000',
+                                        '&:hover': { backgroundColor: '#00d4b4' }
+                                    } : {
+                                        borderColor: '#00bfa5',
+                                        color: '#00bfa5',
+                                        '&:hover': { 
+                                            backgroundColor: 'rgba(0, 191, 165, 0.12)',
+                                            borderColor: '#00d4b4',
+                                            color: '#00d4b4'
+                                        }
+                                    })
+                                }}
+                            >
+                                Случайные
+                            </Button>
+                            <Button
+                                variant={paginationType === 'recommend' ? 'contained' : 'outlined'}
+                                onClick={() => handlePaginationTypeChange('recommend')}
+                                sx={{ 
+                                    textTransform: 'none',
+                                    borderRadius: '25px',
+                                    px: 3,
+                                    py: 1,
+                                    fontWeight: 'bold',
+                                    transition: 'all 0.3s ease',
+                                    ...(paginationType === 'recommend' ? {
+                                        backgroundColor: '#00bfa5',
+                                        color: '#000',
+                                        '&:hover': { backgroundColor: '#00d4b4' }
+                                    } : {
+                                        borderColor: '#00bfa5',
+                                        color: '#00bfa5',
+                                        '&:hover': { 
+                                            backgroundColor: 'rgba(0, 191, 165, 0.12)',
+                                            borderColor: '#00d4b4',
+                                            color: '#00d4b4'
+                                        }
+                                    })
+                                }}
+                            >
+                                Рекомендации
+                            </Button>
+                        </Box>
                     </Box>
-                </Box>
+                )}
 
                 {isViewingDetailPage && selectedPost ? (
                     <Box sx={{ width: '100%', maxWidth: '680px' }}>
