@@ -762,7 +762,7 @@ const PostDetailPage = ({
                 }}
             >
                 <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                    <IconButton onClick={onLike} sx={{ color: post.isLiked ? '#ff1744' : 'white', p: 0.5 }}>
+                    <IconButton onClick={onLike} sx={{ color: post.isLiked ? '#ff1744' : '#00bfa5', p: 0.5 }}>
                         <FavoriteIcon sx={{ fontSize: 24 }} />
                     </IconButton>
                     <Typography variant="subtitle1" sx={{ color: 'white', fontWeight: 'bold', ml: 0.5 }}>
@@ -771,7 +771,7 @@ const PostDetailPage = ({
                 </Box>
 
                 <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                    <IconButton onClick={handleToggleComments} sx={{ color: commentsOpen ? '#00bfa5' : 'white', p: 0.5 }}>
+                    <IconButton onClick={handleToggleComments} sx={{ color: commentsOpen ? '#048b79' : '#00bfa5', p: 0.5 }}>
                         <ChatBubbleOutlineIcon sx={{ fontSize: 24 }} />
                     </IconButton>
                     <Typography variant="subtitle1" sx={{ color: 'white', fontWeight: 'bold', ml: 0.5 }}>
