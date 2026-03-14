@@ -207,8 +207,10 @@ namespace LambdaGeneration.API.Date.Repositories
 
             return await _context.Articles
                 // Берем рандомные статьи как дефолтное значение
-                .OrderBy(a => EF.Functions.Random())
+                .OrderByDescending(a => a.CreatedDate)
                 .Skip(skip) // Пропустить
+                .Take(countPages * 2)
+                .OrderBy(a => EF.Functions.Random())
                 .Take(countPages) // Взять
                 .Select(a => Articles.Map(
                     a.ArticleID,
@@ -259,6 +261,7 @@ namespace LambdaGeneration.API.Date.Repositories
                     a.AuthorID,
                     a.ArticleTags,
                     a.CreatedDate,
+                    a.CountLikes,
                     a.CountLikes))
                 .ToListAsync();
         }
@@ -330,20 +333,7 @@ namespace LambdaGeneration.API.Date.Repositories
             // Если тэги не выбраны, то передаём случаёные статьи
             if (tags == null || tags.Count == 0)
             {
-                return await _context.Articles
-                .OrderBy(a => EF.Functions.Random())
-                .Skip(skip)
-                .Take(pageSize)
-                .Select(a => Articles.Map(
-                    a.ArticleID,
-                    a.ArticleTitle,
-                    a.ArticleContent,
-                    a.ArticlePreview,
-                    a.AuthorID,
-                    a.ArticleTags,
-                    a.CreatedDate,
-                    a.CountLikes))
-                .ToListAsync();
+                return await GetRandomArticles(page, pageSize);
             }
 
             // Фильтруем статьи по выбранным тегам
@@ -359,12 +349,35 @@ namespace LambdaGeneration.API.Date.Repositories
                     a.AuthorID,
                     a.ArticleTags,
                     a.CreatedDate,
-                    a.CountLikes))
+                    a.CountLikes,
+                    a.CountComments))
                 .ToListAsync();
 
             return articles
                 .Where(a => a.ArticleTags.Any(t => tags.Contains(t)))
                 .ToList();
+        }
+
+        public async Task<List<Articles>> GetLatestAsync(int page, int countPages)
+        {
+            int skip = (page - 1) * countPages;
+
+            // Фильтруем статьи по выбранным тегам
+            return await _context.Articles
+                .OrderByDescending(a => a.CreatedDate)
+                .Skip(skip)
+                .Take(countPages)
+                .Select(a => Articles.Map(
+                    a.ArticleID,
+                    a.ArticleTitle,
+                    a.ArticleContent,
+                    a.ArticlePreview,
+                    a.AuthorID,
+                    a.ArticleTags,
+                    a.CreatedDate,
+                    a.CountLikes,
+                    a.CountComments))
+                .ToListAsync();
         }
     }
 }
