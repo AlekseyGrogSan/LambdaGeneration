@@ -1,4 +1,5 @@
 ﻿using LambdaGeneration.API.Application.Interfaces.Services;
+using LambdaGeneration.API.Application.Services;
 using LambdaGeneration.API.Core.Enums;
 using LambdaGeneration.API.Core.Models;
 using LambdaGeneration.API.DTO.Request;
@@ -251,6 +252,58 @@ namespace LambdaGeneration.API.Controllers
                         a.CountLikes, a.CountComments)).ToList()));
             }
             catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+
+        [HttpGet("search")]
+        public async Task<ActionResult<GetArticlesResponse>> SearchArticles([FromQuery] string? q, [FromQuery] int page = 1, [FromQuery] int countPages = 10)
+        {
+            try
+            {
+                var articles = await _articlesService.SearchArticlesAsync(q, page, countPages);
+
+                if (articles == null || !articles.Any())
+                    return NotFound(new { message = $"Статьи по вашему запросу не найдены" });
+
+                return Ok(new GetArticlesResponse(articles.Select(a =>
+                    new GetArticleResponse(a.ArticleID,
+                        a.AuthorID,
+                        a.ArticleTitle,
+                        a.ArticlePreview,
+                        a.ArticleContent,
+                        a.ArticleTags.Select(t => ApiExtensions.FromTags(t)).ToList(),
+                        a.CreatedDate,
+                        a.CountLikes)).ToList()));
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+
+        [HttpGet("searchbytags")]
+        public async Task<ActionResult<GetArticlesResponse>> SearchArticlesByTags([FromQuery] List<int> tags, [FromQuery] int page = 1, [FromQuery] int pageSize = 10)
+        {
+            try
+            {
+                var articles = await _articlesService.SearchArticlesByTagsAsync(tags, page, pageSize);
+
+                if (articles == null || !articles.Any())
+                    return NotFound(new { message = $"Статьи по вашему запросу не найдены" });
+
+                return Ok(new GetArticlesResponse(articles.Select(a =>
+                    new GetArticleResponse(a.ArticleID,
+                        a.AuthorID,
+                        a.ArticleTitle,
+                        a.ArticlePreview,
+                        a.ArticleContent,
+                        a.ArticleTags.Select(t => ApiExtensions.FromTags(t)).ToList(),
+                        a.CreatedDate,
+                        a.CountLikes)).ToList()));
+            }
+            catch (ArgumentException ex)
             {
                 return BadRequest(ex.Message);
             }

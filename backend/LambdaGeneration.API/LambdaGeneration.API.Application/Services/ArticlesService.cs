@@ -1,4 +1,5 @@
 ﻿using LambdaGeneration.API.Application.Interfaces.Services;
+using LambdaGeneration.API.Core.Enums;
 using LambdaGeneration.API.Core.Models;
 using LambdaGeneration.API.Date.Repositories;
 using System.Runtime.CompilerServices;
@@ -80,6 +81,24 @@ namespace LambdaGeneration.API.Application.Services
             if (article == null)
                 throw new ArgumentException("Article not exist");
             return article;
+        }
+        public async Task<List<Articles>> SearchArticlesAsync(string searchTerm, int pageNumber, int countPages)
+        {
+            if (string.IsNullOrEmpty(searchTerm))
+            {
+                throw new ArgumentException("Search query must not be empty.");
+            }
+            if (pageNumber < 1)
+            {
+                throw new ArgumentException("Page number must be positive.");
+            }
+
+            return await _articlesRepository.SearchArticles(searchTerm, pageNumber, countPages);
+        }
+
+        public async Task<List<Articles>> SearchArticlesByTagsAsync(List<int> tags, int page, int pageSize)
+        {
+            return await _articlesRepository.SearchArticlesByTags(tags, page, pageSize);
         }
     }
 }
