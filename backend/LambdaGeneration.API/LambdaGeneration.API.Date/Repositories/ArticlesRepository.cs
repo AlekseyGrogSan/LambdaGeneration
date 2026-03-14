@@ -1,4 +1,5 @@
-﻿using LambdaGeneration.API.Core.Models;
+﻿using LambdaGeneration.API.Core.Enums;
+using LambdaGeneration.API.Core.Models;
 using LambdaGeneration.API.Date.Entities;
 using Microsoft.EntityFrameworkCore;
 using Npgsql.EntityFrameworkCore.PostgreSQL;
@@ -320,6 +321,50 @@ namespace LambdaGeneration.API.Date.Repositories
             }
 
             return expanded.ToList();
+        }
+
+        public async Task<List<Articles>> SearchArticlesByTags(List<int>? tags, int page, int pageSize = 10)
+        {
+            int skip = (page - 1) * pageSize;
+
+            // Если тэги не выбраны, то передаём случаёные статьи
+            if (tags == null || tags.Count == 0)
+            {
+                return await _context.Articles
+                .OrderBy(a => EF.Functions.Random())
+                .Skip(skip)
+                .Take(pageSize)
+                .Select(a => Articles.Map(
+                    a.ArticleID,
+                    a.ArticleTitle,
+                    a.ArticleContent,
+                    a.ArticlePreview,
+                    a.AuthorID,
+                    a.ArticleTags,
+                    a.CreatedDate,
+                    a.CountLikes))
+                .ToListAsync();
+            }
+
+            // Фильтруем статьи по выбранным тегам
+            var articles = await _context.Articles
+                .OrderByDescending(a => a.CreatedDate)
+                .Skip(skip)
+                .Take(pageSize)
+                .Select(a => Articles.Map(
+                    a.ArticleID,
+                    a.ArticleTitle,
+                    a.ArticleContent,
+                    a.ArticlePreview,
+                    a.AuthorID,
+                    a.ArticleTags,
+                    a.CreatedDate,
+                    a.CountLikes))
+                .ToListAsync();
+
+            return articles
+                .Where(a => a.ArticleTags.Any(t => tags.Contains(t)))
+                .ToList();
         }
     }
 }

@@ -1,4 +1,5 @@
 ﻿using LambdaGeneration.API.Application.Interfaces.Services;
+using LambdaGeneration.API.Core.Enums;
 using LambdaGeneration.API.Core.Models;
 using LambdaGeneration.API.Date.Repositories;
 using System.Runtime.CompilerServices;
@@ -93,6 +94,11 @@ namespace LambdaGeneration.API.Application.Services
             }
 
             return await _articlesRepository.SearchArticles(searchTerm, pageNumber, countPages);
+        }
+
+        public async Task<List<Articles>> SearchArticlesByTagsAsync(List<int> tags, int page, int pageSize)
+        {
+            return await _articlesRepository.SearchArticlesByTags(tags, page, pageSize);
         }
     }
 }
