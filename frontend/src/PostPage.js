@@ -560,6 +560,75 @@ const PostPage = () => {
     const [feedCommentsTree, setFeedCommentsTree] = useState([]);
     const [feedNewCommentText, setFeedNewCommentText] = useState('');
     const [feedReplyInputs, setFeedReplyInputs] = useState({});
+    const articlesRef = useRef([]);
+    const hasMoreRef = useRef(hasMore);
+
+    useEffect(() => { articlesRef.current = articles; }, [articles]);
+    useEffect(() => { hasMoreRef.current = hasMore; }, [hasMore]);
+
+    // On mount: if URL contains ?article=<id>, try to open that article in detail view
+    useEffect(() => {
+        const params = new URLSearchParams(window.location.search);
+        const articleId = params.get('article');
+        if (!articleId) return;
+
+        let cancelled = false;
+
+        (async () => {
+            // 1) try to find in already loaded articles
+            let found = articlesRef.current.find(a => String(a.article_id) === String(articleId));
+            if (found) {
+                setSelectedPost(found);
+                setIsViewingDetailPage(true);
+                return;
+            }
+
+            // 2) try to fetch a single-article endpoint if available
+            try {
+                const singlePaths = [
+                    `${API_BASE_URL}/Articles/GetArticleById/${articleId}`,
+                    `${API_BASE_URL}/Articles/GetArticleById?id=${articleId}`,
+                    `${API_BASE_URL}/Articles/get/${articleId}`,
+                    `${API_BASE_URL}/Articles/getById/${articleId}`,
+                    `${API_BASE_URL}/Articles/getArticle/${articleId}`,
+                ];
+
+                for (const p of singlePaths) {
+                    try {
+                        const r = await fetch(p, { credentials: 'include' });
+                        if (!r.ok) continue;
+                        const data = await r.json();
+                        if (!data) continue;
+                        const enriched = await enrichArticleData(data);
+                        if (cancelled) return;
+                        setSelectedPost(enriched);
+                        setIsViewingDetailPage(true);
+                        return;
+                    } catch (e) {
+                        // try next
+                    }
+                }
+            } catch (e) {
+                // ignore and fallback to pagination
+            }
+
+            // 3) fallback: paginate pages until we find the article
+            let page = 1;
+            while (!cancelled) {
+                await fetchArticlesPage(page);
+                const f = articlesRef.current.find(a => String(a.article_id) === String(articleId));
+                if (f) {
+                    setSelectedPost(f);
+                    setIsViewingDetailPage(true);
+                    return;
+                }
+                if (!hasMoreRef.current) break;
+                page += 1;
+            }
+        })();
+
+        return () => { cancelled = true; };
+    }, []);
     const [feedReplyEditorOpen, setFeedReplyEditorOpen] = useState({});
     const [feedEditInputs, setFeedEditInputs] = useState({});
     const [feedEditEditorOpen, setFeedEditEditorOpen] = useState({});
@@ -1463,8 +1532,9 @@ const PostPage = () => {
                                     authorId={post.author_id} 
                                     onAuthorClick={handleOtherAuthorProfileOpen} 
                                     onClick={() => handlePostClick(post)}
-                                    onCommentClick={() => handleOpenCommentsSidebar(post)}
+                                            onCommentClick={() => handleOpenCommentsSidebar(post)}
                                     onLike={() => handleLikeToggle(post.article_id, post.isLiked)}
+                                            showRepost={false}
                                 />
                             </Box>
                         ))}
