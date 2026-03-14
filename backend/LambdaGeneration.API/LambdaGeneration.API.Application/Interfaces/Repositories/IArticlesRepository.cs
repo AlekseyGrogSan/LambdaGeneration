@@ -17,5 +17,7 @@ namespace LambdaGeneration.API.Date.Repositories
         Task<List<Articles>> GetArticlesPage(int pageNumber, int pageSize);
 
         Task<List<Articles>> SearchArticles(string searchTerm, int pageNumber, int pageSize = 10);
+
+        Task<List<Articles>> SearchArticlesByTags(List<int> tags, int page, int pageSize = 10);
     }
 }
