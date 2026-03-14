@@ -37,5 +37,12 @@ namespace LambdaGeneration.API.Application.Services
 
             return await _articlesRepository.GetRandomArticles(size, countPages);
         }
+
+        public async Task<List<Articles>> GetLatestArticlesAsync(int size = 1, int countPages = 10)
+        {
+            if (size < 1 || countPages < 1)
+                throw new ArgumentException("Page number and size must be positive.");
+            return await _articlesRepository.GetLatestAsync(size, countPages);
+        }
     }
 }

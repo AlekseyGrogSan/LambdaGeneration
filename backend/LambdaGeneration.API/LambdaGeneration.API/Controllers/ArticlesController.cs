@@ -235,6 +235,7 @@ namespace LambdaGeneration.API.Controllers
                 List<Articles> articles = typePagination switch
                 {
                     "recommend" => await _recommendationService.GetRecmmedationArticlesAsync(GetUserID(), page, size),
+                    "latest" => await _recommendationService.GetLatestArticlesAsync(page, size),
                     _ => await _recommendationService.GetRandomArticlesAsync(page, size),
                 };
 
@@ -275,7 +276,7 @@ namespace LambdaGeneration.API.Controllers
                         a.ArticleContent,
                         a.ArticleTags.Select(t => ApiExtensions.FromTags(t)).ToList(),
                         a.CreatedDate,
-                        a.CountLikes)).ToList()));
+                        a.CountLikes, a.CountComments)).ToList()));
             }
             catch (ArgumentException ex)
             {
@@ -301,7 +302,7 @@ namespace LambdaGeneration.API.Controllers
                         a.ArticleContent,
                         a.ArticleTags.Select(t => ApiExtensions.FromTags(t)).ToList(),
                         a.CreatedDate,
-                        a.CountLikes)).ToList()));
+                        a.CountLikes, a.CountComments)).ToList()));
             }
             catch (ArgumentException ex)
             {

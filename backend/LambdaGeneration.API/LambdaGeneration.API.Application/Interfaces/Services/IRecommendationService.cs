@@ -6,5 +6,6 @@ namespace LambdaGeneration.API.Application.Interfaces.Services
     {
         Task<List<Articles>> GetRandomArticlesAsync(int size = 1, int countPages = 10);
         Task<List<Articles>> GetRecmmedationArticlesAsync(Guid userId, int size = 1, int countPages = 10);
+        Task<List<Articles>> GetLatestArticlesAsync(int size = 1, int countPages = 10);
     }
 }
