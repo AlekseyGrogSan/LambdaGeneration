@@ -1,8 +1,7 @@
-﻿
-
-using LambdaGeneration.API.Application.Interfaces.Services;
+﻿using LambdaGeneration.API.Application.Interfaces.Services;
 using LambdaGeneration.API.Core.Models;
 using LambdaGeneration.API.Date.Repositories;
+using System.Runtime.CompilerServices;
 
 namespace LambdaGeneration.API.Application.Services
 {
@@ -73,6 +72,14 @@ namespace LambdaGeneration.API.Application.Services
         {
             var all_articles = await _articlesRepository.GetAllArticlesUser(author_id);
             return all_articles;    
+        }
+
+        public async Task<Articles> GetArticleByIdAsync(Guid articleId)
+        {
+            var article = await _articlesRepository.GetById(articleId);
+            if (article == null)
+                throw new ArgumentException("Article not exist");
+            return article;
         }
     }
 }

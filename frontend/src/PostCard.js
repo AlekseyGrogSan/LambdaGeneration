@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
     Box,
     Card,
@@ -55,8 +55,56 @@ const PostCard = ({
     onLike, 
     onCommentClick,
     tags = [],
-    sx = {} // <-- Принимаем кастомные стили, включая фиксированную высоту
+    sx = {}, // <-- Принимаем кастомные стили, включая фиксированную высоту
+    showRepost = true,
+    onShare, // optional share handler (id) => void
 }) => {
+    const [shareNoticeOpen, setShareNoticeOpen] = useState(false);
+    const shareTimerRef = useRef(null);
+
+    useEffect(() => {
+        return () => {
+            if (shareTimerRef.current) {
+                clearTimeout(shareTimerRef.current);
+            }
+        };
+    }, []);
+
+    const showShareNotice = () => {
+        setShareNoticeOpen(true);
+        if (shareTimerRef.current) {
+            clearTimeout(shareTimerRef.current);
+        }
+        shareTimerRef.current = setTimeout(() => {
+            setShareNoticeOpen(false);
+        }, 2000);
+    };
+
+    const handleShareClick = async (event) => {
+        event.stopPropagation();
+        const shareId = id;
+
+        if (onShare) {
+            onShare(shareId);
+            showShareNotice();
+            return;
+        }
+
+        const shareUrl = `${window.location.origin}/?article=${shareId}`;
+
+        try {
+            await navigator.clipboard.writeText(shareUrl);
+        } catch (err) {
+            try {
+                window.prompt('Скопируйте ссылку на статью:', shareUrl);
+            } catch (promptError) {
+                // ignore
+            }
+        } finally {
+            showShareNotice();
+        }
+    };
+
     return (
         <Card 
             sx={{
@@ -76,6 +124,29 @@ const PostCard = ({
             }}
             onClick={onClick}
         >
+            {shareNoticeOpen && (
+                <Box
+                    sx={{
+                        position: 'fixed',
+                        top: '50%',
+                        left: '50%',
+                        transform: 'translate(-50%, -50%)',
+                        zIndex: 2000,
+                        backgroundColor: 'rgba(18, 18, 18, 0.95)',
+                        border: '1px solid rgba(0, 191, 165, 0.6)',
+                        borderRadius: '12px',
+                        boxShadow: '0 10px 30px rgba(0, 0, 0, 0.5)',
+                        px: 3,
+                        py: 1.5,
+                        pointerEvents: 'none',
+                        textAlign: 'center',
+                    }}
+                >
+                    <Typography variant="body1" sx={{ color: 'white', fontWeight: 700 }}>
+                        Ссылка на статью скопирована
+                    </Typography>
+                </Box>
+            )}
             <Box sx={{ p: 2, flexGrow: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
                 
                 {/* 1. АВТОР и ТЕГИ */}
@@ -216,9 +287,14 @@ const PostCard = ({
                     </Box>
 
                     {/* Репост */}
-                    <IconButton sx={{ color: '#00bfa5'}} onClick={(e) => { e.stopPropagation(); console.log('Репост!'); }}>
-                        <SendIcon sx={{ fontSize: 30 }} />
-                    </IconButton>
+                    {showRepost && (
+                        <IconButton
+                            sx={{ color: '#00bfa5'}}
+                            onClick={handleShareClick}
+                        >
+                            <SendIcon sx={{ fontSize: 30 }} />
+                        </IconButton>
+                    )}
 
                 </Box>
             </Box>

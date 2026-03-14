@@ -178,6 +178,22 @@ namespace LambdaGeneration.API.Controllers
                 articles.ArticleTags.Select(t => ApiExtensions.FromTags(t)).ToList(), articles.CreatedDate, articles.CountLikes, articles.CountComments));
         }
 
+        [HttpGet("getArticleById/{id:guid}")]
+        public async Task<ActionResult<UpdateArticlesResponse>> GetByIdAsync(Guid id)
+        {
+            try
+            {
+                var articles = await _articlesService.GetArticleByIdAsync(id);
+
+                return Ok(new UpdateArticlesResponse(articles.ArticleID, articles.ArticleTitle, articles.ArticlePreview, articles.ArticleContent,
+                    articles.ArticleTags.Select(t => ApiExtensions.FromTags(t)).ToList(), articles.CreatedDate, articles.CountLikes, articles.CountComments));
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+
         [HttpGet("getAllMyArticles")]
         [Authorize]
         public async Task<ActionResult<GetArticlesResponse>> GetAllArticlesUser()

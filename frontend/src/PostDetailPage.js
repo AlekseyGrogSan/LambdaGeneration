@@ -779,7 +779,31 @@ const PostDetailPage = ({
                     </Typography>
                 </Box>
 
-                <IconButton sx={{ color: '#00bfa5' }}>
+                <IconButton
+                    sx={{ color: '#00bfa5' }}
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        const shareUrl = `${window.location.origin}/?article=${post.article_id}`;
+                        (async () => {
+                            try {
+                                if (navigator.clipboard && navigator.clipboard.writeText) {
+                                    await navigator.clipboard.writeText(shareUrl);
+                                    alert('Ссылка скопирована в буфер обмена');
+                                } else {
+                                    window.prompt('Скопируйте ссылку на статью:', shareUrl);
+                                }
+                            } catch (err) {
+                                console.error('Copy failed', err);
+                                try {
+                                    await navigator.clipboard.writeText(shareUrl);
+                                    alert('Ссылка скопирована в буфер обмена');
+                                } catch {
+                                    window.prompt('Скопируйте ссылку на статью:', shareUrl);
+                                }
+                            }
+                        })();
+                    }}
+                >
                     <SendIcon sx={{ fontSize: 24 }} />
                 </IconButton>
             </Box>
