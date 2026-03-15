@@ -180,13 +180,13 @@ namespace LambdaGeneration.API.Controllers
         }
 
         [HttpGet("getArticleById/{id:guid}")]
-        public async Task<ActionResult<UpdateArticlesResponse>> GetByIdAsync(Guid id)
+        public async Task<ActionResult<GetArticleResponse>> GetByIdAsync(Guid id)
         {
             try
             {
                 var articles = await _articlesService.GetArticleByIdAsync(id);
 
-                return Ok(new UpdateArticlesResponse(articles.ArticleID, articles.ArticleTitle, articles.ArticlePreview, articles.ArticleContent,
+                return Ok(new GetArticleResponse(articles.ArticleID,articles.AuthorID, articles.ArticleTitle, articles.ArticlePreview, articles.ArticleContent,
                     articles.ArticleTags.Select(t => ApiExtensions.FromTags(t)).ToList(), articles.CreatedDate, articles.CountLikes, articles.CountComments));
             }
             catch (Exception ex)

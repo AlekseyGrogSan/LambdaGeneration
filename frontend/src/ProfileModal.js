@@ -867,7 +867,12 @@ const ProfileModal = ({ open, handleClose, userId, onUnauthorized, onLogout, onP
                                     <ListItemButton
                                         onClick={() => {
                                             handleCloseFollowingList();
-                                            if (openProfile) openProfile(user.id);
+                                            if (openProfile) {
+                                                openProfile(user.id, {
+                                                    returnToProfile: true,
+                                                    returnProfileUserId: isMyProfile ? null : userId,
+                                                });
+                                            }
                                         }}
                                     >
                                         <ListItemAvatar>
