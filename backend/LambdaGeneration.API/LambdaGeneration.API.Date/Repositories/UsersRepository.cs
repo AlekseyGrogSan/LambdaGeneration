@@ -26,7 +26,8 @@ namespace LambdaGeneration.API.Date.Repositories
                 Role = (int)user.Role,
                 CreatedDate = user.CreatedDate,
                 countArticles = 0,
-                countSubscribers = 0
+                countSubscribers = 0,
+                countFollowing = 0
             };
 
             _context.Users.Add(userEntity);
@@ -50,7 +51,10 @@ namespace LambdaGeneration.API.Date.Repositories
                 userEntity.Email,
                 (Role)userEntity.Role,
                 userEntity.AboutUser,
-                userEntity.CreatedDate
+                userEntity.CreatedDate,
+                userEntity.countSubscribers,
+                userEntity.countFollowing,
+                userEntity.countArticles
                 );
         }
         public async Task<Users?> GetByName(string name)
@@ -67,7 +71,10 @@ namespace LambdaGeneration.API.Date.Repositories
                 userEntity.Email,
                 (Role)userEntity.Role,
                 userEntity.AboutUser,
-                userEntity.CreatedDate
+                userEntity.CreatedDate,
+                userEntity.countSubscribers,
+                userEntity.countFollowing,
+                userEntity.countArticles
             );
             }
         public async Task Delete(Guid id)
@@ -95,7 +102,10 @@ namespace LambdaGeneration.API.Date.Repositories
                 userEntity.Email,
                 (Role)userEntity.Role,
                 userEntity.AboutUser,
-                userEntity.CreatedDate
+                userEntity.CreatedDate,
+                userEntity.countSubscribers,
+                userEntity.countFollowing,
+                userEntity.countArticles
                 );
         }
         public async Task<Users?> Update(Guid id, string name, string email, string aboutUser)
@@ -143,6 +153,14 @@ namespace LambdaGeneration.API.Date.Repositories
                 FollowingId = followingId
             });
 
+            await _context.Users
+                .Where(u => u.UserID == followerId)
+                .ExecuteUpdateAsync(u => u.SetProperty(x => x.countFollowing, x => x.countFollowing + 1));
+
+            await _context.Users
+                .Where(u => u.UserID == followingId)
+                .ExecuteUpdateAsync(u => u.SetProperty(x => x.countSubscribers, x => x.countSubscribers + 1));
+
             await _context.SaveChangesAsync();
         }
 
@@ -155,6 +173,15 @@ namespace LambdaGeneration.API.Date.Repositories
                 throw new Exception("Subscription not found");
 
             _context.Subscriptions.Remove(subscription);
+
+            await _context.Users
+                .Where(u => u.UserID == followerId)
+                .ExecuteUpdateAsync(u => u.SetProperty(x => x.countFollowing, x => x.countFollowing - 1));
+
+            await _context.Users
+                .Where(u => u.UserID == followingId)
+                .ExecuteUpdateAsync(u => u.SetProperty(x => x.countSubscribers, x => x.countSubscribers - 1));
+
             await _context.SaveChangesAsync();
         }
 
@@ -180,7 +207,10 @@ namespace LambdaGeneration.API.Date.Repositories
                     userEntity.Email,
                     (Role)userEntity.Role,
                     userEntity.AboutUser,
-                    userEntity.CreatedDate
+                    userEntity.CreatedDate,
+                    userEntity.countSubscribers,
+                    userEntity.countFollowing,
+                    userEntity.countArticles
                 ))
                 .ToList();
         }

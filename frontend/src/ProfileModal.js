@@ -1,10 +1,11 @@
-import React, { useState, useEffect } from 'react'; 
+﻿import React, { useState, useEffect } from 'react'; 
 import {
     Box,
     Typography,
     Modal,
     IconButton,
     Button,
+    ButtonBase,
     Divider,
     Grid,
     TextField,
@@ -13,7 +14,14 @@ import {
     Dialog,         
     DialogTitle,    
     DialogContent,  
-    DialogActions   
+    DialogActions,
+    List,
+    ListItem,
+    ListItemButton,
+    ListItemAvatar,
+    ListItemText,
+    Avatar,
+    Stack
 } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
 import LogoutIcon from '@mui/icons-material/Logout';
@@ -21,6 +29,7 @@ import EditIcon from '@mui/icons-material/Edit';
 import SaveIcon from '@mui/icons-material/Save'; 
 import AccountCircleIcon from '@mui/icons-material/AccountCircle';
 import DeleteIcon from '@mui/icons-material/Delete'; 
+import VisibilityIcon from '@mui/icons-material/Visibility';
 import PostCard from './PostCard'; 
 import EditArticleModal from './EditArticleModal'; 
 
@@ -33,9 +42,10 @@ const modalStyle = {
     transform: 'translate(-50%, -50%)',
     width: { xs: '95%', sm: 1000, md: 1200 }, 
     maxHeight: '90vh', 
-    backgroundColor: '#1e1e1e', 
+    backgroundColor: 'rgba(22, 22, 22, 0.97)', 
     borderRadius: '16px', 
-    boxShadow: '0 10px 40px rgba(0, 0, 0, 0.7)',
+    boxShadow: '0 16px 48px rgba(0, 0, 0, 0.65)',
+    border: '1px solid rgba(255, 255, 255, 0.06)',
     padding: '0', 
     color: 'white',
     overflowY: 'auto',
@@ -58,11 +68,13 @@ const modalStyle = {
 
 const inputStyle = {
     '& .MuiFilledInput-root': {
-        backgroundColor: '#2c2c2c',
+        backgroundColor: 'rgba(44, 44, 44, 0.85)',
         color: 'white',
         fontSize: '1.1rem', 
-        '&:hover': { backgroundColor: '#3a3a3a' },
-        '&.Mui-focused': { backgroundColor: '#3a3a3a' }
+        borderRadius: '12px',
+        boxShadow: 'inset 0 0 0 1px rgba(255, 255, 255, 0.05)',
+        '&:hover': { backgroundColor: 'rgba(58, 58, 58, 0.9)' },
+        '&.Mui-focused': { backgroundColor: 'rgba(58, 58, 58, 0.9)' }
     },
     '& .MuiInputLabel-root': { color: '#bdbdbd' },
 };
@@ -71,7 +83,36 @@ const cardContainerStyle = {
     height: '420px', 
     position: 'relative',
     // ✅ ВОССТАНОВЛЕНО: Стиль для показа оверлея при наведении
-    '&:hover .edit-overlay': { opacity: 1 } 
+    '&:hover .actions-overlay': { opacity: 1 } 
+};
+
+const sectionStyle = {
+    p: 4,
+    backgroundColor: 'rgba(30, 30, 30, 0.78)',
+    borderRadius: '20px',
+    boxShadow: '0 14px 30px rgba(0, 0, 0, 0.45)',
+    border: '1px solid rgba(255, 255, 255, 0.05)'
+};
+
+const statCardStyle = {
+    width: '100%',
+    textAlign: 'center',
+    padding: '16px 18px',
+    borderRadius: '16px',
+    backgroundColor: 'rgba(255, 255, 255, 0.04)',
+    border: '1px solid rgba(255, 255, 255, 0.06)',
+    boxShadow: '0 10px 24px rgba(0, 0, 0, 0.35)',
+    boxSizing: 'border-box',
+    transition: 'transform 0.2s, box-shadow 0.2s, background-color 0.2s'
+};
+
+const glassButtonStyle = {
+    backdropFilter: 'blur(10px)',
+    backgroundColor: 'rgba(255, 255, 255, 0.12)',
+    border: '1px solid rgba(255, 255, 255, 0.25)',
+    boxShadow: '0 8px 24px rgba(0, 0, 0, 0.35)',
+    textTransform: 'none',
+    whiteSpace: 'nowrap'
 };
 
 const getAuthHeaders = () => {
@@ -95,6 +136,13 @@ const ProfileModal = ({ open, handleClose, userId, onUnauthorized, onLogout, onP
     const [deleteConfirmData, setDeleteConfirmData] = useState({ email: '', password: '' });
     const [isDeletingUser, setIsDeletingUser] = useState(false);
     const [deleteError, setDeleteError] = useState(null);
+    
+    const [isFollowingListOpen, setIsFollowingListOpen] = useState(false);
+    const [followingList, setFollowingList] = useState([]);
+    const [isFollowingListLoading, setIsFollowingListLoading] = useState(false);
+    const [followingListError, setFollowingListError] = useState(null);
+    const [isFollowingUser, setIsFollowingUser] = useState(false);
+    const [isFollowBusy, setIsFollowBusy] = useState(false);
     
     const [error, setError] = useState(null);
 
@@ -173,9 +221,30 @@ const ProfileModal = ({ open, handleClose, userId, onUnauthorized, onLogout, onP
     useEffect(() => {
         if (open) {
             setIsEditingProfile(false); 
+            setIsFollowingListOpen(false);
+            setFollowingListError(null);
+            setIsFollowingListLoading(false);
+            setIsFollowingUser(false);
             fetchProfileData();
         }
     }, [open, userId]);
+
+    useEffect(() => {
+        const loadFollowingForStatus = async () => {
+            if (!open || isMyProfile) return;
+            try {
+                const response = await fetch(`${API_BASE_URL}/Users/following`, { credentials: 'include' });
+                if (response.status === 401 || response.status === 403) return;
+                if (!response.ok) return;
+                const following = await response.json();
+                setFollowingList(following);
+                setIsFollowingUser(Array.isArray(following) && following.some(u => u.id === userId));
+            } catch {
+                // ignore follow status errors
+            }
+        };
+        loadFollowingForStatus();
+    }, [open, userId, isMyProfile]);
 
     // --- PROFILE UPDATE LOGIC (опущен для краткости) ---
     const handleSaveProfile = async () => {
@@ -243,6 +312,78 @@ const ProfileModal = ({ open, handleClose, userId, onUnauthorized, onLogout, onP
     const handleArticleDeleteSuccess = (articleId) => {
         setUserPosts(prevPosts => prevPosts.filter(post => post.id !== articleId));
         setEditingPost(null); 
+    };
+
+    const normalizeCount = (value) => {
+        if (Array.isArray(value)) return value.length;
+        if (typeof value === 'number') return value;
+        if (value === null || value === undefined) return 0;
+        const parsed = Number(value);
+        return Number.isFinite(parsed) ? parsed : 0;
+    };
+
+    const subscribersCount = normalizeCount(profileData?.subscribersCount ?? profileData?.followersCount ?? profileData?.countSubscribers ?? profileData?.followers);
+    const followingCount = normalizeCount(profileData?.followingCount ?? profileData?.countFollowing ?? profileData?.following);
+    const articlesCount = normalizeCount(profileData?.articlesCount ?? profileData?.countArticles ?? userPosts.length);
+
+    const handleOpenFollowingList = async () => {
+        if (!isMyProfile) return;
+        setIsFollowingListOpen(true);
+        if (followingList.length > 0) return;
+        setIsFollowingListLoading(true);
+        setFollowingListError(null);
+        try {
+            const response = await fetch(`${API_BASE_URL}/Users/following`, { credentials: 'include' });
+            if (response.status === 401 || response.status === 403) {
+                if (onUnauthorized) onUnauthorized();
+                throw new Error('Необходимо войти в аккаунт.');
+            }
+            if (!response.ok) throw new Error('Не удалось загрузить подписки.');
+            const data = await response.json();
+            setFollowingList(Array.isArray(data) ? data : []);
+        } catch (err) {
+            setFollowingListError(err.message || 'Ошибка загрузки подписок.');
+        } finally {
+            setIsFollowingListLoading(false);
+        }
+    };
+
+    const handleCloseFollowingList = () => setIsFollowingListOpen(false);
+
+    const handleToggleFollow = async () => {
+        if (isMyProfile || !userId) return;
+        setIsFollowBusy(true);
+        try {
+            const endpoint = isFollowingUser 
+                ? `${API_BASE_URL}/Users/unsubscribe/${userId}` 
+                : `${API_BASE_URL}/Users/subscribe/${userId}`;
+            const response = await fetch(endpoint, { 
+                method: isFollowingUser ? 'DELETE' : 'POST', 
+                credentials: 'include'
+            });
+            if (response.status === 401 || response.status === 403) {
+                if (onUnauthorized) onUnauthorized();
+                throw new Error('Необходимо войти в аккаунт.');
+            }
+            if (!response.ok) throw new Error('Не удалось изменить подписку.');
+
+            const delta = isFollowingUser ? -1 : 1;
+            setIsFollowingUser(!isFollowingUser);
+            setProfileData(prev => {
+                if (!prev) return prev;
+                const current = normalizeCount(prev.subscribersCount ?? prev.followersCount);
+                const next = Math.max(0, current + delta);
+                return { 
+                    ...prev, 
+                    subscribersCount: next,
+                    followersCount: next
+                };
+            });
+        } catch (err) {
+            setError(err.message || 'Не удалось изменить подписку.');
+        } finally {
+            setIsFollowBusy(false);
+        }
     };
 
     // --- USER DELETE LOGIC (опущен для краткости) ---
@@ -325,7 +466,7 @@ const ProfileModal = ({ open, handleClose, userId, onUnauthorized, onLogout, onP
 
                         {/* ✅ ВОССТАНОВЛЕНО: Отображение имени и email (если не редактируется) */}
                         {isMyProfile && isEditingProfile ? (
-                            <Box sx={{ width: '100%', maxWidth: 500, display: 'flex', flexDirection: 'column', gap: 2 }}>
+                            <Box sx={{ width: '100%', maxWidth: 520, display: 'flex', flexDirection: 'column', gap: 2, p: 2, borderRadius: '16px', backgroundColor: 'rgba(255,255,255,0.04)', boxShadow: '0 10px 24px rgba(0,0,0,0.35)', border: '1px solid rgba(255,255,255,0.06)' }}>
                                 <TextField
                                     label="Имя пользователя"
                                     value={editData.name}
@@ -360,42 +501,114 @@ const ProfileModal = ({ open, handleClose, userId, onUnauthorized, onLogout, onP
                             На сайте с {new Date(profileData.createDate).toLocaleDateString()}
                         </Typography>
 
-                        {isMyProfile && (
-                            <Box sx={{ mt: 3 }}>
-                                {isEditingProfile ? (
-                                    <Button
-                                        startIcon={<SaveIcon />}
-                                        onClick={handleSaveProfile}
-                                        variant="contained"
-                                        size="large"
-                                        sx={{ bgcolor: '#00bfa5', '&:hover': { bgcolor: '#00897b' } }}
-                                    >
-                                        Сохранить изменения
-                                    </Button>
-                                ) : (
-                                    <Button
-                                        variant="outlined"
-                                        startIcon={<EditIcon />}
-                                        onClick={() => setIsEditingProfile(true)}
+                        <Box sx={{ mt: 3, width: '100%', maxWidth: 720, mx: 'auto' }}>
+                            <Grid container spacing={2} justifyContent="center">
+                                <Grid item xs={12} sm={4}>
+                                    <ButtonBase
+                                        onClick={isMyProfile ? handleOpenFollowingList : undefined}
                                         sx={{
-                                            color: '#00bfa5',
-                                            borderColor: '#00bfa5',
-                                            fontSize: '1rem',
-                                            padding: '6px 20px',
-                                            '&:hover': { borderColor: '#00a38f', backgroundColor: 'rgba(0, 191, 165, 0.1)' }
+                                            ...statCardStyle,
+                                            display: 'block',
+                                            cursor: isMyProfile ? 'pointer' : 'default',
+                                            '&:hover': isMyProfile ? { 
+                                                transform: 'translateY(-2px)', 
+                                                boxShadow: '0 14px 30px rgba(0,0,0,0.45)',
+                                                backgroundColor: 'rgba(0, 191, 165, 0.12)'
+                                            } : undefined
                                         }}
                                     >
-                                        Редактировать профиль
-                                    </Button>
-                                )}
-                            </Box>
-                        )}
+                                        <Stack spacing={0.5}>
+                                            <Typography variant="h4" sx={{ color: 'white', fontWeight: 'bold' }}>
+                                                {followingCount}
+                                            </Typography>
+                                            <Typography variant="body2" sx={{ color: '#bdbdbd', letterSpacing: 0.3 }}>
+                                                Подписки
+                                            </Typography>
+                                        </Stack>
+                                    </ButtonBase>
+                                </Grid>
+                                <Grid item xs={12} sm={4}>
+                                    <Box sx={statCardStyle}>
+                                        <Stack spacing={0.5}>
+                                            <Typography variant="h4" sx={{ color: 'white', fontWeight: 'bold' }}>
+                                                {subscribersCount}
+                                            </Typography>
+                                            <Typography variant="body2" sx={{ color: '#bdbdbd', letterSpacing: 0.3 }}>
+                                                Подписчики
+                                            </Typography>
+                                        </Stack>
+                                    </Box>
+                                </Grid>
+                                <Grid item xs={12} sm={4}>
+                                    <Box sx={statCardStyle}>
+                                        <Stack spacing={0.5}>
+                                            <Typography variant="h4" sx={{ color: 'white', fontWeight: 'bold' }}>
+                                                {articlesCount}
+                                            </Typography>
+                                            <Typography variant="body2" sx={{ color: '#bdbdbd', letterSpacing: 0.3 }}>
+                                                Статьи
+                                            </Typography>
+                                        </Stack>
+                                    </Box>
+                                </Grid>
+                            </Grid>
+                        </Box>
+
+                        <Box sx={{ mt: 3, display: 'flex', gap: 2, flexWrap: 'wrap', justifyContent: 'center' }}>
+                            {isMyProfile ? (
+                                <>
+                                    {isEditingProfile ? (
+                                        <Button
+                                            startIcon={<SaveIcon />}
+                                            onClick={handleSaveProfile}
+                                            variant="contained"
+                                            size="large"
+                                            sx={{ bgcolor: '#00bfa5', '&:hover': { bgcolor: '#00897b' } }}
+                                        >
+                                            Сохранить изменения
+                                        </Button>
+                                    ) : (
+                                        <Button
+                                            variant="outlined"
+                                            startIcon={<EditIcon />}
+                                            onClick={() => setIsEditingProfile(true)}
+                                            sx={{
+                                                color: '#00bfa5',
+                                                borderColor: '#00bfa5',
+                                                fontSize: '1rem',
+                                                padding: '6px 20px',
+                                                '&:hover': { borderColor: '#00a38f', backgroundColor: 'rgba(0, 191, 165, 0.1)' }
+                                            }}
+                                        >
+                                            Редактировать профиль
+                                        </Button>
+                                    )}
+                                </>
+                            ) : (
+                                <Button
+                                    variant={isFollowingUser ? 'outlined' : 'contained'}
+                                    onClick={handleToggleFollow}
+                                    disabled={isFollowBusy}
+                                    sx={{
+                                        bgcolor: isFollowingUser ? 'transparent' : '#00bfa5',
+                                        color: isFollowingUser ? '#00bfa5' : '#101010',
+                                        borderColor: '#00bfa5',
+                                        '&:hover': { 
+                                            bgcolor: isFollowingUser ? 'rgba(0, 191, 165, 0.1)' : '#00897b',
+                                            borderColor: '#00a38f'
+                                        }
+                                    }}
+                                >
+                                    {isFollowingUser ? 'Отписаться' : 'Подписаться'}
+                                </Button>
+                            )}
+                        </Box>
                     </Box>
 
                     <Divider sx={{ backgroundColor: '#333' }} />
 
                     {/* --- СЕКЦИЯ "О СЕБЕ" --- */}
-                    <Box sx={{ p: 4, textAlign: 'center', backgroundColor: '#1e1e1e' }}>
+                    <Box sx={{ ...sectionStyle, m: 3, textAlign: 'center' }}>
                         <Typography variant="h5" sx={{ color: '#bdbdbd', fontWeight: 'bold', mb: 2 }}>
                             О себе
                         </Typography>
@@ -424,7 +637,7 @@ const ProfileModal = ({ open, handleClose, userId, onUnauthorized, onLogout, onP
                     {/* --- ПУБЛИКАЦИИ --- */}
                     <Box sx={{ p: 4 }}>
                         <Typography variant="h4" sx={{ mb: 3, color: '#00bfa5', fontWeight: 'bold' }}>
-                            Публикации ({userPosts.length})
+                            Публикации ({articlesCount})
                         </Typography>
 
                         <Grid container spacing={3}>
@@ -438,23 +651,24 @@ const ProfileModal = ({ open, handleClose, userId, onUnauthorized, onLogout, onP
                                                 authorId={post.author_id} 
                                                 onClick={() => {
                                                     if (isMyProfile) {
-                                                        // В своем профиле клик открывает модалку редактирования
-                                                        setEditingPost(post); 
+                                                        handleClose();
+                                                        if (onPostClick){
+                                                            onPostClick(post, { returnToProfile: true, profileUserId: null });
+                                                        }
                                                     } else {
-                                                        // В чужом профиле клик открывает PostDetailPage
                                                         handleClose(); 
                                                         if (onPostClick){
-                                                            onPostClick(post);
+                                                            onPostClick(post, { returnToProfile: true, profileUserId: userId });
                                                         }
                                                     }
                                                 }}
                                                 onLike={() => onLikes(post.article_id, post.isLiked)}
                                             />
                                             
-                                            {/* ✅ ВОССТАНОВЛЕНО: Оверлей с кнопкой редактирования при наведении (только для моих постов) */}
+                                            {/* ✅ ВОССТАНОВЛЕНО: Оверлей с кнопками (только для моих постов) */}
                                             {isMyProfile && (
                                                 <Box 
-                                                    className="edit-overlay"
+                                                    className="actions-overlay"
                                                     sx={{
                                                         position: 'absolute',
                                                         top: 0,
@@ -463,8 +677,10 @@ const ProfileModal = ({ open, handleClose, userId, onUnauthorized, onLogout, onP
                                                         bottom: 0,
                                                         backgroundColor: 'rgba(0,0,0,0.6)',
                                                         display: 'flex',
+                                                        flexDirection: 'column',
                                                         justifyContent: 'center',
                                                         alignItems: 'center',
+                                                        gap: 2,
                                                         opacity: 0, // Изначально скрыто
                                                         transition: 'opacity 0.2s',
                                                         borderRadius: '12px',
@@ -472,10 +688,42 @@ const ProfileModal = ({ open, handleClose, userId, onUnauthorized, onLogout, onP
                                                     }}
                                                 >
                                                     <Button
+                                                        variant="outlined"
+                                                        startIcon={<VisibilityIcon />}
+                                                        fullWidth
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            handleClose();
+                                                            if (onPostClick){
+                                                                onPostClick(post, { returnToProfile: true, profileUserId: null });
+                                                            }
+                                                        }}
+                                                        sx={{ 
+                                                            ...glassButtonStyle,
+                                                            color: 'white',
+                                                            borderColor: 'rgba(255,255,255,0.6)',
+                                                            maxWidth: 220,
+                                                            '&:hover': { borderColor: 'white', backgroundColor: 'rgba(255,255,255,0.18)' } 
+                                                        }}
+                                                    >
+                                                        Просмотреть
+                                                    </Button>
+                                                    <Button
                                                         variant="contained"
                                                         startIcon={<EditIcon />}
-                                                        onClick={() => setEditingPost(post)}
-                                                        sx={{ bgcolor: '#00bfa5', '&:hover': { bgcolor: '#00897b' } }}
+                                                        fullWidth
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            setEditingPost(post);
+                                                        }}
+                                                        sx={{ 
+                                                            ...glassButtonStyle,
+                                                            maxWidth: 220,
+                                                            bgcolor: 'rgba(0, 191, 165, 0.35)',
+                                                            color: 'white',
+                                                            borderColor: 'rgba(0, 191, 165, 0.5)',
+                                                            '&:hover': { bgcolor: 'rgba(0, 151, 136, 0.45)' } 
+                                                        }}
                                                     >
                                                         Редактировать
                                                     </Button>
@@ -588,6 +836,62 @@ const ProfileModal = ({ open, handleClose, userId, onUnauthorized, onLogout, onP
                         disabled={isDeletingUser || deleteConfirmData.email !== profileData?.email || deleteConfirmData.password.length === 0}
                     >
                         {isDeletingUser ? <CircularProgress size={24} sx={{ color: 'white' }} /> : 'Удалить аккаунт'}
+                    </Button>
+                </DialogActions>
+            </Dialog>
+
+            <Dialog
+                open={isFollowingListOpen}
+                onClose={handleCloseFollowingList}
+                PaperProps={{ sx: { backgroundColor: '#1b1b1b', color: 'white', borderRadius: '12px', minWidth: { xs: '90vw', sm: 520 } } }}
+            >
+                <DialogTitle sx={{ color: '#00bfa5', fontWeight: 'bold' }}>
+                    Мои подписки
+                </DialogTitle>
+                <DialogContent>
+                    {isFollowingListLoading && (
+                        <Box sx={{ display: 'flex', justifyContent: 'center', py: 3 }}>
+                            <CircularProgress size={28} sx={{ color: '#00bfa5' }} />
+                        </Box>
+                    )}
+                    {followingListError && <Alert severity="error" sx={{ mb: 2 }}>{followingListError}</Alert>}
+                    {!isFollowingListLoading && followingList.length === 0 && !followingListError && (
+                        <Typography sx={{ color: '#bdbdbd', textAlign: 'center', py: 2 }}>
+                            У вас пока нет подписок.
+                        </Typography>
+                    )}
+                    {!isFollowingListLoading && followingList.length > 0 && (
+                        <List sx={{ width: '100%' }}>
+                            {followingList.map((user) => (
+                                <ListItem key={user.id} disablePadding>
+                                    <ListItemButton
+                                        onClick={() => {
+                                            handleCloseFollowingList();
+                                            if (openProfile) openProfile(user.id);
+                                        }}
+                                    >
+                                        <ListItemAvatar>
+                                            <Avatar sx={{ bgcolor: '#00bfa5' }}>
+                                                {user.name?.[0]?.toUpperCase() || 'U'}
+                                            </Avatar>
+                                        </ListItemAvatar>
+                                        <ListItemText
+                                            primary={user.name || 'Пользователь'}
+                                            secondary={
+                                                <span style={{ color: '#9e9e9e' }}>
+                                                    Подписчики: {user.followersCount ?? 0} · Подписки: {user.followingCount ?? 0} · Статьи: {user.articlesCount ?? 0}
+                                                </span>
+                                            }
+                                        />
+                                    </ListItemButton>
+                                </ListItem>
+                            ))}
+                        </List>
+                    )}
+                </DialogContent>
+                <DialogActions sx={{ p: 2 }}>
+                    <Button onClick={handleCloseFollowingList} sx={{ color: '#00bfa5' }}>
+                        Закрыть
                     </Button>
                 </DialogActions>
             </Dialog>

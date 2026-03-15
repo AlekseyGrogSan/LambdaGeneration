@@ -54,6 +54,7 @@ const PostDetailPage = ({
     nickname, 
     authorId,
     containerRef, // <-- Новый пропс: реф контейнера ленты
+    backLabel
 }) => {
     
     // Исправленный useEffect: скроллим контейнер ленты
@@ -91,7 +92,7 @@ const PostDetailPage = ({
                 <IconButton onClick={onBack} sx={{ color: '#00bfa5' }}>
                     <ArrowBackIcon />
                 </IconButton>
-                <Typography variant="h6" sx={{ color: 'white', ml: 1 }}>Назад к ленте</Typography>
+                <Typography variant="h6" sx={{ color: 'white', ml: 1 }}>{backLabel || 'Назад к ленте'}</Typography>
             </Box>
 
             <Box sx={{ p: 2 }}>

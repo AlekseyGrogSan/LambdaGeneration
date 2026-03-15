@@ -12,9 +12,12 @@ namespace LambdaGeneration.API.Core.Models
             Email = email;
             AboutUser = aboutUser;
             CreatedDate = DateTime.UtcNow;
+            FollowersCount = 0;
+            FollowingCount = 0;
+            ArticlesCount = 0;
         }
 
-        private Users(Guid Id, string username, string Hashpassword, string email, string aboutUser, DateTime createDate)
+        private Users(Guid Id, string username, string Hashpassword, string email, string aboutUser, DateTime createDate, int followersCount, int followingCount, int articlesCount)
         {
             UserID = Id;
             UserName = username;
@@ -22,6 +25,9 @@ namespace LambdaGeneration.API.Core.Models
             Email = email;
             AboutUser = aboutUser;
             CreatedDate = createDate;
+            FollowersCount = followersCount;
+            FollowingCount = followingCount;
+            ArticlesCount = articlesCount;
         }
 
         public Guid UserID { get; }
@@ -32,15 +38,18 @@ namespace LambdaGeneration.API.Core.Models
         public Role Role { get; private set; } = Role.User;
         public DateTime CreatedDate { get; }
         public bool IsBanned { get; private set; } = false;
+        public int FollowersCount { get; }
+        public int FollowingCount { get; }
+        public int ArticlesCount { get; }
 
         public static Users Create(Guid id, string username, string hashpassword, string email, string aboutUser)
         {
             return new Users(id, username, hashpassword, email, aboutUser);
         }
 
-        public static Users Map(Guid id, string username, string hashpassword, string email, Role role, string aboutUser, DateTime createDate)
+        public static Users Map(Guid id, string username, string hashpassword, string email, Role role, string aboutUser, DateTime createDate, int followersCount, int followingCount, int articlesCount)
         {
-            Users user = new Users(id, username, hashpassword, email, aboutUser, createDate);
+            Users user = new Users(id, username, hashpassword, email, aboutUser, createDate, followersCount, followingCount, articlesCount);
             user.Role = role;
             return user;
         }

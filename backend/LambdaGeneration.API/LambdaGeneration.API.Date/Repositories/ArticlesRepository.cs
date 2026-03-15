@@ -40,11 +40,22 @@ namespace LambdaGeneration.API.Date.Repositories
             };
 
             _context.Articles.Add(article_entity);
+
+            await _context.Users
+                .Where(u => u.UserID == article.AuthorID)
+                .ExecuteUpdateAsync(u => u.SetProperty(x => x.countArticles, x => x.countArticles + 1));
+
             await _context.SaveChangesAsync();
         }
 
         public async Task Delete(Guid article_id)
         {
+            var article = await _context.Articles.FirstOrDefaultAsync(u => u.ArticleID == article_id);
+
+            await _context.Users
+                .Where(u => u.UserID == article.AuthorID)
+                .ExecuteUpdateAsync(u => u.SetProperty(x => x.countArticles, x => x.countArticles - 1));
+
             await _context.Articles.Where(a => a.ArticleID == article_id).ExecuteDeleteAsync();
             await _context.SaveChangesAsync();
         }
