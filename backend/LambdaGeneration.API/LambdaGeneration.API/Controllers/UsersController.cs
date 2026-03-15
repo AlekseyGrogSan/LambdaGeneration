@@ -163,7 +163,6 @@ namespace LambdaGeneration.API.Controllers
                 var userId = GetUserID();
 
                 var user = await _usersService.GetProfile(userId);
-                var subscribersCount = await _usersService.GetSubscribersCount(userId);
 
                 var userResponse = new MyProfileResponse(
                     user.UserID,
@@ -171,7 +170,9 @@ namespace LambdaGeneration.API.Controllers
                     user.Email,
                     user.AboutUser,
                     user.CreatedDate,
-                    subscribersCount
+                    user.FollowersCount,
+                    user.FollowingCount,
+                    user.ArticlesCount
                     );
 
                 return Ok(userResponse);
@@ -188,14 +189,15 @@ namespace LambdaGeneration.API.Controllers
             try
             { 
                 var user = await _usersService.GetProfile(id);
-                var subscribersCount = await _usersService.GetSubscribersCount(id);
 
                 var userResponse = new UserProfileResponse(
                     user.UserID,
                     user.UserName,
                     user.AboutUser,
                     user.CreatedDate,
-                    subscribersCount
+                    user.FollowersCount,
+                    user.FollowingCount,
+                    user.ArticlesCount
                     );
 
                 return Ok(userResponse);
@@ -219,7 +221,6 @@ namespace LambdaGeneration.API.Controllers
                 }
                 
                 (Users user, string token) = await _usersService.Update(id, request.name, request.email, request.aboutUser);
-                var subscribersCount = await _usersService.GetSubscribersCount(id);
 
                 var userProfile = new MyProfileResponse(
                     user.UserID,
@@ -227,7 +228,9 @@ namespace LambdaGeneration.API.Controllers
                     user.Email,
                     user.AboutUser,
                     user.CreatedDate,
-                    subscribersCount
+                    user.FollowersCount,
+                    user.FollowingCount,
+                    user.ArticlesCount
                     );
 
                 HttpContext.Response.Cookies.Append("auth_cookies", token,
@@ -288,7 +291,14 @@ namespace LambdaGeneration.API.Controllers
                 var following = await _usersService.GetFollowing(userId);
 
                 var response = following
-                    .Select(user => new FollowingUserResponse(user.UserID, user.UserName, user.AboutUser))
+                    .Select(user => new FollowingUserResponse(
+                        user.UserID,
+                        user.UserName,
+                        user.AboutUser,
+                        user.FollowersCount,
+                        user.FollowingCount,
+                        user.ArticlesCount
+                        ))
                     .ToList();
 
                 return Ok(response);

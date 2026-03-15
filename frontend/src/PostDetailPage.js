@@ -289,9 +289,10 @@ const PostDetailPage = ({
     currentUserId,
     nickname,
     authorId,
-    containerRef,
     onCommentsCountChange,
     initialOpenComments = false,
+    containerRef, // <-- Новый пропс: реф контейнера ленты
+    backLabel
 }) => {
     const [commentsOpen, setCommentsOpen] = useState(false);
     const [commentsLoading, setCommentsLoading] = useState(false);
@@ -697,7 +698,7 @@ const PostDetailPage = ({
                 <IconButton onClick={onBack} sx={{ color: '#00bfa5' }}>
                     <ArrowBackIcon />
                 </IconButton>
-                <Typography variant="h6" sx={{ color: 'white', ml: 1 }}>Назад к ленте</Typography>
+                <Typography variant="h6" sx={{ color: 'white', ml: 1 }}>{backLabel || 'Назад к ленте'}</Typography>
             </Box>
 
             <Box sx={{ p: 2 }}>

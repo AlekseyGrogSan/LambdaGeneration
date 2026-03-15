@@ -18,6 +18,7 @@ namespace LambdaGeneration.API.Date.Entities
         public DateTime CreatedDate { get; set; }
         public int countArticles { get; set; }
         public int countSubscribers { get; set; }
+        public int countFollowing { get; set; }
         public int Role { get; set; }
         public bool IsBanned { get; set; } = false;
         public List<ArticlesEntity> Articles { get; set; } = new List<ArticlesEntity>();
