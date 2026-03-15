@@ -84,5 +84,25 @@ namespace LambdaGeneration.API.Application.Services
 
             return (user, token);
         }
+
+        public async Task Subscribe(Guid followerId, Guid followingId)
+        {
+            await _usersRepository.Subscribe(followerId, followingId);
+        }
+
+        public async Task Unsubscribe(Guid followerId, Guid followingId)
+        {
+            await _usersRepository.Unsubscribe(followerId, followingId);
+        }
+
+        public async Task<int> GetSubscribersCount(Guid userId)
+        {
+            return await _usersRepository.GetSubscribersCount(userId);
+        }
+
+        public async Task<List<Users>> GetFollowing(Guid userId)
+        {
+            return await _usersRepository.GetFollowing(userId);
+        }
     }
 }

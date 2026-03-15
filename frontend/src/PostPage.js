@@ -565,6 +565,8 @@ const PostPage = () => {
 
     useEffect(() => { articlesRef.current = articles; }, [articles]);
     useEffect(() => { hasMoreRef.current = hasMore; }, [hasMore]);
+    const [returnToProfile, setReturnToProfile] = useState(false);
+    const [returnProfileUserId, setReturnProfileUserId] = useState(null);
 
     // On mount: if URL contains ?article=<id>, try to open that article in detail view
     useEffect(() => {
@@ -714,6 +716,8 @@ const PostPage = () => {
         setLastViewedArticleId(postData.article_id); 
         setSelectedPost(postData); 
         setIsViewingDetailPage(true);
+        setReturnToProfile(!!options.returnToProfile);
+        setReturnProfileUserId(options.profileUserId ?? null);
         setShouldOpenComments(openComments);
     };
     
@@ -731,6 +735,12 @@ const PostPage = () => {
         setPageNumber(1);
         setHasMore(true);
         fetchArticlesPage(1, type);
+        if (returnToProfile) {
+            setViewedProfileId(returnProfileUserId ?? null);
+            setIsProfileModalOpen(true);
+        }
+        setReturnToProfile(false);
+        setReturnProfileUserId(null);
     };
 
     const handleLogout = async () => {
@@ -1498,6 +1508,7 @@ const PostPage = () => {
                         <PostDetailPage
                             post={selectedPost}
                             onBack={handleBackToFeed}
+                            backLabel={returnToProfile ? 'Назад к профилю' : 'Назад к ленте'}
                             nickname={selectedPost.nickname}
                             authorId={selectedPost.author_id} 
                             onAuthorClick={handleOtherAuthorProfileOpen} 
