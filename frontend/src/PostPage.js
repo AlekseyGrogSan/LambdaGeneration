@@ -567,6 +567,8 @@ const PostPage = () => {
     useEffect(() => { hasMoreRef.current = hasMore; }, [hasMore]);
     const [returnToProfile, setReturnToProfile] = useState(false);
     const [returnProfileUserId, setReturnProfileUserId] = useState(null);
+    const [profileReturnEnabled, setProfileReturnEnabled] = useState(false);
+    const [profileReturnUserId, setProfileReturnUserId] = useState(null);
 
     // On mount: if URL contains ?article=<id>, try to open that article in detail view
     useEffect(() => {
@@ -588,6 +590,7 @@ const PostPage = () => {
             // 2) try to fetch a single-article endpoint if available
             try {
                 const singlePaths = [
+                    `${API_BASE_URL}/Articles/getArticleById/${articleId}`,
                     `${API_BASE_URL}/Articles/GetArticleById/${articleId}`,
                     `${API_BASE_URL}/Articles/GetArticleById?id=${articleId}`,
                     `${API_BASE_URL}/Articles/get/${articleId}`,
@@ -693,26 +696,42 @@ const PostPage = () => {
             handleOpen();
         } else {
             setViewedProfileId(null); 
+            setProfileReturnEnabled(false);
+            setProfileReturnUserId(null);
             setIsProfileModalOpen(true);
         }
     };
     
     const handleProfileClose = () => {
+        if (profileReturnEnabled) {
+            setViewedProfileId(profileReturnUserId ?? null);
+            setProfileReturnEnabled(false);
+            setProfileReturnUserId(null);
+            setIsProfileModalOpen(true);
+            return;
+        }
         setIsProfileModalOpen(false);
         setViewedProfileId(null);
         fetchArticlesPage(1);
     };
     
-    const handleOtherAuthorProfileOpen = (userId) => {
+    const handleOtherAuthorProfileOpen = (userId, options = {}) => {
         if (currentUser && currentUser.id === userId) {
             setViewedProfileId(null);
         } else {
             setViewedProfileId(userId);
         }
+        if (options.returnToProfile) {
+            setProfileReturnEnabled(true);
+            setProfileReturnUserId(options.returnProfileUserId ?? null);
+        } else {
+            setProfileReturnEnabled(false);
+            setProfileReturnUserId(null);
+        }
         setIsProfileModalOpen(true);
     };
 
-    const handlePostClick = (postData, openComments = false) => { 
+    const handlePostClick = (postData, options = {}, openComments = false) => { 
         setLastViewedArticleId(postData.article_id); 
         setSelectedPost(postData); 
         setIsViewingDetailPage(true);
@@ -725,6 +744,12 @@ const PostPage = () => {
         setSelectedPost(null); 
         setIsViewingDetailPage(false); 
         setShouldOpenComments(false);
+        if (returnToProfile) {
+            setViewedProfileId(returnProfileUserId ?? null);
+            setIsProfileModalOpen(true);
+        }
+        setReturnToProfile(false);
+        setReturnProfileUserId(null);
     };
 
     const handlePaginationTypeChange = (type) => {
@@ -836,10 +861,13 @@ const PostPage = () => {
 
     
     const enrichArticleData = async (article) => {
-        const rawId = article.article_id;
+        const rawId = article.article_id ?? article.articleId ?? article.ArticleID;
+        const rawAuthorId = article.author_id ?? article.authorId ?? article.AuthorID;
         const fetchOptions = { credentials: 'include' };
 
-        const authorReq = fetch(`${API_BASE_URL}/Users/UserProfile/${article.author_id}`).then(r => r.json()).catch(() => ({}));
+        const authorReq = rawAuthorId
+            ? fetch(`${API_BASE_URL}/Users/UserProfile/${rawAuthorId}`).then(r => r.json()).catch(() => ({}))
+            : Promise.resolve({});
         const likeCountReq = fetch(`${API_BASE_URL}/Like/getLikes/${rawId}`, fetchOptions).then(r => r.json()).catch(() => ({ countLikes: 0 }));
         
         const isLikedReq = fetch(`${API_BASE_URL}/Like/isLiked/${rawId}`, fetchOptions)
@@ -855,18 +883,18 @@ const PostPage = () => {
         
         return {
             ...article,
-            article_id: article.article_id, 
-            author_id: article.author_id, 
+            article_id: rawId, 
+            author_id: rawAuthorId, 
             nickname: authorData.name || 'Автор',
             authorBio: authorData.aboutUser || 'Описание недоступно.',
-            title: article.articleTitle || article.article_title || 'Нет названия', 
-            article_preview: article.articlePreview || article.article_preview || 'Нет описания',
-            article_content: article.article_content || article.articleContent || '...', 
+            title: article.articleTitle || article.article_title || article.ArticleTitle || 'Нет названия', 
+            article_preview: article.articlePreview || article.article_preview || article.ArticlePreview || 'Нет описания',
+            article_content: article.article_content || article.articleContent || article.ArticleContent || '...', 
             likesCount: likeCountData.countLikes || 0,
-            imageUrl: article.article_preview, 
+            imageUrl: article.article_preview || article.ArticlePreview, 
             isLiked: isLikedStatus, 
-            commentsCount: article.countComments ?? article.commentsCount ?? article.comments_count ?? 0,
-            tags: article.article_tags || [], 
+            commentsCount: article.countComments ?? article.commentsCount ?? article.comments_count ?? article.CountComments ?? 0,
+            tags: article.article_tags || article.articleTags || article.ArticleTags || [], 
         };
     };
 
