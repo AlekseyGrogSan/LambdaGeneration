@@ -302,7 +302,13 @@ const EditArticleModal = ({ open, handleClose, post, onUpdateSuccess, onDeleteSu
     if (!post) return null;
 
     return (
-        <Modal open={open} onClose={handleClose} container={container} disablePortal={disablePortal}>
+        <Modal
+            open={open}
+            onClose={handleClose}
+            container={container}
+            disablePortal={disablePortal}
+            sx={{ zIndex: 1500 }}
+        >
             <Box sx={modalStyle}>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
                     <Typography variant="h6" sx={{ color: '#00bfa5', fontWeight: 'bold' }}>

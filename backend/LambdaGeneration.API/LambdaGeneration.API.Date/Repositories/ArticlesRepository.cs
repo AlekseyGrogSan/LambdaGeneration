@@ -390,5 +390,23 @@ namespace LambdaGeneration.API.Date.Repositories
                     a.CountComments))
                 .ToListAsync();
         }
+
+        public async Task<List<Articles>> GetLikesArticles(Guid authorId)
+        {
+            return await _context.Likes.AsNoTracking()
+                .Where(l => l.AuthorId == authorId)
+                .Select(l => l.Articles)
+                .Select(a => Articles.Map(
+                    a.ArticleID,
+                    a.ArticleTitle,
+                    a.ArticleContent,
+                    a.ArticlePreview,
+                    a.AuthorID,
+                    a.ArticleTags,
+                    a.CreatedDate,
+                    a.CountLikes,
+                    a.CountComments))
+                .ToListAsync();
+        }
     }
 }
