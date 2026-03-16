@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect } from 'react'; 
+﻿import React, { useState, useEffect, useRef } from 'react'; 
 import {
     Box,
     Typography,
@@ -31,7 +31,8 @@ import AccountCircleIcon from '@mui/icons-material/AccountCircle';
 import DeleteIcon from '@mui/icons-material/Delete'; 
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import PostCard from './PostCard'; 
-import EditArticleModal from './EditArticleModal'; 
+import EditArticleModal from './EditArticleModal';
+import EmailVerificationModal from './EmailVerificationModal'; 
 
 const API_BASE_URL = 'http://localhost:5113/api';
 
@@ -42,10 +43,11 @@ const modalStyle = {
     transform: 'translate(-50%, -50%)',
     width: { xs: '95%', sm: 1000, md: 1200 }, 
     maxHeight: '90vh', 
-    backgroundColor: 'rgba(22, 22, 22, 0.97)', 
+    background: 'linear-gradient(180deg, rgba(34, 34, 34, 0.72), rgba(18, 18, 18, 0.82))',
+    backdropFilter: 'blur(16px) saturate(120%)', 
     borderRadius: '16px', 
     boxShadow: '0 16px 48px rgba(0, 0, 0, 0.65)',
-    border: '1px solid rgba(255, 255, 255, 0.06)',
+    border: '1px solid rgba(255, 255, 255, 0.18)',
     padding: '0', 
     color: 'white',
     overflowY: 'auto',
@@ -100,7 +102,7 @@ const statCardStyle = {
     padding: '16px 18px',
     borderRadius: '16px',
     backgroundColor: 'rgba(255, 255, 255, 0.04)',
-    border: '1px solid rgba(255, 255, 255, 0.06)',
+    border: '1px solid rgba(255, 255, 255, 0.18)',
     boxShadow: '0 10px 24px rgba(0, 0, 0, 0.35)',
     boxSizing: 'border-box',
     transition: 'transform 0.2s, box-shadow 0.2s, background-color 0.2s'
@@ -121,14 +123,29 @@ const getAuthHeaders = () => {
     };
 };
 
+const validateEmail = (email) => {
+    return String(email)
+        .toLowerCase()
+        .match(
+            /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/
+        );
+};
 const ProfileModal = ({ open, handleClose, userId, onUnauthorized, onLogout, onPostClick, onLikes, openProfile }) => {
+    const profileModalRef = useRef(null);
     const isMyProfile = userId === null; 
     const [profileData, setProfileData] = useState(null);
     const [userPosts, setUserPosts] = useState([]);
     const [isLoading, setIsLoading] = useState(false);
     
     const [isEditingProfile, setIsEditingProfile] = useState(false);
-    const [editData, setEditData] = useState({ name: '', email: '', aboutUser: '' });
+    const [editData, setEditData] = useState({ name: '', aboutUser: '' });
+    const [emailEdit, setEmailEdit] = useState('');
+    const [emailError, setEmailError] = useState(null);
+    const [emailSuccess, setEmailSuccess] = useState(null);
+    const [emailSending, setEmailSending] = useState(false);
+    const [showEmailVerification, setShowEmailVerification] = useState(false);
+    const [pendingEmail, setPendingEmail] = useState('');
+    const [isEmailModalOpen, setIsEmailModalOpen] = useState(false);
     
     const [editingPost, setEditingPost] = useState(null); 
     
@@ -182,9 +199,11 @@ const ProfileModal = ({ open, handleClose, userId, onUnauthorized, onLogout, onP
             
             setEditData({ 
                 name: profileJson.name, 
-                email: isMyProfile ? profileJson.email : '',
                 aboutUser: profileJson.aboutUser || '' 
             });
+            if (isMyProfile) {
+                setEmailEdit(profileJson.email || '');
+            }
 
             // 2. Посты
             const postsResponse = await fetch(postsEndpoint, fetchOptions);
@@ -225,6 +244,12 @@ const ProfileModal = ({ open, handleClose, userId, onUnauthorized, onLogout, onP
             setFollowingListError(null);
             setIsFollowingListLoading(false);
             setIsFollowingUser(false);
+            setEmailError(null);
+            setEmailSuccess(null);
+            setEmailSending(false);
+            setShowEmailVerification(false);
+            setPendingEmail('');
+            setIsEmailModalOpen(false);
             fetchProfileData();
         }
     }, [open, userId]);
@@ -253,7 +278,7 @@ const ProfileModal = ({ open, handleClose, userId, onUnauthorized, onLogout, onP
         try {
             const requestBody = {
                 name: editData.name,
-                email: editData.email,
+                email: profileData?.email || emailEdit,
                 aboutUser: editData.aboutUser
             }; 
 
@@ -279,14 +304,124 @@ const ProfileModal = ({ open, handleClose, userId, onUnauthorized, onLogout, onP
             setProfileData(updatedProfile);
             setEditData({ 
                 name: updatedProfile.name, 
-                email: updatedProfile.email, 
                 aboutUser: updatedProfile.aboutUser || '' 
             });
+            if (isMyProfile) {
+                setEmailEdit(updatedProfile.email || '');
+            }
             setIsEditingProfile(false);
         } catch (err) {
             setError(err.message);
         } finally {
             setIsLoading(false);
+        }
+    };
+
+    const handleProfileModalClose = () => {
+        if (isEditingProfile) {
+            setIsEditingProfile(false);
+            setEmailError(null);
+            setEmailSuccess(null);
+            return;
+        }
+        handleClose();
+    };
+
+    const handleOpenEmailModal = () => {
+        setEmailError(null);
+        setEmailSuccess(null);
+        setEmailSending(false);
+        setPendingEmail('');
+        setShowEmailVerification(false);
+        setIsEmailModalOpen(true);
+    };
+
+    const handleCloseEmailModal = () => {
+        setIsEmailModalOpen(false);
+        setEmailError(null);
+        setEmailSuccess(null);
+        setEmailSending(false);
+        setPendingEmail('');
+        setShowEmailVerification(false);
+    };
+
+    const handleSendEmailVerification = async () => {
+        setEmailError(null);
+        setEmailSuccess(null);
+
+        if (!validateEmail(emailEdit)) {
+            setEmailError('Введите корректный адрес электронной почты.');
+            return;
+        }
+        if (emailEdit === profileData?.email) {
+            setEmailError('Новый Email совпадает с текущим.');
+            return;
+        }
+
+        setEmailSending(true);
+        try {
+            const response = await fetch(`${API_BASE_URL}/Users/resend-code`, {
+                method: 'POST',
+                headers: getAuthHeaders(),
+                body: JSON.stringify(emailEdit),
+                credentials: 'include',
+            });
+
+            if (!response.ok) {
+                const text = await response.text();
+                throw new Error(text || 'Не удалось отправить код подтверждения.');
+            }
+
+            setPendingEmail(emailEdit);
+            setShowEmailVerification(true);
+            setIsEmailModalOpen(false);
+        } catch (err) {
+            setEmailError(err.message || 'Не удалось отправить код подтверждения.');
+        } finally {
+            setEmailSending(false);
+        }
+    };
+
+    const handleEmailVerificationSuccess = async () => {
+        setShowEmailVerification(false);
+        setIsEmailModalOpen(false);
+        setEmailError(null);
+        setEmailSuccess(null);
+        setEmailSending(true);
+        try {
+            const requestBody = {
+                name: profileData?.name || editData.name,
+                email: pendingEmail,
+                aboutUser: profileData?.aboutUser || editData.aboutUser
+            };
+
+            const response = await fetch(`${API_BASE_URL}/Users`, {
+                method: 'PUT',
+                headers: getAuthHeaders(),
+                credentials: 'include',
+                body: JSON.stringify(requestBody)
+            });
+
+            if (response.status === 401 || response.status === 403) {
+                handleClose();
+                if (onUnauthorized) onUnauthorized();
+                throw new Error('Сессия истекла.');
+            }
+
+            if (!response.ok) {
+                const errorText = await response.text();
+                throw new Error(errorText || 'Не удалось обновить Email.');
+            }
+
+            const updatedProfile = await response.json();
+            setProfileData(updatedProfile);
+            setEmailEdit(updatedProfile.email || pendingEmail);
+            setEmailSuccess('Email успешно обновлен.');
+        } catch (err) {
+            setEmailError(err.message || 'Не удалось обновить Email.');
+        } finally {
+            setEmailSending(false);
+            setPendingEmail('');
         }
     };
 
@@ -449,24 +584,38 @@ const ProfileModal = ({ open, handleClose, userId, onUnauthorized, onLogout, onP
 
     return (
         <>
-            <Modal open={open} onClose={handleClose}>
-                <Box sx={modalStyle}>
+            <Modal open={open} onClose={handleProfileModalClose}>
+                <Box sx={modalStyle} ref={profileModalRef}>
                     
                     <IconButton
-                        onClick={handleClose}
+                        onClick={handleProfileModalClose}
                         sx={{ position: 'absolute', top: 15, right: 15, color: '#bdbdbd', zIndex: 5 }}
                     >
                         <CloseIcon />
                     </IconButton>
 
-                    {/* --- ВЕРХНЯЯ ЧАСТЬ ПРОФИЛЯ (ИМЯ/EMAIL/ДАТА) --- */}
-                    <Box sx={{ p: 4, display: 'flex', flexDirection: 'column', alignItems: 'center', background: 'linear-gradient(180deg, #252525 0%, #1e1e1e 100%)' }}>
-                        
-                        <AccountCircleIcon sx={{ fontSize: 100, color: '#00bfa5', mb: 2 }} />
+                    {isMyProfile && isEditingProfile ? (
+                        <Box
+                            sx={{
+                                p: 4,
+                                display: 'flex',
+                                flexDirection: 'column',
+                                gap: 2,
+                                backdropFilter: 'blur(18px) saturate(120%)',
+                                background: 'linear-gradient(180deg, rgba(32, 32, 32, 0.85), rgba(18, 18, 18, 0.9))',
+                                border: '1px solid rgba(255, 255, 255, 0.08)',
+                                borderRadius: '20px',
+                                boxShadow: '0 18px 48px rgba(0, 0, 0, 0.55)',
+                                margin: '32px',
+                            }}
+                        >
+                            <Typography variant="h5" sx={{ color: '#00bfa5', fontWeight: 'bold', textAlign: 'center' }}>
+                                Редактирование профиля
+                            </Typography>
 
-                        {/* ✅ ВОССТАНОВЛЕНО: Отображение имени и email (если не редактируется) */}
-                        {isMyProfile && isEditingProfile ? (
-                            <Box sx={{ width: '100%', maxWidth: 520, display: 'flex', flexDirection: 'column', gap: 2, p: 2, borderRadius: '16px', backgroundColor: 'rgba(255,255,255,0.04)', boxShadow: '0 10px 24px rgba(0,0,0,0.35)', border: '1px solid rgba(255,255,255,0.06)' }}>
+                            {error && <Alert severity="error">{error}</Alert>}
+
+                            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
                                 <TextField
                                     label="Имя пользователя"
                                     value={editData.name}
@@ -476,25 +625,56 @@ const ProfileModal = ({ open, handleClose, userId, onUnauthorized, onLogout, onP
                                     sx={inputStyle}
                                 />
                                 <TextField
-                                    label="Email"
-                                    value={editData.email}
-                                    onChange={(e) => setEditData({...editData, email: e.target.value})}
+                                    label="О себе"
+                                    value={editData.aboutUser}
+                                    onChange={(e) => setEditData({...editData, aboutUser: e.target.value})}
                                     fullWidth
+                                    multiline
+                                    rows={4}
                                     variant="filled"
                                     sx={inputStyle}
                                 />
+                                <Button
+                                    variant="contained"
+                                    startIcon={<SaveIcon />}
+                                    onClick={handleSaveProfile}
+                                    disabled={isLoading}
+                                    sx={{ bgcolor: '#00bfa5', '&:hover': { bgcolor: '#009688' } }}
+                                >
+                                    {isLoading ? <CircularProgress size={24} sx={{ color: 'white' }} /> : 'Сохранить изменения'}
+                                </Button>
                             </Box>
-                        ) : (
-                            <>
-                                <Typography variant="h4" sx={{ color: 'white', fontWeight: 'bold', mb: 0.5 }}>
-                                    {profileData.name}
+                        </Box>
+                    ) : (
+                        <>
+
+                    {/* --- ВЕРХНЯЯ ЧАСТЬ ПРОФИЛЯ (ИМЯ/EMAIL/ДАТА) --- */}
+                    <Box sx={{ p: 4, display: 'flex', flexDirection: 'column', alignItems: 'center', background: 'linear-gradient(180deg, #252525 0%, #1e1e1e 100%)' }}>
+                        
+                        <AccountCircleIcon sx={{ fontSize: 100, color: '#00bfa5', mb: 2 }} />
+
+                        <Typography variant="h4" sx={{ color: 'white', fontWeight: 'bold', mb: 0.5 }}>
+                            {profileData.name}
+                        </Typography>
+                        {isMyProfile && (
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+                                <Typography variant="h6" sx={{ color: '#00bfa5' }}>
+                                    {profileData.email}
                                 </Typography>
-                                {isMyProfile && (
-                                    <Typography variant="h6" sx={{ color: '#00bfa5', mb: 1 }}>
-                                        {profileData.email}
-                                    </Typography>
-                                )}
-                            </>
+                                <IconButton
+                                    size="small"
+                                    onClick={handleOpenEmailModal}
+                                    sx={{
+                                        color: '#00bfa5',
+                                        border: '1px solid rgba(0, 191, 165, 0.4)',
+                                        width: 30,
+                                        height: 30,
+                                        '&:hover': { backgroundColor: 'rgba(0, 191, 165, 0.12)' }
+                                    }}
+                                >
+                                    <EditIcon fontSize="small" />
+                                </IconButton>
+                            </Box>
                         )}
 
                         <Typography variant="body1" sx={{ color: '#757575', mt: 1 }}>
@@ -556,34 +736,20 @@ const ProfileModal = ({ open, handleClose, userId, onUnauthorized, onLogout, onP
 
                         <Box sx={{ mt: 3, display: 'flex', gap: 2, flexWrap: 'wrap', justifyContent: 'center' }}>
                             {isMyProfile ? (
-                                <>
-                                    {isEditingProfile ? (
-                                        <Button
-                                            startIcon={<SaveIcon />}
-                                            onClick={handleSaveProfile}
-                                            variant="contained"
-                                            size="large"
-                                            sx={{ bgcolor: '#00bfa5', '&:hover': { bgcolor: '#00897b' } }}
-                                        >
-                                            Сохранить изменения
-                                        </Button>
-                                    ) : (
-                                        <Button
-                                            variant="outlined"
-                                            startIcon={<EditIcon />}
-                                            onClick={() => setIsEditingProfile(true)}
-                                            sx={{
-                                                color: '#00bfa5',
-                                                borderColor: '#00bfa5',
-                                                fontSize: '1rem',
-                                                padding: '6px 20px',
-                                                '&:hover': { borderColor: '#00a38f', backgroundColor: 'rgba(0, 191, 165, 0.1)' }
-                                            }}
-                                        >
-                                            Редактировать профиль
-                                        </Button>
-                                    )}
-                                </>
+                                <Button
+                                    variant="outlined"
+                                    startIcon={<EditIcon />}
+                                    onClick={() => setIsEditingProfile(true)}
+                                    sx={{
+                                        color: '#00bfa5',
+                                        borderColor: '#00bfa5',
+                                        fontSize: '1rem',
+                                        padding: '6px 20px',
+                                        '&:hover': { borderColor: '#00a38f', backgroundColor: 'rgba(0, 191, 165, 0.1)' }
+                                    }}
+                                >
+                                    Редактировать профиль
+                                </Button>
                             ) : (
                                 <Button
                                     variant={isFollowingUser ? 'outlined' : 'contained'}
@@ -613,23 +779,9 @@ const ProfileModal = ({ open, handleClose, userId, onUnauthorized, onLogout, onP
                             О себе
                         </Typography>
                         
-                        {isMyProfile && isEditingProfile ? (
-                            <TextField
-                                label="Расскажите о себе"
-                                value={editData.aboutUser}
-                                onChange={(e) => setEditData({...editData, aboutUser: e.target.value})}
-                                fullWidth
-                                multiline
-                                rows={4}
-                                variant="filled"
-                                sx={{ maxWidth: 800, margin: '0 auto', ...inputStyle }}
-                            />
-                        ) : (
-                            // ✅ ИСПРАВЛЕНО: Теперь здесь только один компонент
-                            <Typography variant="h6" sx={{ color: 'white', lineHeight: 1.6, maxWidth: 800, margin: '0 auto', fontWeight: 300 }}>
-                                {profileData.aboutUser || (isMyProfile ? 'Добавьте информацию о себе, чтобы другие пользователи узнали вас лучше.' : 'Пользователь не добавил описание.')}
-                            </Typography>
-                        )}
+                        <Typography variant="h6" sx={{ color: 'white', lineHeight: 1.6, maxWidth: 800, margin: '0 auto', fontWeight: 300 }}>
+                            {profileData.aboutUser || (isMyProfile ? 'Добавьте информацию о себе, чтобы другие пользователи узнали вас лучше.' : 'Пользователь не добавил описание.')}
+                        </Typography>
                     </Box>
 
                     <Divider sx={{ backgroundColor: '#333' }} />
@@ -775,6 +927,8 @@ const ProfileModal = ({ open, handleClose, userId, onUnauthorized, onLogout, onP
                             </Button>
                         </Box>
                     )}
+                        </>
+                    )}
                 </Box>
             </Modal>
 
@@ -785,6 +939,65 @@ const ProfileModal = ({ open, handleClose, userId, onUnauthorized, onLogout, onP
                 post={editingPost}
                 onUpdateSuccess={handleArticleUpdateSuccess}
                 onDeleteSuccess={handleArticleDeleteSuccess} 
+                container={profileModalRef.current}
+                disablePortal
+            />
+
+            <Modal open={isEmailModalOpen} onClose={handleCloseEmailModal}>
+                <Box
+                    sx={{
+                        position: 'absolute',
+                        top: '50%',
+                        left: '50%',
+                        transform: 'translate(-50%, -50%)',
+                        width: { xs: '92%', sm: 420 },
+                        p: 3,
+                        borderRadius: '18px',
+                        color: 'white',
+                        backdropFilter: 'blur(18px) saturate(120%)',
+                        background: 'linear-gradient(180deg, rgba(40, 40, 40, 0.85), rgba(20, 20, 20, 0.9))',
+                        border: '1px solid rgba(255, 255, 255, 0.08)',
+                        boxShadow: '0 18px 48px rgba(0, 0, 0, 0.55)',
+                    }}
+                >
+                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                        <Typography variant="h6" sx={{ color: '#00bfa5', fontWeight: 'bold' }}>
+                            Изменение Email
+                        </Typography>
+                        <IconButton onClick={handleCloseEmailModal} sx={{ ml: 'auto', color: '#bdbdbd' }}>
+                            <CloseIcon />
+                        </IconButton>
+                    </Box>
+
+                    {emailError && <Alert severity="error" sx={{ mb: 1 }}>{emailError}</Alert>}
+                    {emailSuccess && <Alert severity="success" sx={{ mb: 1 }}>{emailSuccess}</Alert>}
+
+                    <TextField
+                        label="Новый Email"
+                        value={emailEdit}
+                        onChange={(e) => setEmailEdit(e.target.value)}
+                        fullWidth
+                        variant="filled"
+                        sx={{ ...inputStyle, mb: 2 }}
+                    />
+
+                    <Button
+                        variant="outlined"
+                        fullWidth
+                        onClick={handleSendEmailVerification}
+                        disabled={emailSending}
+                        sx={{ color: '#00bfa5', borderColor: '#00bfa5', '&:hover': { borderColor: '#00a38f', backgroundColor: 'rgba(0, 191, 165, 0.1)' } }}
+                    >
+                        {emailSending ? <CircularProgress size={22} sx={{ color: '#00bfa5' }} /> : 'Отправить код подтверждения'}
+                    </Button>
+                </Box>
+            </Modal>
+
+            <EmailVerificationModal
+                open={showEmailVerification}
+                handleClose={() => setShowEmailVerification(false)}
+                email={pendingEmail}
+                onVerificationSuccess={handleEmailVerificationSuccess}
             />
             
             {/* --- МОДАЛЬНОЕ ОКНО ДЛЯ УДАЛЕНИЯ ПОЛЬЗОВАТЕЛЯ --- */}
@@ -905,3 +1118,7 @@ const ProfileModal = ({ open, handleClose, userId, onUnauthorized, onLogout, onP
 };
 
 export default ProfileModal;
+
+
+
+
