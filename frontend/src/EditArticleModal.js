@@ -69,20 +69,62 @@ const inputStyle = {
 };
 
 const EditorToolbar = ({ editorRef }) => {
+    const [activeStyles, setActiveStyles] = useState({
+        bold: false,
+        italic: false,
+        underline: false,
+        listBulleted: false,
+        listNumbered: false,
+        h2: false
+    });
+
+    const updateToolbarStatus = useCallback(() => {
+        setActiveStyles({
+            bold: document.queryCommandState('bold'),
+            italic: document.queryCommandState('italic'),
+            underline: document.queryCommandState('underline'),
+            listBulleted: document.queryCommandState('insertUnorderedList'),
+            listNumbered: document.queryCommandState('insertOrderedList'),
+            h2: document.queryCommandValue('formatBlock') === 'h2'
+        });
+    }, []);
+
+    useEffect(() => {
+        const editor = editorRef.current;
+        if (!editor) return;
+
+        editor.addEventListener('mouseup', updateToolbarStatus);
+        editor.addEventListener('keyup', updateToolbarStatus);
+
+        return () => {
+            editor.removeEventListener('mouseup', updateToolbarStatus);
+            editor.removeEventListener('keyup', updateToolbarStatus);
+        };
+    }, [editorRef, updateToolbarStatus]);
+
     const applyCommand = useCallback((command, value = null) => {
         if (editorRef.current) editorRef.current.focus();
         document.execCommand(command, false, value);
-    }, [editorRef]);
+        updateToolbarStatus();
+    }, [editorRef, updateToolbarStatus]);
+
+    const getButtonStyle = (isActive, activeColor = '#00bfa5') => ({
+        color: isActive ? activeColor : '#ffffff',
+        backgroundColor: isActive ? 'rgba(255, 255, 255, 0.15)' : 'transparent',
+        borderRadius: '4px',
+        transition: 'all 0.2s',
+        '&:hover': { backgroundColor: '#666666' }
+    });
 
     return (
         <Box sx={{ display: 'flex', gap: 1, padding: 1, backgroundColor: '#444', borderRadius: '8px 8px 0 0', border: '1px solid #555' }}>
-            <IconButton size="small" onClick={() => applyCommand('bold')} sx={{ color: '#fff' }}><FormatBoldIcon /></IconButton>
-            <IconButton size="small" onClick={() => applyCommand('italic')} sx={{ color: '#fff' }}><FormatItalicIcon /></IconButton>
-            <IconButton size="small" onClick={() => applyCommand('underline')} sx={{ color: '#fff' }}><FormatUnderlinedIcon /></IconButton>
+            <IconButton size="small" onClick={() => applyCommand('bold')} sx={getButtonStyle(activeStyles.bold)}><FormatBoldIcon /></IconButton>
+            <IconButton size="small" onClick={() => applyCommand('italic')} sx={getButtonStyle(activeStyles.italic)}><FormatItalicIcon /></IconButton>
+            <IconButton size="small" onClick={() => applyCommand('underline')} sx={getButtonStyle(activeStyles.underline)}><FormatUnderlinedIcon /></IconButton>
             <IconButton size="small" onClick={() => { const url = prompt('URL:'); if(url) applyCommand('createLink', url); }} sx={{ color: '#00bfa5' }}><LinkIcon /></IconButton>
-            <IconButton size="small" onClick={() => applyCommand('formatBlock', '<h2>')} sx={{ color: '#ffeb3b' }}><TitleIcon /></IconButton>
-            <IconButton size="small" onClick={() => applyCommand('insertUnorderedList')} sx={{ color: '#fff' }}><FormatListBulletedIcon /></IconButton>
-            <IconButton size="small" onClick={() => applyCommand('insertOrderedList')} sx={{ color: '#fff' }}><FormatListNumberedIcon /></IconButton>
+            <IconButton size="small" onClick={() => applyCommand('formatBlock', '<h2>')} sx={getButtonStyle(activeStyles.h2, '#ffeb3b')}><TitleIcon /></IconButton>
+            <IconButton size="small" onClick={() => applyCommand('insertUnorderedList')} sx={getButtonStyle(activeStyles.listBulleted)}><FormatListBulletedIcon /></IconButton>
+            <IconButton size="small" onClick={() => applyCommand('insertOrderedList')} sx={getButtonStyle(activeStyles.listNumbered)}><FormatListNumberedIcon /></IconButton>
         </Box>
     );
 };
@@ -98,7 +140,7 @@ const getAuthHeaders = () => {
 };
 
 // ✅ ДОБАВЛЕН onDeleteSuccess
-const EditArticleModal = ({ open, handleClose, post, onUpdateSuccess, onDeleteSuccess }) => {
+const EditArticleModal = ({ open, handleClose, post, onUpdateSuccess, onDeleteSuccess, container, disablePortal }) => {
     // Режим: 'content' или 'tags'
     const [editMode, setEditMode] = useState('content');
 
@@ -260,7 +302,7 @@ const EditArticleModal = ({ open, handleClose, post, onUpdateSuccess, onDeleteSu
     if (!post) return null;
 
     return (
-        <Modal open={open} onClose={handleClose}>
+        <Modal open={open} onClose={handleClose} container={container} disablePortal={disablePortal}>
             <Box sx={modalStyle}>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
                     <Typography variant="h6" sx={{ color: '#00bfa5', fontWeight: 'bold' }}>
