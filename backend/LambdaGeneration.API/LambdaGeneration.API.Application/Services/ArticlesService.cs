@@ -100,5 +100,10 @@ namespace LambdaGeneration.API.Application.Services
         {
             return await _articlesRepository.SearchArticlesByTags(tags, page, pageSize);
         }
+
+        public async Task<List<Articles>> GetLikesArticles(Guid authorId)
+        {
+            return await _articlesRepository.GetLikesArticles(authorId);
+        }
     }
 }

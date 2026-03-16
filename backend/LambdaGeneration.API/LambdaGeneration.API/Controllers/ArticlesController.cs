@@ -309,5 +309,27 @@ namespace LambdaGeneration.API.Controllers
                 return BadRequest(ex.Message);
             }
         }
+
+        [HttpGet("likesArticles")]
+        public async Task<ActionResult<GetArticlesResponse>> GetLikesArticles()
+        {
+            try
+            {
+                var articles = await _articlesService.GetLikesArticles(GetUserID());
+
+                if (articles == null || !articles.Any()) return BadRequest();
+
+                return Ok(new GetArticlesResponse(articles.Select(a =>
+                    new GetArticleResponse(a.ArticleID,
+                        a.AuthorID,
+                        a.ArticleTitle,
+                        a.ArticlePreview,
+                        a.ArticleContent,
+                        a.ArticleTags.Select(t => ApiExtensions.FromTags(t)).ToList(),
+                        a.CreatedDate,
+                        a.CountLikes, a.CountComments)).ToList()));
+            }
+            catch (ArgumentException ex) { return BadRequest(ex.Message); }
+        }
     }
 }

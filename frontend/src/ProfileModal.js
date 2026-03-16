@@ -158,6 +158,11 @@ const ProfileModal = ({ open, handleClose, userId, onUnauthorized, onLogout, onP
     const [followingList, setFollowingList] = useState([]);
     const [isFollowingListLoading, setIsFollowingListLoading] = useState(false);
     const [followingListError, setFollowingListError] = useState(null);
+    const [isLikesListOpen, setIsLikesListOpen] = useState(false);
+    const [likesList, setLikesList] = useState([]);
+    const [isLikesListLoading, setIsLikesListLoading] = useState(false);
+    const [likesListError, setLikesListError] = useState(null);
+    const [likedArticlesCount, setLikedArticlesCount] = useState(0);
     const [isFollowingUser, setIsFollowingUser] = useState(false);
     const [isFollowBusy, setIsFollowBusy] = useState(false);
     
@@ -213,21 +218,30 @@ const ProfileModal = ({ open, handleClose, userId, onUnauthorized, onLogout, onP
             }
             
             const postsJson = await postsResponse.json(); 
-            const formattedPosts = (postsJson.articles || []).map(article => ({
-                id: article.article_id,           // Используется для ключей React
-                article_id: article.article_id,   // ВАЖНО: Используется для API лайков в PostPage
-                author_id: article.author_id,
-                authorId: article.author_id,
-                nickname: profileJson.name || 'Автор', 
-                title: article.article_title,
-                article_preview: article.article_preview, 
-                article_content: article.article_content, 
-                likesCount: article.countLikes || 0,
-                commentsCount: article.comments_count || 0,
-                isLiked: article.is_liked || false,
-                tags: article.article_tags || [],
-            }));
+            const formattedPosts = (postsJson.articles || []).map(article => mapArticleFromApi(article, profileJson.name || 'Автор'));
             setUserPosts(formattedPosts);
+
+            if (isMyProfile) {
+                try {
+                    const likesResponse = await fetch(`${API_BASE_URL}/Articles/likesArticles`, fetchOptions);
+                    if (likesResponse.ok) {
+                        const likesJson = await likesResponse.json();
+                        const likedArticlesRaw = likesJson.articles || likesJson || [];
+                        const likedArticles = likedArticlesRaw.map(article => mapArticleFromApi(article, profileJson.name || 'Автор'));
+                        setLikesList(likedArticles);
+                        setLikedArticlesCount(likedArticles.length);
+                    } else {
+                        setLikesList([]);
+                        setLikedArticlesCount(0);
+                    }
+                } catch {
+                    setLikesList([]);
+                    setLikedArticlesCount(0);
+                }
+            } else {
+                setLikesList([]);
+                setLikedArticlesCount(0);
+            }
 
         } catch (err) {
             if (err.message.includes("Сессия истекла")) return; 
@@ -244,6 +258,9 @@ const ProfileModal = ({ open, handleClose, userId, onUnauthorized, onLogout, onP
             setFollowingListError(null);
             setIsFollowingListLoading(false);
             setIsFollowingUser(false);
+            setIsLikesListOpen(false);
+            setLikesListError(null);
+            setIsLikesListLoading(false);
             setEmailError(null);
             setEmailSuccess(null);
             setEmailSending(false);
@@ -457,6 +474,21 @@ const ProfileModal = ({ open, handleClose, userId, onUnauthorized, onLogout, onP
         return Number.isFinite(parsed) ? parsed : 0;
     };
 
+    const mapArticleFromApi = (article, fallbackNickname = 'Автор') => ({
+        id: article.article_id ?? article.articleId ?? article.ArticleID,
+        article_id: article.article_id ?? article.articleId ?? article.ArticleID,
+        author_id: article.author_id ?? article.authorId ?? article.AuthorID,
+        authorId: article.author_id ?? article.authorId ?? article.AuthorID,
+        nickname: article.nickname || article.authorName || fallbackNickname,
+        title: article.article_title ?? article.articleTitle ?? article.ArticleTitle,
+        article_preview: article.article_preview ?? article.articlePreview ?? article.ArticlePreview,
+        article_content: article.article_content ?? article.articleContent ?? article.ArticleContent,
+        likesCount: article.countLikes ?? article.likesCount ?? 0,
+        commentsCount: article.comments_count ?? article.commentsCount ?? 0,
+        isLiked: article.is_liked ?? article.isLiked ?? true,
+        tags: article.article_tags ?? article.articleTags ?? [],
+    });
+
     const subscribersCount = normalizeCount(profileData?.subscribersCount ?? profileData?.followersCount ?? profileData?.countSubscribers ?? profileData?.followers);
     const followingCount = normalizeCount(profileData?.followingCount ?? profileData?.countFollowing ?? profileData?.following);
     const articlesCount = normalizeCount(profileData?.articlesCount ?? profileData?.countArticles ?? userPosts.length);
@@ -484,6 +516,33 @@ const ProfileModal = ({ open, handleClose, userId, onUnauthorized, onLogout, onP
     };
 
     const handleCloseFollowingList = () => setIsFollowingListOpen(false);
+
+    const handleOpenLikesList = async () => {
+        if (!isMyProfile) return;
+        setIsLikesListOpen(true);
+        if (likesList.length > 0) return;
+        setIsLikesListLoading(true);
+        setLikesListError(null);
+        try {
+            const response = await fetch(`${API_BASE_URL}/Articles/likesArticles`, { credentials: 'include' });
+            if (response.status === 401 || response.status === 403) {
+                if (onUnauthorized) onUnauthorized();
+                throw new Error('Необходимо войти в аккаунт.');
+            }
+            if (!response.ok) throw new Error('Не удалось загрузить понравившиеся статьи.');
+            const data = await response.json();
+            const likedArticlesRaw = data.articles || data || [];
+            const likedArticles = likedArticlesRaw.map(article => mapArticleFromApi(article, profileData?.name || 'Автор'));
+            setLikesList(likedArticles);
+            setLikedArticlesCount(likedArticles.length);
+        } catch (err) {
+            setLikesListError(err.message || 'Ошибка загрузки понравившихся статей.');
+        } finally {
+            setIsLikesListLoading(false);
+        }
+    };
+
+    const handleCloseLikesList = () => setIsLikesListOpen(false);
 
     const handleToggleFollow = async () => {
         if (isMyProfile || !userId) return;
@@ -683,7 +742,7 @@ const ProfileModal = ({ open, handleClose, userId, onUnauthorized, onLogout, onP
 
                         <Box sx={{ mt: 3, width: '100%', maxWidth: 720, mx: 'auto' }}>
                             <Grid container spacing={2} justifyContent="center">
-                                <Grid item xs={12} sm={4}>
+                                <Grid item xs={12} sm={6} md={3}>
                                     <ButtonBase
                                         onClick={isMyProfile ? handleOpenFollowingList : undefined}
                                         sx={{
@@ -707,7 +766,7 @@ const ProfileModal = ({ open, handleClose, userId, onUnauthorized, onLogout, onP
                                         </Stack>
                                     </ButtonBase>
                                 </Grid>
-                                <Grid item xs={12} sm={4}>
+                                <Grid item xs={12} sm={6} md={3}>
                                     <Box sx={statCardStyle}>
                                         <Stack spacing={0.5}>
                                             <Typography variant="h4" sx={{ color: 'white', fontWeight: 'bold' }}>
@@ -719,7 +778,7 @@ const ProfileModal = ({ open, handleClose, userId, onUnauthorized, onLogout, onP
                                         </Stack>
                                     </Box>
                                 </Grid>
-                                <Grid item xs={12} sm={4}>
+                                <Grid item xs={12} sm={6} md={3}>
                                     <Box sx={statCardStyle}>
                                         <Stack spacing={0.5}>
                                             <Typography variant="h4" sx={{ color: 'white', fontWeight: 'bold' }}>
@@ -731,6 +790,32 @@ const ProfileModal = ({ open, handleClose, userId, onUnauthorized, onLogout, onP
                                         </Stack>
                                     </Box>
                                 </Grid>
+                                {isMyProfile && (
+                                    <Grid item xs={12} sm={6} md={3}>
+                                        <ButtonBase
+                                            onClick={handleOpenLikesList}
+                                            sx={{
+                                                ...statCardStyle,
+                                                display: 'block',
+                                                cursor: 'pointer',
+                                                '&:hover': { 
+                                                    transform: 'translateY(-2px)', 
+                                                    boxShadow: '0 14px 30px rgba(0,0,0,0.45)',
+                                                    backgroundColor: 'rgba(0, 191, 165, 0.12)'
+                                                }
+                                            }}
+                                        >
+                                            <Stack spacing={0.5}>
+                                                <Typography variant="h4" sx={{ color: 'white', fontWeight: 'bold' }}>
+                                                    {likedArticlesCount}
+                                                </Typography>
+                                                <Typography variant="body2" sx={{ color: '#bdbdbd', letterSpacing: 0.3 }}>
+                                                    Понравившиеся
+                                                </Typography>
+                                            </Stack>
+                                        </ButtonBase>
+                                    </Grid>
+                                )}
                             </Grid>
                         </Box>
 
@@ -1109,6 +1194,65 @@ const ProfileModal = ({ open, handleClose, userId, onUnauthorized, onLogout, onP
                 </DialogContent>
                 <DialogActions sx={{ p: 2 }}>
                     <Button onClick={handleCloseFollowingList} sx={{ color: '#00bfa5' }}>
+                        Закрыть
+                    </Button>
+                </DialogActions>
+            </Dialog>
+
+            <Dialog
+                open={isLikesListOpen}
+                onClose={handleCloseLikesList}
+                PaperProps={{ sx: { backgroundColor: '#1b1b1b', color: 'white', borderRadius: '12px', minWidth: { xs: '90vw', sm: 520 } } }}
+            >
+                <DialogTitle sx={{ color: '#00bfa5', fontWeight: 'bold' }}>
+                    Понравившиеся статьи
+                </DialogTitle>
+                <DialogContent>
+                    {isLikesListLoading && (
+                        <Box sx={{ display: 'flex', justifyContent: 'center', py: 3 }}>
+                            <CircularProgress size={28} sx={{ color: '#00bfa5' }} />
+                        </Box>
+                    )}
+                    {likesListError && <Alert severity="error" sx={{ mb: 2 }}>{likesListError}</Alert>}
+                    {!isLikesListLoading && likesList.length === 0 && !likesListError && (
+                        <Typography sx={{ color: '#bdbdbd', textAlign: 'center', py: 2 }}>
+                            У вас пока нет понравившихся статей.
+                        </Typography>
+                    )}
+                    {!isLikesListLoading && likesList.length > 0 && (
+                        <List sx={{ width: '100%' }}>
+                            {likesList.map((article) => (
+                                <ListItem key={article.article_id || article.id} disablePadding>
+                                    <ListItemButton
+                                        onClick={() => {
+                                            handleCloseLikesList();
+                                            handleClose();
+                                            if (onPostClick) {
+                                                onPostClick(article, { returnToProfile: true, profileUserId: null });
+                                            }
+                                        }}
+                                    >
+                                        <ListItemAvatar>
+                                            <Avatar sx={{ bgcolor: '#00bfa5' }}>
+                                                {article.title?.[0]?.toUpperCase() || 'A'}
+                                            </Avatar>
+                                        </ListItemAvatar>
+                                        <ListItemText
+                                            primary={article.title || 'Статья'}
+                                            secondary={
+                                                <span style={{ color: '#9e9e9e' }}>
+                                                    @{article.nickname || 'Автор'} · Лайки: {article.likesCount ?? 0} · Комментарии: {article.commentsCount ?? 0}
+                                                </span>
+                                            }
+                                        />
+                                    </ListItemButton>
+                                </ListItem>
+                            ))}
+                        </List>
+                    )}
+                </DialogContent>
+                <DialogActions sx={{ p: 2 }}>
+                    <Button onClick={handleCloseLikesList} sx={{ color: '#00bfa5' }}>
                         Закрыть
                     </Button>
                 </DialogActions>
