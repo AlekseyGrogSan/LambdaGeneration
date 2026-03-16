@@ -82,7 +82,7 @@ namespace LambdaGeneration.API.Application.Services
                 throw new ArgumentException("Article not exist");
             return article;
         }
-        public async Task<List<Articles>> SearchArticlesAsync(string searchTerm, int pageNumber, int countPages)
+        public async Task<List<Articles>> SearchArticlesAsync(string? searchTerm, int pageNumber, int countPages)
         {
             if (string.IsNullOrEmpty(searchTerm))
             {
