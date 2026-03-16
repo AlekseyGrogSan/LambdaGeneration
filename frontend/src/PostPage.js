@@ -8,6 +8,7 @@ import {
     Avatar,
     TextField,
     IconButton,
+    InputAdornment,
 } from '@mui/material';
 import PersonIcon from '@mui/icons-material/Person';
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
@@ -16,6 +17,8 @@ import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import ExpandLessIcon from '@mui/icons-material/ExpandLess';
 import CloseIcon from '@mui/icons-material/Close';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
+import SearchIcon from '@mui/icons-material/Search';
+import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 
 import PostCard from './PostCard';
 import PostDetailPage from './PostDetailPage';
@@ -538,6 +541,7 @@ const PostPage = () => {
     const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
     const [isResourcesModalOpen, setIsResourcesModalOpen] = useState(false);
     const [isFaqModalOpen, setIsFaqModalOpen] = useState(false);
+    const isProfileModalOpenRef = useRef(false);
     
     const [viewedProfileId, setViewedProfileId] = useState(null); 
     const [articles, setArticles] = useState([]); 
@@ -547,6 +551,10 @@ const PostPage = () => {
     const [hasMore, setHasMore] = useState(true); // Есть ли еще данные для загрузки
     const pageSize = 10; // Размер страницы. Убедитесь, что он соответствует бэкенду.
     const [paginationType, setPaginationType] = useState('random'); // random | recommend
+    const [isSearchMode, setIsSearchMode] = useState(false);
+    const [searchQuery, setSearchQuery] = useState('');
+    const searchQueryRef = useRef('');
+    const lastNonSearchTypeRef = useRef('random');
     
     const [isLoading, setIsLoading] = useState(false); 
     const [error, setError] = useState(null);
@@ -565,6 +573,13 @@ const PostPage = () => {
 
     useEffect(() => { articlesRef.current = articles; }, [articles]);
     useEffect(() => { hasMoreRef.current = hasMore; }, [hasMore]);
+    useEffect(() => { isProfileModalOpenRef.current = isProfileModalOpen; }, [isProfileModalOpen]);
+    useEffect(() => { searchQueryRef.current = searchQuery; }, [searchQuery]);
+    useEffect(() => {
+        if (paginationType !== 'search') {
+            lastNonSearchTypeRef.current = paginationType;
+        }
+    }, [paginationType]);
     const [returnToProfile, setReturnToProfile] = useState(false);
     const [returnProfileUserId, setReturnProfileUserId] = useState(null);
     const [profileReturnEnabled, setProfileReturnEnabled] = useState(false);
@@ -674,7 +689,7 @@ const PostPage = () => {
     const handleOpen = () => setIsModalOpen(true); 
     const handleClose = () => { 
         setIsModalOpen(false); 
-        checkAuth().then(isAuth => { if(isAuth) fetchArticlesPage(1); });
+        checkAuth().then(isAuth => { if(isAuth) fetchArticlesPage(1, paginationType, { force: true, searchQuery: searchQueryRef.current }); });
     };
     
     const handlePostOpen = () => setIsPostModalOpen(true);
@@ -699,6 +714,7 @@ const PostPage = () => {
             setProfileReturnEnabled(false);
             setProfileReturnUserId(null);
             setIsProfileModalOpen(true);
+            isProfileModalOpenRef.current = true;
         }
     };
     
@@ -708,11 +724,13 @@ const PostPage = () => {
             setProfileReturnEnabled(false);
             setProfileReturnUserId(null);
             setIsProfileModalOpen(true);
+            isProfileModalOpenRef.current = true;
             return;
         }
         setIsProfileModalOpen(false);
+        isProfileModalOpenRef.current = false;
         setViewedProfileId(null);
-        fetchArticlesPage(1);
+        fetchArticlesPage(1, paginationType, { force: true });
     };
     
     const handleOtherAuthorProfileOpen = (userId, options = {}) => {
@@ -729,6 +747,7 @@ const PostPage = () => {
             setProfileReturnUserId(null);
         }
         setIsProfileModalOpen(true);
+        isProfileModalOpenRef.current = true;
     };
 
     const handlePostClick = (postData, options = {}, openComments = false) => { 
@@ -756,6 +775,9 @@ const PostPage = () => {
         if (type === paginationType || isLoading) return;
 
         setPaginationType(type);
+        if (type !== 'search') {
+            setIsSearchMode(false);
+        }
         setArticles([]);
         setPageNumber(1);
         setHasMore(true);
@@ -766,6 +788,30 @@ const PostPage = () => {
         }
         setReturnToProfile(false);
         setReturnProfileUserId(null);
+    };
+
+    const handleSearchOpen = () => {
+        setIsSearchMode(true);
+    };
+
+    const handleSearchClose = () => {
+        setIsSearchMode(false);
+        setSearchQuery('');
+        const restoreType = lastNonSearchTypeRef.current || 'random';
+        setPaginationType(restoreType);
+        setArticles([]);
+        setPageNumber(1);
+        setHasMore(true);
+        fetchArticlesPage(1, restoreType);
+    };
+
+    const handleSearchSubmit = () => {
+        const query = searchQuery.trim();
+        setPaginationType('search');
+        setArticles([]);
+        setPageNumber(1);
+        setHasMore(true);
+        fetchArticlesPage(1, 'search', { force: true, searchQuery: query });
     };
 
     const handleLogout = async () => {
@@ -793,6 +839,7 @@ const PostPage = () => {
     }, [isViewingDetailPage, lastViewedArticleId]);
 
     const handleScroll = useCallback(() => {
+        if (isProfileModalOpen) return;
         const container = articlesContainerRef.current;
         
         if (container && !isViewingDetailPage) {
@@ -844,7 +891,7 @@ const PostPage = () => {
                 }
             }
         }
-    }, [activeCommentsPost, isViewingDetailPage, isLoading, hasMore, pageNumber, articles]);
+    }, [activeCommentsPost, isViewingDetailPage, isLoading, hasMore, pageNumber, articles, isProfileModalOpen]);
 
     useEffect(() => {
         const container = articlesContainerRef.current;
@@ -900,7 +947,9 @@ const PostPage = () => {
 
 
     // ✅ НОВАЯ ФУНКЦИЯ ЗАГРУЗКИ СТРАНИЦЫ
-    const fetchArticlesPage = async (page, type = paginationType) => {
+    const fetchArticlesPage = async (page, type = paginationType, options = {}) => {
+        const { force = false, searchQuery: providedQuery } = options;
+        if (!force && isProfileModalOpenRef.current) return;
         // Защита от повторной загрузки или загрузки несуществующих страниц
         if (isLoading || (!hasMore && page > pageNumber)) return; 
 
@@ -908,15 +957,37 @@ const PostPage = () => {
         setError(null);
         
         try {
-            const url = `${API_BASE_URL}/Articles/getPaginated?typePagination=${type}&page=${page}&size=${pageSize}`;
+            let url = `${API_BASE_URL}/Articles/getPaginated?typePagination=${type}&page=${page}&size=${pageSize}`;
+            if (type === 'search') {
+                const q = (providedQuery ?? searchQueryRef.current).trim();
+                if (!q) {
+                    setArticles([]);
+                    setHasMore(false);
+                    setPageNumber(1);
+                    return;
+                }
+                url = `${API_BASE_URL}/Articles/search?q=${encodeURIComponent(q)}&page=${page}&countPages=${pageSize}`;
+            }
             const fetchOptions = { credentials: 'include' };
             const response = await fetch(url, fetchOptions);
             if (!response.ok) {
+                if (type === 'search' && (response.status === 404 || response.status === 204)) {
+                    setArticles([]);
+                    setHasMore(false);
+                    setPageNumber(1);
+                    return;
+                }
                 throw new Error(`Ошибка загрузки статей: ${response.statusText}`);
             }
             
             const data = await response.json(); 
             const newArticlesRaw = data.articles || [];
+            if (type === 'search' && newArticlesRaw.length === 0) {
+                setArticles([]);
+                setHasMore(false);
+                setPageNumber(1);
+                return;
+            }
             
             if (newArticlesRaw.length < pageSize) {
                 setHasMore(false);
@@ -945,16 +1016,19 @@ const PostPage = () => {
     };
 
     const handleLikeToggle = async (rawId, currentIsLiked) => {
-        setArticles(prev => prev.map(a => 
-            a.article_id === rawId 
-                ? { ...a, isLiked: !currentIsLiked, likesCount: currentIsLiked ? a.likesCount - 1 : a.likesCount + 1 }
-                : a
-        ));
+        const shouldFreezeFeed = isProfileModalOpenRef.current;
+        if (!shouldFreezeFeed) {
+            setArticles(prev => prev.map(a => 
+                a.article_id === rawId 
+                    ? { ...a, isLiked: !currentIsLiked, likesCount: currentIsLiked ? a.likesCount - 1 : a.likesCount + 1 }
+                    : a
+            ));
 
-        if (selectedPost && selectedPost.article_id === rawId) {
-             setSelectedPost(prev => 
-                ({ ...prev, isLiked: !currentIsLiked, likesCount: currentIsLiked ? prev.likesCount - 1 : prev.likesCount + 1 })
-            );
+            if (selectedPost && selectedPost.article_id === rawId) {
+                 setSelectedPost(prev => 
+                    ({ ...prev, isLiked: !currentIsLiked, likesCount: currentIsLiked ? prev.likesCount - 1 : prev.likesCount + 1 })
+                );
+            }
         }
 
         const endpoint = currentIsLiked ? 'unLike' : 'like';
@@ -965,15 +1039,17 @@ const PostPage = () => {
             }); 
 
             if (response.status === 401 || response.status === 403) {
-                setArticles(prev => prev.map(a => 
-                    a.article_id === rawId 
-                        ? { ...a, isLiked: currentIsLiked, likesCount: currentIsLiked ? a.likesCount + 1 : a.likesCount - 1 }
-                        : a
-                ));
-                 if (selectedPost && selectedPost.article_id === rawId) {
-                    setSelectedPost(prev => 
-                        ({ ...prev, isLiked: currentIsLiked, likesCount: currentIsLiked ? prev.likesCount + 1 : prev.likesCount - 1 })
-                    );
+                if (!shouldFreezeFeed) {
+                    setArticles(prev => prev.map(a => 
+                        a.article_id === rawId 
+                            ? { ...a, isLiked: currentIsLiked, likesCount: currentIsLiked ? a.likesCount + 1 : a.likesCount - 1 }
+                            : a
+                    ));
+                     if (selectedPost && selectedPost.article_id === rawId) {
+                        setSelectedPost(prev => 
+                            ({ ...prev, isLiked: currentIsLiked, likesCount: currentIsLiked ? prev.likesCount + 1 : prev.likesCount - 1 })
+                        );
+                    }
                 }
                 handleOpen();
                 return; 
@@ -982,11 +1058,13 @@ const PostPage = () => {
             if (response.ok) {
                 const res = await response.json();
                 const realCount = res.countLikes;
-                setArticles(prev => prev.map(a => 
-                    a.article_id === rawId ? { ...a, likesCount: realCount } : a
-                ));
-                if (selectedPost?.article_id === rawId) {
-                    setSelectedPost(prev => ({ ...prev, likesCount: realCount, isLiked: !currentIsLiked }));
+                if (!shouldFreezeFeed) {
+                    setArticles(prev => prev.map(a => 
+                        a.article_id === rawId ? { ...a, likesCount: realCount } : a
+                    ));
+                    if (selectedPost?.article_id === rawId) {
+                        setSelectedPost(prev => ({ ...prev, likesCount: realCount, isLiked: !currentIsLiked }));
+                    }
                 }
             }
         } catch (e) {
@@ -1466,67 +1544,148 @@ const PostPage = () => {
                         <Box sx={{ 
                             display: 'flex', 
                             gap: 2,
+                            alignItems: 'center',
                             backdropFilter: 'blur(10px)',
                             backgroundColor: 'rgba(18, 18, 18, 0.7)',
                             borderRadius: '30px',
                             padding: '8px 12px',
                             border: '1px solid rgba(0, 191, 165, 0.2)',
                             boxShadow: '0 8px 32px rgba(0, 191, 165, 0.1)',
+                            transition: 'all 0.3s ease',
                         }}>
-                            <Button
-                                variant={paginationType === 'random' ? 'contained' : 'outlined'}
-                                onClick={() => handlePaginationTypeChange('random')}
-                                sx={{ 
-                                    textTransform: 'none',
-                                    borderRadius: '25px',
-                                    px: 3,
-                                    py: 1,
-                                    fontWeight: 'bold',
-                                    transition: 'all 0.3s ease',
-                                    ...(paginationType === 'random' ? {
-                                        backgroundColor: '#00bfa5',
-                                        color: '#000',
-                                        '&:hover': { backgroundColor: '#00d4b4' }
-                                    } : {
-                                        borderColor: '#00bfa5',
-                                        color: '#00bfa5',
-                                        '&:hover': { 
-                                            backgroundColor: 'rgba(0, 191, 165, 0.12)',
-                                            borderColor: '#00d4b4',
-                                            color: '#00d4b4'
-                                        }
-                                    })
-                                }}
-                            >
-                                Случайные
-                            </Button>
-                            <Button
-                                variant={paginationType === 'recommend' ? 'contained' : 'outlined'}
-                                onClick={() => handlePaginationTypeChange('recommend')}
-                                sx={{ 
-                                    textTransform: 'none',
-                                    borderRadius: '25px',
-                                    px: 3,
-                                    py: 1,
-                                    fontWeight: 'bold',
-                                    transition: 'all 0.3s ease',
-                                    ...(paginationType === 'recommend' ? {
-                                        backgroundColor: '#00bfa5',
-                                        color: '#000',
-                                        '&:hover': { backgroundColor: '#00d4b4' }
-                                    } : {
-                                        borderColor: '#00bfa5',
-                                        color: '#00bfa5',
-                                        '&:hover': { 
-                                            backgroundColor: 'rgba(0, 191, 165, 0.12)',
-                                            borderColor: '#00d4b4',
-                                            color: '#00d4b4'
-                                        }
-                                    })
-                                }}
-                            >
-                                Рекомендации
-                            </Button>
+                            {isSearchMode ? (
+                                <>
+                                    <IconButton
+                                        onClick={handleSearchClose}
+                                        sx={{
+                                            borderRadius: '50%',
+                                            color: '#00bfa5',
+                                            border: '1px solid rgba(0, 191, 165, 0.5)',
+                                            '&:hover': { backgroundColor: 'rgba(0, 191, 165, 0.12)' }
+                                        }}
+                                    >
+                                        <ArrowBackIcon />
+                                    </IconButton>
+                                    <TextField
+                                        value={searchQuery}
+                                        onChange={(e) => setSearchQuery(e.target.value)}
+                                        onKeyDown={(e) => {
+                                            if (e.key === 'Enter') {
+                                                e.preventDefault();
+                                                handleSearchSubmit();
+                                            }
+                                        }}
+                                        placeholder="Поиск статей..."
+                                        variant="outlined"
+                                        size="small"
+                                        sx={{
+                                            minWidth: { xs: 220, sm: 360, md: 420 },
+                                            '& .MuiOutlinedInput-root': {
+                                                color: 'white',
+                                                borderRadius: '25px',
+                                                backgroundColor: 'rgba(0, 0, 0, 0.2)',
+                                                '& fieldset': { borderColor: 'rgba(0, 191, 165, 0.4)' },
+                                                '&:hover fieldset': { borderColor: '#00d4b4' },
+                                                '&.Mui-focused fieldset': { borderColor: '#00d4b4' },
+                                            },
+                                            '& .MuiInputBase-input::placeholder': {
+                                                color: '#9e9e9e',
+                                                opacity: 1,
+                                            },
+                                        }}
+                                        InputProps={{
+                                            endAdornment: (
+                                                <InputAdornment position="end">
+                                                    <IconButton
+                                                        onClick={handleSearchSubmit}
+                                                        sx={{ color: '#00bfa5' }}
+                                                    >
+                                                        <SearchIcon />
+                                                    </IconButton>
+                                                </InputAdornment>
+                                            )
+                                        }}
+                                    />
+                                </>
+                            ) : (
+                                <>
+                                    <Button
+                                        variant={paginationType === 'random' ? 'contained' : 'outlined'}
+                                        onClick={() => handlePaginationTypeChange('random')}
+                                        sx={{ 
+                                            textTransform: 'none',
+                                            borderRadius: '25px',
+                                            px: 3,
+                                            py: 1,
+                                            fontWeight: 'bold',
+                                            transition: 'all 0.3s ease',
+                                            ...(paginationType === 'random' ? {
+                                                backgroundColor: '#00bfa5',
+                                                color: '#000',
+                                                '&:hover': { backgroundColor: '#00d4b4' }
+                                            } : {
+                                                borderColor: '#00bfa5',
+                                                color: '#00bfa5',
+                                                '&:hover': { 
+                                                    backgroundColor: 'rgba(0, 191, 165, 0.12)',
+                                                    borderColor: '#00d4b4',
+                                                    color: '#00d4b4'
+                                                }
+                                            })
+                                        }}
+                                    >
+                                        Случайные
+                                    </Button>
+                                    <Button
+                                        variant={paginationType === 'recommend' ? 'contained' : 'outlined'}
+                                        onClick={() => handlePaginationTypeChange('recommend')}
+                                        sx={{ 
+                                            textTransform: 'none',
+                                            borderRadius: '25px',
+                                            px: 3,
+                                            py: 1,
+                                            fontWeight: 'bold',
+                                            transition: 'all 0.3s ease',
+                                            ...(paginationType === 'recommend' ? {
+                                                backgroundColor: '#00bfa5',
+                                                color: '#000',
+                                                '&:hover': { backgroundColor: '#00d4b4' }
+                                            } : {
+                                                borderColor: '#00bfa5',
+                                                color: '#00bfa5',
+                                                '&:hover': { 
+                                                    backgroundColor: 'rgba(0, 191, 165, 0.12)',
+                                                    borderColor: '#00d4b4',
+                                                    color: '#00d4b4'
+                                                }
+                                            })
+                                        }}
+                                    >
+                                        Рекомендации
+                                    </Button>
+                                    <Button
+                                        variant="outlined"
+                                        onClick={handleSearchOpen}
+                                        sx={{ 
+                                            textTransform: 'none',
+                                            borderRadius: '25px',
+                                            px: 3,
+                                            py: 1,
+                                            fontWeight: 'bold',
+                                            transition: 'all 0.3s ease',
+                                            borderColor: '#00bfa5',
+                                            color: '#00bfa5',
+                                            '&:hover': { 
+                                                backgroundColor: 'rgba(0, 191, 165, 0.12)',
+                                                borderColor: '#00d4b4',
+                                                color: '#00d4b4'
+                                            }
+                                        }}
+                                    >
+                                        Поиск
+                                    </Button>
+                                </>
+                            )}
                         </Box>
                     </Box>
                 )}
@@ -1551,7 +1710,11 @@ const PostPage = () => {
                 ) : (
                     <Box sx={{ width: '100%', maxWidth: '650px', pb: 5 }}>
                         {articles.length === 0 && isLoading && <Typography sx={{color:'white', textAlign:'center', pt: 4}}><CircularProgress sx={{ color: '#00bfa5' }} /></Typography>}
-                        {!isLoading && articles.length === 0 && !error && <Typography sx={{color:'white', textAlign:'center', pt: 4}}>Статей пока нет.</Typography>}
+                        {!isLoading && articles.length === 0 && !error && (
+                            <Typography sx={{color:'white', textAlign:'center', pt: 4}}>
+                                {paginationType === 'search' ? 'Статьи не найдены :((' : 'Статей пока нет.'}
+                            </Typography>
+                        )}
                         
                         {articles.map((post) => (
                             <Box
@@ -1615,7 +1778,7 @@ const PostPage = () => {
                     setArticles([]);
                     setPageNumber(1);
                     setHasMore(true);
-                    setTimeout(() => fetchArticlesPage(1), 0);
+                    setTimeout(() => fetchArticlesPage(1, paginationType, { force: true, searchQuery: searchQueryRef.current }), 0);
                 }} 
             />
             
