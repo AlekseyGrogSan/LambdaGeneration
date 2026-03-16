@@ -550,11 +550,12 @@ const PostPage = () => {
     const [pageNumber, setPageNumber] = useState(1);
     const [hasMore, setHasMore] = useState(true); // Есть ли еще данные для загрузки
     const pageSize = 10; // Размер страницы. Убедитесь, что он соответствует бэкенду.
-    const [paginationType, setPaginationType] = useState('random'); // random | recommend
+    const [paginationType, setPaginationType] = useState('random'); // random | recommend | search | tags
     const [isSearchMode, setIsSearchMode] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
     const searchQueryRef = useRef('');
     const lastNonSearchTypeRef = useRef('random');
+    const [selectedTagIds, setSelectedTagIds] = useState([]);
     
     const [isLoading, setIsLoading] = useState(false); 
     const [error, setError] = useState(null);
@@ -778,6 +779,9 @@ const PostPage = () => {
         if (type !== 'search') {
             setIsSearchMode(false);
         }
+        if (type !== 'tags') {
+            setSelectedTagIds([]);
+        }
         setArticles([]);
         setPageNumber(1);
         setHasMore(true);
@@ -812,6 +816,15 @@ const PostPage = () => {
         setPageNumber(1);
         setHasMore(true);
         fetchArticlesPage(1, 'search', { force: true, searchQuery: query });
+    };
+
+    const handleApplyTagFilter = (tagIds) => {
+        setSelectedTagIds(tagIds);
+        setPaginationType('tags');
+        setArticles([]);
+        setPageNumber(1);
+        setHasMore(true);
+        fetchArticlesPage(1, 'tags', { force: true, tagIds });
     };
 
     const handleLogout = async () => {
@@ -948,7 +961,7 @@ const PostPage = () => {
 
     // ✅ НОВАЯ ФУНКЦИЯ ЗАГРУЗКИ СТРАНИЦЫ
     const fetchArticlesPage = async (page, type = paginationType, options = {}) => {
-        const { force = false, searchQuery: providedQuery } = options;
+        const { force = false, searchQuery: providedQuery, tagIds: providedTagIds } = options;
         if (!force && isProfileModalOpenRef.current) return;
         // Защита от повторной загрузки или загрузки несуществующих страниц
         if (isLoading || (!hasMore && page > pageNumber)) return; 
@@ -967,6 +980,20 @@ const PostPage = () => {
                     return;
                 }
                 url = `${API_BASE_URL}/Articles/search?q=${encodeURIComponent(q)}&page=${page}&countPages=${pageSize}`;
+            }
+            if (type === 'tags') {
+                const tagIds = Array.isArray(providedTagIds) ? providedTagIds : selectedTagIds;
+                if (!tagIds || tagIds.length === 0) {
+                    setArticles([]);
+                    setHasMore(false);
+                    setPageNumber(1);
+                    return;
+                }
+                const params = new URLSearchParams();
+                tagIds.forEach((id) => params.append('tags', id));
+                params.set('page', page);
+                params.set('pageSize', pageSize);
+                url = `${API_BASE_URL}/Articles/searchbytags?${params.toString()}`;
             }
             const fetchOptions = { credentials: 'include' };
             const response = await fetch(url, fetchOptions);
@@ -1795,7 +1822,12 @@ const PostPage = () => {
                 openProfile={handleOtherAuthorProfileOpen}
             />
 
-            <CategoryModal open={isCategoryModalOpen} handleClose={handleCategoryClose} />
+            <CategoryModal
+                open={isCategoryModalOpen}
+                handleClose={handleCategoryClose}
+                selectedTags={selectedTagIds}
+                onApply={handleApplyTagFilter}
+            />
             <ResourcesModal open={isResourcesModalOpen} handleClose={handleResourcesClose} />
             <FaqModal open={isFaqModalOpen} handleClose={handleFaqClose} />
             

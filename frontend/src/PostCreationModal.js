@@ -25,9 +25,10 @@ const API_BASE_URL = 'http://localhost:5113/api';
 // --- СПИСОК ДОСТУПНЫХ ТЕГОВ ---
 const AVAILABLE_TAGS = [
     'C#', 'Java', 'Python', 'JavaScript', 'TypeScript', 'Go', 'Rust', 'Kotlin',
-    'Swift', 'PHP', 'C++', 'C', 'Ruby', '.NET', 'ASPNET',
-    'Entity Framework', 'Spring', 'React', 'Angular', 'Vue', 'NodeJS',
-    'Django', 'Flask', 'Math', 'Data Structures', 'LLM', 'ML'
+    'Swift', 'PHP', 'C++', 'C', 'Ruby',
+    '.NET', 'ASP.NET', 'Entity Framework', 'Spring', 'React', 'Angular', 'Vue',
+    'Node.js', 'Django', 'Flask',
+    'Math', 'Data Structures', 'LLM', 'ML'
 ];
 
 // --- СТИЛИ ДЛЯ ПОЛЕЙ ВВОДА (Input Styles) ---
