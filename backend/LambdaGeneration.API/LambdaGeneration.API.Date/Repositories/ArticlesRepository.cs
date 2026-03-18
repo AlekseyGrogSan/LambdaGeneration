@@ -169,17 +169,17 @@ namespace LambdaGeneration.API.Date.Repositories
         public async Task<List<Articles>> GetRecommentationArticles(Guid userId, int page, int countPages)
         {
             // 1. Получаем статьи, которые лайкнул пользователь
-            var likedArticles = await _context.Likes
+            if (page < 1 || countPages < 1)
+                throw new ArgumentException("Page and countPages must be positive.");
+
+            // 1. Получаем уникальные теги статей, которые лайкнул пользователь
+            var relevantArticlesTags = await _context.Likes
                 .AsNoTracking()
                 .Where(l => l.AuthorId == userId)
                 .Select(l => l.Articles)
-                .ToListAsync();
-
-            // 2. Собираем теги в памяти
-            var relevantArticlesTags = likedArticles
                 .SelectMany(a => a.ArticleTags)
                 .Distinct()
-                .ToArray();
+                .ToArrayAsync();
 
             if (!relevantArticlesTags.Any())
             {
@@ -192,9 +192,11 @@ namespace LambdaGeneration.API.Date.Repositories
             var articles = await _context.Articles
                 .OrderByDescending(a => a.CreatedDate)
                 .ToListAsync();
-
-            var result = articles
+            // 2. Фильтруем и пагинируем на уровне БД (без материализации всех статей в память)
+            return await _context.Articles
+                .AsNoTracking()
                 .Where(a => a.ArticleTags.Any(tag => relevantArticlesTags.Contains(tag)))
+                .OrderByDescending(a => a.CreatedDate)
                 .Skip(skip)
                 .Take(countPages)
                 .Select(a => Articles.Map(
@@ -207,9 +209,7 @@ namespace LambdaGeneration.API.Date.Repositories
                     a.CreatedDate,
                     a.CountLikes,
                     a.CountComments))
-                .ToList();
-
-            return result;
+                .ToListAsync();
         }
 
         public async Task<List<Articles>> GetRandomArticles(int page, int countPages)
