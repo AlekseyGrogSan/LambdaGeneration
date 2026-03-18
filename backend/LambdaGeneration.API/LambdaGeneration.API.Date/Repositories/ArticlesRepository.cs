@@ -188,10 +188,6 @@ namespace LambdaGeneration.API.Date.Repositories
 
             int skip = (page - 1) * countPages;
 
-            // 3. Теперь фильтруем статьи по тегам
-            var articles = await _context.Articles
-                .OrderByDescending(a => a.CreatedDate)
-                .ToListAsync();
             // 2. Фильтруем и пагинируем на уровне БД (без материализации всех статей в память)
             return await _context.Articles
                 .AsNoTracking()
