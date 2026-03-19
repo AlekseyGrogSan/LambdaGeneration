@@ -172,6 +172,8 @@ namespace LambdaGeneration.API.Controllers
                     }
                 }
 
+
+
                 var article = await _articlesService.Update(request.article_id, GetUserID(), request.article_title, request.article_content, request.article_preview, file_path);
 
                 var ArticleTagsResponse = new List<string>();

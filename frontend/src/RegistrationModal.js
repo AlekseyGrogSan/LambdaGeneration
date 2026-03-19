@@ -257,6 +257,31 @@ const RegistrationModal = ({ open, handleClose, onForgotPassword }) => {
                             </Typography>
                         </Box>
                     )}
+                    {isRegisterMode && (
+                        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                            <Button
+                                variant="outlined"
+                                component="label"
+                                sx={{ color: '#00bfa5', borderColor: '#00bfa5', '&:hover': { borderColor: '#009688', backgroundColor: 'rgba(0, 191, 165, 0.08)' } }}
+                            >
+                                Загрузить аватар
+                                <input hidden type="file" accept="image/*" onChange={handleAvatarChange} />
+                            </Button>
+                            {avatarFile && (
+                                <Typography variant="body2" sx={{ color: '#bdbdbd' }}>
+                                    {avatarFile.name}
+                                </Typography>
+                            )}
+                            {avatarError && (
+                                <Typography variant="caption" sx={{ color: '#ff8a80' }}>
+                                    {avatarError}
+                                </Typography>
+                            )}
+                            <Typography variant="caption" sx={{ color: '#7e7e7e' }}>
+                                Максимум {formatBytes(MAX_AVATAR_BYTES)}
+                            </Typography>
+                        </Box>
+                    )}
 
                     <Button type="submit" variant="contained" fullWidth sx={{ bgcolor: '#00bfa5', '&:hover': { bgcolor: '#009688' }, mt: 1 }}>
                         {isRegisterMode ? 'Зарегистрироваться' : 'Войти'}
