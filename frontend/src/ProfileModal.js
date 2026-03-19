@@ -27,12 +27,12 @@ import CloseIcon from '@mui/icons-material/Close';
 import LogoutIcon from '@mui/icons-material/Logout';
 import EditIcon from '@mui/icons-material/Edit';
 import SaveIcon from '@mui/icons-material/Save'; 
-import AccountCircleIcon from '@mui/icons-material/AccountCircle';
 import DeleteIcon from '@mui/icons-material/Delete'; 
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import PostCard from './PostCard'; 
 import EditArticleModal from './EditArticleModal';
 import EmailVerificationModal from './EmailVerificationModal'; 
+import { buildArticleImageUrl, buildAvatarUrl, DEFAULT_AVATAR_SRC, formatBytes, isAvatarTooLarge, MAX_AVATAR_BYTES } from './avatarUtils';
 
 const API_BASE_URL = 'http://localhost:5113/api';
 
@@ -165,6 +165,10 @@ const ProfileModal = ({ open, handleClose, userId, onUnauthorized, onLogout, onP
     const [likedArticlesCount, setLikedArticlesCount] = useState(0);
     const [isFollowingUser, setIsFollowingUser] = useState(false);
     const [isFollowBusy, setIsFollowBusy] = useState(false);
+
+    const [avatarFile, setAvatarFile] = useState(null);
+    const [avatarPreview, setAvatarPreview] = useState('');
+    const [avatarError, setAvatarError] = useState(null);
     
     const [error, setError] = useState(null);
 
@@ -218,7 +222,11 @@ const ProfileModal = ({ open, handleClose, userId, onUnauthorized, onLogout, onP
             }
             
             const postsJson = await postsResponse.json(); 
-            const formattedPosts = (postsJson.articles || []).map(article => mapArticleFromApi(article, profileJson.name || 'Автор'));
+            const profileAvatar = profileJson.pathAvatar ?? profileJson.PathAvatar ?? null;
+            const formattedPosts = (postsJson.articles || []).map(article => ({
+                ...mapArticleFromApi(article, profileJson.name || 'Автор'),
+                authorAvatar: profileAvatar,
+            }));
             setUserPosts(formattedPosts);
 
             if (isMyProfile) {
@@ -267,9 +275,20 @@ const ProfileModal = ({ open, handleClose, userId, onUnauthorized, onLogout, onP
             setShowEmailVerification(false);
             setPendingEmail('');
             setIsEmailModalOpen(false);
+            setAvatarFile(null);
+            setAvatarPreview('');
+            setAvatarError(null);
             fetchProfileData();
         }
     }, [open, userId]);
+
+    useEffect(() => {
+        return () => {
+            if (avatarPreview && avatarPreview.startsWith('blob:')) {
+                URL.revokeObjectURL(avatarPreview);
+            }
+        };
+    }, [avatarPreview]);
 
     useEffect(() => {
         const loadFollowingForStatus = async () => {
@@ -289,21 +308,47 @@ const ProfileModal = ({ open, handleClose, userId, onUnauthorized, onLogout, onP
     }, [open, userId, isMyProfile]);
 
     // --- PROFILE UPDATE LOGIC (опущен для краткости) ---
+    const handleAvatarChange = (event) => {
+        const file = event.target.files?.[0];
+        if (!file) return;
+
+        if (isAvatarTooLarge(file)) {
+            setAvatarError(`Размер аватара не должен превышать ${formatBytes(MAX_AVATAR_BYTES)}.`);
+            setAvatarFile(null);
+            setAvatarPreview('');
+            return;
+        }
+
+        setAvatarError(null);
+        setAvatarFile(file);
+        const nextPreview = URL.createObjectURL(file);
+        setAvatarPreview((prev) => {
+            if (prev && prev.startsWith('blob:')) {
+                URL.revokeObjectURL(prev);
+            }
+            return nextPreview;
+        });
+    };
+
     const handleSaveProfile = async () => {
+        if (avatarError) {
+            setError(avatarError);
+            return;
+        }
         setIsLoading(true);
         setError(null);
         try {
-            const requestBody = {
-                name: editData.name,
-                email: profileData?.email || emailEdit,
-                aboutUser: editData.aboutUser
-            }; 
-
+            const formData = new FormData();
+            formData.append('name', editData.name || '');
+            formData.append('email', profileData?.email || emailEdit || '');
+            formData.append('aboutUser', editData.aboutUser || '');
+            if (avatarFile) {
+                formData.append('avatar', avatarFile);
+            }
             const response = await fetch(`${API_BASE_URL}/Users`, {
                 method: 'PUT', 
-                headers: getAuthHeaders(),
                 credentials: 'include',
-                body: JSON.stringify(requestBody)
+                body: formData
             });
             
             if (response.status === 401 || response.status === 403) {
@@ -326,6 +371,9 @@ const ProfileModal = ({ open, handleClose, userId, onUnauthorized, onLogout, onP
             if (isMyProfile) {
                 setEmailEdit(updatedProfile.email || '');
             }
+            setAvatarFile(null);
+            setAvatarPreview('');
+            setAvatarError(null);
             setIsEditingProfile(false);
         } catch (err) {
             setError(err.message);
@@ -406,17 +454,14 @@ const ProfileModal = ({ open, handleClose, userId, onUnauthorized, onLogout, onP
         setEmailSuccess(null);
         setEmailSending(true);
         try {
-            const requestBody = {
-                name: profileData?.name || editData.name,
-                email: pendingEmail,
-                aboutUser: profileData?.aboutUser || editData.aboutUser
-            };
-
+            const formData = new FormData();
+            formData.append('name', profileData?.name || editData.name || '');
+            formData.append('email', pendingEmail || '');
+            formData.append('aboutUser', profileData?.aboutUser || editData.aboutUser || '');
             const response = await fetch(`${API_BASE_URL}/Users`, {
                 method: 'PUT',
-                headers: getAuthHeaders(),
                 credentials: 'include',
-                body: JSON.stringify(requestBody)
+                body: formData
             });
 
             if (response.status === 401 || response.status === 403) {
@@ -448,12 +493,15 @@ const ProfileModal = ({ open, handleClose, userId, onUnauthorized, onLogout, onP
         setUserPosts(prevPosts => 
             prevPosts.map(post => {
                 if (post.id === articleId) {
+                    const nextFilePath = updatedData.file_path ?? updatedData.filePath ?? updatedData.FilePath;
                     return { 
                         ...post, 
                         title: updatedData.article_title || updatedData.articleTitle || post.title,
                         article_preview: updatedData.article_preview || updatedData.articlePreview || post.article_preview,
                         article_content: updatedData.article_content || updatedData.articleContent || post.article_content,
-                        tags: updatedData.article_tags || updatedData.articleTags || post.tags
+                        tags: updatedData.article_tags || updatedData.articleTags || post.tags,
+                        file_path: nextFilePath ?? post.file_path,
+                        articleImageUrl: nextFilePath ? buildArticleImageUrl(API_BASE_URL, nextFilePath) : post.articleImageUrl
                     };
                 }
                 return post;
@@ -480,9 +528,12 @@ const ProfileModal = ({ open, handleClose, userId, onUnauthorized, onLogout, onP
         author_id: article.author_id ?? article.authorId ?? article.AuthorID,
         authorId: article.author_id ?? article.authorId ?? article.AuthorID,
         nickname: article.nickname || article.authorName || fallbackNickname,
+        authorAvatar: article.pathAvatar ?? article.PathAvatar ?? article.authorAvatar ?? article.author_avatar ?? null,
         title: article.article_title ?? article.articleTitle ?? article.ArticleTitle,
         article_preview: article.article_preview ?? article.articlePreview ?? article.ArticlePreview,
         article_content: article.article_content ?? article.articleContent ?? article.ArticleContent,
+        file_path: article.file_path ?? article.filePath ?? article.FilePath,
+        articleImageUrl: buildArticleImageUrl(API_BASE_URL, article.file_path ?? article.filePath ?? article.FilePath),
         likesCount: article.countLikes ?? article.likesCount ?? 0,
         commentsCount: article.comments_count ?? article.commentsCount ?? 0,
         isLiked: article.is_liked ?? article.isLiked ?? true,
@@ -673,8 +724,38 @@ const ProfileModal = ({ open, handleClose, userId, onUnauthorized, onLogout, onP
                             </Typography>
 
                             {error && <Alert severity="error">{error}</Alert>}
+                            {avatarError && <Alert severity="error">{avatarError}</Alert>}
 
                             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                                <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} alignItems="center">
+                                    <Avatar
+                                        src={buildAvatarUrl(API_BASE_URL, avatarPreview || profileData?.pathAvatar || profileData?.PathAvatar)}
+                                        sx={{ width: 96, height: 96, border: '2px solid #00bfa5' }}
+                                        imgProps={{
+                                            onError: (e) => {
+                                                e.currentTarget.src = DEFAULT_AVATAR_SRC;
+                                            },
+                                        }}
+                                    />
+                                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1, width: '100%' }}>
+                                        <Button
+                                            variant="outlined"
+                                            component="label"
+                                            sx={{ color: '#00bfa5', borderColor: '#00bfa5', '&:hover': { borderColor: '#009688', backgroundColor: 'rgba(0, 191, 165, 0.08)' } }}
+                                        >
+                                            Загрузить аватар
+                                            <input hidden type="file" accept="image/*" onChange={handleAvatarChange} />
+                                        </Button>
+                                        {avatarFile && (
+                                            <Typography variant="body2" sx={{ color: '#bdbdbd' }}>
+                                                {avatarFile.name}
+                                            </Typography>
+                                        )}
+                                        <Typography variant="caption" sx={{ color: '#7e7e7e' }}>
+                                            Максимум {formatBytes(MAX_AVATAR_BYTES)}
+                                        </Typography>
+                                    </Box>
+                                </Stack>
                                 <TextField
                                     label="Имя пользователя"
                                     value={editData.name}
@@ -710,7 +791,15 @@ const ProfileModal = ({ open, handleClose, userId, onUnauthorized, onLogout, onP
                     {/* --- ВЕРХНЯЯ ЧАСТЬ ПРОФИЛЯ (ИМЯ/EMAIL/ДАТА) --- */}
                     <Box sx={{ p: 4, display: 'flex', flexDirection: 'column', alignItems: 'center', background: 'linear-gradient(180deg, #252525 0%, #1e1e1e 100%)' }}>
                         
-                        <AccountCircleIcon sx={{ fontSize: 100, color: '#00bfa5', mb: 2 }} />
+                        <Avatar
+                            src={buildAvatarUrl(API_BASE_URL, profileData?.pathAvatar ?? profileData?.PathAvatar)}
+                            sx={{ width: 110, height: 110, border: '3px solid #00bfa5', mb: 2 }}
+                            imgProps={{
+                                onError: (e) => {
+                                    e.currentTarget.src = DEFAULT_AVATAR_SRC;
+                                },
+                            }}
+                        />
 
                         <Typography variant="h4" sx={{ color: 'white', fontWeight: 'bold', mb: 0.5 }}>
                             {profileData.name}
@@ -865,7 +954,7 @@ const ProfileModal = ({ open, handleClose, userId, onUnauthorized, onLogout, onP
                         </Typography>
                         
                         <Typography variant="h6" sx={{ color: 'white', lineHeight: 1.6, maxWidth: 800, margin: '0 auto', fontWeight: 300 }}>
-                            {profileData.aboutUser || (isMyProfile ? 'Добавьте информацию о себе, чтобы другие пользователи узнали вас лучше.' : 'Пользователь не добавил описание.')}
+                            {profileData.aboutUser || 'Пользователь ничего о себе не добавил.'}
                         </Typography>
                     </Box>
 
@@ -885,6 +974,7 @@ const ProfileModal = ({ open, handleClose, userId, onUnauthorized, onLogout, onP
                                             <PostCard
                                                 {...post}
                                                 sx = {{ height: '100%' }}
+                                                showImage={false}
                                                 authorId={post.author_id} 
                                                 onClick={() => {
                                                     if (isMyProfile) {
@@ -1174,7 +1264,15 @@ const ProfileModal = ({ open, handleClose, userId, onUnauthorized, onLogout, onP
                                         }}
                                     >
                                         <ListItemAvatar>
-                                            <Avatar sx={{ bgcolor: '#00bfa5' }}>
+                                            <Avatar
+                                                src={buildAvatarUrl(API_BASE_URL, user.pathAvatar ?? user.PathAvatar)}
+                                                sx={{ bgcolor: '#00bfa5' }}
+                                                imgProps={{
+                                                    onError: (e) => {
+                                                        e.currentTarget.src = DEFAULT_AVATAR_SRC;
+                                                    },
+                                                }}
+                                            >
                                                 {user.name?.[0]?.toUpperCase() || 'U'}
                                             </Avatar>
                                         </ListItemAvatar>
@@ -1233,8 +1331,16 @@ const ProfileModal = ({ open, handleClose, userId, onUnauthorized, onLogout, onP
                                         }}
                                     >
                                         <ListItemAvatar>
-                                            <Avatar sx={{ bgcolor: '#00bfa5' }}>
-                                                {article.title?.[0]?.toUpperCase() || 'A'}
+                                            <Avatar
+                                                src={buildAvatarUrl(API_BASE_URL, article.authorAvatar)}
+                                                sx={{ bgcolor: '#00bfa5' }}
+                                                imgProps={{
+                                                    onError: (e) => {
+                                                        e.currentTarget.src = DEFAULT_AVATAR_SRC;
+                                                    },
+                                                }}
+                                            >
+                                                {article.nickname?.[0]?.toUpperCase() || 'A'}
                                             </Avatar>
                                         </ListItemAvatar>
                                         <ListItemText

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react'; 
+﻿import React, { useState, useEffect, useRef, useCallback } from 'react'; 
 import { 
     Box,
     Button,
@@ -29,6 +29,7 @@ import PostCreationModal from './PostCreationModal';
 import CategoryModal from './CategoryModal'; 
 import ResourcesModal from './ResourcesModal';
 import FaqModal from './FaqModal';
+import { buildArticleImageUrl, buildAvatarUrl, DEFAULT_AVATAR_SRC } from './avatarUtils';
 
 const API_BASE_URL = 'http://localhost:5113/api';
 
@@ -145,7 +146,17 @@ const Sidebar = ({ handleOpen, handleProfileOpen, handlePostOpen, handleCategory
 
         {currentUser ? (
             <Box sx={{ mb: 3, p: 2, bgcolor: '#2c2c2c', borderRadius: '12px', display: 'flex', alignItems: 'center', gap: 1 }}>
-                <Avatar sx={{ bgcolor: '#00bfa5' }}>{currentUser.name[0]?.toUpperCase()}</Avatar>
+                <Avatar
+                    src={buildAvatarUrl(API_BASE_URL, currentUser.pathAvatar ?? currentUser.PathAvatar)}
+                    sx={{ bgcolor: '#00bfa5' }}
+                    imgProps={{
+                        onError: (e) => {
+                            e.currentTarget.src = DEFAULT_AVATAR_SRC;
+                        },
+                    }}
+                >
+                    {currentUser.name[0]?.toUpperCase()}
+                </Avatar>
                 <Box sx={{ overflow: 'hidden' }}>
                     <Typography variant="subtitle2" sx={{ color: '#bdbdbd', fontSize: '0.75rem' }}>Вы вошли как:</Typography>
                     <Typography variant="body1" sx={{ color: 'white', fontWeight: 'bold', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
@@ -225,9 +236,20 @@ const FeedCommentItem = ({
                 p: 1.2,
             }}
         >
-            <Typography variant="body2" sx={{ color: '#00bfa5', fontWeight: 700 }}>
-                @{comment.authorName}
-            </Typography>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                <Avatar
+                    src={buildAvatarUrl(API_BASE_URL, comment.authorAvatar)}
+                    sx={{ width: 28, height: 28, border: '1px solid #00bfa5' }}
+                    imgProps={{
+                        onError: (e) => {
+                            e.currentTarget.src = DEFAULT_AVATAR_SRC;
+                        },
+                    }}
+                />
+                <Typography variant="body2" sx={{ color: '#00bfa5', fontWeight: 700 }}>
+                    @{comment.authorName}
+                </Typography>
+            </Box>
 
             <Typography variant="body2" sx={{ color: 'white', mt: 0.5, whiteSpace: 'pre-wrap' }}>
                 {comment.content}
@@ -731,7 +753,7 @@ const PostPage = () => {
         setIsProfileModalOpen(false);
         isProfileModalOpenRef.current = false;
         setViewedProfileId(null);
-        fetchArticlesPage(1, paginationType, { force: true });
+        checkAuth().then(() => fetchArticlesPage(1, paginationType, { force: true }));
     };
     
     const handleOtherAuthorProfileOpen = (userId, options = {}) => {
@@ -923,6 +945,7 @@ const PostPage = () => {
     const enrichArticleData = async (article) => {
         const rawId = article.article_id ?? article.articleId ?? article.ArticleID;
         const rawAuthorId = article.author_id ?? article.authorId ?? article.AuthorID;
+        const rawFilePath = article.file_path ?? article.filePath ?? article.FilePath;
         const fetchOptions = { credentials: 'include' };
 
         const authorReq = rawAuthorId
@@ -946,12 +969,15 @@ const PostPage = () => {
             article_id: rawId, 
             author_id: rawAuthorId, 
             nickname: authorData.name || 'Автор',
+            authorAvatar: authorData.pathAvatar ?? authorData.PathAvatar ?? null,
             authorBio: authorData.aboutUser || 'Описание недоступно.',
             title: article.articleTitle || article.article_title || article.ArticleTitle || 'Нет названия', 
             article_preview: article.articlePreview || article.article_preview || article.ArticlePreview || 'Нет описания',
             article_content: article.article_content || article.articleContent || article.ArticleContent || '...', 
             likesCount: likeCountData.countLikes || 0,
-            imageUrl: article.article_preview || article.ArticlePreview, 
+            file_path: rawFilePath,
+            articleImageUrl: buildArticleImageUrl(API_BASE_URL, rawFilePath),
+            imageUrl: buildArticleImageUrl(API_BASE_URL, rawFilePath),
             isLiked: isLikedStatus, 
             commentsCount: article.countComments ?? article.commentsCount ?? article.comments_count ?? article.CountComments ?? 0,
             tags: article.article_tags || article.articleTags || article.ArticleTags || [], 
@@ -1117,7 +1143,7 @@ const PostPage = () => {
         }
     }, [articles, activeCommentsPost]);
 
-    const getFeedCommentAuthorName = async (userId) => {
+    const getFeedCommentAuthorInfo = async (userId) => {
         if (feedCommentAuthorCacheRef.current[userId]) {
             return feedCommentAuthorCacheRef.current[userId];
         }
@@ -1127,17 +1153,22 @@ const PostPage = () => {
                 credentials: 'include',
             });
             if (!response.ok) {
-                feedCommentAuthorCacheRef.current[userId] = 'Автор';
-                return 'Автор';
+                const fallback = { name: 'Автор', avatar: null };
+                feedCommentAuthorCacheRef.current[userId] = fallback;
+                return fallback;
             }
 
             const data = await response.json();
-            const name = data.name || 'Автор';
-            feedCommentAuthorCacheRef.current[userId] = name;
-            return name;
+            const info = {
+                name: data.name || 'Автор',
+                avatar: data.pathAvatar ?? data.PathAvatar ?? null,
+            };
+            feedCommentAuthorCacheRef.current[userId] = info;
+            return info;
         } catch {
-            feedCommentAuthorCacheRef.current[userId] = 'Автор';
-            return 'Автор';
+            const fallback = { name: 'Автор', avatar: null };
+            feedCommentAuthorCacheRef.current[userId] = fallback;
+            return fallback;
         }
     };
 
@@ -1164,7 +1195,7 @@ const PostPage = () => {
         const hasReplies = Boolean(comment.hasReplies ?? comment.HasReplies);
         const repliesCount = comment.repliesCount ?? comment.RepliesCount ?? 0;
 
-        const authorName = await getFeedCommentAuthorName(authorId);
+        const authorInfo = await getFeedCommentAuthorInfo(authorId);
         const isLiked = await getFeedCommentLikeStatus(commentId);
 
         return {
@@ -1173,7 +1204,8 @@ const PostPage = () => {
             authorId,
             hasReplies,
             repliesCount,
-            authorName,
+            authorName: authorInfo.name,
+            authorAvatar: authorInfo.avatar,
             isLiked,
             replies: [],
             repliesOpen: false,
@@ -1725,6 +1757,7 @@ const PostPage = () => {
                             backLabel={returnToProfile ? 'Назад к профилю' : 'Назад к ленте'}
                             nickname={selectedPost.nickname}
                             authorId={selectedPost.author_id} 
+                            authorAvatar={selectedPost.authorAvatar}
                             onAuthorClick={handleOtherAuthorProfileOpen} 
                             onUnauthorized={handleOpen}
                             currentUserId={currentUser?.id}
@@ -1836,3 +1869,4 @@ const PostPage = () => {
 };
 
 export default PostPage;
+

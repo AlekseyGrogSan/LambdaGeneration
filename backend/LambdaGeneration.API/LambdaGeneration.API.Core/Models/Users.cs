@@ -4,7 +4,7 @@ namespace LambdaGeneration.API.Core.Models
 {
     public class Users
     {
-        private Users(Guid Id, string username, string Hashpassword, string email, string aboutUser)
+        private Users(Guid Id, string username, string Hashpassword, string email, string aboutUser, string? pathAvatar)
         {
             UserID = Id;
             UserName = username;
@@ -15,9 +15,10 @@ namespace LambdaGeneration.API.Core.Models
             FollowersCount = 0;
             FollowingCount = 0;
             ArticlesCount = 0;
+            PathAvatar = pathAvatar;
         }
 
-        private Users(Guid Id, string username, string Hashpassword, string email, string aboutUser, DateTime createDate, int followersCount, int followingCount, int articlesCount)
+        private Users(Guid Id, string username, string Hashpassword, string email, string aboutUser, DateTime createDate, int followersCount, int followingCount, int articlesCount, string pathAvatar)
         {
             UserID = Id;
             UserName = username;
@@ -28,6 +29,7 @@ namespace LambdaGeneration.API.Core.Models
             FollowersCount = followersCount;
             FollowingCount = followingCount;
             ArticlesCount = articlesCount;
+            PathAvatar = pathAvatar;
         }
 
         public Guid UserID { get; }
@@ -41,15 +43,16 @@ namespace LambdaGeneration.API.Core.Models
         public int FollowersCount { get; }
         public int FollowingCount { get; }
         public int ArticlesCount { get; }
+        public string PathAvatar { get; } = string.Empty;
 
-        public static Users Create(Guid id, string username, string hashpassword, string email, string aboutUser)
+        public static Users Create(Guid id, string username, string hashpassword, string email, string aboutUser, string pathAvatar)
         {
-            return new Users(id, username, hashpassword, email, aboutUser);
+            return new Users(id, username, hashpassword, email, aboutUser, pathAvatar);
         }
 
-        public static Users Map(Guid id, string username, string hashpassword, string email, Role role, string aboutUser, DateTime createDate, int followersCount, int followingCount, int articlesCount)
+        public static Users Map(Guid id, string username, string hashpassword, string email, Role role, string aboutUser, DateTime createDate, int followersCount, int followingCount, int articlesCount, string? pathAvatar)
         {
-            Users user = new Users(id, username, hashpassword, email, aboutUser, createDate, followersCount, followingCount, articlesCount);
+            Users user = new Users(id, username, hashpassword, email, aboutUser, createDate, followersCount, followingCount, articlesCount, pathAvatar);
             user.Role = role;
             return user;
         }

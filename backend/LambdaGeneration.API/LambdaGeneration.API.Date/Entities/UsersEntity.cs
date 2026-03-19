@@ -24,6 +24,7 @@ namespace LambdaGeneration.API.Date.Entities
         public List<ArticlesEntity> Articles { get; set; } = new List<ArticlesEntity>();
         public List<SubscriptionEntity> Followers { get; set; } = new List<SubscriptionEntity>();
         public List<SubscriptionEntity> Following { get; set; } = new List<SubscriptionEntity>();
+        public string? PathAvatar { get; set; } = string.Empty;
     }
 
 }

@@ -27,6 +27,7 @@ import LinkIcon from '@mui/icons-material/Link';
 import TitleIcon from '@mui/icons-material/Title';
 import FormatListBulletedIcon from '@mui/icons-material/FormatListBulleted';
 import FormatListNumberedIcon from '@mui/icons-material/FormatListNumbered';
+import { buildArticleImageUrl, formatBytes, isArticleImageTooLarge, MAX_ARTICLE_IMAGE_BYTES } from './avatarUtils';
 
 const API_BASE_URL = 'http://localhost:5113/api';
 
@@ -149,12 +150,16 @@ const EditArticleModal = ({ open, handleClose, post, onUpdateSuccess, onDeleteSu
     const [preview, setPreview] = useState('');
     const [content, setContent] = useState(''); 
     const [selectedTags, setSelectedTags] = useState([]);
+    const [imageFile, setImageFile] = useState(null);
+    const [imagePreview, setImagePreview] = useState('');
+    const [imageError, setImageError] = useState(null);
     
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState(null);
     const [successMsg, setSuccessMsg] = useState('');
     
     const editorRef = useRef(null);
+    const fileInputRef = useRef(null);
 
     useEffect(() => {
         if (post && open) {
@@ -165,6 +170,12 @@ const EditArticleModal = ({ open, handleClose, post, onUpdateSuccess, onDeleteSu
             setSelectedTags(post.tags || []);
             setError(null);
             setSuccessMsg('');
+            setImageFile(null);
+            setImageError(null);
+            setImagePreview('');
+            if (fileInputRef.current) {
+                fileInputRef.current.value = '';
+            }
             
             setTimeout(() => {
                 if (editorRef.current) {
@@ -173,6 +184,14 @@ const EditArticleModal = ({ open, handleClose, post, onUpdateSuccess, onDeleteSu
             }, 100);
         }
     }, [post, open]);
+
+    useEffect(() => {
+        return () => {
+            if (imagePreview && imagePreview.startsWith('blob:')) {
+                URL.revokeObjectURL(imagePreview);
+            }
+        };
+    }, [imagePreview]);
 
     const handleContentChange = () => {
         if (editorRef.current) {
@@ -191,6 +210,42 @@ const EditArticleModal = ({ open, handleClose, post, onUpdateSuccess, onDeleteSu
                 return prevTags;
             }
         });
+    };
+
+    const handleImageChange = (event) => {
+        const nextFile = event.target.files?.[0];
+        if (!nextFile) return;
+
+        if (isArticleImageTooLarge(nextFile)) {
+            setImageError(`Размер фото не должен превышать ${formatBytes(MAX_ARTICLE_IMAGE_BYTES)}.`);
+            setImageFile(null);
+            setImagePreview('');
+            return;
+        }
+
+        setImageError(null);
+        setImageFile(nextFile);
+        const nextPreview = URL.createObjectURL(nextFile);
+        setImagePreview((prev) => {
+            if (prev && prev.startsWith('blob:')) {
+                URL.revokeObjectURL(prev);
+            }
+            return nextPreview;
+        });
+    };
+
+    const clearSelectedImage = () => {
+        setImageFile(null);
+        setImageError(null);
+        setImagePreview((prev) => {
+            if (prev && prev.startsWith('blob:')) {
+                URL.revokeObjectURL(prev);
+            }
+            return '';
+        });
+        if (fileInputRef.current) {
+            fileInputRef.current.value = '';
+        }
     };
 
     // ✅ НОВЫЙ МЕТОД: Удаление статьи
@@ -229,18 +284,26 @@ const EditArticleModal = ({ open, handleClose, post, onUpdateSuccess, onDeleteSu
     
     // МЕТОД: Сохранение контента
     const handleSaveContent = async () => {
+        if (imageError) {
+            setError(imageError);
+            return;
+        }
+
         setIsLoading(true); setError(null); setSuccessMsg('');
         try {
+            const formData = new FormData();
+            formData.append('article_id', post.id);
+            formData.append('article_title', title);
+            formData.append('article_preview', preview);
+            formData.append('article_content', content);
+            if (imageFile) {
+                formData.append('picture', imageFile);
+            }
+
             const response = await fetch(`${API_BASE_URL}/Articles/update`, {
                 method: 'PUT',
-                headers: getAuthHeaders(),
                 credentials: 'include',
-                body: JSON.stringify({
-                    article_id: post.id,
-                    article_title: title,
-                    article_preview: preview,
-                    article_content: content
-                })
+                body: formData
             });
 
             if (!response.ok) {
@@ -396,6 +459,60 @@ const EditArticleModal = ({ open, handleClose, post, onUpdateSuccess, onDeleteSu
                                     '&::-webkit-scrollbar-thumb': { background: '#00bfa5', borderRadius: '4px' }
                                 }}
                             />
+                        </Box>
+
+                        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                            <Typography variant="body2" sx={{ color: '#bdbdbd', fontWeight: 'bold' }}>
+                                Фото статьи (до {formatBytes(MAX_ARTICLE_IMAGE_BYTES)})
+                            </Typography>
+                            <input
+                                ref={fileInputRef}
+                                hidden
+                                type="file"
+                                accept="image/*"
+                                onChange={handleImageChange}
+                            />
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
+                                <Button
+                                    variant="outlined"
+                                    onClick={() => fileInputRef.current?.click()}
+                                    sx={{ color: '#00bfa5', borderColor: '#00bfa5', '&:hover': { borderColor: '#009688', backgroundColor: 'rgba(0, 191, 165, 0.08)' } }}
+                                >
+                                    Выбрать фото
+                                </Button>
+                                {imageFile && (
+                                    <Button
+                                        variant="text"
+                                        onClick={clearSelectedImage}
+                                        sx={{ color: '#ff8a80' }}
+                                    >
+                                        Убрать
+                                    </Button>
+                                )}
+                                <Typography variant="body2" sx={{ color: '#9e9e9e' }}>
+                                    {imageFile ? `${imageFile.name} (${formatBytes(imageFile.size)})` : 'Файл не выбран'}
+                                </Typography>
+                            </Box>
+                            {imageError && (
+                                <Typography variant="body2" sx={{ color: '#ff8a80' }}>
+                                    {imageError}
+                                </Typography>
+                            )}
+                            {(imagePreview || post?.articleImageUrl || post?.file_path || post?.filePath) && (
+                                <Box
+                                    component="img"
+                                    src={imagePreview || buildArticleImageUrl(API_BASE_URL, post?.file_path || post?.filePath || post?.articleImageUrl)}
+                                    alt="Фото статьи"
+                                    onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                                    sx={{
+                                        width: '100%',
+                                        maxHeight: 220,
+                                        borderRadius: '12px',
+                                        objectFit: 'cover',
+                                        border: '1px solid #444',
+                                    }}
+                                />
+                            )}
                         </Box>
                         
                         <Button 

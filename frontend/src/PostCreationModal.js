@@ -1,4 +1,4 @@
-import React, { useState, useRef, useCallback } from 'react';
+import React, { useState, useRef, useCallback, useEffect } from 'react';
 import {
     Modal,
     Box,
@@ -18,6 +18,7 @@ import LinkIcon from '@mui/icons-material/Link';
 import TitleIcon from '@mui/icons-material/Title';
 import FormatListBulletedIcon from '@mui/icons-material/FormatListBulleted';
 import FormatListNumberedIcon from '@mui/icons-material/FormatListNumbered';
+import { formatBytes, isArticleImageTooLarge, MAX_ARTICLE_IMAGE_BYTES } from './avatarUtils';
 
 // Базовый URL для API (должен быть определен в реальном приложении)
 const API_BASE_URL = 'http://localhost:5113/api';
@@ -184,11 +185,14 @@ const PostCreationModal = ({ open, handleClose, onUnauthorized, onPostSuccess })
     const [content, setContent] = useState('');
     // 4. Состояние для файла (заглушка)
     const [file, setFile] = useState(null);
+    const [imagePreview, setImagePreview] = useState('');
+    const [imageError, setImageError] = useState(null);
     // 5. Состояние для тегов
     const [selectedTags, setSelectedTags] = useState([]);
 
     // Ссылка на DOM-элемент редактора (div с contenteditable)
     const editorRef = useRef(null);
+    const fileInputRef = useRef(null);
 
     // Обработчик ввода: обновляет состояние 'content' при изменении содержимого
     const handleContentChange = () => {
@@ -251,6 +255,49 @@ const PostCreationModal = ({ open, handleClose, onUnauthorized, onPostSuccess })
         });
     };
     // --------------------
+    useEffect(() => {
+        return () => {
+            if (imagePreview && imagePreview.startsWith('blob:')) {
+                URL.revokeObjectURL(imagePreview);
+            }
+        };
+    }, [imagePreview]);
+
+    const handleImageChange = (event) => {
+        const nextFile = event.target.files?.[0];
+        if (!nextFile) return;
+
+        if (isArticleImageTooLarge(nextFile)) {
+            setImageError(`Размер фото не должен превышать ${formatBytes(MAX_ARTICLE_IMAGE_BYTES)}.`);
+            setFile(null);
+            setImagePreview('');
+            return;
+        }
+
+        setImageError(null);
+        setFile(nextFile);
+        const nextPreview = URL.createObjectURL(nextFile);
+        setImagePreview((prev) => {
+            if (prev && prev.startsWith('blob:')) {
+                URL.revokeObjectURL(prev);
+            }
+            return nextPreview;
+        });
+    };
+
+    const clearSelectedImage = () => {
+        setFile(null);
+        setImageError(null);
+        setImagePreview((prev) => {
+            if (prev && prev.startsWith('blob:')) {
+                URL.revokeObjectURL(prev);
+            }
+            return '';
+        });
+        if (fileInputRef.current) {
+            fileInputRef.current.value = '';
+        }
+    };
 
     // --- ОБРАБОТЧИК СОХРАНЕНИЯ (ОБНОВЛЕН) ---
     const handlePublish = async () => {
@@ -260,20 +307,24 @@ const PostCreationModal = ({ open, handleClose, onUnauthorized, onPostSuccess })
             return;
         }
 
-        const postData = {
-            article_title: title,
-            article_preview: preview,
-            article_content: content,
-            article_tags: selectedTags // Передаем список строк-тегов
-        };
+        if (imageError) {
+            alert(imageError);
+            return;
+        }
+
+        const formData = new FormData();
+        formData.append('article_title', title);
+        formData.append('article_preview', preview);
+        formData.append('article_content', content);
+        selectedTags.forEach((tag) => formData.append('article_tags', tag));
+        if (file) {
+            formData.append('picture', file);
+        }
 
         try {
             const response = await fetch(`${API_BASE_URL}/Articles/create`, {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(postData),
+                body: formData,
                 credentials: 'include',
             });
 
@@ -318,6 +369,7 @@ const PostCreationModal = ({ open, handleClose, onUnauthorized, onPostSuccess })
             setPreview('');
             setContent('');
             setSelectedTags([]);
+            clearSelectedImage();
             if (editorRef.current) {
                 editorRef.current.innerHTML = ''; // Очищаем содержимое
             }
@@ -368,6 +420,60 @@ const PostCreationModal = ({ open, handleClose, onUnauthorized, onPostSuccess })
                     // ✅ ДОБАВЛЕНО: Ограничивает высоту 4-мя строками, после чего появляется скролл (совместно с maxHeight в inputStyle)
                     maxRows={4} 
                 />
+
+                {/* --- Р”РћР‘РђР’Р›Р•РќРР• Р¤РћРўРћ --- */}
+                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                    <Typography variant="body2" sx={{ color: '#bdbdbd', fontWeight: 'bold' }}>
+                        Фото статьи (до {formatBytes(MAX_ARTICLE_IMAGE_BYTES)})
+                    </Typography>
+                    <input
+                        ref={fileInputRef}
+                        hidden
+                        type="file"
+                        accept="image/*"
+                        onChange={handleImageChange}
+                    />
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
+                        <Button
+                            variant="outlined"
+                            onClick={() => fileInputRef.current?.click()}
+                            sx={{ color: '#00bfa5', borderColor: '#00bfa5', '&:hover': { borderColor: '#009688', backgroundColor: 'rgba(0, 191, 165, 0.08)' } }}
+                        >
+                            Выбрать фото
+                        </Button>
+                        {file && (
+                            <Button
+                                variant="text"
+                                onClick={clearSelectedImage}
+                                sx={{ color: '#ff8a80' }}
+                            >
+                                Убрать
+                            </Button>
+                        )}
+                        <Typography variant="body2" sx={{ color: '#9e9e9e' }}>
+                            {file ? `${file.name} (${formatBytes(file.size)})` : 'Файл не выбран'}
+                        </Typography>
+                    </Box>
+                    {imageError && (
+                        <Typography variant="body2" sx={{ color: '#ff8a80' }}>
+                            {imageError}
+                        </Typography>
+                    )}
+                    {imagePreview && (
+                        <Box
+                            component="img"
+                            src={imagePreview}
+                            alt="Превью статьи"
+                            sx={{
+                                width: '100%',
+                                maxHeight: 220,
+                                borderRadius: '12px',
+                                objectFit: 'cover',
+                                border: '1px solid #444',
+                            }}
+                        />
+                    )}
+                </Box>
 
                 {/* --- СЕКЦИЯ РЕДАКТОРА ТЕКСТА (с красивым скроллом) --- */}
                 <Box>

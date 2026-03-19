@@ -9,7 +9,7 @@ namespace LambdaGeneration.API.Date.Repositories
         Task<Users?> GetByName(string username);
         Task Delete(Guid id);
         Task<Users?> GetProfile(Guid id);
-        Task<Users?> Update(Guid id, string name, string email, string aboutUser);
+        Task<Users?> Update(Guid id, string name, string email, string aboutUser, string pathAvatar);
         Task ChangePassword(Guid id, string newPasswordHash);
         Task Subscribe(Guid followerId, Guid followingId);
         Task Unsubscribe(Guid followerId, Guid followingId);

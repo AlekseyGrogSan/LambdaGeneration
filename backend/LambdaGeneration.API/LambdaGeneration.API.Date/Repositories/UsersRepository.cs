@@ -27,7 +27,8 @@ namespace LambdaGeneration.API.Date.Repositories
                 CreatedDate = user.CreatedDate,
                 countArticles = 0,
                 countSubscribers = 0,
-                countFollowing = 0
+                countFollowing = 0,
+                PathAvatar = user.PathAvatar,
             };
 
             _context.Users.Add(userEntity);
@@ -54,7 +55,8 @@ namespace LambdaGeneration.API.Date.Repositories
                 userEntity.CreatedDate,
                 userEntity.countSubscribers,
                 userEntity.countFollowing,
-                userEntity.countArticles
+                userEntity.countArticles,
+                userEntity.PathAvatar
                 );
         }
         public async Task<Users?> GetByName(string name)
@@ -74,7 +76,8 @@ namespace LambdaGeneration.API.Date.Repositories
                 userEntity.CreatedDate,
                 userEntity.countSubscribers,
                 userEntity.countFollowing,
-                userEntity.countArticles
+                userEntity.countArticles,
+                userEntity.PathAvatar
             );
             }
         public async Task Delete(Guid id)
@@ -105,10 +108,11 @@ namespace LambdaGeneration.API.Date.Repositories
                 userEntity.CreatedDate,
                 userEntity.countSubscribers,
                 userEntity.countFollowing,
-                userEntity.countArticles
+                userEntity.countArticles,
+                userEntity.PathAvatar
                 );
         }
-        public async Task<Users?> Update(Guid id, string name, string email, string aboutUser)
+        public async Task<Users?> Update(Guid id, string name, string email, string aboutUser, string pathAvatar)
         {
             await _context.Users
                 .Where(u => u.UserID == id)
@@ -116,6 +120,7 @@ namespace LambdaGeneration.API.Date.Repositories
                     .SetProperty(u => u.Email, email)
                     .SetProperty(u => u.UserName, name)
                     .SetProperty(u => u.AboutUser, aboutUser)
+                    .SetProperty(u => u.PathAvatar, pathAvatar)
             );
             await _context.SaveChangesAsync();
 
@@ -210,7 +215,8 @@ namespace LambdaGeneration.API.Date.Repositories
                     userEntity.CreatedDate,
                     userEntity.countSubscribers,
                     userEntity.countFollowing,
-                    userEntity.countArticles
+                    userEntity.countArticles,
+                    userEntity.PathAvatar
                 ))
                 .ToList();
         }

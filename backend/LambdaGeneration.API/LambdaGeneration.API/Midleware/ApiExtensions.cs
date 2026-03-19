@@ -267,7 +267,7 @@ namespace LambdaGeneration.API.Midleware
                             tagIds.Add(1);
                         }
 
-                        await articlesService.Create(title, content, preview, tagIds, admin.UserID);
+                        await articlesService.Create(title, content, preview, tagIds, admin.UserID, "/articles_uploads/admin.png");
                         count++;
                     }
 

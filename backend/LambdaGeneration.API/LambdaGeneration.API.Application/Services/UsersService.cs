@@ -28,10 +28,10 @@ namespace LambdaGeneration.API.Application.Services
 
         }
 
-        public async Task Register(Guid id, string userName, string email, string password, string aboutUser)
+        public async Task Register(Guid id, string userName, string email, string password, string aboutUser, string? pathAvatar)
         {
             var hashedPassword = _passwordHasher.HashPassword(password);
-            var user = Users.Create(id, userName, hashedPassword, email, aboutUser);
+            var user = Users.Create(id, userName, hashedPassword, email, aboutUser, pathAvatar);
             await _usersRepository.Add(user);
         }
 
@@ -73,9 +73,9 @@ namespace LambdaGeneration.API.Application.Services
             return user;
         }
 
-        public async Task<(Users, string token)> Update(Guid id, string name, string email, string aboutUser)
+        public async Task<(Users, string token)> Update(Guid id, string name, string email, string aboutUser, string pathAvatar)
         {
-            var user = await _usersRepository.Update(id, name, email, aboutUser);
+            var user = await _usersRepository.Update(id, name, email, aboutUser, pathAvatar);
 
             if (user == null)
                 throw new Exception("User is not exist!");

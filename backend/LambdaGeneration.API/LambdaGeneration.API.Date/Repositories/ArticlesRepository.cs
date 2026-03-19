@@ -32,7 +32,8 @@ namespace LambdaGeneration.API.Date.Repositories
                 ArticlePreview = article.ArticlePreview,
                 AuthorID = article.AuthorID,
                 CreatedDate = article.CreatedDate,
-                ArticleTags = article.ArticleTags
+                ArticleTags = article.ArticleTags,
+                FilePath = article.FilePath,
             };
 
             _context.Articles.Add(article_entity);
@@ -62,43 +63,27 @@ namespace LambdaGeneration.API.Date.Repositories
             var article_entity = await _context.Articles.FirstOrDefaultAsync(a => a.ArticleID == article_id);
             if (article_entity == null)
                 return null;
-            return Articles.Map(article_entity.ArticleID,
-                article_entity.ArticleTitle,
-                article_entity.ArticleContent,
-                article_entity.ArticlePreview,
-                article_entity.AuthorID,
-                article_entity.ArticleTags,
-                article_entity.CreatedDate,
-                article_entity.CountLikes,
-                article_entity.CountComments
-                );
+            return Map(article_entity);
         }
 
-        public async Task<Articles?> Update(Guid article_id, string new_title, string new_content, string new_preview)
+        public async Task<Articles?> Update(Guid article_id, string new_title, string new_content, string new_preview, string file_path)
         {
             await _context.Articles
                 .Where(a => a.ArticleID == article_id)
                 .ExecuteUpdateAsync(setter => setter
-                .SetProperty(ar => ar.ArticleTitle, new_title)
-                .SetProperty(ar => ar.ArticleContent, new_content)
-                .SetProperty(ar => ar.ArticlePreview, new_preview)
+                    .SetProperty(ar => ar.ArticleTitle, new_title)
+                    .SetProperty(ar => ar.ArticleContent, new_content)
+                    .SetProperty(ar => ar.ArticlePreview, new_preview)
+                    .SetProperty(ar => ar.FilePath, file_path)
                 );
 
             await _context.SaveChangesAsync();
 
             var article_entity = await _context.Articles.FirstOrDefaultAsync(a => a.ArticleID == article_id);
 
-            return Articles.Map(
-                article_entity.ArticleID,
-                article_entity.ArticleTitle,
-                article_entity.ArticleContent,
-                article_entity.ArticlePreview,
-                article_entity.AuthorID,
-                article_entity.ArticleTags,
-                article_entity.CreatedDate,
-                article_entity.CountLikes,
-                article_entity.CountComments
-            );
+            if (article_entity == null) return null;
+
+            return Map(article_entity);
         }
 
         public async Task<Articles?> UpdateTags(Guid article_id, List<int> new_tags)
@@ -115,32 +100,14 @@ namespace LambdaGeneration.API.Date.Repositories
                 return null;
             article_entity.ArticleTags = new_tags;
             await _context.SaveChangesAsync();
-            return Articles.Map(
-                article_entity.ArticleID,
-                article_entity.ArticleTitle,
-                article_entity.ArticleContent,
-                article_entity.ArticlePreview,
-                article_entity.AuthorID,
-                article_entity.ArticleTags,
-                article_entity.CreatedDate,
-                article_entity.CountLikes,
-                article_entity.CountComments
-            );
+            return Map(article_entity);
         }
 
         public async Task<List<Articles>> GetAllArticlesUser(Guid author_id)
         {
             return await _context.Articles
                 .Where(a => a.AuthorID == author_id)
-                .Select(a => Articles.Map(a.ArticleID,
-                a.ArticleTitle,
-                a.ArticleContent,
-                a.ArticlePreview,
-                a.AuthorID,
-                a.ArticleTags,
-                a.CreatedDate,
-                a.CountLikes,
-                a.CountComments)).
+                .Select(a => Map(a)).
                 ToListAsync();
         }
 
@@ -153,16 +120,7 @@ namespace LambdaGeneration.API.Date.Repositories
                 .OrderByDescending(a => a.CreatedDate)
                 .Skip(skip) // Пропустить
                 .Take(pageSize) // Взять
-                .Select(a => Articles.Map(
-                    a.ArticleID,
-                    a.ArticleTitle,
-                    a.ArticleContent,
-                    a.ArticlePreview,
-                    a.AuthorID,
-                    a.ArticleTags,
-                    a.CreatedDate,
-                    a.CountLikes,
-                    a.CountComments))
+                .Select(a => Map(a))
                 .ToListAsync();
         }
 
@@ -195,17 +153,10 @@ namespace LambdaGeneration.API.Date.Repositories
                 .OrderByDescending(a => a.CreatedDate)
                 .Skip(skip)
                 .Take(countPages)
-                .Select(a => Articles.Map(
-                    a.ArticleID,
-                    a.ArticleTitle,
-                    a.ArticleContent,
-                    a.ArticlePreview,
-                    a.AuthorID,
-                    a.ArticleTags,
-                    a.CreatedDate,
-                    a.CountLikes,
-                    a.CountComments))
-                .ToListAsync();
+                .Select(Map)
+                .ToList();
+
+            return result;
         }
 
         public async Task<List<Articles>> GetRandomArticles(int page, int countPages)
@@ -219,16 +170,7 @@ namespace LambdaGeneration.API.Date.Repositories
                 .Take(countPages * 2)
                 .OrderBy(a => EF.Functions.Random())
                 .Take(countPages) // Взять
-                .Select(a => Articles.Map(
-                    a.ArticleID,
-                    a.ArticleTitle,
-                    a.ArticleContent,
-                    a.ArticlePreview,
-                    a.AuthorID,
-                    a.ArticleTags,
-                    a.CreatedDate,
-                    a.CountLikes,
-                    a.CountComments))
+                .Select(a => Map(a))
                 .ToListAsync();
         }
 
@@ -260,16 +202,7 @@ namespace LambdaGeneration.API.Date.Repositories
                 .OrderByDescending(a => a.CreatedDate)
                 .Skip(skip)
                 .Take(pageSize)
-                .Select(a => Articles.Map(
-                    a.ArticleID,
-                    a.ArticleTitle,
-                    a.ArticleContent,
-                    a.ArticlePreview,
-                    a.AuthorID,
-                    a.ArticleTags,
-                    a.CreatedDate,
-                    a.CountLikes,
-                    a.CountLikes))
+                .Select(a => Map(a))
                 .ToListAsync();
         }
 
@@ -348,16 +281,7 @@ namespace LambdaGeneration.API.Date.Repositories
                 .OrderByDescending(a => a.CreatedDate)
                 .Skip(skip)
                 .Take(pageSize)
-                .Select(a => Articles.Map(
-                    a.ArticleID,
-                    a.ArticleTitle,
-                    a.ArticleContent,
-                    a.ArticlePreview,
-                    a.AuthorID,
-                    a.ArticleTags,
-                    a.CreatedDate,
-                    a.CountLikes,
-                    a.CountComments))
+                .Select(a => Map(a))
                 .ToListAsync();
 
             return articles
@@ -374,16 +298,7 @@ namespace LambdaGeneration.API.Date.Repositories
                 .OrderByDescending(a => a.CreatedDate)
                 .Skip(skip)
                 .Take(countPages)
-                .Select(a => Articles.Map(
-                    a.ArticleID,
-                    a.ArticleTitle,
-                    a.ArticleContent,
-                    a.ArticlePreview,
-                    a.AuthorID,
-                    a.ArticleTags,
-                    a.CreatedDate,
-                    a.CountLikes,
-                    a.CountComments))
+                .Select(a =>Map(a))
                 .ToListAsync();
         }
 
@@ -392,8 +307,14 @@ namespace LambdaGeneration.API.Date.Repositories
             return await _context.Likes.AsNoTracking()
                 .Where(l => l.AuthorId == authorId)
                 .Select(l => l.Articles)
-                .Select(a => Articles.Map(
-                    a.ArticleID,
+                .Select(a => Map(a))
+                .ToListAsync();
+        }
+
+        private static Articles Map(ArticlesEntity a)
+        {
+            return Articles.Map(
+                a.ArticleID,
                     a.ArticleTitle,
                     a.ArticleContent,
                     a.ArticlePreview,
@@ -401,8 +322,9 @@ namespace LambdaGeneration.API.Date.Repositories
                     a.ArticleTags,
                     a.CreatedDate,
                     a.CountLikes,
-                    a.CountComments))
-                .ToListAsync();
+                    a.CountComments,
+                    a.FilePath
+                );
         }
     }
 }

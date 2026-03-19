@@ -5,11 +5,14 @@ import {
     Typography,
     IconButton,
     Chip,
+    Avatar,
 } from '@mui/material';
 import FavoriteIcon from '@mui/icons-material/Favorite';
 import ChatBubbleOutlineIcon from '@mui/icons-material/ChatBubbleOutline';
 import SendIcon from '@mui/icons-material/Send';
-import PersonIcon from '@mui/icons-material/Person'; 
+import { buildArticleImageUrl, buildAvatarUrl, DEFAULT_AVATAR_SRC } from './avatarUtils';
+
+const API_BASE_URL = 'http://localhost:5113/api';
 
 // --- ОБЩИЙ МАССИВ ЦВЕТОВ ДЛЯ ТЕГОВ ---
 const TAG_COLORS = [
@@ -44,6 +47,7 @@ const getTagColor = (tag, index) => {
 const PostCard = ({ 
     id, 
     nickname, 
+    authorAvatar,
     authorId,
     onAuthorClick,
     title, 
@@ -58,9 +62,22 @@ const PostCard = ({
     sx = {}, // <-- Принимаем кастомные стили, включая фиксированную высоту
     showRepost = true,
     onShare, // optional share handler (id) => void
+    articleImageUrl,
+    file_path,
+    filePath,
+    showImage = true,
 }) => {
     const [shareNoticeOpen, setShareNoticeOpen] = useState(false);
     const shareTimerRef = useRef(null);
+    const [imageBroken, setImageBroken] = useState(false);
+
+    const withCacheBust = (url) => {
+        if (!url) return url;
+        return `${url}${url.includes('?') ? '&' : '?'}v=${Date.now()}`;
+    };
+
+    const resolvedImageUrl = articleImageUrl || buildArticleImageUrl(API_BASE_URL, file_path || filePath);
+    const resolvedAuthorAvatar = buildAvatarUrl(API_BASE_URL, authorAvatar);
 
     useEffect(() => {
         return () => {
@@ -69,6 +86,10 @@ const PostCard = ({
             }
         };
     }, []);
+
+    useEffect(() => {
+        setImageBroken(false);
+    }, [resolvedImageUrl]);
 
     const showShareNotice = () => {
         setShareNoticeOpen(true);
@@ -167,8 +188,23 @@ const PostCard = ({
                             <Typography variant="body2" sx={labelStyle}>
                                 Автор
                             </Typography>
-                            <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                                <PersonIcon sx={{ color: '#00bfa5', mr: 1, fontSize: 30 }} />
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                <Avatar
+                                    src={resolvedAuthorAvatar}
+                                    sx={{ width: 34, height: 34, border: '2px solid #00bfa5' }}
+                                    imgProps={{
+                                        onError: (e) => {
+                                            // 1-я ошибка: пробуем тот же URL, но с cache-bust
+                                            if (!e.currentTarget.dataset.retried && resolvedAuthorAvatar) {
+                                                e.currentTarget.dataset.retried = '1';
+                                                e.currentTarget.src = withCacheBust(resolvedAuthorAvatar);
+                                                return;
+                                            }
+                                            // 2-я ошибка: дефолтный аватар
+                                            e.currentTarget.src = DEFAULT_AVATAR_SRC;
+                                        },
+                                    }}
+                                />
                                 <Typography 
                                     variant="h6" 
                                     sx={{ color: '#00bfa5', fontWeight: 'bold' }}
@@ -242,6 +278,33 @@ const PostCard = ({
                     />
                 </Box>
             </Box>
+
+            {showImage && resolvedImageUrl && !imageBroken && (
+                <Box sx={{ px: 2, pb: 1.5 }}>
+                    <Box
+                        component="img"
+                        src={resolvedImageUrl}
+                        alt="Фото статьи"
+                        onError={(e) => {
+                            // 1-й фейл: повторяем с cache-bust (часто после создания файла)
+                            if (!e.currentTarget.dataset.retried && resolvedImageUrl) {
+                                e.currentTarget.dataset.retried = '1';
+                                e.currentTarget.src = withCacheBust(resolvedImageUrl);
+                                return;
+                            }
+                            // 2-й фейл: скрываем картинку
+                            setImageBroken(true);
+                        }}
+                        sx={{
+                            width: '100%',
+                            height: { xs: 180, sm: 200 },  // ← увеличил с 140/160
+                            objectFit: 'cover',
+                            borderRadius: '12px',
+                            border: '1px solid #333',
+                        }}
+                    />
+                </Box>
+            )}
 
             {/* Панель взаимодействия (Лайки, Комментарии, Репост) */}
             <Box sx={{ 

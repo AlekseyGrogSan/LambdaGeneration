@@ -8,15 +8,16 @@ import {
     Button,
     Collapse,
     CircularProgress,
+    Avatar,
 } from '@mui/material';
 import FavoriteIcon from '@mui/icons-material/Favorite';
 import ChatBubbleOutlineIcon from '@mui/icons-material/ChatBubbleOutline';
 import SendIcon from '@mui/icons-material/Send';
-import PersonIcon from '@mui/icons-material/Person';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import ExpandLessIcon from '@mui/icons-material/ExpandLess';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
+import { buildArticleImageUrl, buildAvatarUrl, DEFAULT_AVATAR_SRC } from './avatarUtils';
 
 const API_BASE_URL = 'http://localhost:5113/api';
 
@@ -100,9 +101,20 @@ const CommentItem = ({
                 p: 1.5,
             }}
         >
-            <Typography variant="body2" sx={{ color: '#00bfa5', fontWeight: 700 }}>
-                @{comment.authorName}
-            </Typography>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                <Avatar
+                    src={buildAvatarUrl(API_BASE_URL, comment.authorAvatar)}
+                    sx={{ width: 28, height: 28, border: '1px solid #00bfa5' }}
+                    imgProps={{
+                        onError: (e) => {
+                            e.currentTarget.src = DEFAULT_AVATAR_SRC;
+                        },
+                    }}
+                />
+                <Typography variant="body2" sx={{ color: '#00bfa5', fontWeight: 700 }}>
+                    @{comment.authorName}
+                </Typography>
+            </Box>
             <Typography variant="body1" sx={{ color: 'white', mt: 0.5, whiteSpace: 'pre-wrap' }}>
                 {comment.content}
             </Typography>
@@ -289,6 +301,7 @@ const PostDetailPage = ({
     currentUserId,
     nickname,
     authorId,
+    authorAvatar,
     containerRef,
     onCommentsCountChange,
     initialOpenComments = false,
@@ -304,6 +317,7 @@ const PostDetailPage = ({
     const [editInputs, setEditInputs] = useState({});
     const [editEditorOpen, setEditEditorOpen] = useState({});
     const authorCacheRef = useRef({});
+    const [imageBroken, setImageBroken] = useState(false);
 
     useEffect(() => {
         if (containerRef && containerRef.current) {
@@ -320,14 +334,20 @@ const PostDetailPage = ({
         }
     }, [initialOpenComments, post.article_id]);
 
+    useEffect(() => {
+        setImageBroken(false);
+    }, [post.article_id]);
+
     if (!post) return <Box sx={{ color: 'white' }}>Пост не найден.</Box>;
+
+    const articleImageUrl = post.articleImageUrl || buildArticleImageUrl(API_BASE_URL, post.file_path || post.filePath);
 
     const getTagColor = (tag, index) => {
         const hash = tag.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
         return TAG_COLORS[(hash + index) % TAG_COLORS.length];
     };
 
-    const getAuthorName = async (userId) => {
+    const getAuthorInfo = async (userId) => {
         if (authorCacheRef.current[userId]) {
             return authorCacheRef.current[userId];
         }
@@ -338,17 +358,22 @@ const PostDetailPage = ({
             });
 
             if (!response.ok) {
-                authorCacheRef.current[userId] = 'Автор';
-                return 'Автор';
+                const fallback = { name: 'Автор', avatar: null };
+                authorCacheRef.current[userId] = fallback;
+                return fallback;
             }
 
             const data = await response.json();
-            const name = data.name || 'Автор';
-            authorCacheRef.current[userId] = name;
-            return name;
+            const info = {
+                name: data.name || 'Автор',
+                avatar: data.pathAvatar ?? data.PathAvatar ?? null,
+            };
+            authorCacheRef.current[userId] = info;
+            return info;
         } catch {
-            authorCacheRef.current[userId] = 'Автор';
-            return 'Автор';
+            const fallback = { name: 'Автор', avatar: null };
+            authorCacheRef.current[userId] = fallback;
+            return fallback;
         }
     };
 
@@ -358,7 +383,7 @@ const PostDetailPage = ({
         const hasReplies = Boolean(comment.hasReplies ?? comment.HasReplies);
         const repliesCount = comment.repliesCount ?? comment.RepliesCount ?? 0;
 
-        const authorName = await getAuthorName(authorId);
+        const authorInfo = await getAuthorInfo(authorId);
         const isLikedResponse = await fetch(`${API_BASE_URL}/LikeComment/isLiked/${commentId}`, {
             credentials: 'include',
         }).catch(() => null);
@@ -372,7 +397,8 @@ const PostDetailPage = ({
             authorId,
             hasReplies,
             repliesCount,
-            authorName,
+            authorName: authorInfo.name,
+            authorAvatar: authorInfo.avatar,
             isLiked,
             replies: [],
             repliesOpen: false,
@@ -715,8 +741,16 @@ const PostDetailPage = ({
                     sx={{ cursor: onAuthorClick && authorId ? 'pointer' : 'default' }}
                 >
                     <Typography variant="body2" sx={labelStyle}>Автор</Typography>
-                    <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                        <PersonIcon sx={{ color: '#00bfa5', mr: 1, fontSize: 30 }} />
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <Avatar
+                            src={buildAvatarUrl(API_BASE_URL, authorAvatar)}
+                            sx={{ width: 34, height: 34, border: '2px solid #00bfa5' }}
+                            imgProps={{
+                                onError: (e) => {
+                                    e.currentTarget.src = DEFAULT_AVATAR_SRC;
+                                },
+                            }}
+                        />
                         <Typography variant="h6" sx={{ color: '#00bfa5', fontWeight: 'bold' }}>
                             {nickname}
                         </Typography>
@@ -737,6 +771,24 @@ const PostDetailPage = ({
                         />
                     ))}
                 </Box>
+
+                {articleImageUrl && !imageBroken && (
+                    <Box sx={{ mb: 3 }}>
+                        <Box
+                            component="img"
+                            src={articleImageUrl}
+                            alt="Фото статьи"
+                            onError={() => setImageBroken(true)}
+                            sx={{
+                                width: '100%',
+                                maxHeight: 420,
+                                objectFit: 'cover',
+                                borderRadius: '14px',
+                                border: '1px solid #333',
+                            }}
+                        />
+                    </Box>
+                )}
 
                 <Box
                     dangerouslySetInnerHTML={{ __html: post.article_content }}
