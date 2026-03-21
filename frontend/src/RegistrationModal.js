@@ -184,7 +184,7 @@ const RegistrationModal = ({ open, handleClose, onForgotPassword }) => {
                     <TextField label="Пароль" name="password" type="password" variant="filled" fullWidth sx={inputStyle} value={formData.password} onChange={handleChange} required />
                     
                     {isRegisterMode && (
-                        <TextField label="О себе" name="aboutUser" variant="filled" fullWidth multiline rows={2} sx={inputStyle} value={formData.aboutUser} onChange={handleChange} />
+                        <TextField label="О себе" name="aboutUser" variant="filled" fullWidth multiline rows={2} sx={inputStyle} value={formData.aboutUser} onChange={handleChange} required={false} />
                     )}
                     {isRegisterMode && (
                         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>

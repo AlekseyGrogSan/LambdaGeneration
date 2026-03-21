@@ -29,6 +29,7 @@ import PostCreationModal from './PostCreationModal';
 import CategoryModal from './CategoryModal'; 
 import ResourcesModal from './ResourcesModal';
 import FaqModal from './FaqModal';
+import AdminPanelModal from './AdminPanelModal';
 import { buildArticleImageUrl, buildAvatarUrl, DEFAULT_AVATAR_SRC } from './avatarUtils';
 
 const API_BASE_URL = 'http://localhost:5113/api';
@@ -117,6 +118,13 @@ const profileButtonStyle = {
     '&:hover': { borderColor: '#00897b', color: '#00897b', backgroundColor: 'rgba(0, 191, 165, 0.08)' },
 };
 
+const adminButtonStyle = {
+    ...commonButtonStyle,
+    backgroundColor: '#c62828',
+    color: '#fff',
+    '&:hover': { backgroundColor: '#ff1744' }
+};
+
 const scrollbarStyle = {
     '&::-webkit-scrollbar': {
         width: '8px', // Ширина вертикального скролла
@@ -138,7 +146,7 @@ const scrollbarStyle = {
     scrollbarColor: '#00bfa5 #1a1a1a',
 };
 
-const Sidebar = ({ handleOpen, handleProfileOpen, handlePostOpen, handleCategoryOpen, handleResourcesOpen, handleFaqOpen, currentUser }) => (
+const Sidebar = ({ handleOpen, handleProfileOpen, handlePostOpen, handleCategoryOpen, handleResourcesOpen, handleFaqOpen, handleAdminOpen, isAdmin, currentUser }) => (
     <Box sx={sidebarStyle}>
         <Typography variant="h5" sx={{ color: '#00bfa5', fontWeight: 'bold', textAlign: 'center', mb: 4, letterSpacing: 1 }}>
             Lyambda
@@ -176,7 +184,16 @@ const Sidebar = ({ handleOpen, handleProfileOpen, handlePostOpen, handleCategory
             <Button variant="contained" sx={sidebarButtonStyle} onClick={handleFaqOpen}>FAQ</Button>
         </Box>
 
-        <Box sx={{ mt: 'auto' }}>
+        <Box sx={{ mt: 'auto', display: 'flex', flexDirection: 'column', gap: 1 }}>
+            {isAdmin && (
+                <Button
+                    sx={adminButtonStyle}
+                    startIcon={<DeleteOutlineIcon />}
+                    onClick={handleAdminOpen}
+                >
+                    Админ-панель
+                </Button>
+            )}
             <Button
                 sx={profileButtonStyle}
                 startIcon={<PersonIcon />}
@@ -561,8 +578,9 @@ const PostPage = () => {
     const [isForgotModalOpen, setIsForgotModalOpen] = useState(false);
     const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
     const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
-    const [isResourcesModalOpen, setIsResourcesModalOpen] = useState(false);
-    const [isFaqModalOpen, setIsFaqModalOpen] = useState(false);
+const [isResourcesModalOpen, setIsResourcesModalOpen] = useState(false);
+const [isFaqModalOpen, setIsFaqModalOpen] = useState(false);
+const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
     const isProfileModalOpenRef = useRef(false);
     
     const [viewedProfileId, setViewedProfileId] = useState(null); 
@@ -728,6 +746,8 @@ const PostPage = () => {
     
     const handleFaqOpen = () => setIsFaqModalOpen(true);
     const handleFaqClose = () => setIsFaqModalOpen(false);
+    const handleAdminOpen = () => setIsAdminPanelOpen(true);
+    const handleAdminClose = () => setIsAdminPanelOpen(false);
 
     const handleProfileOpen = () => {
         if (!currentUser) {
@@ -1270,8 +1290,8 @@ const PostPage = () => {
         }
 
         const trimmed = content.trim();
-        if (trimmed.length < 5) {
-            setFeedCommentsError('Комментарий должен быть не короче 5 символов');
+        if (trimmed.length < 2) {
+            setFeedCommentsError('Комментарий должен быть не короче 2 символов');
             return;
         }
 
@@ -1342,8 +1362,8 @@ const PostPage = () => {
 
     const updateFeedComment = async (commentId, content) => {
         const trimmed = content.trim();
-        if (trimmed.length < 5) {
-            setFeedCommentsError('Комментарий должен быть не короче 5 символов');
+        if (trimmed.length < 2) {
+            setFeedCommentsError('Комментарий должен быть не короче 2 символов');
             return false;
         }
 
@@ -1820,8 +1840,9 @@ const PostPage = () => {
                 handleCategoryOpen={handleCategoryOpen} 
                 handleResourcesOpen={handleResourcesOpen} 
                 handleFaqOpen={handleFaqOpen}
+                handleAdminOpen={handleAdminOpen}
+                isAdmin={currentUser?.role === 'Admin'}
                 currentUser={currentUser}
-                
             />
             
             <RegistrationModal 
@@ -1863,6 +1884,7 @@ const PostPage = () => {
             />
             <ResourcesModal open={isResourcesModalOpen} handleClose={handleResourcesClose} />
             <FaqModal open={isFaqModalOpen} handleClose={handleFaqClose} />
+            <AdminPanelModal open={isAdminPanelOpen} handleClose={handleAdminClose} />
             
         </Box>
     );

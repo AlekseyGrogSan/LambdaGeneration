@@ -39,7 +39,17 @@ namespace LambdaGeneration.API.Application.Services
         {
             var user = await _usersRepository.GetByEmail(email);
 
-            if (user == null || !_passwordHasher.VerifyPassword(password, user.PasswordHash))
+            if (user == null)
+            {
+                throw new UnauthorizedAccessException("Invalid email or password.");
+            }
+
+            if (user.IsBanned)
+            {
+                throw new UnauthorizedAccessException("Account is banned.");
+            }
+
+            if (!_passwordHasher.VerifyPassword(password, user.PasswordHash))
             {
                 throw new UnauthorizedAccessException("Invalid email or password.");
             }

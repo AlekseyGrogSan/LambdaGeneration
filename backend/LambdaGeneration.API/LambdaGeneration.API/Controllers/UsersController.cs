@@ -208,7 +208,8 @@ namespace LambdaGeneration.API.Controllers
                     user.FollowersCount,
                     user.FollowingCount,
                     user.ArticlesCount,
-                    user.PathAvatar
+                    user.PathAvatar,
+                    user.Role.ToString()
                     );
 
                 return Ok(userResponse);
@@ -234,7 +235,8 @@ namespace LambdaGeneration.API.Controllers
                     user.FollowersCount,
                     user.FollowingCount,
                     user.ArticlesCount,
-                    user.PathAvatar
+                    user.PathAvatar,
+                    user.Role.ToString()
                     );
 
                 return Ok(userResponse);
@@ -292,7 +294,8 @@ namespace LambdaGeneration.API.Controllers
                     user.FollowersCount,
                     user.FollowingCount,
                     user.ArticlesCount,
-                    user.PathAvatar
+                    user.PathAvatar,
+                    user.Role.ToString()
                     );
 
                 HttpContext.Response.Cookies.Append("auth_cookies", token,

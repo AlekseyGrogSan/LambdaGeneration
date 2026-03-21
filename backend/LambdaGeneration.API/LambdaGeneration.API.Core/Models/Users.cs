@@ -50,10 +50,14 @@ namespace LambdaGeneration.API.Core.Models
             return new Users(id, username, hashpassword, email, aboutUser, pathAvatar);
         }
 
-        public static Users Map(Guid id, string username, string hashpassword, string email, Role role, string aboutUser, DateTime createDate, int followersCount, int followingCount, int articlesCount, string? pathAvatar)
+        public static Users Map(Guid id, string username, string hashpassword, string email, Role role, string aboutUser, DateTime createDate, int followersCount, int followingCount, int articlesCount, bool isBanned, string? pathAvatar)
         {
             Users user = new Users(id, username, hashpassword, email, aboutUser, createDate, followersCount, followingCount, articlesCount, pathAvatar);
             user.Role = role;
+            if (isBanned && !user.IsBanned)
+            {
+                user.SetBanned();
+            }
             return user;
         }
         public void SetRole(Role role)

@@ -56,6 +56,7 @@ namespace LambdaGeneration.API.Date.Repositories
                 userEntity.countSubscribers,
                 userEntity.countFollowing,
                 userEntity.countArticles,
+                userEntity.IsBanned,
                 userEntity.PathAvatar
                 );
         }
@@ -77,9 +78,10 @@ namespace LambdaGeneration.API.Date.Repositories
                 userEntity.countSubscribers,
                 userEntity.countFollowing,
                 userEntity.countArticles,
+                userEntity.IsBanned,
                 userEntity.PathAvatar
             );
-            }
+        }
         public async Task Delete(Guid id)
         {
             var userEntity = await _context.Users.AsNoTracking().FirstOrDefaultAsync(u => u.UserID == id);
@@ -109,6 +111,7 @@ namespace LambdaGeneration.API.Date.Repositories
                 userEntity.countSubscribers,
                 userEntity.countFollowing,
                 userEntity.countArticles,
+                userEntity.IsBanned,
                 userEntity.PathAvatar
                 );
         }
@@ -220,9 +223,42 @@ namespace LambdaGeneration.API.Date.Repositories
                     userEntity.countSubscribers,
                     userEntity.countFollowing,
                     userEntity.countArticles,
+                    userEntity.IsBanned,
                     userEntity.PathAvatar
                 ))
                 .ToList();
+        }
+
+        public async Task<List<Users>> GetAllUsers()
+        {
+            return await _context.Users
+                .AsNoTracking()
+                .OrderBy(u => u.UserName)
+                .Select(userEntity => Users.Map(
+                    userEntity.UserID,
+                    userEntity.UserName,
+                    userEntity.PasswordHash,
+                    userEntity.Email,
+                    (Role)userEntity.Role,
+                    userEntity.AboutUser,
+                    userEntity.CreatedDate,
+                    userEntity.countSubscribers,
+                    userEntity.countFollowing,
+                    userEntity.countArticles,
+                    userEntity.IsBanned,
+                    userEntity.PathAvatar
+                ))
+                .ToListAsync();
+        }
+
+        public async Task SetBanned(Guid userId, bool isBanned)
+        {
+            await _context.Users
+                .Where(u => u.UserID == userId)
+                .ExecuteUpdateAsync(setter => setter
+                    .SetProperty(u => u.IsBanned, isBanned));
+
+            await _context.SaveChangesAsync();
         }
     }
 }

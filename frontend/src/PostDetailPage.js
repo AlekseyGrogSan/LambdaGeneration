@@ -448,8 +448,8 @@ const PostDetailPage = ({
 
     const createComment = async (content, parentId = null) => {
         const trimmed = content.trim();
-        if (trimmed.length < 5) {
-            setCommentsError('Комментарий должен быть не короче 5 символов');
+        if (trimmed.length < 2) {
+            setCommentsError('Комментарий должен быть не короче 2 символов');
             return;
         }
 
@@ -509,8 +509,8 @@ const PostDetailPage = ({
 
     const updateComment = async (commentId, content) => {
         const trimmed = content.trim();
-        if (trimmed.length < 5) {
-            setCommentsError('Комментарий должен быть не короче 5 символов');
+        if (trimmed.length < 2) {
+            setCommentsError('Комментарий должен быть не короче 2 символов');
             return false;
         }
 

@@ -15,5 +15,7 @@ namespace LambdaGeneration.API.Date.Repositories
         Task Unsubscribe(Guid followerId, Guid followingId);
         Task<int> GetSubscribersCount(Guid userId);
         Task<List<Users>> GetFollowing(Guid userId);
+        Task SetBanned(Guid userId, bool isBanned);
+        Task<List<Users>> GetAllUsers();
     }
 }
