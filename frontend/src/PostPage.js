@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect, useRef, useCallback } from 'react'; 
+import React, { useState, useEffect, useRef, useCallback } from 'react'; 
 import { 
     Box,
     Button,
@@ -712,7 +712,7 @@ const PostPage = () => {
     const handleOpen = () => setIsModalOpen(true); 
     const handleClose = () => { 
         setIsModalOpen(false); 
-        checkAuth().then(isAuth => { if(isAuth) fetchArticlesPage(1, paginationType, { force: true, searchQuery: searchQueryRef.current }); });
+        void checkAuth();
     };
     
     const handlePostOpen = () => setIsPostModalOpen(true);
@@ -753,7 +753,7 @@ const PostPage = () => {
         setIsProfileModalOpen(false);
         isProfileModalOpenRef.current = false;
         setViewedProfileId(null);
-        checkAuth().then(() => fetchArticlesPage(1, paginationType, { force: true }));
+        void checkAuth();
     };
     
     const handleOtherAuthorProfileOpen = (userId, options = {}) => {

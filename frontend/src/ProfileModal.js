@@ -135,6 +135,7 @@ const ProfileModal = ({ open, handleClose, userId, onUnauthorized, onLogout, onP
     const isMyProfile = userId === null; 
     const [profileData, setProfileData] = useState(null);
     const [userPosts, setUserPosts] = useState([]);
+    const [visiblePostsCount, setVisiblePostsCount] = useState(10);
     const [isLoading, setIsLoading] = useState(false);
     
     const [isEditingProfile, setIsEditingProfile] = useState(false);
@@ -169,6 +170,7 @@ const ProfileModal = ({ open, handleClose, userId, onUnauthorized, onLogout, onP
     const [avatarFile, setAvatarFile] = useState(null);
     const [avatarPreview, setAvatarPreview] = useState('');
     const [avatarError, setAvatarError] = useState(null);
+    const authorProfileCache = useRef(new Map());
     
     const [error, setError] = useState(null);
 
@@ -235,9 +237,10 @@ const ProfileModal = ({ open, handleClose, userId, onUnauthorized, onLogout, onP
                     if (likesResponse.ok) {
                         const likesJson = await likesResponse.json();
                         const likedArticlesRaw = likesJson.articles || likesJson || [];
-                        const likedArticles = likedArticlesRaw.map(article => mapArticleFromApi(article, profileJson.name || 'Автор'));
-                        setLikesList(likedArticles);
-                        setLikedArticlesCount(likedArticles.length);
+                        const mappedArticles = likedArticlesRaw.map(article => mapArticleFromApi(article));
+                        const enrichedArticles = await Promise.all(mappedArticles.map(enrichArticleWithAuthorProfile));
+                        setLikesList(enrichedArticles);
+                        setLikedArticlesCount(enrichedArticles.length);
                     } else {
                         setLikesList([]);
                         setLikedArticlesCount(0);
@@ -278,6 +281,7 @@ const ProfileModal = ({ open, handleClose, userId, onUnauthorized, onLogout, onP
             setAvatarFile(null);
             setAvatarPreview('');
             setAvatarError(null);
+            setVisiblePostsCount(10);
             fetchProfileData();
         }
     }, [open, userId]);
@@ -540,6 +544,46 @@ const ProfileModal = ({ open, handleClose, userId, onUnauthorized, onLogout, onP
         tags: article.article_tags ?? article.articleTags ?? [],
     });
 
+    const applyAuthorProfileToArticle = (article, profile) => {
+        if (!profile) return article;
+        const authorAvatar = profile.pathAvatar ?? profile.PathAvatar ?? profile.Pathavatar ?? profile.avatar ?? article.authorAvatar;
+        const nickname = profile.name || profile.UserName || profile.userName || article.nickname || 'Автор';
+        return {
+            ...article,
+            nickname,
+            authorAvatar,
+        };
+    };
+
+    const fetchAuthorProfile = async (authorId) => {
+        if (!authorId) return null;
+        const cacheKey = String(authorId);
+        if (authorProfileCache.current.has(cacheKey)) {
+            return authorProfileCache.current.get(cacheKey);
+        }
+        try {
+            const response = await fetch(`${API_BASE_URL}/Users/UserProfile/${authorId}`, { credentials: 'include' });
+            if (!response.ok) return null;
+            const profile = await response.json();
+            authorProfileCache.current.set(cacheKey, profile);
+            return profile;
+        } catch {
+            return null;
+        }
+    };
+
+    const enrichArticleWithAuthorProfile = async (article) => {
+        if (!article?.author_id) return article;
+        const profile = await fetchAuthorProfile(article.author_id);
+        return applyAuthorProfileToArticle(article, profile);
+    };
+
+    const visiblePosts = userPosts.slice(0, visiblePostsCount);
+    const canLoadMorePosts = visiblePostsCount < userPosts.length;
+    const handleLoadMorePosts = () => {
+        setVisiblePostsCount(prev => Math.min(prev + 10, userPosts.length));
+    };
+
     const subscribersCount = normalizeCount(profileData?.subscribersCount ?? profileData?.followersCount ?? profileData?.countSubscribers ?? profileData?.followers);
     const followingCount = normalizeCount(profileData?.followingCount ?? profileData?.countFollowing ?? profileData?.following);
     const articlesCount = normalizeCount(profileData?.articlesCount ?? profileData?.countArticles ?? userPosts.length);
@@ -583,7 +627,7 @@ const ProfileModal = ({ open, handleClose, userId, onUnauthorized, onLogout, onP
             if (!response.ok) throw new Error('Не удалось загрузить понравившиеся статьи.');
             const data = await response.json();
             const likedArticlesRaw = data.articles || data || [];
-            const likedArticles = likedArticlesRaw.map(article => mapArticleFromApi(article, profileData?.name || 'Автор'));
+            const likedArticles = likedArticlesRaw.map(article => mapArticleFromApi(article));
             setLikesList(likedArticles);
             setLikedArticlesCount(likedArticles.length);
         } catch (err) {
@@ -968,7 +1012,7 @@ const ProfileModal = ({ open, handleClose, userId, onUnauthorized, onLogout, onP
 
                         <Grid container spacing={3}>
                             {userPosts.length > 0 ? (
-                                userPosts.map((post) => (
+                                visiblePosts.map((post) => (
                                     <Grid item xs={12} sm={6} lg={4} key={post.id}>
                                         <Box sx={cardContainerStyle}>
                                             <PostCard
@@ -1065,6 +1109,22 @@ const ProfileModal = ({ open, handleClose, userId, onUnauthorized, onLogout, onP
                                 </Box>
                             )}
                         </Grid>
+                        {canLoadMorePosts && (
+                            <Box sx={{ mt: 3, display: 'flex', justifyContent: 'center' }}>
+                                <Button
+                                    variant="outlined"
+                                    onClick={handleLoadMorePosts}
+                                    sx={{
+                                        color: '#00bfa5',
+                                        borderColor: '#00bfa5',
+                                        textTransform: 'none',
+                                        '&:hover': { borderColor: '#00a38f', backgroundColor: 'rgba(0, 191, 165, 0.08)' }
+                                    }}
+                                >
+                                    Показать еще
+                                </Button>
+                            </Box>
+                        )}
                     </Box>
 
 

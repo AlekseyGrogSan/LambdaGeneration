@@ -1,4 +1,4 @@
-﻿using LambdaGeneration.API.Application.Interfaces.Services;
+using LambdaGeneration.API.Application.Interfaces.Services;
 using LambdaGeneration.API.Core.Enums;
 using LambdaGeneration.API.Core.Models;
 using LambdaGeneration.API.Date.Repositories;
@@ -75,6 +75,11 @@ namespace LambdaGeneration.API.Application.Services
         {
             var all_articles = await _articlesRepository.GetAllArticlesUser(author_id);
             return all_articles;    
+        }
+
+        public async Task<List<Articles>> GetArticlesByAuthorPaged(Guid author_id, int page, int pageSize)
+        {
+            return await _articlesRepository.GetArticlesByAuthorPaged(author_id, page, pageSize);
         }
 
         public async Task<Articles> GetArticleByIdAsync(Guid articleId)

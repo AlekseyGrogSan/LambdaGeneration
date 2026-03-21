@@ -34,9 +34,9 @@ const API_BASE_URL = 'http://localhost:5113/api';
 // ТЕ ЖЕ ТЕГИ, ЧТО И ПРИ СОЗДАНИИ
 const AVAILABLE_TAGS = [
     'C#', 'Java', 'Python', 'JavaScript', 'TypeScript', 'Go', 'Rust', 'Kotlin',
-    'Swift', 'PHP', 'C++', 'C', 'Ruby',
+    'Swift', 'PHP', 'C++', 'C', 'Ruby', 'PascalABC',
     '.NET', 'ASP.NET', 'Entity Framework', 'Spring', 'React', 'Angular', 'Vue',
-    'Node.js', 'Django', 'Flask',
+    'Node.js', 'Django', 'Flask', 'Unity',
     'Math', 'Data Structures', 'LLM', 'ML'
 ];
 

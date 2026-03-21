@@ -158,6 +158,8 @@ namespace LambdaGeneration.API.Midleware
                 25 => "Data Structures",
                 26 => "LLM",
                 27 => "ML",
+                28 => "PascalABC",
+                29 => "Unity",
 
                 _ => ""
             };
@@ -197,7 +199,9 @@ namespace LambdaGeneration.API.Midleware
                 "Math" => 24,
                 "Data Structures" => 25,
                 "LLM" => 26,
-                "ML" => 27
+                "ML" => 27,
+                "PascalABC" => 28,
+                "Unity" => 29
 
                 , _ => 0
             };

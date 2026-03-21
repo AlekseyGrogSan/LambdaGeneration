@@ -1,4 +1,4 @@
-﻿using LambdaGeneration.API.Application.Interfaces.Services;
+using LambdaGeneration.API.Application.Interfaces.Services;
 using LambdaGeneration.API.Application.Services;
 using LambdaGeneration.API.Core.Enums;
 using LambdaGeneration.API.Core.Models;
@@ -255,6 +255,31 @@ namespace LambdaGeneration.API.Controllers
                     a.ArticleTags.Select(t => ApiExtensions.FromTags(t)).ToList(),
                     a.CreatedDate,
                     a.CountLikes, a.CountComments, a.FilePath)).ToList()));
+        }
+
+        [HttpGet("getProfileArticles")]
+        [Authorize]
+        public async Task<ActionResult<GetArticlesResponse>> GetProfileArticles([FromQuery] Guid? userId = null, [FromQuery] int page = 1, [FromQuery] int size = 10)
+        {
+            try
+            {
+                var targetUserId = userId ?? GetUserID();
+                var articles = await _articlesService.GetArticlesByAuthorPaged(targetUserId, page, size);
+
+                return Ok(new GetArticlesResponse(articles.Select(a =>
+                    new GetArticleResponse(a.ArticleID,
+                        a.AuthorID,
+                        a.ArticleTitle,
+                        a.ArticlePreview,
+                        a.ArticleContent,
+                        a.ArticleTags.Select(t => ApiExtensions.FromTags(t)).ToList(),
+                        a.CreatedDate,
+                        a.CountLikes, a.CountComments, a.FilePath)).ToList()));
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
         }
 
         [HttpGet("getPaginated")]

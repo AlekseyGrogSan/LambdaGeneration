@@ -1,4 +1,4 @@
-export const DEFAULT_AVATAR_SRC = '/default-avatar.png';
+export const DEFAULT_AVATAR_SRC = '/default-avatar.svg';
 export const MAX_AVATAR_BYTES = 10 * 1024 * 1024;
 export const MAX_ARTICLE_IMAGE_BYTES = 10 * 1024 * 1024;
 

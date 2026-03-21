@@ -114,14 +114,18 @@ namespace LambdaGeneration.API.Date.Repositories
         }
         public async Task<Users?> Update(Guid id, string name, string email, string aboutUser, string pathAvatar)
         {
-            await _context.Users
-                .Where(u => u.UserID == id)
-                .ExecuteUpdateAsync(setter => setter
-                    .SetProperty(u => u.Email, email)
-                    .SetProperty(u => u.UserName, name)
-                    .SetProperty(u => u.AboutUser, aboutUser)
-                    .SetProperty(u => u.PathAvatar, pathAvatar)
-            );
+            var userEntity = await _context.Users.FirstOrDefaultAsync(u => u.UserID == id);
+            if (userEntity == null)
+                return null;
+
+            userEntity.Email = email;
+            userEntity.UserName = name;
+            userEntity.AboutUser = aboutUser;
+            if (!string.IsNullOrWhiteSpace(pathAvatar))
+            {
+                userEntity.PathAvatar = pathAvatar;
+            }
+
             await _context.SaveChangesAsync();
 
             return await GetProfile(id);

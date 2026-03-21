@@ -1,4 +1,4 @@
-﻿using LambdaGeneration.API.Core.Models;
+using LambdaGeneration.API.Core.Models;
 
 namespace LambdaGeneration.API.Application.Interfaces.Services
 {
@@ -9,6 +9,7 @@ namespace LambdaGeneration.API.Application.Interfaces.Services
         Task<Articles?> Update(Guid article_id, Guid authorId, string new_title, string new_content, string new_preview, string file_path);
         Task<Articles?> UpdateTags(Guid article_id, List<int> new_tags);
         Task<List<Articles>> GetAllArticlesUser(Guid author_id);
+        Task<List<Articles>> GetArticlesByAuthorPaged(Guid author_id, int page, int pageSize);
         Task<List<Articles>> SearchArticlesAsync(string? searchTerm, int pageNumber, int countPages);
         Task<List<Articles>> SearchArticlesByTagsAsync(List<int> tags, int page, int pageSize);
         Task<Articles> GetArticleByIdAsync(Guid articleId);

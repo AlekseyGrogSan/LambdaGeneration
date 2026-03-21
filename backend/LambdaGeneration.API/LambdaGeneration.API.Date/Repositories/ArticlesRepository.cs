@@ -1,4 +1,4 @@
-﻿using LambdaGeneration.API.Core.Enums;
+using LambdaGeneration.API.Core.Enums;
 using LambdaGeneration.API.Core.Models;
 using LambdaGeneration.API.Date.Entities;
 using Microsoft.EntityFrameworkCore;
@@ -111,6 +111,21 @@ namespace LambdaGeneration.API.Date.Repositories
                 ToListAsync();
         }
 
+        public async Task<List<Articles>> GetArticlesByAuthorPaged(Guid author_id, int page, int pageSize)
+        {
+            int validPage = page < 1 ? 1 : page;
+            int validPageSize = pageSize < 1 ? 10 : pageSize;
+            int skip = (validPage - 1) * validPageSize;
+
+            return await _context.Articles
+                .Where(a => a.AuthorID == author_id)
+                .OrderByDescending(a => a.CreatedDate)
+                .Skip(skip)
+                .Take(validPageSize)
+                .Select(a => Map(a))
+                .ToListAsync();
+        }
+
         public async Task<List<Articles>> GetArticlesPage(int pageNumber, int pageSize)
         {
             int skip = (pageNumber - 1) * pageSize;
@@ -146,9 +161,13 @@ namespace LambdaGeneration.API.Date.Repositories
 
             int skip = (page - 1) * countPages;
 
-            // 2. Фильтруем и пагинируем на уровне БД (без материализации всех статей в память)
-            return await _context.Articles
-                .AsNoTracking()
+            // 3. Теперь фильтруем статьи по тегам
+            var articles = await _context.Articles
+                .OrderByDescending(a => a.CreatedDate)
+                .OrderBy(a => EF.Functions.Random())
+                .ToListAsync();
+
+            var result = articles
                 .Where(a => a.ArticleTags.Any(tag => relevantArticlesTags.Contains(tag)))
                 .OrderByDescending(a => a.CreatedDate)
                 .Skip(skip)
