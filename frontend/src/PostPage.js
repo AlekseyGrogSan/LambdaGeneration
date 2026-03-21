@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect, useRef, useCallback } from 'react'; 
+import React, { useState, useEffect, useRef, useCallback } from 'react'; 
 import { 
     Box,
     Button,
@@ -774,7 +774,7 @@ const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
         setIsProfileModalOpen(false);
         isProfileModalOpenRef.current = false;
         setViewedProfileId(null);
-        checkAuth().then(() => fetchArticlesPage(1, paginationType, { force: true }));
+        void checkAuth();
     };
     
     const handleOtherAuthorProfileOpen = (userId, options = {}) => {
