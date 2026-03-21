@@ -142,17 +142,17 @@ namespace LambdaGeneration.API.Date.Repositories
         public async Task<List<Articles>> GetRecommentationArticles(Guid userId, int page, int countPages)
         {
             // 1. Получаем статьи, которые лайкнул пользователь
-            if (page < 1 || countPages < 1)
-                throw new ArgumentException("Page and countPages must be positive.");
-
-            // 1. Получаем уникальные теги статей, которые лайкнул пользователь
-            var relevantArticlesTags = await _context.Likes
+            var likedArticles = await _context.Likes
                 .AsNoTracking()
                 .Where(l => l.AuthorId == userId)
                 .Select(l => l.Articles)
+                .ToListAsync();
+
+            // 2. Собираем теги в памяти
+            var relevantArticlesTags = likedArticles
                 .SelectMany(a => a.ArticleTags)
                 .Distinct()
-                .ToArrayAsync();
+                .ToArray();
 
             if (!relevantArticlesTags.Any())
             {
