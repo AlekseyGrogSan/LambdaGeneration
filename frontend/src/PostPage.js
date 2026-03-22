@@ -1763,6 +1763,10 @@ const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
         !isLoading &&
         (paginationType === 'random' || paginationType === 'recommend');
 
+    /** Вертикальный scroll-snap между статьями на мобильной ленте (свайп / инерция к следующей карточке). */
+    const mobileArticleSnapEnabled =
+        !isDesktopLayout && !isViewingDetailPage && articles.length > 0;
+
     const { dragOffset, swipeHandlers } = useFeedTabSwipe({
         enabled: feedSwipeEnabled,
         activeTab: paginationType === 'recommend' ? 'recommend' : 'random',
@@ -1842,6 +1846,15 @@ const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
                     overflowY: 'auto',
                     overflowX: 'hidden',
                     scrollSnapType: 'none',
+                    scrollPaddingTop: 0,
+                    scrollPaddingBottom: 0,
+                    '@media (max-width: 767.95px)': mobileArticleSnapEnabled
+                        ? {
+                            scrollSnapType: 'y mandatory',
+                            scrollPaddingTop: 'calc(112px + env(safe-area-inset-top, 0px))',
+                            scrollPaddingBottom: 'calc(88px + env(safe-area-inset-bottom, 0px))',
+                        }
+                        : {},
                     '@media (min-width: 768px)': {
                         scrollSnapType: 'y mandatory',
                     },
@@ -2224,6 +2237,13 @@ const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
                                     py: 1,
                                     px: 0,
                                     scrollSnapAlign: 'none',
+                                    scrollSnapStop: 'normal',
+                                    '@media (max-width: 767.95px)': {
+                                        minHeight:
+                                            'calc(100dvh - 112px - env(safe-area-inset-top, 0px) - 88px - env(safe-area-inset-bottom, 0px))',
+                                        scrollSnapAlign: 'start',
+                                        scrollSnapStop: 'always',
+                                    },
                                     '@media (min-width: 768px)': {
                                         minHeight: '100vh',
                                         alignItems: 'center',
