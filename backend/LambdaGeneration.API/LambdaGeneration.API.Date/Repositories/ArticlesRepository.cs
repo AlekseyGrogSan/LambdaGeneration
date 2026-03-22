@@ -300,13 +300,16 @@ namespace LambdaGeneration.API.Date.Repositories
             }
 
             // Фильтруем статьи по выбранным тегам
-            return await _context.Articles
-                .Where(a => a.ArticleTags.Any(t => tags.Contains(t)))
+            var articles = await _context.Articles
                 .OrderByDescending(a => a.CreatedDate)
                 .Skip(skip)
                 .Take(pageSize)
                 .Select(a => Map(a))
                 .ToListAsync();
+
+            return articles
+                .Where(a => a.ArticleTags.Any(t => tags.Contains(t)))
+                .ToList();
         }
 
         public async Task<List<Articles>> GetLatestAsync(int page, int countPages)
