@@ -345,7 +345,17 @@ const PostCreationModal = ({ open, handleClose, onUnauthorized, onPostSuccess })
                     console.warn('Не удалось прочитать JSON ошибки. Возможно, ошибка сервера 500 без тела.', e);
                 }
                 
-                const errorMessage = errorDetails.error || errorDetails.reason || `Ошибка публикации: ${response.status} ${response.statusText}`;
+                const fieldErrors = errorDetails?.errors
+                    ? Object.entries(errorDetails.errors)
+                        .flatMap(([field, messages]) => {
+                            const list = Array.isArray(messages) ? messages : [messages];
+                            return list.map((msg) => `${field}: ${msg}`);
+                        })
+                        .join(' | ')
+                    : '';
+                const errorMessage = errorDetails.error
+                    || errorDetails.reason
+                    || (fieldErrors ? `Ошибка валидации: ${fieldErrors}` : `Ошибка публикации: ${response.status} ${response.statusText}`);
                 const detailedReason = errorDetails.reason ? ` Причина: ${errorDetails.reason}` : '';
                 const suggestion = errorDetails.suggestion ? ` Предложение: ${errorDetails.suggestion}` : '';
                 

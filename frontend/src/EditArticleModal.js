@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import {
     Modal,
     Box,
@@ -160,6 +160,14 @@ const EditArticleModal = ({ open, handleClose, post, onUpdateSuccess, onDeleteSu
     
     const editorRef = useRef(null);
     const fileInputRef = useRef(null);
+    const existingPictureFileRef = useRef(null);
+    const existingPictureFetchPromiseRef = useRef(null);
+
+    const existingPictureUrl = useMemo(() => {
+        if (!post) return '';
+        const path = post.file_path || post.filePath || post.articleImageUrl || post.article_image_url || post.picture || '';
+        return buildArticleImageUrl(API_BASE_URL, path);
+    }, [post]);
 
     useEffect(() => {
         if (post && open) {
@@ -192,6 +200,11 @@ const EditArticleModal = ({ open, handleClose, post, onUpdateSuccess, onDeleteSu
             }
         };
     }, [imagePreview]);
+
+    useEffect(() => {
+        existingPictureFileRef.current = null;
+        existingPictureFetchPromiseRef.current = null;
+    }, [existingPictureUrl, open]);
 
     const handleContentChange = () => {
         if (editorRef.current) {
@@ -248,6 +261,38 @@ const EditArticleModal = ({ open, handleClose, post, onUpdateSuccess, onDeleteSu
         }
     };
 
+    const getPictureForUpload = useCallback(async (selectedFile) => {
+        if (selectedFile) return selectedFile;
+        if (!existingPictureUrl) return null;
+        if (existingPictureFileRef.current) return existingPictureFileRef.current;
+        if (!existingPictureFetchPromiseRef.current) {
+            existingPictureFetchPromiseRef.current = (async () => {
+                const response = await fetch(existingPictureUrl, { credentials: 'include' });
+                if (!response.ok) {
+                    throw new Error('Unable to download the current article image. Please choose a new photo.');
+                }
+                const blob = await response.blob();
+                let filename = 'article-image';
+                try {
+                    const urlObj = new URL(existingPictureUrl, window.location.origin);
+                    const candidate = urlObj.pathname.split('/').pop();
+                    if (candidate) filename = candidate;
+                } catch {
+                    const fallback = existingPictureUrl.split('/').pop()?.split('?')[0];
+                    if (fallback) filename = fallback;
+                }
+                const file = new File([blob], filename, { type: blob.type || 'image/jpeg' });
+                existingPictureFileRef.current = file;
+                return file;
+            })();
+        }
+        try {
+            return await existingPictureFetchPromiseRef.current;
+        } finally {
+            existingPictureFetchPromiseRef.current = null;
+        }
+    }, [existingPictureUrl]);
+
     // ✅ НОВЫЙ МЕТОД: Удаление статьи
     const handleDeleteArticle = async () => {
         if (!window.confirm("Вы уверены, что хотите удалить эту статью? Это действие необратимо.")) {
@@ -291,14 +336,19 @@ const EditArticleModal = ({ open, handleClose, post, onUpdateSuccess, onDeleteSu
 
         setIsLoading(true); setError(null); setSuccessMsg('');
         try {
+            const pictureFile = await getPictureForUpload(imageFile);
+            if (!pictureFile) {
+                const message = existingPictureUrl
+                    ? 'Unable to load the current article image. Please select a new photo before saving.'
+                    : 'This article does not have an image yet. Choose a file to save your changes.';
+                throw new Error(message);
+            }
             const formData = new FormData();
             formData.append('article_id', post.id);
             formData.append('article_title', title);
             formData.append('article_preview', preview);
             formData.append('article_content', content);
-            if (imageFile) {
-                formData.append('picture', imageFile);
-            }
+            formData.append('picture', pictureFile);
 
             const response = await fetch(`${API_BASE_URL}/Articles/update`, {
                 method: 'PUT',
