@@ -671,6 +671,40 @@ const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
     const [moreMenuAnchor, setMoreMenuAnchor] = useState(null);
     const moreMenuLockRef = useRef(null);
     const moreMenuScrollTopRef = useRef(0);
+    const lockFeedScroll = useCallback(() => {
+        const container = articlesContainerRef.current;
+        if (!container || moreMenuLockRef.current) return;
+
+        moreMenuScrollTopRef.current = container.scrollTop;
+        moreMenuLockRef.current = {
+            overflowY: container.style.overflowY,
+            scrollBehavior: container.style.scrollBehavior,
+            scrollSnapType: container.style.scrollSnapType,
+            touchAction: container.style.touchAction,
+            overscrollBehavior: container.style.overscrollBehavior,
+        };
+        container.style.overflowY = 'hidden';
+        container.style.scrollBehavior = 'auto';
+        container.style.scrollSnapType = 'none';
+        container.style.touchAction = 'none';
+        container.style.overscrollBehavior = 'contain';
+        requestAnimationFrame(() => {
+            container.scrollTop = moreMenuScrollTopRef.current;
+        });
+    }, []);
+
+    const unlockFeedScroll = useCallback(() => {
+        const container = articlesContainerRef.current;
+        if (!container || !moreMenuLockRef.current) return;
+
+        const { overflowY, scrollBehavior, scrollSnapType, touchAction, overscrollBehavior } = moreMenuLockRef.current;
+        container.style.overflowY = overflowY;
+        container.style.scrollBehavior = scrollBehavior;
+        container.style.scrollSnapType = scrollSnapType;
+        container.style.touchAction = touchAction;
+        container.style.overscrollBehavior = overscrollBehavior;
+        moreMenuLockRef.current = null;
+    }, []);
     const theme = useTheme();
     const isDesktopLayout = useMediaQuery(theme.breakpoints.up(768));
     const isProfileModalOpenRef = useRef(false);
@@ -678,6 +712,9 @@ const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
     const [viewedProfileId, setViewedProfileId] = useState(null); 
     const [articles, setArticles] = useState([]); 
     const [currentUser, setCurrentUser] = useState(null);
+    const currentUserAvatar = currentUser
+        ? buildAvatarUrl(API_BASE_URL, currentUser.pathAvatar ?? currentUser.PathAvatar)
+        : null;
     
     const [pageNumber, setPageNumber] = useState(1);
     const [hasMore, setHasMore] = useState(true); // Есть ли еще данные для загрузки
@@ -731,31 +768,12 @@ const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
         }
     }, [paginationType]);
     useEffect(() => {
-        const container = articlesContainerRef.current;
-        if (!container) return;
         if (moreMenuAnchor) {
-            moreMenuScrollTopRef.current = container.scrollTop;
-            moreMenuLockRef.current = {
-                overflowY: container.style.overflowY,
-                scrollBehavior: container.style.scrollBehavior,
-                scrollSnapType: container.style.scrollSnapType,
-            };
-            container.style.overflowY = 'hidden';
-            container.style.scrollBehavior = 'auto';
-            container.style.scrollSnapType = 'none';
-            requestAnimationFrame(() => {
-                container.scrollTop = moreMenuScrollTopRef.current;
-            });
+            lockFeedScroll();
             return;
         }
-        if (moreMenuLockRef.current) {
-            const { overflowY, scrollBehavior, scrollSnapType } = moreMenuLockRef.current;
-            container.style.overflowY = overflowY;
-            container.style.scrollBehavior = scrollBehavior;
-            container.style.scrollSnapType = scrollSnapType;
-            moreMenuLockRef.current = null;
-        }
-    }, [moreMenuAnchor]);
+        unlockFeedScroll();
+    }, [moreMenuAnchor, lockFeedScroll, unlockFeedScroll]);
     const [returnToProfile, setReturnToProfile] = useState(false);
     const [returnProfileUserId, setReturnProfileUserId] = useState(null);
     const [profileReturnEnabled, setProfileReturnEnabled] = useState(false);
@@ -2017,6 +2035,7 @@ const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
                                         onClick={(e) => {
                                             e.preventDefault();
                                             e.stopPropagation();
+                                            lockFeedScroll();
                                             setMoreMenuAnchor(e.currentTarget);
                                         }}
                                         aria-label="Ещё"
@@ -2339,7 +2358,11 @@ const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
             <Menu
                 anchorEl={moreMenuAnchor}
                 open={Boolean(moreMenuAnchor)}
-                onClose={() => setMoreMenuAnchor(null)}
+                onClose={() => {
+                    setMoreMenuAnchor(null);
+                    unlockFeedScroll();
+                }}
+                disableScrollLock
                 anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
                 transformOrigin={{ vertical: 'top', horizontal: 'right' }}
                 slotProps={{
@@ -2421,6 +2444,8 @@ const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
                     }
                     handleProfileOpen();
                 }}
+                currentUser={currentUser}
+                currentUserAvatar={currentUserAvatar}
             />
             
             <RegistrationModal 
@@ -2469,4 +2494,3 @@ const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
 };
 
 export default PostPage;
-
