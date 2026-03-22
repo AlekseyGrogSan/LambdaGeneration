@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react'; 
+import React, { useState, useEffect, useLayoutEffect, useRef, useCallback } from 'react';
 import { 
     Box,
     Button,
@@ -37,7 +37,7 @@ import ProfileModal from './ProfileModal';
 import MobileBottomNav from './MobileBottomNav';
 import MobileFeedSegmentedControl from './MobileFeedSegmentedControl';
 import MobileFeedListSkeleton from './MobileFeedListSkeleton';
-import { useFeedTabSwipe } from './useFeedTabSwipe';
+import { useVerticalFeedSwipe } from './useVerticalFeedSwipe';
 import RegistrationModal from './RegistrationModal';
 import ForgotPasswordModal from './ForgotPasswordModal';
 import PostCreationModal from './PostCreationModal';
@@ -703,7 +703,9 @@ const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
     const articlesRef = useRef([]);
     const hasMoreRef = useRef(hasMore);
     const feedCacheRef = useRef({ random: null, recommend: null });
-    const switchRandomRecommendTabRef = useRef(() => {});
+    const verticalViewportRef = useRef(null);
+    const [feedSlideHeight, setFeedSlideHeight] = useState(0);
+    const [feedCurrentIndex, setFeedCurrentIndex] = useState(0);
 
     useEffect(() => { articlesRef.current = articles; }, [articles]);
     useEffect(() => { hasMoreRef.current = hasMore; }, [hasMore]);
@@ -965,6 +967,8 @@ const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
 
     const handleScroll = useCallback(() => {
         if (isProfileModalOpen) return;
+        if (!isDesktopLayout && !isViewingDetailPage) return;
+
         const container = articlesContainerRef.current;
         
         if (container && !isViewingDetailPage) {
@@ -1016,7 +1020,7 @@ const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
                 }
             }
         }
-    }, [activeCommentsPost, isViewingDetailPage, isLoading, hasMore, pageNumber, articles, isProfileModalOpen]);
+    }, [activeCommentsPost, isViewingDetailPage, isLoading, hasMore, pageNumber, articles, isProfileModalOpen, isDesktopLayout]);
 
     useEffect(() => {
         const container = articlesContainerRef.current;
@@ -1030,6 +1034,60 @@ const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
             }
         };
     }, [handleScroll]);
+
+    useLayoutEffect(() => {
+        if (isDesktopLayout || isViewingDetailPage) {
+            setFeedSlideHeight(0);
+            return undefined;
+        }
+        let ro = null;
+        let cancelled = false;
+        let rafId = 0;
+
+        const applySize = (el) => {
+            const h = el.getBoundingClientRect().height;
+            if (h > 0) setFeedSlideHeight(h);
+        };
+
+        const attach = () => {
+            const el = verticalViewportRef.current;
+            if (!el || cancelled) return false;
+            applySize(el);
+            ro = new ResizeObserver(() => applySize(el));
+            ro.observe(el);
+            return true;
+        };
+
+        if (!attach()) {
+            rafId = requestAnimationFrame(() => {
+                if (!cancelled) attach();
+            });
+        }
+
+        return () => {
+            cancelled = true;
+            cancelAnimationFrame(rafId);
+            if (ro) ro.disconnect();
+        };
+    }, [isDesktopLayout, isViewingDetailPage, articles.length]);
+
+    useEffect(() => {
+        setFeedCurrentIndex(0);
+    }, [paginationType]);
+
+    useEffect(() => {
+        if (!articles.length) {
+            setFeedCurrentIndex(0);
+            return;
+        }
+        setFeedCurrentIndex((i) => Math.min(i, articles.length - 1));
+    }, [articles.length]);
+
+    useEffect(() => {
+        if (isDesktopLayout || isViewingDetailPage || !lastViewedArticleId || articles.length === 0) return;
+        const idx = articles.findIndex((a) => String(a.article_id) === String(lastViewedArticleId));
+        if (idx >= 0) setFeedCurrentIndex(idx);
+    }, [isViewingDetailPage, lastViewedArticleId, articles, isDesktopLayout]);
 
     
     const enrichArticleData = async (article) => {
@@ -1187,6 +1245,16 @@ const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
         }
     };
 
+    const fetchArticlesPageRef = useRef(fetchArticlesPage);
+    fetchArticlesPageRef.current = fetchArticlesPage;
+
+    useEffect(() => {
+        if (isDesktopLayout || isViewingDetailPage || articles.length === 0) return;
+        if (feedCurrentIndex < articles.length - 2) return;
+        if (!hasMore || isLoading) return;
+        fetchArticlesPageRef.current(pageNumber + 1);
+    }, [feedCurrentIndex, articles.length, hasMore, isLoading, isDesktopLayout, isViewingDetailPage, pageNumber]);
+
     const switchRandomRecommendTab = (type) => {
         if (type !== 'random' && type !== 'recommend') return;
         if (type === paginationType) return;
@@ -1232,8 +1300,6 @@ const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
         setError(null);
         fetchArticlesPage(1, type, { force: true });
     };
-
-    switchRandomRecommendTabRef.current = switchRandomRecommendTab;
 
     const handlePaginationTypeChange = (type) => {
         if (type === paginationType || isLoading) return;
@@ -1756,20 +1822,23 @@ const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
         }
     };
 
-    const feedSwipeEnabled =
+    const verticalFeedEnabled =
         !isDesktopLayout &&
         !isViewingDetailPage &&
-        !isSearchMode &&
-        !isLoading &&
-        (paginationType === 'random' || paginationType === 'recommend');
+        articles.length > 0 &&
+        feedSlideHeight > 0;
 
-    const { dragOffset, swipeHandlers } = useFeedTabSwipe({
-        enabled: feedSwipeEnabled,
-        activeTab: paginationType === 'recommend' ? 'recommend' : 'random',
-        scrollContainerRef: articlesContainerRef,
-        threshold: 50,
-        onSwipeLeft: () => switchRandomRecommendTabRef.current('recommend'),
-        onSwipeRight: () => switchRandomRecommendTabRef.current('random'),
+    const { pointerHandlers: verticalPointerHandlers, trackStyle: verticalTrackStyle } = useVerticalFeedSwipe({
+        enabled: verticalFeedEnabled,
+        slideHeight: feedSlideHeight,
+        itemCount: articles.length,
+        currentIndex: feedCurrentIndex,
+        setCurrentIndex: setFeedCurrentIndex,
+        onSwipePastEnd: () => {
+            if (hasMore && !isLoading) {
+                void fetchArticlesPageRef.current(pageNumber + 1);
+            }
+        },
     });
 
     const feedCommentsSidebarProps = {
@@ -1839,7 +1908,8 @@ const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
                 sx={{ 
                     flex: 1, 
                     height: '100vh', 
-                    overflowY: 'auto',
+                    minHeight: 0,
+                    overflowY: isViewingDetailPage || isDesktopLayout ? 'auto' : 'hidden',
                     overflowX: 'hidden',
                     scrollSnapType: 'none',
                     '@media (min-width: 768px)': {
@@ -1848,9 +1918,9 @@ const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
                     '&::-webkit-scrollbar': { display: 'none' }, 
                     msOverflowStyle: 'none', 
                     scrollbarWidth: 'none', 
-                    display: 'flex', 
-                    flexDirection: 'column', 
-                    alignItems: 'center',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: !isDesktopLayout && !isViewingDetailPage ? 'stretch' : 'center',
                     scrollBehavior: 'smooth',
                     position: 'relative',
                     width: '100%',
@@ -2175,7 +2245,7 @@ const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
                             containerRef={articlesContainerRef}
                         />
                     </Box>
-                ) : (
+                ) : isDesktopLayout ? (
                     <Box
                         sx={{
                             width: '100%',
@@ -2190,52 +2260,37 @@ const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
                                 px: 0,
                                 pb: 5,
                             },
-                            transform: `translateX(${dragOffset}px)`,
-                            transition: Math.abs(dragOffset) > 0.5
-                                ? 'none'
-                                : 'transform 0.28s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.22s ease',
-                            touchAction: feedSwipeEnabled ? 'pan-y' : 'auto',
                         }}
-                        {...(feedSwipeEnabled ? swipeHandlers : {})}
                     >
-                        {articles.length === 0 && isLoading && (isDesktopLayout || (paginationType !== 'random' && paginationType !== 'recommend')) && (
+                        {articles.length === 0 && isLoading && (
                             <Typography sx={{ color: '#f5f5f5', textAlign: 'center', pt: 4 }}>
                                 <CircularProgress sx={{ color: '#00bfa5' }} />
                             </Typography>
-                        )}
-                        {articles.length === 0 && isLoading && !isDesktopLayout && (paginationType === 'random' || paginationType === 'recommend') && (
-                            <MobileFeedListSkeleton count={3} />
                         )}
                         {!isLoading && articles.length === 0 && !error && (
                             <Typography sx={{ color: '#f5f5f5', textAlign: 'center', pt: 4 }}>
                                 {emptyStateMessage || (paginationType === 'search' ? 'Статьи не найдены.' : 'Статей пока нет.')}
                             </Typography>
                         )}
-                        
+
                         {articles.map((post) => (
                             <Box
                                 key={post.article_id}
                                 ref={setPostRef(post.article_id)}
-                                sx={{ 
-                                    minHeight: 'auto',
+                                sx={{
+                                    minHeight: '100vh',
                                     display: 'flex',
                                     justifyContent: 'center',
-                                    alignItems: 'stretch',
-                                    py: 1,
+                                    alignItems: 'center',
+                                    py: '20px',
                                     px: 0,
-                                    scrollSnapAlign: 'none',
-                                    '@media (min-width: 768px)': {
-                                        minHeight: '100vh',
-                                        alignItems: 'center',
-                                        py: '20px',
-                                        scrollSnapAlign: 'center',
-                                    },
+                                    scrollSnapAlign: 'center',
                                 }}
                             >
                                 <PostCard
                                     {...post}
-                                    authorId={post.author_id} 
-                                    onAuthorClick={handleOtherAuthorProfileOpen} 
+                                    authorId={post.author_id}
+                                    onAuthorClick={handleOtherAuthorProfileOpen}
                                     onClick={() => handlePostClick(post)}
                                     onCommentClick={() => handleOpenCommentsSidebar(post)}
                                     onLike={() => handleLikeToggle(post.article_id, post.isLiked)}
@@ -2243,15 +2298,117 @@ const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
                                 />
                             </Box>
                         ))}
-                        
+
                         {isLoading && articles.length > 0 && (
                             <Box sx={{ display: 'flex', justifyContent: 'center', py: 2 }}>
                                 <CircularProgress size={30} sx={{ color: '#00bfa5' }} />
                             </Box>
                         )}
-                        
-                        {!hasMore && articles.length > 0 && <Typography sx={{ color: '#f5f5f5', textAlign: 'center', py: 4 }}>Это все статьи!</Typography>}
+
+                        {!hasMore && articles.length > 0 && (
+                            <Typography sx={{ color: '#f5f5f5', textAlign: 'center', py: 4 }}>Это все статьи!</Typography>
+                        )}
                         {error && <Typography color="error" sx={{ textAlign: 'center', pt: 4 }}>{error}</Typography>}
+                    </Box>
+                ) : (
+                    <Box
+                        ref={verticalViewportRef}
+                        sx={{
+                            flex: 1,
+                            minHeight: 0,
+                            width: '100%',
+                            maxWidth: '100vw',
+                            position: 'relative',
+                            overflow: 'hidden',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            touchAction: 'none',
+                        }}
+                        {...verticalPointerHandlers}
+                    >
+                        {articles.length === 0 && isLoading && (paginationType === 'random' || paginationType === 'recommend') && (
+                            <MobileFeedListSkeleton count={3} />
+                        )}
+                        {articles.length === 0 && isLoading && paginationType !== 'random' && paginationType !== 'recommend' && (
+                            <Typography sx={{ color: '#f5f5f5', textAlign: 'center', pt: 4 }}>
+                                <CircularProgress sx={{ color: '#00bfa5' }} />
+                            </Typography>
+                        )}
+                        {!isLoading && articles.length === 0 && !error && (
+                            <Typography sx={{ color: '#f5f5f5', textAlign: 'center', pt: 4, px: 2 }}>
+                                {emptyStateMessage || (paginationType === 'search' ? 'Статьи не найдены.' : 'Статей пока нет.')}
+                            </Typography>
+                        )}
+
+                        {articles.length > 0 && feedSlideHeight > 0 && (
+                            <Box sx={{ ...verticalTrackStyle, width: '100%' }}>
+                                {articles.map((post) => (
+                                    <Box
+                                        key={post.article_id}
+                                        ref={setPostRef(post.article_id)}
+                                        sx={{
+                                            height: feedSlideHeight,
+                                            flexShrink: 0,
+                                            width: '100%',
+                                            maxWidth: '100vw',
+                                            boxSizing: 'border-box',
+                                            px: 1,
+                                            pb: 'calc(88px + env(safe-area-inset-bottom, 0px))',
+                                            display: 'flex',
+                                            flexDirection: 'column',
+                                            justifyContent: 'center',
+                                            alignItems: 'stretch',
+                                        }}
+                                    >
+                                        <PostCard
+                                            {...post}
+                                            authorId={post.author_id}
+                                            onAuthorClick={handleOtherAuthorProfileOpen}
+                                            onClick={() => handlePostClick(post)}
+                                            onCommentClick={() => handleOpenCommentsSidebar(post)}
+                                            onLike={() => handleLikeToggle(post.article_id, post.isLiked)}
+                                            showRepost={false}
+                                        />
+                                    </Box>
+                                ))}
+                            </Box>
+                        )}
+
+                        {isLoading && articles.length > 0 && (
+                            <Box
+                                sx={{
+                                    position: 'absolute',
+                                    bottom: 'calc(96px + env(safe-area-inset-bottom, 0px))',
+                                    left: 0,
+                                    right: 0,
+                                    display: 'flex',
+                                    justifyContent: 'center',
+                                }}
+                            >
+                                <CircularProgress size={30} sx={{ color: '#00bfa5' }} />
+                            </Box>
+                        )}
+
+                        {!hasMore && articles.length > 0 && feedCurrentIndex >= articles.length - 1 && (
+                            <Typography
+                                sx={{
+                                    position: 'absolute',
+                                    bottom: 'calc(72px + env(safe-area-inset-bottom, 0px))',
+                                    left: 0,
+                                    right: 0,
+                                    textAlign: 'center',
+                                    color: '#bdbdbd',
+                                    fontSize: '0.85rem',
+                                }}
+                            >
+                                Это все статьи!
+                            </Typography>
+                        )}
+                        {error && (
+                            <Typography color="error" sx={{ textAlign: 'center', pt: 2, px: 2 }}>
+                                {error}
+                            </Typography>
+                        )}
                     </Box>
                 )}
             </Box>
