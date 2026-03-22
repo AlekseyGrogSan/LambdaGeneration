@@ -28,17 +28,12 @@ namespace LambdaGeneration.API.Controllers
             _logger = logger;
         }
 
-        // --- ������������ ------------------------------------------------------
-
-        /// <summary>
-        /// �������� ������� ������������ �� ID
-        /// </summary>
         [HttpGet("users/{userId:guid}")]
         public async Task<IActionResult> GetUser(Guid userId)
         {
             var user = await _usersRepository.GetProfile(userId);
             if (user == null)
-                return NotFound(new { message = "������������ �� ������" });
+                return NotFound(new { message = "Пользователь не найден" });
 
             return Ok(new
             {
@@ -69,15 +64,12 @@ namespace LambdaGeneration.API.Controllers
             }));
         }
 
-        /// <summary>
-        /// �������� / ��������� ������������ (toggle)
-        /// </summary>
         [HttpPatch("users/{userId:guid}/ban")]
         public async Task<IActionResult> ToggleBan(Guid userId)
         {
             var user = await _usersRepository.GetProfile(userId);
             if (user == null)
-                return NotFound(new { message = "������������ �� ������" });
+                return NotFound(new { message = "Пользователь не найден" });
 
             user.SetBanned();
             await _usersRepository.SetBanned(userId, user.IsBanned);
@@ -92,19 +84,16 @@ namespace LambdaGeneration.API.Controllers
             {
                 user.UserID,
                 user.IsBanned,
-                message = user.IsBanned ? "������������ ������������" : "������������ �������������"
+                message = user.IsBanned ? "Пользователь забанен" : "Пользователь разбанен "
             });
         }
 
-        /// <summary>
-        /// ������� ������������ ���������
-        /// </summary>
         [HttpDelete("users/{userId:guid}")]
         public async Task<IActionResult> DeleteUser(Guid userId)
         {
             var user = await _usersRepository.GetProfile(userId);
             if (user == null)
-                return NotFound(new { message = "������������ �� ������" });
+                return NotFound(new { message = "Пользователь не найден" });
 
             await _usersRepository.Delete(userId);
 
@@ -114,14 +103,9 @@ namespace LambdaGeneration.API.Controllers
                 userId,
                 user.UserName);
 
-            return Ok(new { message = $"������������ {user.UserName} �����" });
+            return Ok(new { message = $"Пользователь {user.UserName} удален" });
         }
 
-        // --- ������ ------------------------------------------------------------
-
-        /// <summary>
-        /// �������� ������ ������������
-        /// </summary>
         [HttpGet("users/{userId:guid}/articles")]
         public async Task<IActionResult> GetUserArticles(Guid userId, [FromQuery] int page = 1, [FromQuery] int pageSize = 20)
         {
@@ -138,9 +122,6 @@ namespace LambdaGeneration.API.Controllers
             }));
         }
 
-        /// <summary>
-        /// ������� ������ �� ID
-        /// </summary>
         [HttpGet("users/{userId:guid}/comments")]
         public async Task<IActionResult> GetUserComments(Guid userId)
         {
@@ -164,7 +145,7 @@ namespace LambdaGeneration.API.Controllers
         {
             var article = await _articlesRepository.GetById(articleId);
             if (article == null)
-                return NotFound(new { message = "������ �� �������" });
+                return NotFound(new { message = "Статьи не найдены" });
 
             await _articlesRepository.Delete(articleId);
 
@@ -174,14 +155,9 @@ namespace LambdaGeneration.API.Controllers
                 articleId,
                 article.ArticleTitle);
 
-            return Ok(new { message = $"������ �{article.ArticleTitle}� �������" });
+            return Ok(new { message = $"Стаья {article.ArticleTitle} удалена" });
         }
 
-        // --- ����������� -------------------------------------------------------
-
-        /// <summary>
-        /// �������� ����������� � ������
-        /// </summary>
         [HttpGet("articles/{articleId:guid}/comments")]
         public async Task<IActionResult> GetArticleComments(Guid articleId)
         {
@@ -199,19 +175,17 @@ namespace LambdaGeneration.API.Controllers
             }));
         }
 
-        /// <summary>
-        /// ������� ����������� �� ID
-        /// </summary>
+
         [HttpDelete("comments/{commentId:guid}")]
         public async Task<IActionResult> DeleteComment(Guid commentId)
         {
             var comment = await _commentsRepository.GetCommentByIdAsync(commentId);
             if (comment == null)
-                return NotFound(new { message = "����������� �� ������" });
+                return NotFound(new { message = "Комментарии у пользователя не найдены" });
 
             var deleted = await _commentsRepository.DeleteCommentAsync(commentId);
             if (!deleted)
-                return StatusCode(500, new { message = "�� ������� ������� �����������" });
+                return StatusCode(500, new { message = "Ошибка удаления комментария" });
 
             _logger.LogWarning(
                 "Admin {Admin} deleted comment {CommentId} on article {ArticleId}",
@@ -219,18 +193,15 @@ namespace LambdaGeneration.API.Controllers
                 commentId,
                 comment.ArticleId);
 
-            return Ok(new { message = "����������� �����" });
+            return Ok(new { message = "Комментарий успешно удален" });
         }
 
-        /// <summary>
-        /// ������� ��� ����������� � ������
-        /// </summary>
         [HttpDelete("articles/{articleId:guid}/comments")]
         public async Task<IActionResult> DeleteAllArticleComments(Guid articleId)
         {
             var comments = await _commentsRepository.GetCommentsByIdAsync(articleId);
             if (!comments.Any())
-                return NotFound(new { message = "������������ �� �������" });
+                return NotFound(new { message = "Уомментарии у статьи не найдены" });
 
             int deletedCount = 0;
             foreach (var comment in comments)
@@ -245,7 +216,7 @@ namespace LambdaGeneration.API.Controllers
                 deletedCount,
                 articleId);
 
-            return Ok(new { message = $"������� {deletedCount} ������������" });
+            return Ok(new { message = $"Удалено {deletedCount} комментариев" });
         }
     }
 }
