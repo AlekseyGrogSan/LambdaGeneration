@@ -540,7 +540,7 @@ const ProfileModal = ({ open, handleClose, userId, onUnauthorized, onLogout, onP
         articleImageUrl: buildArticleImageUrl(API_BASE_URL, article.file_path ?? article.filePath ?? article.FilePath),
         likesCount: article.countLikes ?? article.likesCount ?? 0,
         commentsCount: article.comments_count ?? article.commentsCount ?? 0,
-        isLiked: article.is_liked ?? article.isLiked ?? true,
+        isLiked: article.is_liked ?? article.isLiked ?? false,
         tags: article.article_tags ?? article.articleTags ?? [],
     });
 
@@ -1034,6 +1034,8 @@ const ProfileModal = ({ open, handleClose, userId, onUnauthorized, onLogout, onP
                                                     }
                                                 }}
                                                 onLike={() => onLikes(post.article_id, post.isLiked)}
+                                                showCommentAction={false}
+                                                showRepost={false}
                                             />
                                             
                                             {/* ✅ ВОССТАНОВЛЕНО: Оверлей с кнопками (только для моих постов) */}

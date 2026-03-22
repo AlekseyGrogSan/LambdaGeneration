@@ -62,7 +62,6 @@ namespace LambdaGeneration.API.Controllers
                 {
                     return BadRequest(new {
                         error = "Статья не прошла проверку",
-                        reason = resultModeration.Reason,
                         flags = resultModeration.Flags,
                         field = "post"
                     });
@@ -155,7 +154,6 @@ namespace LambdaGeneration.API.Controllers
                     return BadRequest(new
                     {
                         error = "Статья не прошла проверку",
-                        reason = resultModeration.Reason,
                         flags = resultModeration.Flags,
                         field = "post"
                     });

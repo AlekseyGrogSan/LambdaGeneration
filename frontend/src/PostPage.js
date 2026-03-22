@@ -599,6 +599,7 @@ const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
     
     const [isLoading, setIsLoading] = useState(false); 
     const [error, setError] = useState(null);
+    const [emptyStateMessage, setEmptyStateMessage] = useState('');
     const [selectedPost, setSelectedPost] = useState(null); 
     const [isViewingDetailPage, setIsViewingDetailPage] = useState(false);
     const [lastViewedArticleId, setLastViewedArticleId] = useState(null); 
@@ -1004,6 +1005,23 @@ const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
         };
     };
 
+    const buildEmptyStateMessage = (type, options = {}) => {
+        const { searchQuery: providedQuery } = options;
+        const normalizedQuery = (providedQuery ?? searchQueryRef.current ?? '').trim();
+
+        if (type === 'search') {
+            return normalizedQuery
+                ? `Статей по запросу «${normalizedQuery}» не найдено.`
+                : 'Статей по такому запросу нет.';
+        }
+
+        if (type === 'tags') {
+            return 'Статей с выбранными тегами не найдено.';
+        }
+
+        return 'Статей пока нет.';
+    };
+
 
     // ✅ НОВАЯ ФУНКЦИЯ ЗАГРУЗКИ СТРАНИЦЫ
     const fetchArticlesPage = async (page, type = paginationType, options = {}) => {
@@ -1014,6 +1032,7 @@ const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
 
         setIsLoading(true);
         setError(null);
+        setEmptyStateMessage('');
         
         try {
             let url = `${API_BASE_URL}/Articles/getPaginated?typePagination=${type}&page=${page}&size=${pageSize}`;
@@ -1023,6 +1042,7 @@ const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
                     setArticles([]);
                     setHasMore(false);
                     setPageNumber(1);
+                    setEmptyStateMessage(buildEmptyStateMessage(type, { searchQuery: q }));
                     return;
                 }
                 url = `${API_BASE_URL}/Articles/search?q=${encodeURIComponent(q)}&page=${page}&countPages=${pageSize}`;
@@ -1033,6 +1053,7 @@ const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
                     setArticles([]);
                     setHasMore(false);
                     setPageNumber(1);
+                    setEmptyStateMessage(buildEmptyStateMessage(type));
                     return;
                 }
                 const params = new URLSearchParams();
@@ -1044,10 +1065,15 @@ const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
             const fetchOptions = { credentials: 'include' };
             const response = await fetch(url, fetchOptions);
             if (!response.ok) {
-                if (type === 'search' && (response.status === 404 || response.status === 204)) {
+                const isEmptyResponse = (type === 'search' || type === 'tags') && (response.status === 404 || response.status === 204);
+                if (isEmptyResponse) {
                     setArticles([]);
                     setHasMore(false);
                     setPageNumber(1);
+                    const messageOptions = type === 'search'
+                        ? { searchQuery: (providedQuery ?? searchQueryRef.current) }
+                        : {};
+                    setEmptyStateMessage(buildEmptyStateMessage(type, messageOptions));
                     return;
                 }
                 throw new Error(`Ошибка загрузки статей: ${response.statusText}`);
@@ -1055,10 +1081,14 @@ const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
             
             const data = await response.json(); 
             const newArticlesRaw = data.articles || [];
-            if (type === 'search' && newArticlesRaw.length === 0) {
+            if (newArticlesRaw.length === 0) {
                 setArticles([]);
                 setHasMore(false);
                 setPageNumber(1);
+                const messageOptions = type === 'search'
+                    ? { searchQuery: (providedQuery ?? searchQueryRef.current) }
+                    : {};
+                setEmptyStateMessage(buildEmptyStateMessage(type, messageOptions));
                 return;
             }
             
@@ -1792,7 +1822,7 @@ const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
                         {articles.length === 0 && isLoading && <Typography sx={{color:'white', textAlign:'center', pt: 4}}><CircularProgress sx={{ color: '#00bfa5' }} /></Typography>}
                         {!isLoading && articles.length === 0 && !error && (
                             <Typography sx={{color:'white', textAlign:'center', pt: 4}}>
-                                {paginationType === 'search' ? 'Статьи не найдены :((' : 'Статей пока нет.'}
+                                {emptyStateMessage || (paginationType === 'search' ? 'Статьи не найдены.' : 'Статей пока нет.')}
                             </Typography>
                         )}
                         

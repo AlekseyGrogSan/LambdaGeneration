@@ -302,8 +302,8 @@ const PostCreationModal = ({ open, handleClose, onUnauthorized, onPostSuccess })
     // --- ОБРАБОТЧИК СОХРАНЕНИЯ (ОБНОВЛЕН) ---
     const handlePublish = async () => {
         // Проверка на заполнение всех обязательных полей
-        if (!title || !preview || !content || selectedTags.length === 0) {
-            alert('Пожалуйста, заполните заголовок, анонс, текст и выберите хотя бы один тег.');
+        if (!title || !preview || !content) {
+            alert('Пожалуйста, заполните заголовок, анонс и текст статьи.');
             return;
         }
 
@@ -613,7 +613,7 @@ const PostCreationModal = ({ open, handleClose, onUnauthorized, onPostSuccess })
                     variant="contained"
                     fullWidth
                     onClick={handlePublish}
-                    disabled={!title || !preview || !content || selectedTags.length === 0} // Отключаем, если нет заголовка, превью, текста или тегов
+                    disabled={!title || !preview || !content} // Теги и картинка опциональны
                     sx={{
                         marginTop: 1,
                         backgroundColor: '#00bfa5',

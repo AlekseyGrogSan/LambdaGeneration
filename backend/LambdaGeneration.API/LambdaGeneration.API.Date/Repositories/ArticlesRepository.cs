@@ -291,17 +291,25 @@ namespace LambdaGeneration.API.Date.Repositories
             // Если тэги не выбраны, то передаём случаёные статьи
             if (tags == null || tags.Count == 0)
             {
-                return await GetRandomArticles(page, pageSize);
+                return await _context.Articles
+                .OrderBy(a => EF.Functions.Random())
+                .Skip(skip)
+                .Take(pageSize)
+                .Select(a => Map(a))
+                .ToListAsync();
             }
 
             // Фильтруем статьи по выбранным тегам
-            return await _context.Articles
-                .Where(a => a.ArticleTags.Any(t => tags.Contains(t)))
+            var articles = await _context.Articles
                 .OrderByDescending(a => a.CreatedDate)
                 .Skip(skip)
                 .Take(pageSize)
                 .Select(a => Map(a))
                 .ToListAsync();
+
+            return articles
+                .Where(a => a.ArticleTags.Any(t => tags.Contains(t)))
+                .ToList();
         }
 
         public async Task<List<Articles>> GetLatestAsync(int page, int countPages)

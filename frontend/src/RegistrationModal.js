@@ -37,6 +37,52 @@ const validateEmail = (email) => {
         );
 };
 
+const flattenErrorMessages = (errors) => {
+    if (!errors) return '';
+    if (typeof errors === 'string') return errors;
+    if (Array.isArray(errors)) {
+        return errors.filter(Boolean).join(' ');
+    }
+    if (typeof errors === 'object') {
+        return Object.entries(errors)
+            .map(([field, value]) => {
+                const messages = Array.isArray(value) ? value : [value];
+                const joined = messages.filter(Boolean).join(' ');
+                return joined ? `${field}: ${joined}` : '';
+            })
+            .filter(Boolean)
+            .join(' ');
+    }
+    return '';
+};
+
+const extractApiErrorMessage = async (response) => {
+    const clone = response.clone();
+    try {
+        const payload = await response.json();
+        if (payload) {
+            if (payload.message) return payload.message;
+            if (payload.detail) return payload.detail;
+            if (payload.error) return payload.error;
+            const flattened = flattenErrorMessages(
+                payload.errors ?? payload.Errors ?? payload.modelState ?? payload.response ?? payload
+            );
+            if (flattened) return flattened;
+        }
+    } catch (e) {
+        // Ignore JSON parsing issues
+    }
+
+    try {
+        const text = await clone.text();
+        if (text) return text;
+    } catch {
+        // Ignore text parsing issues
+    }
+
+    return response.statusText || 'Ошибка запроса';
+};
+
 const RegistrationModal = ({ open, handleClose, onForgotPassword }) => {
     const [isRegisterMode, setIsRegisterMode] = useState(true);
     const [formData, setFormData] = useState({
@@ -152,11 +198,11 @@ const RegistrationModal = ({ open, handleClose, onForgotPassword }) => {
                     setAvatarError('');
                 }
             } else {
-                const errorData = await response.json();
-                setError(errorData.message || 'Ошибка запроса');
+                const errorMessage = await extractApiErrorMessage(response);
+                setError(errorMessage || 'Ошибка запроса');
             }
         } catch (err) {
-            setError('Ошибка сети');
+            setError('Не удалось связаться с сервером. Проверьте подключение и повторите попытку.');
         }
     };
 
