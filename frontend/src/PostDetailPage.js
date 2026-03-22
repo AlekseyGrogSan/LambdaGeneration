@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+﻿import React, { useEffect, useRef, useState } from 'react';
 import {
     Box,
     Typography,
@@ -153,12 +153,12 @@ const CommentItem = ({
                         }}
                     >
                         {comment.repliesLoading
-                            ? 'Загрузка...'
+                            ? 'Р—Р°РіСЂСѓР·РєР°...'
                             : comment.repliesOpen
-                                ? 'Скрыть ответы'
+                                ? 'РЎРєСЂС‹С‚СЊ РѕС‚РІРµС‚С‹'
                                 : (comment.repliesCount > 0
-                                    ? `Показать ответы (${comment.repliesCount})`
-                                    : 'Показать ответы')}
+                                    ? `РџРѕРєР°Р·Р°С‚СЊ РѕС‚РІРµС‚С‹ (${comment.repliesCount})`
+                                    : 'РџРѕРєР°Р·Р°С‚СЊ РѕС‚РІРµС‚С‹')}
                     </Button>
                 )}
 
@@ -174,7 +174,7 @@ const CommentItem = ({
                         px: 1,
                     }}
                 >
-                    Ответить на комментарий
+                    РћС‚РІРµС‚РёС‚СЊ РЅР° РєРѕРјРјРµРЅС‚Р°СЂРёР№
                 </Button>
 
                 {currentUserId && comment.authorId === currentUserId && (
@@ -190,7 +190,7 @@ const CommentItem = ({
                             px: 1,
                         }}
                     >
-                        Редактировать
+                        Р РµРґР°РєС‚РёСЂРѕРІР°С‚СЊ
                     </Button>
                 )}
 
@@ -208,7 +208,7 @@ const CommentItem = ({
                             px: 1,
                         }}
                     >
-                        Удалить
+                        РЈРґР°Р»РёС‚СЊ
                     </Button>
                 )}
             </Box>
@@ -219,7 +219,7 @@ const CommentItem = ({
                         variant="filled"
                         size="small"
                         fullWidth
-                        label="Ответить"
+                        label="РћС‚РІРµС‚РёС‚СЊ"
                         value={replyInputs[comment.commentId] || ''}
                         onChange={(e) => onReplyTextChange(comment.commentId, e.target.value)}
                         onKeyDown={(e) => {
@@ -240,7 +240,7 @@ const CommentItem = ({
                             '&:hover': { backgroundColor: '#009e8a' },
                         }}
                     >
-                        Отправить
+                        РћС‚РїСЂР°РІРёС‚СЊ
                     </Button>
                 </Box>
             )}
@@ -251,7 +251,7 @@ const CommentItem = ({
                         variant="filled"
                         size="small"
                         fullWidth
-                        label="Изменить комментарий"
+                        label="РР·РјРµРЅРёС‚СЊ РєРѕРјРјРµРЅС‚Р°СЂРёР№"
                         value={editInputs[comment.commentId] ?? ''}
                         onChange={(e) => onEditTextChange(comment.commentId, e.target.value)}
                         sx={commentInputStyle}
@@ -266,7 +266,7 @@ const CommentItem = ({
                             '&:hover': { backgroundColor: '#009e8a' },
                         }}
                     >
-                        Сохранить
+                        РЎРѕС…СЂР°РЅРёС‚СЊ
                     </Button>
                 </Box>
             )}
@@ -344,7 +344,7 @@ const PostDetailPage = ({
         setImageBroken(false);
     }, [post.article_id]);
 
-    if (!post) return <Box sx={{ color: 'white' }}>Пост не найден.</Box>;
+    if (!post) return <Box sx={{ color: 'white' }}>РџРѕСЃС‚ РЅРµ РЅР°Р№РґРµРЅ.</Box>;
 
     const articleImageUrl = post.articleImageUrl || buildArticleImageUrl(API_BASE_URL, post.file_path || post.filePath);
 
@@ -364,20 +364,20 @@ const PostDetailPage = ({
             });
 
             if (!response.ok) {
-                const fallback = { name: 'Автор', avatar: null };
+                const fallback = { name: 'РђРІС‚РѕСЂ', avatar: null };
                 authorCacheRef.current[userId] = fallback;
                 return fallback;
             }
 
             const data = await response.json();
             const info = {
-                name: data.name || 'Автор',
+                name: data.name || 'РђРІС‚РѕСЂ',
                 avatar: data.pathAvatar ?? data.PathAvatar ?? null,
             };
             authorCacheRef.current[userId] = info;
             return info;
         } catch {
-            const fallback = { name: 'Автор', avatar: null };
+            const fallback = { name: 'РђРІС‚РѕСЂ', avatar: null };
             authorCacheRef.current[userId] = fallback;
             return fallback;
         }
@@ -423,7 +423,7 @@ const PostDetailPage = ({
             });
 
             if (!response.ok) {
-                throw new Error('Не удалось загрузить комментарии');
+                throw new Error('РќРµ СѓРґР°Р»РѕСЃСЊ Р·Р°РіСЂСѓР·РёС‚СЊ РєРѕРјРјРµРЅС‚Р°СЂРёРё');
             }
 
             const data = await response.json();
@@ -437,7 +437,7 @@ const PostDetailPage = ({
             onCommentsCountChange?.(post.article_id, countTreeComments(tree));
         } catch (error) {
             console.error(error);
-            setCommentsError('Ошибка при загрузке комментариев');
+            setCommentsError('РћС€РёР±РєР° РїСЂРё Р·Р°РіСЂСѓР·РєРµ РєРѕРјРјРµРЅС‚Р°СЂРёРµРІ');
         } finally {
             setCommentsLoading(false);
         }
@@ -455,7 +455,7 @@ const PostDetailPage = ({
     const createComment = async (content, parentId = null) => {
         const trimmed = content.trim();
         if (trimmed.length < 2) {
-            setCommentsError('Комментарий должен быть не короче 2 символов');
+            setCommentsError('РљРѕРјРјРµРЅС‚Р°СЂРёР№ РґРѕР»Р¶РµРЅ Р±С‹С‚СЊ РЅРµ РєРѕСЂРѕС‡Рµ 2 СЃРёРјРІРѕР»РѕРІ');
             return;
         }
 
@@ -475,9 +475,9 @@ const PostDetailPage = ({
         if (!response.ok) {
             if (response.status === 401 || response.status === 403) {
                 onUnauthorized?.();
-                throw new Error('Для комментариев требуется авторизация');
+                throw new Error('Р”Р»СЏ РєРѕРјРјРµРЅС‚Р°СЂРёРµРІ С‚СЂРµР±СѓРµС‚СЃСЏ Р°РІС‚РѕСЂРёР·Р°С†РёСЏ');
             }
-            throw new Error('Не удалось отправить комментарий');
+            throw new Error('РќРµ СѓРґР°Р»РѕСЃСЊ РѕС‚РїСЂР°РІРёС‚СЊ РєРѕРјРјРµРЅС‚Р°СЂРёР№');
         }
 
         await loadComments();
@@ -516,7 +516,7 @@ const PostDetailPage = ({
     const updateComment = async (commentId, content) => {
         const trimmed = content.trim();
         if (trimmed.length < 2) {
-            setCommentsError('Комментарий должен быть не короче 2 символов');
+            setCommentsError('РљРѕРјРјРµРЅС‚Р°СЂРёР№ РґРѕР»Р¶РµРЅ Р±С‹С‚СЊ РЅРµ РєРѕСЂРѕС‡Рµ 2 СЃРёРјРІРѕР»РѕРІ');
             return false;
         }
 
@@ -534,11 +534,11 @@ const PostDetailPage = ({
 
         if (response.status === 401 || response.status === 403) {
             onUnauthorized?.();
-            throw new Error('Для комментариев требуется авторизация');
+            throw new Error('Р”Р»СЏ РєРѕРјРјРµРЅС‚Р°СЂРёРµРІ С‚СЂРµР±СѓРµС‚СЃСЏ Р°РІС‚РѕСЂРёР·Р°С†РёСЏ');
         }
 
         if (!response.ok) {
-            throw new Error('Не удалось обновить комментарий');
+            throw new Error('РќРµ СѓРґР°Р»РѕСЃСЊ РѕР±РЅРѕРІРёС‚СЊ РєРѕРјРјРµРЅС‚Р°СЂРёР№');
         }
 
         return true;
@@ -571,7 +571,7 @@ const PostDetailPage = ({
         try {
             setCommentsError(null);
             if (comment.hasReplies) {
-                const ok = await updateComment(comment.commentId, 'Комментарий удален');
+                const ok = await updateComment(comment.commentId, 'РљРѕРјРјРµРЅС‚Р°СЂРёР№ СѓРґР°Р»РµРЅ');
                 if (!ok) return;
             } else {
                 const response = await fetch(`${API_BASE_URL}/Comments/delete-comment`, {
@@ -585,11 +585,11 @@ const PostDetailPage = ({
 
                 if (response.status === 401 || response.status === 403) {
                     onUnauthorized?.();
-                    throw new Error('Для удаления комментария требуется авторизация');
+                    throw new Error('Р”Р»СЏ СѓРґР°Р»РµРЅРёСЏ РєРѕРјРјРµРЅС‚Р°СЂРёСЏ С‚СЂРµР±СѓРµС‚СЃСЏ Р°РІС‚РѕСЂРёР·Р°С†РёСЏ');
                 }
 
                 if (!response.ok) {
-                    throw new Error('Не удалось удалить комментарий');
+                    throw new Error('РќРµ СѓРґР°Р»РѕСЃСЊ СѓРґР°Р»РёС‚СЊ РєРѕРјРјРµРЅС‚Р°СЂРёР№');
                 }
             }
 
@@ -616,11 +616,11 @@ const PostDetailPage = ({
 
             if (response.status === 401 || response.status === 403) {
                 onUnauthorized?.();
-                throw new Error('Для лайков комментариев требуется авторизация');
+                throw new Error('Р”Р»СЏ Р»Р°Р№РєРѕРІ РєРѕРјРјРµРЅС‚Р°СЂРёРµРІ С‚СЂРµР±СѓРµС‚СЃСЏ Р°РІС‚РѕСЂРёР·Р°С†РёСЏ');
             }
 
             if (!response.ok) {
-                throw new Error('Не удалось изменить лайк комментария');
+                throw new Error('РќРµ СѓРґР°Р»РѕСЃСЊ РёР·РјРµРЅРёС‚СЊ Р»Р°Р№Рє РєРѕРјРјРµРЅС‚Р°СЂРёСЏ');
             }
 
             const data = await response.json();
@@ -729,7 +729,7 @@ const PostDetailPage = ({
             <Box sx={{ p: { xs: 1.25, md: 2 }, borderBottom: '1px solid #333', display: 'flex', alignItems: 'center', gap: 0.5 }}>
                 <IconButton
                     onClick={onBack}
-                    aria-label="Назад"
+                    aria-label="РќР°Р·Р°Рґ"
                     sx={{
                         color: '#00e5c9',
                         minWidth: 44,
@@ -752,12 +752,12 @@ const PostDetailPage = ({
                         whiteSpace: 'nowrap',
                     }}
                 >
-                    {backLabel || 'Назад к ленте'}
+                    {backLabel || 'РќР°Р·Р°Рґ Рє Р»РµРЅС‚Рµ'}
                 </Typography>
             </Box>
 
             <Box sx={{ p: { xs: 1.25, md: 2 } }}>
-                <Typography variant="body2" sx={labelStyle}>Название</Typography>
+                <Typography variant="body2" sx={labelStyle}>РќР°Р·РІР°РЅРёРµ</Typography>
                 <Typography variant="h4" sx={{ fontWeight: 'bold', mb: 2 }}>{post.title}</Typography>
 
                 <Box
@@ -769,7 +769,7 @@ const PostDetailPage = ({
                     }}
                     sx={{ cursor: onAuthorClick && authorId ? 'pointer' : 'default' }}
                 >
-                    <Typography variant="body2" sx={labelStyle}>Автор</Typography>
+                    <Typography variant="body2" sx={labelStyle}>РђРІС‚РѕСЂ</Typography>
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                         <Avatar
                             src={buildAvatarUrl(API_BASE_URL, authorAvatar)}
@@ -819,7 +819,7 @@ const PostDetailPage = ({
                         <Box
                             component="img"
                             src={articleImageUrl}
-                            alt="Фото статьи"
+                            alt="Р¤РѕС‚Рѕ СЃС‚Р°С‚СЊРё"
                             onError={() => setImageBroken(true)}
                             sx={{
                                 width: '100%',
@@ -831,6 +831,7 @@ const PostDetailPage = ({
                         />
                     </Box>
                 )}
+
 
                 <Box
                     dangerouslySetInnerHTML={{ __html: post.article_content }}
@@ -861,7 +862,7 @@ const PostDetailPage = ({
                 <Box sx={{ display: 'flex', alignItems: 'center' }}>
                     <IconButton
                         onClick={onLike}
-                        aria-label="Лайк"
+                        aria-label="Р›Р°Р№Рє"
                         sx={{ color: post.isLiked ? '#ff1744' : '#00e5c9', minWidth: 44, minHeight: 44 }}
                     >
                         <FavoriteIcon sx={{ fontSize: 26 }} />
@@ -874,7 +875,7 @@ const PostDetailPage = ({
                 <Box sx={{ display: 'flex', alignItems: 'center' }}>
                     <IconButton
                         onClick={handleToggleComments}
-                        aria-label="Комментарии"
+                        aria-label="РљРѕРјРјРµРЅС‚Р°СЂРёРё"
                         sx={{ color: commentsOpen ? '#048b79' : '#00e5c9', minWidth: 44, minHeight: 44 }}
                     >
                         <ChatBubbleOutlineIcon sx={{ fontSize: 26 }} />
@@ -893,17 +894,17 @@ const PostDetailPage = ({
                             try {
                                 if (navigator.clipboard && navigator.clipboard.writeText) {
                                     await navigator.clipboard.writeText(shareUrl);
-                                    alert('Ссылка скопирована в буфер обмена');
+                                    alert('РЎСЃС‹Р»РєР° СЃРєРѕРїРёСЂРѕРІР°РЅР° РІ Р±СѓС„РµСЂ РѕР±РјРµРЅР°');
                                 } else {
-                                    window.prompt('Скопируйте ссылку на статью:', shareUrl);
+                                    window.prompt('РЎРєРѕРїРёСЂСѓР№С‚Рµ СЃСЃС‹Р»РєСѓ РЅР° СЃС‚Р°С‚СЊСЋ:', shareUrl);
                                 }
                             } catch (err) {
                                 console.error('Copy failed', err);
                                 try {
                                     await navigator.clipboard.writeText(shareUrl);
-                                    alert('Ссылка скопирована в буфер обмена');
+                                    alert('РЎСЃС‹Р»РєР° СЃРєРѕРїРёСЂРѕРІР°РЅР° РІ Р±СѓС„РµСЂ РѕР±РјРµРЅР°');
                                 } catch {
-                                    window.prompt('Скопируйте ссылку на статью:', shareUrl);
+                                    window.prompt('РЎРєРѕРїРёСЂСѓР№С‚Рµ СЃСЃС‹Р»РєСѓ РЅР° СЃС‚Р°С‚СЊСЋ:', shareUrl);
                                 }
                             }
                         })();
@@ -916,11 +917,11 @@ const PostDetailPage = ({
             {isDesktopComments && (
                 <Collapse in={commentsOpen} timeout="auto" unmountOnExit>
                     <Box sx={{ p: 2, borderTop: '1px solid #333' }}>
-                        <Typography variant="h6" sx={{ color: '#f5f5f5', mb: 2 }}>Комментарии</Typography>
+                        <Typography variant="h6" sx={{ color: '#f5f5f5', mb: 2 }}>РљРѕРјРјРµРЅС‚Р°СЂРёРё</Typography>
 
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
                             <TextField
-                                label="Написать комментарий..."
+                                label="РќР°РїРёСЃР°С‚СЊ РєРѕРјРјРµРЅС‚Р°СЂРёР№..."
                                 variant="filled"
                                 fullWidth
                                 value={newCommentText}
@@ -944,7 +945,7 @@ const PostDetailPage = ({
                                     '&:hover': { backgroundColor: '#009e8a' },
                                 }}
                             >
-                                Отправить
+                                РћС‚РїСЂР°РІРёС‚СЊ
                             </Button>
                         </Box>
 
@@ -957,7 +958,7 @@ const PostDetailPage = ({
                                 <CircularProgress size={28} sx={{ color: '#00bfa5' }} />
                             </Box>
                         ) : commentsTree.length === 0 ? (
-                            <Typography sx={{ color: '#bdbdbd' }}>Пока нет комментариев. Будьте первым.</Typography>
+                            <Typography sx={{ color: '#bdbdbd' }}>РџРѕРєР° РЅРµС‚ РєРѕРјРјРµРЅС‚Р°СЂРёРµРІ. Р‘СѓРґСЊС‚Рµ РїРµСЂРІС‹Рј.</Typography>
                         ) : (
                             <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
                                 {commentsTree.map((comment) => (
@@ -1028,11 +1029,11 @@ const PostDetailPage = ({
                             }}
                         >
                             <Typography variant="h6" sx={{ color: '#00e5c9', fontWeight: 700, fontSize: '1.05rem' }}>
-                                Комментарии
+                                РљРѕРјРјРµРЅС‚Р°СЂРёРё
                             </Typography>
                             <IconButton
                                 onClick={() => setCommentsOpen(false)}
-                                aria-label="Закрыть"
+                                aria-label="Р—Р°РєСЂС‹С‚СЊ"
                                 sx={{ ml: 'auto', minWidth: 44, minHeight: 44, color: '#bdbdbd' }}
                             >
                                 <CloseIcon />
@@ -1057,7 +1058,7 @@ const PostDetailPage = ({
                                     <CircularProgress size={28} sx={{ color: '#00bfa5' }} />
                                 </Box>
                             ) : commentsTree.length === 0 ? (
-                                <Typography sx={{ color: '#bdbdbd' }}>Пока нет комментариев. Будьте первым.</Typography>
+                                <Typography sx={{ color: '#bdbdbd' }}>РџРѕРєР° РЅРµС‚ РєРѕРјРјРµРЅС‚Р°СЂРёРµРІ. Р‘СѓРґСЊС‚Рµ РїРµСЂРІС‹Рј.</Typography>
                             ) : (
                                 <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
                                     {commentsTree.map((comment) => (
@@ -1096,7 +1097,7 @@ const PostDetailPage = ({
                         >
                             <Box sx={{ display: 'flex', alignItems: 'stretch', gap: 1 }}>
                                 <TextField
-                                    label="Написать комментарий..."
+                                    label="РќР°РїРёСЃР°С‚СЊ РєРѕРјРјРµРЅС‚Р°СЂРёР№..."
                                     variant="filled"
                                     fullWidth
                                     value={newCommentText}
@@ -1127,7 +1128,7 @@ const PostDetailPage = ({
                                         '&:hover': { backgroundColor: '#009e8a' },
                                     }}
                                 >
-                                    Отпр.
+                                    РћС‚РїСЂ.
                                 </Button>
                             </Box>
                         </Box>
