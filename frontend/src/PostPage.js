@@ -35,6 +35,9 @@ import PostCard from './PostCard';
 import PostDetailPage from './PostDetailPage';
 import ProfileModal from './ProfileModal';
 import MobileBottomNav from './MobileBottomNav';
+import MobileFeedSegmentedControl from './MobileFeedSegmentedControl';
+import MobileFeedListSkeleton from './MobileFeedListSkeleton';
+import { useFeedTabSwipe } from './useFeedTabSwipe';
 import RegistrationModal from './RegistrationModal';
 import ForgotPasswordModal from './ForgotPasswordModal';
 import PostCreationModal from './PostCreationModal';
@@ -699,9 +702,21 @@ const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
     const [feedReplyInputs, setFeedReplyInputs] = useState({});
     const articlesRef = useRef([]);
     const hasMoreRef = useRef(hasMore);
+    const feedCacheRef = useRef({ random: null, recommend: null });
+    const switchRandomRecommendTabRef = useRef(() => {});
 
     useEffect(() => { articlesRef.current = articles; }, [articles]);
     useEffect(() => { hasMoreRef.current = hasMore; }, [hasMore]);
+
+    useEffect(() => {
+        if (paginationType !== 'random' && paginationType !== 'recommend') return;
+        feedCacheRef.current[paginationType] = {
+            articles,
+            pageNumber,
+            hasMore,
+            emptyStateMessage,
+        };
+    }, [articles, pageNumber, hasMore, emptyStateMessage, paginationType]);
     useEffect(() => { isProfileModalOpenRef.current = isProfileModalOpen; }, [isProfileModalOpen]);
     useEffect(() => { searchQueryRef.current = searchQuery; }, [searchQuery]);
     useEffect(() => {
@@ -902,41 +917,8 @@ const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
         setReturnProfileUserId(null);
     };
 
-    const handlePaginationTypeChange = (type) => {
-        if (type === paginationType || isLoading) return;
-
-        setPaginationType(type);
-        if (type !== 'search') {
-            setIsSearchMode(false);
-        }
-        if (type !== 'tags') {
-            setSelectedTagIds([]);
-        }
-        setArticles([]);
-        setPageNumber(1);
-        setHasMore(true);
-        fetchArticlesPage(1, type);
-        if (returnToProfile) {
-            setViewedProfileId(returnProfileUserId ?? null);
-            setIsProfileModalOpen(true);
-        }
-        setReturnToProfile(false);
-        setReturnProfileUserId(null);
-    };
-
     const handleSearchOpen = () => {
         setIsSearchMode(true);
-    };
-
-    const handleSearchClose = () => {
-        setIsSearchMode(false);
-        setSearchQuery('');
-        const restoreType = lastNonSearchTypeRef.current || 'random';
-        setPaginationType(restoreType);
-        setArticles([]);
-        setPageNumber(1);
-        setHasMore(true);
-        fetchArticlesPage(1, restoreType);
     };
 
     const handleSearchSubmit = () => {
@@ -1202,6 +1184,102 @@ const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
             setError('Не удалось загрузить статьи.');
         } finally {
             setIsLoading(false);
+        }
+    };
+
+    const switchRandomRecommendTab = (type) => {
+        if (type !== 'random' && type !== 'recommend') return;
+        if (type === paginationType) return;
+        if (isLoading) return;
+
+        setPaginationType(type);
+        setIsSearchMode(false);
+        setSelectedTagIds([]);
+
+        const cached = feedCacheRef.current[type];
+        if (cached && cached.articles && cached.articles.length > 0) {
+            setArticles(cached.articles);
+            setPageNumber(cached.pageNumber);
+            setHasMore(cached.hasMore);
+            setEmptyStateMessage(cached.emptyStateMessage || '');
+            setError(null);
+            setIsLoading(false);
+            queueMicrotask(() => {
+                const el = articlesContainerRef.current;
+                if (el) el.scrollTop = 0;
+            });
+            return;
+        }
+
+        if (cached && Array.isArray(cached.articles) && cached.articles.length === 0) {
+            setArticles([]);
+            setPageNumber(1);
+            setHasMore(false);
+            setEmptyStateMessage(cached.emptyStateMessage || '');
+            setError(null);
+            setIsLoading(false);
+            queueMicrotask(() => {
+                const el = articlesContainerRef.current;
+                if (el) el.scrollTop = 0;
+            });
+            return;
+        }
+
+        setArticles([]);
+        setPageNumber(1);
+        setHasMore(true);
+        setEmptyStateMessage('');
+        setError(null);
+        fetchArticlesPage(1, type, { force: true });
+    };
+
+    switchRandomRecommendTabRef.current = switchRandomRecommendTab;
+
+    const handlePaginationTypeChange = (type) => {
+        if (type === paginationType || isLoading) return;
+
+        if (type === 'random' || type === 'recommend') {
+            switchRandomRecommendTab(type);
+            if (returnToProfile) {
+                setViewedProfileId(returnProfileUserId ?? null);
+                setIsProfileModalOpen(true);
+            }
+            setReturnToProfile(false);
+            setReturnProfileUserId(null);
+            return;
+        }
+
+        setPaginationType(type);
+        if (type !== 'search') {
+            setIsSearchMode(false);
+        }
+        if (type !== 'tags') {
+            setSelectedTagIds([]);
+        }
+        setArticles([]);
+        setPageNumber(1);
+        setHasMore(true);
+        fetchArticlesPage(1, type);
+        if (returnToProfile) {
+            setViewedProfileId(returnProfileUserId ?? null);
+            setIsProfileModalOpen(true);
+        }
+        setReturnToProfile(false);
+        setReturnProfileUserId(null);
+    };
+
+    const handleSearchClose = () => {
+        setIsSearchMode(false);
+        setSearchQuery('');
+        const restoreType = lastNonSearchTypeRef.current || 'random';
+        if (restoreType === 'random' || restoreType === 'recommend') {
+            switchRandomRecommendTab(restoreType);
+        } else {
+            setPaginationType(restoreType);
+            setArticles([]);
+            setPageNumber(1);
+            setHasMore(true);
+            fetchArticlesPage(1, restoreType, { force: true });
         }
     };
 
@@ -1678,6 +1756,22 @@ const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
         }
     };
 
+    const feedSwipeEnabled =
+        !isDesktopLayout &&
+        !isViewingDetailPage &&
+        !isSearchMode &&
+        !isLoading &&
+        (paginationType === 'random' || paginationType === 'recommend');
+
+    const { dragOffset, swipeHandlers } = useFeedTabSwipe({
+        enabled: feedSwipeEnabled,
+        activeTab: paginationType === 'recommend' ? 'recommend' : 'random',
+        scrollContainerRef: articlesContainerRef,
+        threshold: 50,
+        onSwipeLeft: () => switchRandomRecommendTabRef.current('recommend'),
+        onSwipeRight: () => switchRandomRecommendTabRef.current('random'),
+    });
+
     const feedCommentsSidebarProps = {
         activePost: activeCommentsPost,
         commentsTree: feedCommentsTree,
@@ -1707,33 +1801,6 @@ const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
     const mobileSearchActive = isSearchMode || paginationType === 'search';
     const mobileCategoriesActive = isCategoryModalOpen || paginationType === 'tags';
     const mobileProfileActive = isProfileModalOpen;
-
-    const chipButtonSx = (active) => ({
-        textTransform: 'none',
-        borderRadius: '20px',
-        px: { xs: 1.5, sm: 2 },
-        py: 0.75,
-        minHeight: 44,
-        fontWeight: 'bold',
-        fontSize: { xs: '0.8rem', sm: '0.875rem' },
-        flexShrink: 0,
-        transition: 'all 0.25s ease',
-        ...(active
-            ? {
-                backgroundColor: '#00bfa5',
-                color: '#0a0a0a',
-                borderColor: '#00bfa5',
-                '&:hover': { backgroundColor: '#00d4b4' },
-            }
-            : {
-                borderColor: 'rgba(0, 191, 165, 0.55)',
-                color: '#e0f7f4',
-                '&:hover': {
-                    backgroundColor: 'rgba(0, 191, 165, 0.12)',
-                    borderColor: '#00d4b4',
-                },
-            }),
-    });
 
     return (
         <Box sx={{ display: 'flex', minHeight: '100vh', backgroundColor: '#121212', overflow: 'hidden' }}>
@@ -1795,6 +1862,7 @@ const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
                     <Box
                         sx={{
                             display: 'flex',
+                            flexDirection: 'column',
                             '@media (min-width: 768px)': {
                                 display: 'none',
                             },
@@ -1806,16 +1874,15 @@ const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
                             px: 1.25,
                             pt: 'calc(10px + env(safe-area-inset-top, 0px))',
                             pb: 1,
-                            alignItems: 'center',
                             gap: 1,
-                            background: 'linear-gradient(180deg, rgba(18,18,18,0.98) 0%, rgba(18,18,18,0.88) 85%, transparent 100%)',
+                            background: 'linear-gradient(180deg, rgba(18,18,18,0.98) 0%, rgba(18,18,18,0.92) 92%, transparent 100%)',
                             borderBottom: '1px solid rgba(0, 191, 165, 0.12)',
-                            backdropFilter: 'blur(10px)',
+                            backdropFilter: 'blur(12px)',
                             transition: 'background 0.25s ease',
                         }}
                     >
                         {isSearchMode ? (
-                            <>
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, width: '100%' }}>
                                 <IconButton
                                     onClick={handleSearchClose}
                                     aria-label="Назад"
@@ -1874,72 +1941,45 @@ const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
                                         ),
                                     }}
                                 />
-                            </>
+                            </Box>
                         ) : (
                             <>
-                                <Typography
-                                    variant="h6"
-                                    sx={{
-                                        fontWeight: 800,
-                                        letterSpacing: 0.5,
-                                        color: '#00e5c9',
-                                        fontSize: '1.15rem',
-                                    }}
-                                >
-                                    Lyambda
-                                </Typography>
-                                <Box sx={{ flex: 1 }} />
-                                <IconButton
-                                    onClick={handleSearchOpen}
-                                    aria-label="Поиск"
-                                    sx={{ minWidth: 44, minHeight: 44, color: '#e0f7f4' }}
-                                >
-                                    <SearchIcon />
-                                </IconButton>
-                                <IconButton
-                                    onClick={(e) => setMoreMenuAnchor(e.currentTarget)}
-                                    aria-label="Ещё"
-                                    sx={{ minWidth: 44, minHeight: 44, color: '#e0f7f4' }}
-                                >
-                                    <MoreVertIcon />
-                                </IconButton>
+                                <Box sx={{ display: 'flex', alignItems: 'center', width: '100%', gap: 1 }}>
+                                    <Typography
+                                        variant="h6"
+                                        sx={{
+                                            fontWeight: 800,
+                                            letterSpacing: 0.5,
+                                            color: '#00e5c9',
+                                            fontSize: '1.15rem',
+                                        }}
+                                    >
+                                        Lyambda
+                                    </Typography>
+                                    <Box sx={{ flex: 1 }} />
+                                    <IconButton
+                                        onClick={(e) => setMoreMenuAnchor(e.currentTarget)}
+                                        aria-label="Ещё"
+                                        sx={{ minWidth: 44, minHeight: 44, color: '#e0f7f4' }}
+                                    >
+                                        <MoreVertIcon />
+                                    </IconButton>
+                                </Box>
+                                {(paginationType === 'random' || paginationType === 'recommend') && (
+                                    <MobileFeedSegmentedControl
+                                        value={paginationType === 'recommend' ? 'recommend' : 'random'}
+                                        disabled={isLoading}
+                                        onChange={(next) => {
+                                            if (next === 'random') {
+                                                handlePaginationTypeChange('random');
+                                            } else {
+                                                handlePaginationTypeChange('recommend');
+                                            }
+                                        }}
+                                    />
+                                )}
                             </>
                         )}
-                    </Box>
-                )}
-
-                {!isViewingDetailPage && (
-                    <Box
-                        sx={{
-                            display: 'flex',
-                            '@media (min-width: 768px)': {
-                                display: 'none',
-                            },
-                            width: '100%',
-                            maxWidth: '100vw',
-                            overflowX: 'auto',
-                            gap: 1,
-                            px: 1.25,
-                            py: 0.75,
-                            scrollbarWidth: 'none',
-                            '&::-webkit-scrollbar': { display: 'none' },
-                            flexShrink: 0,
-                        }}
-                    >
-                        <Button
-                            variant={paginationType === 'random' ? 'contained' : 'outlined'}
-                            onClick={() => handlePaginationTypeChange('random')}
-                            sx={chipButtonSx(paginationType === 'random')}
-                        >
-                            Случайные
-                        </Button>
-                        <Button
-                            variant={paginationType === 'recommend' ? 'contained' : 'outlined'}
-                            onClick={() => handlePaginationTypeChange('recommend')}
-                            sx={chipButtonSx(paginationType === 'recommend')}
-                        >
-                            Рекомендации
-                        </Button>
                     </Box>
                 )}
 
@@ -2136,22 +2176,36 @@ const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
                         />
                     </Box>
                 ) : (
-                    <Box sx={{
-                        width: '100%',
-                        maxWidth: { xs: '100%', sm: '650px' },
-                        boxSizing: 'border-box',
-                        px: 1,
-                        pb: 'calc(100px + env(safe-area-inset-bottom, 0px))',
-                        '@media (min-width: 600px)': {
-                            px: 1.5,
-                        },
-                        '@media (min-width: 768px)': {
-                            px: 0,
-                            pb: 5,
-                        },
-                    }}
+                    <Box
+                        sx={{
+                            width: '100%',
+                            maxWidth: { xs: '100%', sm: '650px' },
+                            boxSizing: 'border-box',
+                            px: 1,
+                            pb: 'calc(100px + env(safe-area-inset-bottom, 0px))',
+                            '@media (min-width: 600px)': {
+                                px: 1.5,
+                            },
+                            '@media (min-width: 768px)': {
+                                px: 0,
+                                pb: 5,
+                            },
+                            transform: `translateX(${dragOffset}px)`,
+                            transition: Math.abs(dragOffset) > 0.5
+                                ? 'none'
+                                : 'transform 0.28s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.22s ease',
+                            touchAction: feedSwipeEnabled ? 'pan-y' : 'auto',
+                        }}
+                        {...(feedSwipeEnabled ? swipeHandlers : {})}
                     >
-                        {articles.length === 0 && isLoading && <Typography sx={{ color: '#f5f5f5', textAlign: 'center', pt: 4 }}><CircularProgress sx={{ color: '#00bfa5' }} /></Typography>}
+                        {articles.length === 0 && isLoading && (isDesktopLayout || (paginationType !== 'random' && paginationType !== 'recommend')) && (
+                            <Typography sx={{ color: '#f5f5f5', textAlign: 'center', pt: 4 }}>
+                                <CircularProgress sx={{ color: '#00bfa5' }} />
+                            </Typography>
+                        )}
+                        {articles.length === 0 && isLoading && !isDesktopLayout && (paginationType === 'random' || paginationType === 'recommend') && (
+                            <MobileFeedListSkeleton count={3} />
+                        )}
                         {!isLoading && articles.length === 0 && !error && (
                             <Typography sx={{ color: '#f5f5f5', textAlign: 'center', pt: 4 }}>
                                 {emptyStateMessage || (paginationType === 'search' ? 'Статьи не найдены.' : 'Статей пока нет.')}
