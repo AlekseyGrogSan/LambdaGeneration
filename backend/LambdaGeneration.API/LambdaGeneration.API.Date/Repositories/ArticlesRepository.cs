@@ -229,11 +229,7 @@ namespace LambdaGeneration.API.Date.Repositories
         {
             var synonymDictionary = new Dictionary<string, List<string>>
             {
-                // Python - теперь есть все три варианта как ключи!
-                ["python"] = new() { "python", "питон", "пайтон" },
-                ["питон"] = new() { "python", "питон", "пайтон" },
-                ["пайтон"] = new() { "python", "питон", "пайтон" },
-
+                // Programming Languages
                 // C#
                 ["c#"] = new() { "c#", "си шарп", "csharp", "сишарп" },
                 ["csharp"] = new() { "c#", "си шарп", "csharp", "сишарп" },
@@ -244,46 +240,166 @@ namespace LambdaGeneration.API.Date.Repositories
                 ["java"] = new() { "java", "джава" },
                 ["джава"] = new() { "java", "джава" },
 
-                //С++
-                ["С++"] = new() { "C++","сиплюсплюс", "плюсики", "cplusplus" },
-                ["сиплюсплюс"] = new() { "C++", "сиплюсплюс", "плюсики", "cplusplus" },
-                ["плюсы"] = new() { "C++", "сиплюсплюс", "плюсики", "cplusplus" },
-                ["плюсики"] = new() { "C++", "сиплюсплюс", "плюсики", "cplusplus" },
-                ["cplusplus"] = new() { "C++", "сиплюсплюс", "плюсики", "cplusplus" },
+                // Python
+                ["python"] = new() { "python", "питон", "пайтон" },
+                ["питон"] = new() { "python", "питон", "пайтон" },
+                ["пайтон"] = new() { "python", "питон", "пайтон" },
 
                 // JavaScript
                 ["javascript"] = new() { "javascript", "js", "джаваскрипт" },
                 ["js"] = new() { "javascript", "js", "джаваскрипт" },
                 ["джаваскрипт"] = new() { "javascript", "js", "джаваскрипт" },
 
+                // TypeScript
+                ["typescript"] = new() { "typescript", "ts", "тайпскрипт" },
+                ["ts"] = new() { "typescript", "ts", "тайпскрипт" },
+                ["тайпскрипт"] = new() { "typescript", "ts", "тайпскрипт" },
+
+                // Go
+                ["go"] = new() { "go", "гo" },
+                ["гo"] = new() { "go", "гo" },
+
+                // Rust
+                ["rust"] = new() { "rust", "раст" },
+                ["раст"] = new() { "rust", "раст" },
+
+                // Kotlin
+                ["kotlin"] = new() { "kotlin", "котлин" },
+                ["котлин"] = new() { "kotlin", "котлин" },
+
+                // Swift
+                ["swift"] = new() { "swift", "свифт" },
+                ["свифт"] = new() { "swift", "свифт" },
+
+                // PHP
+                ["php"] = new() { "php", "пхп" },
+                ["пхп"] = new() { "php", "пхп" },
+
+                // C++
+                ["c++"] = new() { "c++", "сиплюсплюс", "плюсики", "cplusplus" },
+                ["сиплюсплюс"] = new() { "c++", "сиплюсплюс", "плюсики", "cplusplus" },
+                ["плюсики"] = new() { "c++", "сиплюсплюс", "плюсики", "cplusplus" },
+                ["cplusplus"] = new() { "c++", "сиплюсплюс", "плюсики", "cplusplus" },
+
+                // C
+                ["c"] = new() { "c", "си" },
+                ["си"] = new() { "c", "си" },
+
+                // Ruby
+                ["ruby"] = new() { "ruby", "руби" },
+                ["руби"] = new() { "ruby", "руби" },
+
+                // Frameworks and Libraries
                 // .NET
                 [".net"] = new() { ".net", "dotnet", "дотнет" },
                 ["dotnet"] = new() { ".net", "dotnet", "дотнет" },
                 ["дотнет"] = new() { ".net", "dotnet", "дотнет" },
 
+                // ASP.NET
+                ["asp.net"] = new() { "asp.net", "aspnet", "асп.нет", "аспнет" },
+                ["aspnet"] = new() { "asp.net", "aspnet", "асп.нет", "аспнет" },
+                ["асп.нет"] = new() { "asp.net", "aspnet", "асп.нет", "аспнет" },
+                ["аспнет"] = new() { "asp.net", "aspnet", "асп.нет", "аспнет" },
+
+                // Entity Framework
+                ["entity framework"] = new() { "entity framework", "entityframework", "ef", "entityframeworkcore", "efcore" },
+                ["entityframework"] = new() { "entity framework", "entityframework", "ef", "entityframeworkcore", "efcore" },
+                ["ef"] = new() { "entity framework", "entityframework", "ef", "entityframeworkcore", "efcore" },
+                ["entityframeworkcore"] = new() { "entity framework", "entityframework", "ef", "entityframeworkcore", "efcore" },
+                ["efcore"] = new() { "entity framework", "entityframework", "ef", "entityframeworkcore", "efcore" },
+
+                // Spring
+                ["spring"] = new() { "spring", "спринг" },
+                ["спринг"] = new() { "spring", "спринг" },
+
+                // React
+                ["react"] = new() { "react", "реакт" },
+                ["реакт"] = new() { "react", "реакт" },
+
+                // Angular
+                ["angular"] = new() { "angular", "ангулар" },
+                ["ангулар"] = new() { "angular", "ангулар" },
+
+                // Vue
+                ["vue"] = new() { "vue", "вью" },
+                ["вью"] = new() { "vue", "вью" },
+
+                // Node.js
+                ["node.js"] = new() { "node.js", "nodejs", "ноде", "ноджс" },
+                ["nodejs"] = new() { "node.js", "nodejs", "ноде", "ноджс" },
+                ["ноде"] = new() { "node.js", "nodejs", "ноде", "ноджс" },
+                ["ноджс"] = new() { "node.js", "nodejs", "ноде", "ноджс" },
+
+                // Django
+                ["django"] = new() { "django", "джанго" },
+                ["джанго"] = new() { "django", "джанго" },
+
+                // Flask
+                ["flask"] = new() { "flask", "фласк" },
+                ["фласк"] = new() { "flask", "фласк" },
+
+                // Topics
+                // Math
+                ["math"] = new() { "math", "математика", "матан", "алгебра", "геометрия" },
+                ["математика"] = new() { "math", "математика", "матан", "алгебра", "геометрия" },
+                ["матан"] = new() { "math", "математика", "матан", "алгебра", "геометрия" },
+                ["алгебра"] = new() { "math", "математика", "матан", "алгебра", "геометрия" },
+                ["геометрия"] = new() { "math", "математика", "матан", "алгебра", "геометрия" },
+
+                // Data Structures
+                ["data structures"] = new() { "data structures", "datastructures", "структуры данных", "структурыданных" },
+                ["datastructures"] = new() { "data structures", "datastructures", "структуры данных", "структурыданных" },
+                ["структуры данных"] = new() { "data structures", "datastructures", "структуры данных", "структурыданных" },
+                ["структурыданных"] = new() { "data structures", "datastructures", "структуры данных", "структурыданных" },
+
+                // LLM
+                ["llm"] = new() { "llm", "llms", "большие языковые модели", "большая языковая модель" },
+                ["llms"] = new() { "llm", "llms", "большие языковые модели", "большая языковая модель" },
+                ["большие языковые модели"] = new() { "llm", "llms", "большие языковые модели", "большая языковая модель" },
+                ["большая языковая модель"] = new() { "llm", "llms", "большие языковые модели", "большая языковая модель" },
+
+                // ML
+                ["ml"] = new() { "ml", "machine learning", "machinelearning", "машинное обучение" },
+                ["machine learning"] = new() { "ml", "machine learning", "machinelearning", "машинное обучение" },
+                ["machinelearning"] = new() { "ml", "machine learning", "machinelearning", "машинное обучение" },
+                ["машинное обучение"] = new() { "ml", "machine learning", "machinelearning", "машинное обучение" },
+
+                // PascalABC
+                ["pascalabc"] = new() { "pascalabc", "pascal abc", "паскаль абс", "паскаль", "pascal" },
+                ["pascal abc"] = new() { "pascalabc", "pascal abc", "паскаль абс", "паскаль", "pascal" },
+                ["паскаль абс"] = new() { "pascalabc", "pascal abc", "паскаль абс", "паскаль", "pascal" },
+                ["паскаль"] = new() { "pascalabc", "pascal abc", "паскаль абс", "паскаль", "pascal" },
+                ["pascal"] = new() { "pascalabc", "pascal abc", "паскаль абс", "паскаль", "pascal" },
+
+                // Unity
+                ["unity"] = new() { "unity", "юнити", "unity3d", "юнити3d" },
+                ["юнити"] = new() { "unity", "юнити", "unity3d", "юнити3d" },
+                ["unity3d"] = new() { "unity", "юнити", "unity3d", "юнити3d" },
+                ["юнити3d"] = new() { "unity", "юнити", "unity3d", "юнити3d" },
+
                 // IT
-                ["it"] = new() { "it", "айти" },
-                ["айти"] = new() { "it", "айти" }
+                ["it"] = new() { "it", "айти", "информационные технологии" },
+                ["айти"] = new() { "it", "айти", "информационные технологии" },
+                ["информационные технологии"] = new() { "it", "айти", "информационные технологии" }
             };
 
             var expanded = new HashSet<string>();
 
             foreach (var term in terms)
             {
-                if (synonymDictionary.TryGetValue(term, out var synonyms))
-                { 
+                if (synonymDictionary.TryGetValue(term.ToLower(), out var synonyms))
+                {
                     foreach (var synonym in synonyms)
                         expanded.Add(synonym.ToLower());
                 }
                 else
                 {
-                    expanded.Add(term);
+                    expanded.Add(term.ToLower());
                 }
             }
 
             return expanded.ToList();
         }
-
         public async Task<List<Articles>> SearchArticlesByTags(List<int>? tags, int page, int pageSize = 10)
         {
             int skip = (page - 1) * pageSize;

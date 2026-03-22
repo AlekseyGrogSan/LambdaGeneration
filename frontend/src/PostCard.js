@@ -172,7 +172,7 @@ const PostCard = ({
                     </Typography>
                 </Box>
             )}
-            <Box sx={{ p: { xs: 1.25, sm: 1.5, md: 2 }, flexGrow: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between', minWidth: 0 }}>
+            <Box sx={{ p: { xs: 1.25, sm: 1.5, md: 2 }, flexGrow: 1, display: 'flex', flexDirection: 'column', justifyContent: { xs: 'flex-start', md: 'space-between' }, minWidth: 0 }}>
                 
                 {/* 1. АВТОР и ТЕГИ */}
                 <Box>

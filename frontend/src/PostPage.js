@@ -669,6 +669,8 @@ const [isResourcesModalOpen, setIsResourcesModalOpen] = useState(false);
 const [isFaqModalOpen, setIsFaqModalOpen] = useState(false);
 const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
     const [moreMenuAnchor, setMoreMenuAnchor] = useState(null);
+    const moreMenuLockRef = useRef(null);
+    const moreMenuScrollTopRef = useRef(0);
     const theme = useTheme();
     const isDesktopLayout = useMediaQuery(theme.breakpoints.up(768));
     const isProfileModalOpenRef = useRef(false);
@@ -685,6 +687,7 @@ const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
     const searchQueryRef = useRef('');
     const lastNonSearchTypeRef = useRef('random');
+    const lastFeedTypeRef = useRef('random');
     const [selectedTagIds, setSelectedTagIds] = useState([]);
     
     const [isLoading, setIsLoading] = useState(false); 
@@ -723,7 +726,36 @@ const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
         if (paginationType !== 'search') {
             lastNonSearchTypeRef.current = paginationType;
         }
+        if (paginationType === 'random' || paginationType === 'recommend') {
+            lastFeedTypeRef.current = paginationType;
+        }
     }, [paginationType]);
+    useEffect(() => {
+        const container = articlesContainerRef.current;
+        if (!container) return;
+        if (moreMenuAnchor) {
+            moreMenuScrollTopRef.current = container.scrollTop;
+            moreMenuLockRef.current = {
+                overflowY: container.style.overflowY,
+                scrollBehavior: container.style.scrollBehavior,
+                scrollSnapType: container.style.scrollSnapType,
+            };
+            container.style.overflowY = 'hidden';
+            container.style.scrollBehavior = 'auto';
+            container.style.scrollSnapType = 'none';
+            requestAnimationFrame(() => {
+                container.scrollTop = moreMenuScrollTopRef.current;
+            });
+            return;
+        }
+        if (moreMenuLockRef.current) {
+            const { overflowY, scrollBehavior, scrollSnapType } = moreMenuLockRef.current;
+            container.style.overflowY = overflowY;
+            container.style.scrollBehavior = scrollBehavior;
+            container.style.scrollSnapType = scrollSnapType;
+            moreMenuLockRef.current = null;
+        }
+    }, [moreMenuAnchor]);
     const [returnToProfile, setReturnToProfile] = useState(false);
     const [returnProfileUserId, setReturnProfileUserId] = useState(null);
     const [profileReturnEnabled, setProfileReturnEnabled] = useState(false);
@@ -1281,6 +1313,18 @@ const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
             setHasMore(true);
             fetchArticlesPage(1, restoreType, { force: true });
         }
+    };
+
+    const handleMobileHomeNav = () => {
+        if (isViewingDetailPage) {
+            handleBackToFeed();
+        } else if (isSearchMode) {
+            handleSearchClose();
+        } else if (paginationType === 'tags') {
+            const targetFeedType = lastFeedTypeRef.current || 'random';
+            handlePaginationTypeChange(targetFeedType);
+        }
+        setIsCategoryModalOpen(false);
     };
 
     const handleLikeToggle = async (rawId, currentIsLiked) => {
@@ -1971,7 +2015,11 @@ const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
                                     </Typography>
                                     <Box sx={{ flex: 1 }} />
                                     <IconButton
-                                        onClick={(e) => setMoreMenuAnchor(e.currentTarget)}
+                                        onClick={(e) => {
+                                            e.preventDefault();
+                                            e.stopPropagation();
+                                            setMoreMenuAnchor(e.currentTarget);
+                                        }}
                                         aria-label="Ещё"
                                         sx={{ minWidth: 44, minHeight: 44, color: '#e0f7f4' }}
                                     >
@@ -2353,14 +2401,7 @@ const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
                 searchActive={mobileSearchActive}
                 categoriesActive={mobileCategoriesActive}
                 profileActive={mobileProfileActive}
-                onHome={() => {
-                    if (isViewingDetailPage) {
-                        handleBackToFeed();
-                    } else if (isSearchMode) {
-                        handleSearchClose();
-                    }
-                    setIsCategoryModalOpen(false);
-                }}
+                onHome={handleMobileHomeNav}
                 onSearch={() => {
                     if (isViewingDetailPage) {
                         handleBackToFeed();

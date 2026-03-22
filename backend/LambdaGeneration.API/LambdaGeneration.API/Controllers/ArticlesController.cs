@@ -69,10 +69,11 @@ namespace LambdaGeneration.API.Controllers
 
                 var ArticleIntTags = new List<int>();
 
-                for (var i = 0;  i < request.article_tags.Count; i++)
-                {
-                    ArticleIntTags.Add(ApiExtensions.ToTags(request.article_tags[i]));
-                }
+                if (request.article_tags != null)
+                    for (var i = 0;  i < request.article_tags.Count; i++)
+                    {
+                        ArticleIntTags.Add(ApiExtensions.ToTags(request.article_tags[i]));
+                    }
                 
                 var author_id = GetUserID();
 
