@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react'; 
+﻿import React, { useState, useEffect, useRef, useCallback } from 'react'; 
 import { 
     Box,
     Button,
@@ -113,7 +113,7 @@ const sidebarStyle = {
     },
     flexDirection: 'column',
     justifyContent: 'flex-start',
-    height: '95.5vh',
+    height: '100vh',
     borderLeft: '1px solid #333',
     position: 'sticky',
     top: 0,
@@ -1122,7 +1122,6 @@ const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
 
         return 'Статей пока нет.';
     };
-
 
     // ✅ НОВАЯ ФУНКЦИЯ ЗАГРУЗКИ СТРАНИЦЫ
     const fetchArticlesPage = async (page, type = paginationType, options = {}) => {
@@ -2247,10 +2246,11 @@ const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
                             '@media (min-width: 600px)': {
                                 px: 1.5,
                             },
-                            '@media (min-width: 768px)': {
-                                px: 0,
-                                pb: 5,
-                            },
+                        '@media (min-width: 768px)': {
+                            px: 0,
+                            pb: 5,
+                            mt: '20px',
+                        },
                             transform: `translateX(${dragOffset}px)`,
                             transition: Math.abs(dragOffset) > 0.5
                                 ? 'none'
