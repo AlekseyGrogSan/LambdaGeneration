@@ -665,9 +665,9 @@ const PostPage = () => {
     const [isForgotModalOpen, setIsForgotModalOpen] = useState(false);
     const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
     const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
-const [isResourcesModalOpen, setIsResourcesModalOpen] = useState(false);
-const [isFaqModalOpen, setIsFaqModalOpen] = useState(false);
-const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
+    const [isResourcesModalOpen, setIsResourcesModalOpen] = useState(false);
+    const [isFaqModalOpen, setIsFaqModalOpen] = useState(false);
+    const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
     const [moreMenuAnchor, setMoreMenuAnchor] = useState(null);
     const theme = useTheme();
     const isDesktopLayout = useMediaQuery(theme.breakpoints.up(768));
@@ -706,6 +706,14 @@ const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
     const verticalViewportRef = useRef(null);
     const [feedSlideHeight, setFeedSlideHeight] = useState(0);
     const [feedCurrentIndex, setFeedCurrentIndex] = useState(0);
+    const [returnToProfile, setReturnToProfile] = useState(false);
+    const [returnProfileUserId, setReturnProfileUserId] = useState(null);
+    const [profileReturnEnabled, setProfileReturnEnabled] = useState(false);
+    const [profileReturnUserId, setProfileReturnUserId] = useState(null);
+    const [feedReplyEditorOpen, setFeedReplyEditorOpen] = useState({});
+    const [feedEditInputs, setFeedEditInputs] = useState({});
+    const [feedEditEditorOpen, setFeedEditEditorOpen] = useState({});
+    const feedCommentAuthorCacheRef = useRef({});
 
     useEffect(() => { articlesRef.current = articles; }, [articles]);
     useEffect(() => { hasMoreRef.current = hasMore; }, [hasMore]);
@@ -726,10 +734,6 @@ const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
             lastNonSearchTypeRef.current = paginationType;
         }
     }, [paginationType]);
-    const [returnToProfile, setReturnToProfile] = useState(false);
-    const [returnProfileUserId, setReturnProfileUserId] = useState(null);
-    const [profileReturnEnabled, setProfileReturnEnabled] = useState(false);
-    const [profileReturnUserId, setProfileReturnUserId] = useState(null);
 
     // On mount: if URL contains ?article=<id>, try to open that article in detail view
     useEffect(() => {
@@ -795,10 +799,6 @@ const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
 
         return () => { cancelled = true; };
     }, []);
-    const [feedReplyEditorOpen, setFeedReplyEditorOpen] = useState({});
-    const [feedEditInputs, setFeedEditInputs] = useState({});
-    const [feedEditEditorOpen, setFeedEditEditorOpen] = useState({});
-    const feedCommentAuthorCacheRef = useRef({});
 
     const articlesContainerRef = useRef(null); 
     const postRefs = useRef({}); 
@@ -1045,7 +1045,11 @@ const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
         let rafId = 0;
 
         const applySize = (el) => {
-            const h = el.getBoundingClientRect().height;
+            let h = el.getBoundingClientRect().height;
+            if (h <= 0 && typeof window !== 'undefined') {
+                const approxHeaderAndChrome = 140;
+                h = Math.max(window.innerHeight - approxHeaderAndChrome, 240);
+            }
             if (h > 0) setFeedSlideHeight(h);
         };
 
@@ -2322,7 +2326,8 @@ const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
                             overflow: 'hidden',
                             display: 'flex',
                             flexDirection: 'column',
-                            touchAction: 'none',
+                            touchAction:
+                                articles.length > 0 && feedSlideHeight > 0 ? 'none' : 'manipulation',
                         }}
                         {...verticalPointerHandlers}
                     >
