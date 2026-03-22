@@ -1,4 +1,4 @@
-﻿import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
     Box,
     Typography,
@@ -9,11 +9,15 @@ import {
     Collapse,
     CircularProgress,
     Avatar,
+    SwipeableDrawer,
+    useMediaQuery,
+    useTheme,
 } from '@mui/material';
 import FavoriteIcon from '@mui/icons-material/Favorite';
 import ChatBubbleOutlineIcon from '@mui/icons-material/ChatBubbleOutline';
 import SendIcon from '@mui/icons-material/Send';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
+import CloseIcon from '@mui/icons-material/Close';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import ExpandLessIcon from '@mui/icons-material/ExpandLess';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
@@ -318,6 +322,8 @@ const PostDetailPage = ({
     const [editEditorOpen, setEditEditorOpen] = useState({});
     const authorCacheRef = useRef({});
     const [imageBroken, setImageBroken] = useState(false);
+    const theme = useTheme();
+    const isDesktopComments = useMediaQuery(theme.breakpoints.up(768));
 
     useEffect(() => {
         if (containerRef && containerRef.current) {
@@ -715,19 +721,42 @@ const PostDetailPage = ({
                 backgroundColor: '#2c2c2c',
                 borderRadius: '12px',
                 boxShadow: '0 4px 12px rgba(0, 0, 0, 0.5)',
-                m: 2,
+                m: { xs: 0, sm: 1, md: 2 },
                 pb: 2,
                 color: 'white',
             }}
         >
-            <Box sx={{ p: 2, borderBottom: '1px solid #333', display: 'flex', alignItems: 'center' }}>
-                <IconButton onClick={onBack} sx={{ color: '#00bfa5' }}>
+            <Box sx={{ p: { xs: 1.25, md: 2 }, borderBottom: '1px solid #333', display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                <IconButton
+                    onClick={onBack}
+                    aria-label="Назад"
+                    sx={{
+                        color: '#00e5c9',
+                        minWidth: 44,
+                        minHeight: 44,
+                        transition: 'background-color 0.2s ease',
+                        '&:hover': { backgroundColor: 'rgba(0, 191, 165, 0.1)' },
+                    }}
+                >
                     <ArrowBackIcon />
                 </IconButton>
-                <Typography variant="h6" sx={{ color: 'white', ml: 1 }}>{backLabel || 'Назад к ленте'}</Typography>
+                <Typography
+                    variant="h6"
+                    sx={{
+                        color: '#f5f5f5',
+                        ml: 0.5,
+                        fontSize: { xs: '1rem', md: '1.25rem' },
+                        fontWeight: 700,
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap',
+                    }}
+                >
+                    {backLabel || 'Назад к ленте'}
+                </Typography>
             </Box>
 
-            <Box sx={{ p: 2 }}>
+            <Box sx={{ p: { xs: 1.25, md: 2 } }}>
                 <Typography variant="body2" sx={labelStyle}>Название</Typography>
                 <Typography variant="h4" sx={{ fontWeight: 'bold', mb: 2 }}>{post.title}</Typography>
 
@@ -757,7 +786,19 @@ const PostDetailPage = ({
                     </Box>
                 </Box>
 
-                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mb: 3 }}>
+                <Box
+                    sx={{
+                        display: 'flex',
+                        flexWrap: 'nowrap',
+                        gap: 0.75,
+                        mb: 3,
+                        overflowX: 'auto',
+                        maxWidth: '100%',
+                        pb: 0.5,
+                        scrollbarWidth: 'thin',
+                        '&::-webkit-scrollbar': { height: 4 },
+                    }}
+                >
                     {post.tags.map((tag, index) => (
                         <Chip
                             key={index}
@@ -767,6 +808,7 @@ const PostDetailPage = ({
                                 color: 'white',
                                 fontWeight: 'bold',
                                 borderRadius: '10px',
+                                flexShrink: 0,
                             }}
                         />
                     ))}
@@ -807,33 +849,43 @@ const PostDetailPage = ({
 
             <Box
                 sx={{
-                    p: 2,
+                    px: { xs: 1, md: 2 },
+                    py: { xs: 1, md: 2 },
                     borderTop: '1px solid #333',
                     display: 'flex',
-                    gap: 3,
+                    gap: { xs: 1, md: 3 },
                     alignItems: 'center',
+                    flexWrap: 'nowrap',
                 }}
             >
                 <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                    <IconButton onClick={onLike} sx={{ color: post.isLiked ? '#ff1744' : '#00bfa5', p: 0.5 }}>
-                        <FavoriteIcon sx={{ fontSize: 24 }} />
+                    <IconButton
+                        onClick={onLike}
+                        aria-label="Лайк"
+                        sx={{ color: post.isLiked ? '#ff1744' : '#00e5c9', minWidth: 44, minHeight: 44 }}
+                    >
+                        <FavoriteIcon sx={{ fontSize: 26 }} />
                     </IconButton>
-                    <Typography variant="subtitle1" sx={{ color: 'white', fontWeight: 'bold', ml: 0.5 }}>
+                    <Typography variant="subtitle1" sx={{ color: '#f5f5f5', fontWeight: 'bold', ml: 0.25 }}>
                         {post.likesCount}
                     </Typography>
                 </Box>
 
                 <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                    <IconButton onClick={handleToggleComments} sx={{ color: commentsOpen ? '#048b79' : '#00bfa5', p: 0.5 }}>
-                        <ChatBubbleOutlineIcon sx={{ fontSize: 24 }} />
+                    <IconButton
+                        onClick={handleToggleComments}
+                        aria-label="Комментарии"
+                        sx={{ color: commentsOpen ? '#048b79' : '#00e5c9', minWidth: 44, minHeight: 44 }}
+                    >
+                        <ChatBubbleOutlineIcon sx={{ fontSize: 26 }} />
                     </IconButton>
-                    <Typography variant="subtitle1" sx={{ color: 'white', fontWeight: 'bold', ml: 0.5 }}>
+                    <Typography variant="subtitle1" sx={{ color: '#f5f5f5', fontWeight: 'bold', ml: 0.25 }}>
                         {post.commentsCount}
                     </Typography>
                 </Box>
 
                 <IconButton
-                    sx={{ color: '#00bfa5' }}
+                    sx={{ color: '#00e5c9', minWidth: 44, minHeight: 44, ml: 'auto' }}
                     onClick={(e) => {
                         e.stopPropagation();
                         const shareUrl = `${window.location.origin}/?article=${post.article_id}`;
@@ -861,77 +913,227 @@ const PostDetailPage = ({
                 </IconButton>
             </Box>
 
-            <Collapse in={commentsOpen} timeout="auto" unmountOnExit>
-                <Box sx={{ p: 2, borderTop: '1px solid #333' }}>
-                    <Typography variant="h6" sx={{ color: 'white', mb: 2 }}>Комментарии</Typography>
+            {isDesktopComments && (
+                <Collapse in={commentsOpen} timeout="auto" unmountOnExit>
+                    <Box sx={{ p: 2, borderTop: '1px solid #333' }}>
+                        <Typography variant="h6" sx={{ color: '#f5f5f5', mb: 2 }}>Комментарии</Typography>
 
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
-                        <TextField
-                            label="Написать комментарий..."
-                            variant="filled"
-                            fullWidth
-                            value={newCommentText}
-                            onChange={(e) => setNewCommentText(e.target.value)}
-                            onKeyDown={(e) => {
-                                if (e.key === 'Enter' && !e.shiftKey) {
-                                    e.preventDefault();
-                                    handleCreateRootComment();
-                                }
-                            }}
-                            sx={commentInputStyle}
-                        />
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
+                            <TextField
+                                label="Написать комментарий..."
+                                variant="filled"
+                                fullWidth
+                                value={newCommentText}
+                                onChange={(e) => setNewCommentText(e.target.value)}
+                                onKeyDown={(e) => {
+                                    if (e.key === 'Enter' && !e.shiftKey) {
+                                        e.preventDefault();
+                                        handleCreateRootComment();
+                                    }
+                                }}
+                                sx={commentInputStyle}
+                            />
 
-                        <Button
-                            variant="contained"
-                            onClick={handleCreateRootComment}
+                            <Button
+                                variant="contained"
+                                onClick={handleCreateRootComment}
+                                sx={{
+                                    borderRadius: '10px',
+                                    backgroundColor: '#00bfa5',
+                                    px: 2,
+                                    '&:hover': { backgroundColor: '#009e8a' },
+                                }}
+                            >
+                                Отправить
+                            </Button>
+                        </Box>
+
+                        {commentsError && (
+                            <Typography sx={{ color: '#ff8a80', mb: 1 }}>{commentsError}</Typography>
+                        )}
+
+                        {commentsLoading ? (
+                            <Box sx={{ py: 2, textAlign: 'center' }}>
+                                <CircularProgress size={28} sx={{ color: '#00bfa5' }} />
+                            </Box>
+                        ) : commentsTree.length === 0 ? (
+                            <Typography sx={{ color: '#bdbdbd' }}>Пока нет комментариев. Будьте первым.</Typography>
+                        ) : (
+                            <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
+                                {commentsTree.map((comment) => (
+                                    <CommentItem
+                                        key={comment.commentId}
+                                        comment={comment}
+                                        depth={0}
+                                        currentUserId={currentUserId}
+                                        replyInputs={replyInputs}
+                                        replyEditorOpen={replyEditorOpen}
+                                        editInputs={editInputs}
+                                        editEditorOpen={editEditorOpen}
+                                        onReplyTextChange={handleReplyChange}
+                                        onToggleReplyEditor={handleToggleReplyEditor}
+                                        onReplySubmit={handleReplySubmit}
+                                        onEditTextChange={handleEditChange}
+                                        onToggleEditEditor={handleToggleEditEditor}
+                                        onEditSubmit={handleEditSubmit}
+                                        onDeleteComment={handleDeleteComment}
+                                        onLikeToggle={handleCommentLikeToggle}
+                                        onToggleReplies={handleToggleReplies}
+                                    />
+                                ))}
+                            </Box>
+                        )}
+                    </Box>
+                </Collapse>
+            )}
+
+            {!isDesktopComments && (
+                <SwipeableDrawer
+                    anchor="bottom"
+                    open={commentsOpen}
+                    onClose={() => setCommentsOpen(false)}
+                    onOpen={() => {}}
+                    disableDiscovery
+                    PaperProps={{
+                        sx: {
+                            borderTopLeftRadius: 16,
+                            borderTopRightRadius: 16,
+                            height: 'min(92vh, 780px)',
+                            maxHeight: '92vh',
+                            width: '100%',
+                            maxWidth: '100vw',
+                            overflow: 'hidden',
+                            backgroundColor: '#1f1f1f',
+                            transition: 'transform 0.25s ease-out',
+                        },
+                    }}
+                >
+                    <Box
+                        sx={{
+                            height: '100%',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            maxWidth: '100vw',
+                        }}
+                    >
+                        <Box
                             sx={{
-                                borderRadius: '10px',
-                                backgroundColor: '#00bfa5',
+                                flexShrink: 0,
                                 px: 2,
-                                '&:hover': { backgroundColor: '#009e8a' },
+                                py: 1.25,
+                                borderBottom: '1px solid #333',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: 1,
                             }}
                         >
-                            Отправить
-                        </Button>
-                    </Box>
-
-                    {commentsError && (
-                        <Typography sx={{ color: '#ff8a80', mb: 1 }}>{commentsError}</Typography>
-                    )}
-
-                    {commentsLoading ? (
-                        <Box sx={{ py: 2, textAlign: 'center' }}>
-                            <CircularProgress size={28} sx={{ color: '#00bfa5' }} />
+                            <Typography variant="h6" sx={{ color: '#00e5c9', fontWeight: 700, fontSize: '1.05rem' }}>
+                                Комментарии
+                            </Typography>
+                            <IconButton
+                                onClick={() => setCommentsOpen(false)}
+                                aria-label="Закрыть"
+                                sx={{ ml: 'auto', minWidth: 44, minHeight: 44, color: '#bdbdbd' }}
+                            >
+                                <CloseIcon />
+                            </IconButton>
                         </Box>
-                    ) : commentsTree.length === 0 ? (
-                        <Typography sx={{ color: '#aaa' }}>Пока нет комментариев. Будьте первым.</Typography>
-                    ) : (
-                        <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
-                            {commentsTree.map((comment) => (
-                                <CommentItem
-                                    key={comment.commentId}
-                                    comment={comment}
-                                    depth={0}
-                                    currentUserId={currentUserId}
-                                    replyInputs={replyInputs}
-                                    replyEditorOpen={replyEditorOpen}
-                                    editInputs={editInputs}
-                                    editEditorOpen={editEditorOpen}
-                                    onReplyTextChange={handleReplyChange}
-                                    onToggleReplyEditor={handleToggleReplyEditor}
-                                    onReplySubmit={handleReplySubmit}
-                                    onEditTextChange={handleEditChange}
-                                    onToggleEditEditor={handleToggleEditEditor}
-                                    onEditSubmit={handleEditSubmit}
-                                    onDeleteComment={handleDeleteComment}
-                                    onLikeToggle={handleCommentLikeToggle}
-                                    onToggleReplies={handleToggleReplies}
+
+                        <Box
+                            sx={{
+                                flex: 1,
+                                minHeight: 0,
+                                overflowY: 'auto',
+                                p: 2,
+                                pt: 1.5,
+                            }}
+                        >
+                            {commentsError && (
+                                <Typography sx={{ color: '#ff8a80', mb: 1 }}>{commentsError}</Typography>
+                            )}
+
+                            {commentsLoading ? (
+                                <Box sx={{ py: 2, textAlign: 'center' }}>
+                                    <CircularProgress size={28} sx={{ color: '#00bfa5' }} />
+                                </Box>
+                            ) : commentsTree.length === 0 ? (
+                                <Typography sx={{ color: '#bdbdbd' }}>Пока нет комментариев. Будьте первым.</Typography>
+                            ) : (
+                                <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
+                                    {commentsTree.map((comment) => (
+                                        <CommentItem
+                                            key={comment.commentId}
+                                            comment={comment}
+                                            depth={0}
+                                            currentUserId={currentUserId}
+                                            replyInputs={replyInputs}
+                                            replyEditorOpen={replyEditorOpen}
+                                            editInputs={editInputs}
+                                            editEditorOpen={editEditorOpen}
+                                            onReplyTextChange={handleReplyChange}
+                                            onToggleReplyEditor={handleToggleReplyEditor}
+                                            onReplySubmit={handleReplySubmit}
+                                            onEditTextChange={handleEditChange}
+                                            onToggleEditEditor={handleToggleEditEditor}
+                                            onEditSubmit={handleEditSubmit}
+                                            onDeleteComment={handleDeleteComment}
+                                            onLikeToggle={handleCommentLikeToggle}
+                                            onToggleReplies={handleToggleReplies}
+                                        />
+                                    ))}
+                                </Box>
+                            )}
+                        </Box>
+
+                        <Box
+                            sx={{
+                                flexShrink: 0,
+                                borderTop: '1px solid #333',
+                                p: 2,
+                                pb: 'calc(12px + env(safe-area-inset-bottom, 0px))',
+                                backgroundColor: '#181818',
+                            }}
+                        >
+                            <Box sx={{ display: 'flex', alignItems: 'stretch', gap: 1 }}>
+                                <TextField
+                                    label="Написать комментарий..."
+                                    variant="filled"
+                                    fullWidth
+                                    value={newCommentText}
+                                    onChange={(e) => setNewCommentText(e.target.value)}
+                                    onKeyDown={(e) => {
+                                        if (e.key === 'Enter' && !e.shiftKey) {
+                                            e.preventDefault();
+                                            handleCreateRootComment();
+                                        }
+                                    }}
+                                    sx={{
+                                        ...commentInputStyle,
+                                        '& .MuiFilledInput-root': {
+                                            ...commentInputStyle['& .MuiFilledInput-root'],
+                                            minHeight: 48,
+                                        },
+                                    }}
                                 />
-                            ))}
+                                <Button
+                                    variant="contained"
+                                    onClick={handleCreateRootComment}
+                                    sx={{
+                                        borderRadius: '10px',
+                                        backgroundColor: '#00bfa5',
+                                        minWidth: 88,
+                                        minHeight: 48,
+                                        alignSelf: 'stretch',
+                                        '&:hover': { backgroundColor: '#009e8a' },
+                                    }}
+                                >
+                                    Отпр.
+                                </Button>
+                            </Box>
                         </Box>
-                    )}
-                </Box>
-            </Collapse>
+                    </Box>
+                </SwipeableDrawer>
+            )}
         </Box>
     );
 };

@@ -9,6 +9,13 @@ import {
     TextField,
     IconButton,
     InputAdornment,
+    Menu,
+    MenuItem,
+    ListItemIcon,
+    ListItemText,
+    useMediaQuery,
+    useTheme,
+    SwipeableDrawer,
 } from '@mui/material';
 import PersonIcon from '@mui/icons-material/Person';
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
@@ -19,10 +26,15 @@ import CloseIcon from '@mui/icons-material/Close';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import SearchIcon from '@mui/icons-material/Search';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
+import MoreVertIcon from '@mui/icons-material/MoreVert';
+import MenuBookIcon from '@mui/icons-material/MenuBook';
+import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
+import AdminPanelSettingsIcon from '@mui/icons-material/AdminPanelSettings';
 
 import PostCard from './PostCard';
 import PostDetailPage from './PostDetailPage';
 import ProfileModal from './ProfileModal';
+import MobileBottomNav from './MobileBottomNav';
 import RegistrationModal from './RegistrationModal';
 import ForgotPasswordModal from './ForgotPasswordModal';
 import PostCreationModal from './PostCreationModal';
@@ -50,12 +62,24 @@ const commentsSidebarStyle = {
     minWidth: 340,
     backgroundColor: '#1f1f1f',
     borderRight: '1px solid #333',
-    display: { xs: 'none', md: 'flex' },
+    display: 'none',
+    '@media (min-width: 768px)': {
+        display: 'flex',
+    },
     flexDirection: 'column',
     height: '100vh',
     position: 'sticky',
     top: 0,
     left: 0,
+};
+
+const commentsDrawerInnerSx = {
+    width: '100%',
+    height: '100%',
+    display: 'flex',
+    flexDirection: 'column',
+    backgroundColor: '#1f1f1f',
+    overflow: 'hidden',
 };
 
 const countTreeComments = (comments = []) => comments.reduce(
@@ -76,19 +100,22 @@ const updateCommentInTree = (tree, commentId, updater) => tree.map((item) => {
 });
 
 const sidebarStyle = {
-    width: 250, 
-    minWidth: 250, 
-    backgroundColor: '#1f1f1f', 
-    padding: 2, 
-    display: { xs: 'none', md: 'flex' }, 
+    width: 250,
+    minWidth: 250,
+    backgroundColor: '#1f1f1f',
+    padding: 2,
+    display: 'none',
+    '@media (min-width: 768px)': {
+        display: 'flex',
+    },
     flexDirection: 'column',
-    justifyContent: 'flex-start', 
-    height: '95.5vh', 
+    justifyContent: 'flex-start',
+    height: '95.5vh',
     borderLeft: '1px solid #333',
-    position: 'sticky', 
-    top: 0, 
+    position: 'sticky',
+    top: 0,
     right: 0,
-    overflowY: 'hidden', 
+    overflowY: 'hidden',
 };
 
 const commonButtonStyle = {
@@ -452,6 +479,7 @@ const FeedCommentItem = ({
 );
 
 const CommentsFeedSidebar = ({
+    variant = 'desktop',
     activePost,
     commentsTree,
     commentsLoading,
@@ -474,22 +502,37 @@ const CommentsFeedSidebar = ({
     onCommentLikeToggle,
     onCommentToggleReplies,
     onClose,
-}) => (
-    <Box sx={commentsSidebarStyle}>
-        <Box sx={{ px: 2, py: 1.3, borderBottom: '1px solid #333', display: 'flex', alignItems: 'center', gap: 1 }}>
-            <Typography variant="h6" sx={{ color: '#00bfa5', fontWeight: 700 }}>
+}) => {
+    const isDrawer = variant === 'drawer';
+
+    const header = (
+        <Box sx={{ px: 2, py: isDrawer ? 1.5 : 1.3, borderBottom: '1px solid #333', display: 'flex', alignItems: 'center', gap: 1, flexShrink: 0 }}>
+            <Typography variant="h6" sx={{ color: '#00e5c9', fontWeight: 700, fontSize: isDrawer ? '1.05rem' : undefined }}>
                 Комментарии
             </Typography>
-            <IconButton onClick={onClose} size="small" sx={{ ml: 'auto', color: '#9e9e9e' }}>
-                <CloseIcon fontSize="small" />
+            <IconButton
+                onClick={onClose}
+                aria-label="Закрыть комментарии"
+                sx={{
+                    ml: 'auto',
+                    color: '#bdbdbd',
+                    minWidth: 44,
+                    minHeight: 44,
+                    transition: 'background-color 0.2s ease',
+                    '&:hover': { backgroundColor: 'rgba(255,255,255,0.06)' },
+                }}
+            >
+                <CloseIcon />
             </IconButton>
         </Box>
+    );
 
-        <Box sx={{ px: 2, pt: 1, pb: 1.5, borderBottom: '1px solid #333' }}>
+    const titleBlock = (
+        <Box sx={{ px: 2, pt: 1, pb: 1.5, borderBottom: '1px solid #333', flexShrink: 0 }}>
             <Typography
                 variant="body2"
                 sx={{
-                    color: 'white',
+                    color: '#f5f5f5',
                     mt: 0.4,
                     whiteSpace: 'nowrap',
                     overflow: 'hidden',
@@ -499,9 +542,20 @@ const CommentsFeedSidebar = ({
                 {activePost?.title}
             </Typography>
         </Box>
+    );
 
-        <Box sx={{ p: 1.5, borderBottom: '1px solid #333' }}>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+    const inputBlock = (
+        <Box
+            sx={{
+                p: 1.5,
+                borderTop: isDrawer ? '1px solid #333' : undefined,
+                borderBottom: !isDrawer ? '1px solid #333' : undefined,
+                flexShrink: 0,
+                backgroundColor: isDrawer ? '#181818' : 'transparent',
+                pb: isDrawer ? 'calc(12px + env(safe-area-inset-bottom, 0px))' : 1.5,
+            }}
+        >
+            <Box sx={{ display: 'flex', alignItems: 'stretch', gap: 1 }}>
                 <TextField
                     label="Написать комментарий..."
                     variant="filled"
@@ -514,7 +568,13 @@ const CommentsFeedSidebar = ({
                             onCreateRootComment();
                         }
                     }}
-                    sx={commentInputStyle}
+                    sx={{
+                        ...commentInputStyle,
+                        '& .MuiFilledInput-root': {
+                            ...commentInputStyle['& .MuiFilledInput-root'],
+                            minHeight: isDrawer ? 48 : undefined,
+                        },
+                    }}
                 />
                 <Button
                     variant="contained"
@@ -522,10 +582,14 @@ const CommentsFeedSidebar = ({
                     sx={{
                         borderRadius: '10px',
                         backgroundColor: '#00bfa5',
+                        minWidth: isDrawer ? 88 : undefined,
+                        minHeight: 48,
+                        alignSelf: 'stretch',
+                        transition: 'background-color 0.2s ease',
                         '&:hover': { backgroundColor: '#009e8a' },
                     }}
                 >
-                    Отпр.
+                    {isDrawer ? 'Отпр.' : 'Отпр.'}
                 </Button>
             </Box>
 
@@ -533,14 +597,16 @@ const CommentsFeedSidebar = ({
                 <Typography sx={{ color: '#ff8a80', mt: 1, fontSize: '0.85rem' }}>{commentsError}</Typography>
             )}
         </Box>
+    );
 
-        <Box sx={{ flex: 1, overflowY: 'auto', p: 1.5, ...scrollbarStyle}}>
+    const listBlock = (
+        <Box sx={{ flex: 1, minHeight: 0, overflowY: 'auto', p: 1.5, ...scrollbarStyle }}>
             {commentsLoading ? (
                 <Box sx={{ py: 3, textAlign: 'center' }}>
                     <CircularProgress size={26} sx={{ color: '#00bfa5' }} />
                 </Box>
             ) : commentsTree.length === 0 ? (
-                <Typography sx={{ color: '#aaa', fontSize: '0.9rem' }}>
+                <Typography sx={{ color: '#bdbdbd', fontSize: '0.9rem' }}>
                     Пока нет комментариев. Будьте первым.
                 </Typography>
             ) : (
@@ -569,8 +635,26 @@ const CommentsFeedSidebar = ({
                 </Box>
             )}
         </Box>
-    </Box>
-);
+    );
+
+    return (
+        <Box sx={isDrawer ? commentsDrawerInnerSx : commentsSidebarStyle}>
+            {header}
+            {titleBlock}
+            {isDrawer ? (
+                <>
+                    {listBlock}
+                    {inputBlock}
+                </>
+            ) : (
+                <>
+                    {inputBlock}
+                    {listBlock}
+                </>
+            )}
+        </Box>
+    );
+};
 
 const PostPage = () => {
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -581,6 +665,9 @@ const PostPage = () => {
 const [isResourcesModalOpen, setIsResourcesModalOpen] = useState(false);
 const [isFaqModalOpen, setIsFaqModalOpen] = useState(false);
 const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
+    const [moreMenuAnchor, setMoreMenuAnchor] = useState(null);
+    const theme = useTheme();
+    const isDesktopLayout = useMediaQuery(theme.breakpoints.up(768));
     const isProfileModalOpenRef = useRef(false);
     
     const [viewedProfileId, setViewedProfileId] = useState(null); 
@@ -1590,41 +1677,107 @@ const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
             setFeedCommentsError(err.message);
         }
     };
+
+    const feedCommentsSidebarProps = {
+        activePost: activeCommentsPost,
+        commentsTree: feedCommentsTree,
+        commentsLoading: feedCommentsLoading,
+        commentsError: feedCommentsError,
+        newCommentText: feedNewCommentText,
+        currentUserId: currentUser?.id,
+        replyInputs: feedReplyInputs,
+        replyEditorOpen: feedReplyEditorOpen,
+        editInputs: feedEditInputs,
+        editEditorOpen: feedEditEditorOpen,
+        onNewCommentTextChange: setFeedNewCommentText,
+        onCreateRootComment: handleFeedCreateRootComment,
+        onReplyTextChange: handleFeedReplyChange,
+        onToggleReplyEditor: handleFeedToggleReplyEditor,
+        onReplySubmit: handleFeedReplySubmit,
+        onEditTextChange: handleFeedEditChange,
+        onToggleEditEditor: handleFeedToggleEditEditor,
+        onEditSubmit: handleFeedEditSubmit,
+        onDeleteComment: handleFeedDeleteComment,
+        onCommentLikeToggle: handleFeedCommentLikeToggle,
+        onCommentToggleReplies: handleFeedCommentToggleReplies,
+        onClose: handleFeedCloseComments,
+    };
+
+    const mobileHomeActive = !isViewingDetailPage && !isSearchMode && paginationType !== 'search' && paginationType !== 'tags' && !isProfileModalOpen && !isCategoryModalOpen;
+    const mobileSearchActive = isSearchMode || paginationType === 'search';
+    const mobileCategoriesActive = isCategoryModalOpen || paginationType === 'tags';
+    const mobileProfileActive = isProfileModalOpen;
+
+    const chipButtonSx = (active) => ({
+        textTransform: 'none',
+        borderRadius: '20px',
+        px: { xs: 1.5, sm: 2 },
+        py: 0.75,
+        minHeight: 44,
+        fontWeight: 'bold',
+        fontSize: { xs: '0.8rem', sm: '0.875rem' },
+        flexShrink: 0,
+        transition: 'all 0.25s ease',
+        ...(active
+            ? {
+                backgroundColor: '#00bfa5',
+                color: '#0a0a0a',
+                borderColor: '#00bfa5',
+                '&:hover': { backgroundColor: '#00d4b4' },
+            }
+            : {
+                borderColor: 'rgba(0, 191, 165, 0.55)',
+                color: '#e0f7f4',
+                '&:hover': {
+                    backgroundColor: 'rgba(0, 191, 165, 0.12)',
+                    borderColor: '#00d4b4',
+                },
+            }),
+    });
+
     return (
         <Box sx={{ display: 'flex', minHeight: '100vh', backgroundColor: '#121212', overflow: 'hidden' }}>
-            {!isViewingDetailPage && activeCommentsPost && (
-                <CommentsFeedSidebar
-                    activePost={activeCommentsPost}
-                    commentsTree={feedCommentsTree}
-                    commentsLoading={feedCommentsLoading}
-                    commentsError={feedCommentsError}
-                    newCommentText={feedNewCommentText}
-                    currentUserId={currentUser?.id}
-                    replyInputs={feedReplyInputs}
-                    replyEditorOpen={feedReplyEditorOpen}
-                    editInputs={feedEditInputs}
-                    editEditorOpen={feedEditEditorOpen}
-                    onNewCommentTextChange={setFeedNewCommentText}
-                    onCreateRootComment={handleFeedCreateRootComment}
-                    onReplyTextChange={handleFeedReplyChange}
-                    onToggleReplyEditor={handleFeedToggleReplyEditor}
-                    onReplySubmit={handleFeedReplySubmit}
-                    onEditTextChange={handleFeedEditChange}
-                    onToggleEditEditor={handleFeedToggleEditEditor}
-                    onEditSubmit={handleFeedEditSubmit}
-                    onDeleteComment={handleFeedDeleteComment}
-                    onCommentLikeToggle={handleFeedCommentLikeToggle}
-                    onCommentToggleReplies={handleFeedCommentToggleReplies}
-                    onClose={handleFeedCloseComments}
-                />
+            {!isViewingDetailPage && activeCommentsPost && isDesktopLayout && (
+                <CommentsFeedSidebar variant="desktop" {...feedCommentsSidebarProps} />
             )}
-            
+
+            {!isViewingDetailPage && activeCommentsPost && !isDesktopLayout && (
+                <SwipeableDrawer
+                    anchor="bottom"
+                    open={Boolean(activeCommentsPost)}
+                    onClose={handleFeedCloseComments}
+                    onOpen={() => {}}
+                    disableDiscovery
+                    PaperProps={{
+                        sx: {
+                            borderTopLeftRadius: 16,
+                            borderTopRightRadius: 16,
+                            height: 'min(90vh, 720px)',
+                            maxHeight: '90vh',
+                            width: '100%',
+                            maxWidth: '100vw',
+                            overflow: 'hidden',
+                            backgroundColor: '#1f1f1f',
+                            transition: 'transform 0.25s ease-out',
+                        },
+                    }}
+                >
+                    <Box sx={{ height: '100%', maxWidth: '100vw' }}>
+                        <CommentsFeedSidebar variant="drawer" {...feedCommentsSidebarProps} />
+                    </Box>
+                </SwipeableDrawer>
+            )}
+
             <Box 
                 sx={{ 
                     flex: 1, 
                     height: '100vh', 
                     overflowY: 'auto',
-                    scrollSnapType: 'y mandatory', 
+                    overflowX: 'hidden',
+                    scrollSnapType: 'none',
+                    '@media (min-width: 768px)': {
+                        scrollSnapType: 'y mandatory',
+                    },
                     '&::-webkit-scrollbar': { display: 'none' }, 
                     msOverflowStyle: 'none', 
                     scrollbarWidth: 'none', 
@@ -1633,17 +1786,173 @@ const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
                     alignItems: 'center',
                     scrollBehavior: 'smooth',
                     position: 'relative',
+                    width: '100%',
+                    maxWidth: '100vw',
                 }}
                 ref={articlesContainerRef} 
             >
-                
+                {!isViewingDetailPage && (
+                    <Box
+                        sx={{
+                            display: 'flex',
+                            '@media (min-width: 768px)': {
+                                display: 'none',
+                            },
+                            position: 'sticky',
+                            top: 0,
+                            zIndex: 11,
+                            width: '100%',
+                            maxWidth: '100vw',
+                            px: 1.25,
+                            pt: 'calc(10px + env(safe-area-inset-top, 0px))',
+                            pb: 1,
+                            alignItems: 'center',
+                            gap: 1,
+                            background: 'linear-gradient(180deg, rgba(18,18,18,0.98) 0%, rgba(18,18,18,0.88) 85%, transparent 100%)',
+                            borderBottom: '1px solid rgba(0, 191, 165, 0.12)',
+                            backdropFilter: 'blur(10px)',
+                            transition: 'background 0.25s ease',
+                        }}
+                    >
+                        {isSearchMode ? (
+                            <>
+                                <IconButton
+                                    onClick={handleSearchClose}
+                                    aria-label="Назад"
+                                    sx={{
+                                        minWidth: 44,
+                                        minHeight: 44,
+                                        color: '#00e5c9',
+                                        border: '1px solid rgba(0, 191, 165, 0.45)',
+                                        transition: 'background-color 0.2s ease',
+                                        '&:hover': { backgroundColor: 'rgba(0, 191, 165, 0.1)' },
+                                    }}
+                                >
+                                    <ArrowBackIcon />
+                                </IconButton>
+                                <TextField
+                                    value={searchQuery}
+                                    onChange={(e) => setSearchQuery(e.target.value)}
+                                    onKeyDown={(e) => {
+                                        if (e.key === 'Enter') {
+                                            e.preventDefault();
+                                            handleSearchSubmit();
+                                        }
+                                    }}
+                                    placeholder="Поиск статей..."
+                                    variant="outlined"
+                                    size="small"
+                                    fullWidth
+                                    sx={{
+                                        flex: 1,
+                                        '& .MuiOutlinedInput-root': {
+                                            color: '#f5f5f5',
+                                            borderRadius: '12px',
+                                            minHeight: 44,
+                                            backgroundColor: 'rgba(0, 0, 0, 0.25)',
+                                            transition: 'border-color 0.2s ease',
+                                            '& fieldset': { borderColor: 'rgba(0, 191, 165, 0.4)' },
+                                            '&:hover fieldset': { borderColor: '#00d4b4' },
+                                            '&.Mui-focused fieldset': { borderColor: '#00e5c9' },
+                                        },
+                                        '& .MuiInputBase-input::placeholder': {
+                                            color: '#b0b0b0',
+                                            opacity: 1,
+                                        },
+                                    }}
+                                    InputProps={{
+                                        endAdornment: (
+                                            <InputAdornment position="end">
+                                                <IconButton
+                                                    onClick={handleSearchSubmit}
+                                                    aria-label="Искать"
+                                                    sx={{ color: '#00e5c9', minWidth: 44, minHeight: 44 }}
+                                                >
+                                                    <SearchIcon />
+                                                </IconButton>
+                                            </InputAdornment>
+                                        ),
+                                    }}
+                                />
+                            </>
+                        ) : (
+                            <>
+                                <Typography
+                                    variant="h6"
+                                    sx={{
+                                        fontWeight: 800,
+                                        letterSpacing: 0.5,
+                                        color: '#00e5c9',
+                                        fontSize: '1.15rem',
+                                    }}
+                                >
+                                    Lyambda
+                                </Typography>
+                                <Box sx={{ flex: 1 }} />
+                                <IconButton
+                                    onClick={handleSearchOpen}
+                                    aria-label="Поиск"
+                                    sx={{ minWidth: 44, minHeight: 44, color: '#e0f7f4' }}
+                                >
+                                    <SearchIcon />
+                                </IconButton>
+                                <IconButton
+                                    onClick={(e) => setMoreMenuAnchor(e.currentTarget)}
+                                    aria-label="Ещё"
+                                    sx={{ minWidth: 44, minHeight: 44, color: '#e0f7f4' }}
+                                >
+                                    <MoreVertIcon />
+                                </IconButton>
+                            </>
+                        )}
+                    </Box>
+                )}
+
+                {!isViewingDetailPage && (
+                    <Box
+                        sx={{
+                            display: 'flex',
+                            '@media (min-width: 768px)': {
+                                display: 'none',
+                            },
+                            width: '100%',
+                            maxWidth: '100vw',
+                            overflowX: 'auto',
+                            gap: 1,
+                            px: 1.25,
+                            py: 0.75,
+                            scrollbarWidth: 'none',
+                            '&::-webkit-scrollbar': { display: 'none' },
+                            flexShrink: 0,
+                        }}
+                    >
+                        <Button
+                            variant={paginationType === 'random' ? 'contained' : 'outlined'}
+                            onClick={() => handlePaginationTypeChange('random')}
+                            sx={chipButtonSx(paginationType === 'random')}
+                        >
+                            Случайные
+                        </Button>
+                        <Button
+                            variant={paginationType === 'recommend' ? 'contained' : 'outlined'}
+                            onClick={() => handlePaginationTypeChange('recommend')}
+                            sx={chipButtonSx(paginationType === 'recommend')}
+                        >
+                            Рекомендации
+                        </Button>
+                    </Box>
+                )}
+
                 {!isViewingDetailPage && (
                     <Box 
                         sx={{ 
                             position: 'sticky',
                             top: 0,
                             width: '100%',
-                            display: 'flex',
+                            display: 'none',
+                            '@media (min-width: 768px)': {
+                                display: 'flex',
+                            },
                             justifyContent: 'center',
                             pt: 2,
                             pb: 2,
@@ -1800,7 +2109,16 @@ const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
                 )}
 
                 {isViewingDetailPage && selectedPost ? (
-                    <Box sx={{ width: '100%', maxWidth: '680px' }}>
+                    <Box sx={{
+                        width: '100%',
+                        maxWidth: '680px',
+                        boxSizing: 'border-box',
+                        px: 1,
+                        pb: 'calc(96px + env(safe-area-inset-bottom, 0px))',
+                        '@media (min-width: 600px)': { px: 1.5 },
+                        '@media (min-width: 768px)': { px: 0, pb: 2 },
+                    }}
+                    >
                         <PostDetailPage
                             post={selectedPost}
                             onBack={handleBackToFeed}
@@ -1818,10 +2136,24 @@ const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
                         />
                     </Box>
                 ) : (
-                    <Box sx={{ width: '100%', maxWidth: '650px', pb: 5 }}>
-                        {articles.length === 0 && isLoading && <Typography sx={{color:'white', textAlign:'center', pt: 4}}><CircularProgress sx={{ color: '#00bfa5' }} /></Typography>}
+                    <Box sx={{
+                        width: '100%',
+                        maxWidth: { xs: '100%', sm: '650px' },
+                        boxSizing: 'border-box',
+                        px: 1,
+                        pb: 'calc(100px + env(safe-area-inset-bottom, 0px))',
+                        '@media (min-width: 600px)': {
+                            px: 1.5,
+                        },
+                        '@media (min-width: 768px)': {
+                            px: 0,
+                            pb: 5,
+                        },
+                    }}
+                    >
+                        {articles.length === 0 && isLoading && <Typography sx={{ color: '#f5f5f5', textAlign: 'center', pt: 4 }}><CircularProgress sx={{ color: '#00bfa5' }} /></Typography>}
                         {!isLoading && articles.length === 0 && !error && (
-                            <Typography sx={{color:'white', textAlign:'center', pt: 4}}>
+                            <Typography sx={{ color: '#f5f5f5', textAlign: 'center', pt: 4 }}>
                                 {emptyStateMessage || (paginationType === 'search' ? 'Статьи не найдены.' : 'Статей пока нет.')}
                             </Typography>
                         )}
@@ -1831,12 +2163,19 @@ const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
                                 key={post.article_id}
                                 ref={setPostRef(post.article_id)}
                                 sx={{ 
-                                    minHeight: '100vh', 
-                                    display: 'flex', 
-                                    justifyContent: 'center', 
-                                    alignItems: 'center',
-                                    padding: '20px 0', 
-                                    scrollSnapAlign: 'center', 
+                                    minHeight: 'auto',
+                                    display: 'flex',
+                                    justifyContent: 'center',
+                                    alignItems: 'stretch',
+                                    py: 1,
+                                    px: 0,
+                                    scrollSnapAlign: 'none',
+                                    '@media (min-width: 768px)': {
+                                        minHeight: '100vh',
+                                        alignItems: 'center',
+                                        py: '20px',
+                                        scrollSnapAlign: 'center',
+                                    },
                                 }}
                             >
                                 <PostCard
@@ -1844,9 +2183,9 @@ const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
                                     authorId={post.author_id} 
                                     onAuthorClick={handleOtherAuthorProfileOpen} 
                                     onClick={() => handlePostClick(post)}
-                                            onCommentClick={() => handleOpenCommentsSidebar(post)}
+                                    onCommentClick={() => handleOpenCommentsSidebar(post)}
                                     onLike={() => handleLikeToggle(post.article_id, post.isLiked)}
-                                            showRepost={false}
+                                    showRepost={false}
                                 />
                             </Box>
                         ))}
@@ -1857,7 +2196,7 @@ const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
                             </Box>
                         )}
                         
-                        {!hasMore && articles.length > 0 && <Typography sx={{color:'white', textAlign:'center', py: 4}}>Это все статьи!</Typography>}
+                        {!hasMore && articles.length > 0 && <Typography sx={{ color: '#f5f5f5', textAlign: 'center', py: 4 }}>Это все статьи!</Typography>}
                         {error && <Typography color="error" sx={{ textAlign: 'center', pt: 4 }}>{error}</Typography>}
                     </Box>
                 )}
@@ -1873,6 +2212,100 @@ const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
                 handleAdminOpen={handleAdminOpen}
                 isAdmin={currentUser?.role === 'Admin'}
                 currentUser={currentUser}
+            />
+
+            <Menu
+                anchorEl={moreMenuAnchor}
+                open={Boolean(moreMenuAnchor)}
+                onClose={() => setMoreMenuAnchor(null)}
+                anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+                transformOrigin={{ vertical: 'top', horizontal: 'right' }}
+                slotProps={{
+                    paper: {
+                        sx: {
+                            mt: 1,
+                            minWidth: 220,
+                            backgroundColor: '#1e1e1e',
+                            border: '1px solid rgba(0, 191, 165, 0.25)',
+                            borderRadius: 2,
+                            color: '#f5f5f5',
+                        },
+                    },
+                }}
+            >
+                <MenuItem
+                    onClick={() => {
+                        setMoreMenuAnchor(null);
+                        handleResourcesOpen();
+                    }}
+                    sx={{ minHeight: 48, transition: 'background-color 0.2s ease' }}
+                >
+                    <ListItemIcon sx={{ color: '#00e5c9' }}>
+                        <MenuBookIcon fontSize="small" />
+                    </ListItemIcon>
+                    <ListItemText primaryTypographyProps={{ fontSize: '0.95rem' }} primary="Полезные материалы" />
+                </MenuItem>
+                <MenuItem
+                    onClick={() => {
+                        setMoreMenuAnchor(null);
+                        handleFaqOpen();
+                    }}
+                    sx={{ minHeight: 48 }}
+                >
+                    <ListItemIcon sx={{ color: '#00e5c9' }}>
+                        <HelpOutlineIcon fontSize="small" />
+                    </ListItemIcon>
+                    <ListItemText primaryTypographyProps={{ fontSize: '0.95rem' }} primary="FAQ" />
+                </MenuItem>
+                {currentUser?.role === 'Admin' && (
+                    <MenuItem
+                        onClick={() => {
+                            setMoreMenuAnchor(null);
+                            handleAdminOpen();
+                        }}
+                        sx={{ minHeight: 48 }}
+                    >
+                        <ListItemIcon sx={{ color: '#ff8a80' }}>
+                            <AdminPanelSettingsIcon fontSize="small" />
+                        </ListItemIcon>
+                        <ListItemText primaryTypographyProps={{ fontSize: '0.95rem' }} primary="Админ-панель" />
+                    </MenuItem>
+                )}
+            </Menu>
+
+            <MobileBottomNav
+                hidden={isDesktopLayout}
+                homeActive={mobileHomeActive}
+                searchActive={mobileSearchActive}
+                categoriesActive={mobileCategoriesActive}
+                profileActive={mobileProfileActive}
+                onHome={() => {
+                    if (isViewingDetailPage) {
+                        handleBackToFeed();
+                    } else if (isSearchMode) {
+                        handleSearchClose();
+                    }
+                    setIsCategoryModalOpen(false);
+                }}
+                onSearch={() => {
+                    if (isViewingDetailPage) {
+                        handleBackToFeed();
+                    }
+                    handleSearchOpen();
+                }}
+                onCreate={handlePostOpen}
+                onCategories={() => {
+                    if (isViewingDetailPage) {
+                        handleBackToFeed();
+                    }
+                    handleCategoryOpen();
+                }}
+                onProfile={() => {
+                    if (isViewingDetailPage) {
+                        handleBackToFeed();
+                    }
+                    handleProfileOpen();
+                }}
             />
             
             <RegistrationModal 
