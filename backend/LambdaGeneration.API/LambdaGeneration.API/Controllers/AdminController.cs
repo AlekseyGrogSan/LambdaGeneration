@@ -28,11 +28,6 @@ namespace LambdaGeneration.API.Controllers
             _logger = logger;
         }
 
-        // --- ������������ ------------------------------------------------------
-
-        /// <summary>
-        /// �������� ������� ������������ �� ID
-        /// </summary>
         [HttpGet("users/{userId:guid}")]
         public async Task<IActionResult> GetUser(Guid userId)
         {
@@ -69,9 +64,6 @@ namespace LambdaGeneration.API.Controllers
             }));
         }
 
-        /// <summary>
-        /// �������� / ��������� ������������ (toggle)
-        /// </summary>
         [HttpPatch("users/{userId:guid}/ban")]
         public async Task<IActionResult> ToggleBan(Guid userId)
         {
@@ -96,9 +88,6 @@ namespace LambdaGeneration.API.Controllers
             });
         }
 
-        /// <summary>
-        /// ������� ������������ ���������
-        /// </summary>
         [HttpDelete("users/{userId:guid}")]
         public async Task<IActionResult> DeleteUser(Guid userId)
         {
@@ -117,11 +106,6 @@ namespace LambdaGeneration.API.Controllers
             return Ok(new { message = $"Пользователь {user.UserName} удален" });
         }
 
-        // --- ������ ------------------------------------------------------------
-
-        /// <summary>
-        /// �������� ������ ������������
-        /// </summary>
         [HttpGet("users/{userId:guid}/articles")]
         public async Task<IActionResult> GetUserArticles(Guid userId, [FromQuery] int page = 1, [FromQuery] int pageSize = 20)
         {
@@ -138,9 +122,6 @@ namespace LambdaGeneration.API.Controllers
             }));
         }
 
-        /// <summary>
-        /// ������� ������ �� ID
-        /// </summary>
         [HttpGet("users/{userId:guid}/comments")]
         public async Task<IActionResult> GetUserComments(Guid userId)
         {
@@ -177,11 +158,6 @@ namespace LambdaGeneration.API.Controllers
             return Ok(new { message = $"Стаья {article.ArticleTitle} удалена" });
         }
 
-        // --- ����������� -------------------------------------------------------
-
-        /// <summary>
-        /// �������� ����������� � ������
-        /// </summary>
         [HttpGet("articles/{articleId:guid}/comments")]
         public async Task<IActionResult> GetArticleComments(Guid articleId)
         {
@@ -220,9 +196,6 @@ namespace LambdaGeneration.API.Controllers
             return Ok(new { message = "Комментарий успешно удален" });
         }
 
-        /// <summary>
-        /// ������� ��� ����������� � ������
-        /// </summary>
         [HttpDelete("articles/{articleId:guid}/comments")]
         public async Task<IActionResult> DeleteAllArticleComments(Guid articleId)
         {
