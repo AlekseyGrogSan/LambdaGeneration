@@ -437,7 +437,7 @@ namespace LambdaGeneration.API.Date.Repositories
                 .OrderByDescending(a => a.CreatedDate)
                 .Skip(skip)
                 .Take(countPages)
-                .Select(a =>Map(a))
+                .Select(a => Map(a))
                 .ToListAsync();
         }
 
@@ -464,138 +464,6 @@ namespace LambdaGeneration.API.Date.Repositories
                     a.CountComments,
                     a.FilePath
                 );
-        }
-
-        // Улучшенный метод расширения терминов
-        private async Task<List<string>> ExpandTerms(List<string> terms)
-        {
-            var synonymDictionary = new Dictionary<string, List<string>>
-            {
-                // Python - теперь есть все три варианта как ключи!
-                ["python"] = new() { "python", "питон", "пайтон" },
-                ["питон"] = new() { "python", "питон", "пайтон" },
-                ["пайтон"] = new() { "python", "питон", "пайтон" },
-
-                // C#
-                ["c#"] = new() { "c#", "си шарп", "csharp", "сишарп" },
-                ["csharp"] = new() { "c#", "си шарп", "csharp", "сишарп" },
-                ["сишарп"] = new() { "c#", "си шарп", "csharp", "сишарп" },
-                ["си шарп"] = new() { "c#", "си шарп", "csharp", "сишарп" },
-
-                // Java
-                ["java"] = new() { "java", "джава" },
-                ["джава"] = new() { "java", "джава" },
-
-                //С++
-                ["С++"] = new() { "C++","сиплюсплюс", "плюсики", "cplusplus" },
-                ["сиплюсплюс"] = new() { "C++", "сиплюсплюс", "плюсики", "cplusplus" },
-                ["плюсы"] = new() { "C++", "сиплюсплюс", "плюсики", "cplusplus" },
-                ["плюсики"] = new() { "C++", "сиплюсплюс", "плюсики", "cplusplus" },
-                ["cplusplus"] = new() { "C++", "сиплюсплюс", "плюсики", "cplusplus" },
-
-                // JavaScript
-                ["javascript"] = new() { "javascript", "js", "джаваскрипт" },
-                ["js"] = new() { "javascript", "js", "джаваскрипт" },
-                ["джаваскрипт"] = new() { "javascript", "js", "джаваскрипт" },
-
-                // .NET
-                [".net"] = new() { ".net", "dotnet", "дотнет" },
-                ["dotnet"] = new() { ".net", "dotnet", "дотнет" },
-                ["дотнет"] = new() { ".net", "dotnet", "дотнет" },
-
-                // IT
-                ["it"] = new() { "it", "айти" },
-                ["айти"] = new() { "it", "айти" }
-            };
-
-            var expanded = new HashSet<string>();
-
-            foreach (var term in terms)
-            {
-                if (synonymDictionary.TryGetValue(term, out var synonyms))
-                { 
-                    foreach (var synonym in synonyms)
-                        expanded.Add(synonym.ToLower());
-                }
-                else
-                {
-                    expanded.Add(term);
-                }
-            }
-
-            return expanded.ToList();
-        }
-
-        public async Task<List<Articles>> SearchArticlesByTags(List<int>? tags, int page, int pageSize = 10)
-        {
-            int skip = (page - 1) * pageSize;
-
-            // Если тэги не выбраны, то передаём случаёные статьи
-            if (tags == null || tags.Count == 0)
-            {
-                return await GetRandomArticles(page, pageSize);
-            }
-
-            // Фильтруем статьи по выбранным тегам
-            var articles = await _context.Articles
-                .OrderByDescending(a => a.CreatedDate)
-                .Skip(skip)
-                .Take(pageSize)
-                .Select(a => Articles.Map(
-                    a.ArticleID,
-                    a.ArticleTitle,
-                    a.ArticleContent,
-                    a.ArticlePreview,
-                    a.AuthorID,
-                    a.ArticleTags,
-                    a.CreatedDate,
-                    a.CountLikes,
-                    a.CountComments))
-                .ToListAsync();
-
-            return articles
-                .Where(a => a.ArticleTags.Any(t => tags.Contains(t)))
-                .ToList();
-        }
-
-        public async Task<List<Articles>> GetLatestAsync(int page, int countPages)
-        {
-            int skip = (page - 1) * countPages;
-
-            // Фильтруем статьи по выбранным тегам
-            return await _context.Articles
-                .OrderByDescending(a => a.CreatedDate)
-                .Skip(skip)
-                .Take(countPages)
-                .Select(a => Articles.Map(
-                    a.ArticleID,
-                    a.ArticleTitle,
-                    a.ArticleContent,
-                    a.ArticlePreview,
-                    a.AuthorID,
-                    a.ArticleTags,
-                    a.CreatedDate,
-                    a.CountLikes,
-                    a.CountComments))
-                .ToListAsync();
-        }
-
-        public async Task<List<Articles>> GetLikesArticles(Guid authorId)
-        {
-            return await _context.Likes.AsNoTracking()
-                .Where(l => l.AuthorId == authorId)
-                .Select(l => l.Articles)
-                .Select(a => Articles.Map(
-                    a.ArticleID,
-                    a.ArticleTitle,
-                    a.ArticleContent,
-                    a.ArticlePreview,
-                    a.AuthorID,
-                    a.ArticleTags,
-                    a.CreatedDate,
-                    a.CountLikes,
-                    a.CountComments))
-                .ToListAsync();
         }
     }
 }

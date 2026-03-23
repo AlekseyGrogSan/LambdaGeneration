@@ -122,28 +122,28 @@ const sidebarStyle = {
 };
 
 const commonButtonStyle = {
-    fontWeight: 'bold', 
-    textTransform: 'none', 
-    fontSize: '0.9rem', 
-    justifyContent: 'flex-start', 
-    padding: '8px 16px', 
+    fontWeight: 'bold',
+    textTransform: 'none',
+    fontSize: '0.9rem',
+    justifyContent: 'flex-start',
+    padding: '8px 16px',
     borderRadius: '8px',
-    marginBottom: 1, 
+    marginBottom: 1,
     width: '100%'
 };
 
 const sidebarButtonStyle = {
     ...commonButtonStyle,
-    backgroundColor: 'rgba(255, 255, 255, 0.05)', 
-    color: '#ffffff', 
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    color: '#ffffff',
     '&:hover': { backgroundColor: 'rgba(255, 255, 255, 0.1)' },
 };
 
 const profileButtonStyle = {
     ...commonButtonStyle,
-    color: '#00bfa5', 
-    borderColor: '#00bfa5', 
-    borderWidth: '1px', 
+    color: '#00bfa5',
+    borderColor: '#00bfa5',
+    borderWidth: '1px',
     borderStyle: 'solid',
     '&:hover': { borderColor: '#00897b', color: '#00897b', backgroundColor: 'rgba(0, 191, 165, 0.08)' },
 };
@@ -157,21 +157,20 @@ const adminButtonStyle = {
 
 const scrollbarStyle = {
     '&::-webkit-scrollbar': {
-        width: '8px', // Ширина вертикального скролла
+        width: '8px',
     },
     '&::-webkit-scrollbar-track': {
-        background: '#1a1a1a', // Цвет дорожки (чуть темнее фона)
+        background: '#1a1a1a',
         borderRadius: '10px',
     },
     '&::-webkit-scrollbar-thumb': {
-        background: '#00bfa5', // Цвет ползунка (ваш основной зеленый)
+        background: '#00bfa5',
         borderRadius: '10px',
-        border: '2px solid #1a1a1a', // Отступ вокруг ползунка, чтобы он казался тоньше
+        border: '2px solid #1a1a1a',
     },
     '&::-webkit-scrollbar-thumb:hover': {
-        background: '#009e8a', // Цвет при наведении
+        background: '#009e8a',
     },
-    // Для Firefox
     scrollbarWidth: 'thin',
     scrollbarColor: '#00bfa5 #1a1a1a',
 };
@@ -1403,16 +1402,6 @@ const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
         }
     };
 
-    const handleCommentsCountChange = (articleId, commentsCount) => {
-        setArticles(prev => prev.map(a => (
-            a.article_id === articleId ? { ...a, commentsCount } : a
-        )));
-
-        if (selectedPost?.article_id === articleId) {
-            setSelectedPost(prev => ({ ...prev, commentsCount }));
-        }
-    };
-
     useEffect(() => {
         if (!activeCommentsPost) return;
         const updatedPost = articles.find((a) => a.article_id === activeCommentsPost.article_id);
@@ -1420,353 +1409,6 @@ const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
             setActiveCommentsPost(updatedPost);
         }
     }, [articles, activeCommentsPost]);
-
-    const getFeedCommentAuthorName = async (userId) => {
-        if (feedCommentAuthorCacheRef.current[userId]) {
-            return feedCommentAuthorCacheRef.current[userId];
-        }
-
-        try {
-            const response = await fetch(`${API_BASE_URL}/Users/UserProfile/${userId}`, {
-                credentials: 'include',
-            });
-            if (!response.ok) {
-                feedCommentAuthorCacheRef.current[userId] = 'Автор';
-                return 'Автор';
-            }
-
-            const data = await response.json();
-            const name = data.name || 'Автор';
-            feedCommentAuthorCacheRef.current[userId] = name;
-            return name;
-        } catch {
-            feedCommentAuthorCacheRef.current[userId] = 'Автор';
-            return 'Автор';
-        }
-    };
-
-    const getFeedCommentLikeStatus = async (commentId) => {
-        try {
-            const response = await fetch(`${API_BASE_URL}/LikeComment/isLiked/${commentId}`, {
-                credentials: 'include',
-            });
-
-            if (!response.ok) {
-                return false;
-            }
-
-            const data = await response.json();
-            return data.isLiked || false;
-        } catch {
-            return false;
-        }
-    };
-
-    const enrichFeedComment = async (comment) => {
-        const commentId = comment.commentId ?? comment.CommentId;
-        const authorId = comment.authorId ?? comment.AuthorId;
-        const hasReplies = Boolean(comment.hasReplies ?? comment.HasReplies);
-        const repliesCount = comment.repliesCount ?? comment.RepliesCount ?? 0;
-
-        const authorName = await getFeedCommentAuthorName(authorId);
-        const isLiked = await getFeedCommentLikeStatus(commentId);
-
-        return {
-            ...comment,
-            commentId,
-            authorId,
-            hasReplies,
-            repliesCount,
-            authorName,
-            isLiked,
-            replies: [],
-            repliesOpen: false,
-            repliesLoading: false,
-            repliesLoaded: false,
-        };
-    };
-
-    const loadFeedCommentsForPost = async (postData) => {
-        if (!postData?.article_id) return;
-
-        setFeedCommentsLoading(true);
-        setFeedCommentsError(null);
-
-        try {
-            const response = await fetch(`${API_BASE_URL}/Comments/get-comments/${postData.article_id}`, {
-                credentials: 'include',
-            });
-
-            if (!response.ok) {
-                throw new Error('Не удалось загрузить комментарии');
-            }
-
-            const data = await response.json();
-            const tree = await Promise.all((data.comments || []).map(enrichFeedComment));
-            setFeedCommentsTree(tree);
-            setFeedReplyEditorOpen({});
-            setFeedEditEditorOpen({});
-            setFeedEditInputs({});
-            handleCommentsCountChange(postData.article_id, countTreeComments(tree));
-        } catch (err) {
-            console.error(err);
-            setFeedCommentsError('Ошибка при загрузке комментариев');
-        } finally {
-            setFeedCommentsLoading(false);
-        }
-    };
-
-    const handleOpenCommentsSidebar = async (postData) => {
-        if (activeCommentsPost?.article_id === postData.article_id) {
-            setActiveCommentsPost(null);
-            setFeedCommentsTree([]);
-            setFeedCommentsError(null);
-            setFeedReplyEditorOpen({});
-            setFeedEditEditorOpen({});
-            setFeedEditInputs({});
-            return;
-        }
-
-        setActiveCommentsPost(postData);
-        setFeedNewCommentText('');
-        setFeedReplyInputs({});
-        setFeedReplyEditorOpen({});
-        setFeedEditEditorOpen({});
-        setFeedEditInputs({});
-        await loadFeedCommentsForPost(postData);
-    };
-
-    const createFeedComment = async (content, parentId = null) => {
-        if (!activeCommentsPost?.article_id) {
-            return;
-        }
-
-        const trimmed = content.trim();
-        if (trimmed.length < 5) {
-            setFeedCommentsError('Комментарий должен быть не короче 5 символов');
-            return;
-        }
-
-        const response = await fetch(`${API_BASE_URL}/Comments/create-comment`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            credentials: 'include',
-            body: JSON.stringify({
-                articleId: activeCommentsPost.article_id,
-                parentId,
-                content: trimmed,
-            }),
-        });
-
-        if (!response.ok) {
-            if (response.status === 401 || response.status === 403) {
-                handleOpen();
-                throw new Error('Для комментариев требуется авторизация');
-            }
-            throw new Error('Не удалось отправить комментарий');
-        }
-
-        await loadFeedCommentsForPost(activeCommentsPost);
-    };
-
-    const handleFeedCreateRootComment = async () => {
-        try {
-            setFeedCommentsError(null);
-            await createFeedComment(feedNewCommentText);
-            setFeedNewCommentText('');
-        } catch (err) {
-            setFeedCommentsError(err.message);
-        }
-    };
-
-    const handleFeedReplyChange = (commentId, value) => {
-        setFeedReplyInputs((prev) => ({ ...prev, [commentId]: value }));
-    };
-
-    const handleFeedEditChange = (commentId, value) => {
-        setFeedEditInputs((prev) => ({ ...prev, [commentId]: value }));
-    };
-
-    const handleFeedReplySubmit = async (commentId, value) => {
-        try {
-            setFeedCommentsError(null);
-            await createFeedComment(value, commentId);
-            setFeedReplyInputs((prev) => ({ ...prev, [commentId]: '' }));
-            setFeedReplyEditorOpen((prev) => ({ ...prev, [commentId]: false }));
-        } catch (err) {
-            setFeedCommentsError(err.message);
-        }
-    };
-
-    const handleFeedToggleReplyEditor = (commentId) => {
-        setFeedReplyEditorOpen((prev) => ({ ...prev, [commentId]: !prev[commentId] }));
-    };
-
-    const handleFeedToggleEditEditor = (commentId, currentContent = '') => {
-        setFeedEditEditorOpen((prev) => ({ ...prev, [commentId]: !prev[commentId] }));
-        setFeedEditInputs((prev) => ({
-            ...prev,
-            [commentId]: prev[commentId] ?? currentContent,
-        }));
-    };
-
-    const updateFeedComment = async (commentId, content) => {
-        const trimmed = content.trim();
-        if (trimmed.length < 5) {
-            setFeedCommentsError('Комментарий должен быть не короче 5 символов');
-            return false;
-        }
-
-        const response = await fetch(`${API_BASE_URL}/Comments/update-comment`, {
-            method: 'PUT',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            credentials: 'include',
-            body: JSON.stringify({
-                commentId,
-                content: trimmed,
-            }),
-        });
-
-        if (response.status === 401 || response.status === 403) {
-            handleOpen();
-            throw new Error('Для комментариев требуется авторизация');
-        }
-
-        if (!response.ok) {
-            throw new Error('Не удалось обновить комментарий');
-        }
-
-        return true;
-    };
-
-    const handleFeedEditSubmit = async (commentId, value) => {
-        try {
-            setFeedCommentsError(null);
-            const ok = await updateFeedComment(commentId, value);
-            if (!ok) return;
-            setFeedEditEditorOpen((prev) => ({ ...prev, [commentId]: false }));
-            await loadFeedCommentsForPost(activeCommentsPost);
-        } catch (err) {
-            setFeedCommentsError(err.message);
-        }
-    };
-
-    const handleFeedDeleteComment = async (comment) => {
-        try {
-            setFeedCommentsError(null);
-            if (comment.hasReplies) {
-                const ok = await updateFeedComment(comment.commentId, 'Комментарий удален');
-                if (!ok) return;
-            } else {
-                const response = await fetch(`${API_BASE_URL}/Comments/delete-comment`, {
-                    method: 'DELETE',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    credentials: 'include',
-                    body: JSON.stringify(comment.commentId),
-                });
-
-                if (response.status === 401 || response.status === 403) {
-                    handleOpen();
-                    throw new Error('Для удаления комментария требуется авторизация');
-                }
-
-                if (!response.ok) {
-                    throw new Error('Не удалось удалить комментарий');
-                }
-            }
-            await loadFeedCommentsForPost(activeCommentsPost);
-        } catch (err) {
-            setFeedCommentsError(err.message);
-        }
-    };
-
-    const handleFeedCommentLikeToggle = async (commentId, currentIsLiked) => {
-        const endpoint = currentIsLiked ? 'unLike' : 'like';
-
-        setFeedCommentsTree((prev) => updateCommentInTree(prev, commentId, (comment) => ({
-            ...comment,
-            isLiked: !currentIsLiked,
-            countLikes: currentIsLiked ? Math.max((comment.countLikes || 0) - 1, 0) : (comment.countLikes || 0) + 1,
-        })));
-
-        try {
-            const response = await fetch(`${API_BASE_URL}/LikeComment/${endpoint}/${commentId}`, {
-                method: 'POST',
-                credentials: 'include',
-            });
-
-            if (response.status === 401 || response.status === 403) {
-                handleOpen();
-                throw new Error('Для лайков комментариев требуется авторизация');
-            }
-
-            if (!response.ok) {
-                throw new Error('Не удалось изменить лайк комментария');
-            }
-
-            const data = await response.json();
-            setFeedCommentsTree((prev) => updateCommentInTree(prev, commentId, (comment) => ({
-                ...comment,
-                isLiked: !currentIsLiked,
-                countLikes: data.countLikes ?? comment.countLikes ?? 0,
-            })));
-        } catch (err) {
-            setFeedCommentsTree((prev) => updateCommentInTree(prev, commentId, (comment) => ({
-                ...comment,
-                isLiked: currentIsLiked,
-                countLikes: currentIsLiked ? (comment.countLikes || 0) + 1 : Math.max((comment.countLikes || 0) - 1, 0),
-            })));
-            setFeedCommentsError(err.message);
-        }
-    };
-
-    const handleFeedCloseComments = () => {
-        setActiveCommentsPost(null);
-        setFeedCommentsTree([]);
-        setFeedCommentsError(null);
-        setFeedReplyInputs({});
-        setFeedReplyEditorOpen({});
-        setFeedEditEditorOpen({});
-        setFeedEditInputs({});
-        setFeedNewCommentText('');
-    };
-
-    const fetchFeedRepliesTree = async (parentId) => {
-        const response = await fetch(`${API_BASE_URL}/Comments/get-replies/${parentId}`, {
-            credentials: 'include',
-        });
-
-        if (!response.ok) {
-            throw new Error('Failed to load replies');
-        }
-
-        const data = await response.json();
-        const replies = await Promise.all((data.comments || []).map(async (reply) => {
-            const enrichedReply = await enrichFeedComment(reply);
-
-            if (!enrichedReply.hasReplies) {
-                return enrichedReply;
-            }
-
-            const nestedReplies = await fetchFeedRepliesTree(enrichedReply.commentId);
-            return {
-                ...enrichedReply,
-                replies: nestedReplies,
-                repliesOpen: nestedReplies.length > 0,
-                repliesLoading: false,
-                repliesLoaded: true,
-                repliesCount: nestedReplies.length,
-            };
-        }));
-
-        return replies;
-    };
 
     const handleCommentsCountChange = (articleId, commentsCount) => {
         setArticles(prev => prev.map(a => (
@@ -2786,6 +2428,9 @@ const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
                 searchActive={mobileSearchActive}
                 categoriesActive={mobileCategoriesActive}
                 profileActive={mobileProfileActive}
+                isAuthenticated={Boolean(currentUser)}
+                profileAvatarSrc={buildAvatarUrl(API_BASE_URL, currentUser?.pathAvatar ?? currentUser?.PathAvatar)}
+                profileInitial={currentUser?.name?.[0]?.toUpperCase() || 'U'}
                 onHome={handleMobileHomeNav}
                 onSearch={() => {
                     if (isViewingDetailPage) {

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Box, Typography } from '@mui/material';
+import { Avatar, Box, Typography } from '@mui/material';
 import HomeOutlinedIcon from '@mui/icons-material/HomeOutlined';
 import HomeIcon from '@mui/icons-material/Home';
 import SearchOutlinedIcon from '@mui/icons-material/SearchOutlined';
@@ -53,6 +53,9 @@ const MobileBottomNav = ({
     searchActive,
     categoriesActive,
     profileActive,
+    isAuthenticated = false,
+    profileAvatarSrc = '',
+    profileInitial = '',
     onHome,
     onSearch,
     onCreate,
@@ -203,7 +206,27 @@ const MobileBottomNav = ({
                     color: profileActive ? '#00e5c9' : '#9e9e9e',
                 }}
             >
-                {profileActive ? (
+                {isAuthenticated ? (
+                    <Avatar
+                        src={profileAvatarSrc || undefined}
+                        sx={{
+                            width: 26,
+                            height: 26,
+                            fontSize: '0.75rem',
+                            fontWeight: 700,
+                            bgcolor: '#00bfa5',
+                            color: '#10211f',
+                            border: `1.5px solid ${profileActive ? '#00e5c9' : 'rgba(158, 158, 158, 0.65)'}`,
+                        }}
+                        imgProps={{
+                            onError: (e) => {
+                                e.currentTarget.src = '/default-avatar.svg';
+                            },
+                        }}
+                    >
+                        {profileInitial}
+                    </Avatar>
+                ) : profileActive ? (
                     <PersonIcon sx={{ fontSize: 26 }} />
                 ) : (
                     <PersonOutlineIcon sx={{ fontSize: 26 }} />

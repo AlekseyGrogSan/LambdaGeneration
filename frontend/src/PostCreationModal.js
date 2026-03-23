@@ -11,6 +11,7 @@ import {
 
 // Импорт иконок для редактора и галочки
 import DoneIcon from '@mui/icons-material/Done';
+import CloseIcon from '@mui/icons-material/Close';
 import FormatBoldIcon from '@mui/icons-material/FormatBold';
 import FormatItalicIcon from '@mui/icons-material/FormatItalic';
 import FormatUnderlinedIcon from '@mui/icons-material/FormatUnderlined';
@@ -139,35 +140,69 @@ const EditorToolbar = ({ editorRef }) => {
     });
 
     return (
-        <Box sx={{ display: 'flex', gap: 1, padding: 1, backgroundColor: '#555555', borderRadius: '8px 8px 0 0', border: '1px solid #444444' }}>
-            <IconButton size="small" onClick={() => applyCommand('bold')} sx={getButtonStyle(activeStyles.bold)}>
+        <Box
+            sx={{
+                display: 'flex',
+                gap: 1,
+                padding: 1,
+                backgroundColor: '#555555',
+                borderRadius: '8px 8px 0 0',
+                border: '1px solid #444444',
+                flexWrap: 'nowrap',
+                overflowX: 'auto',
+                overflowY: 'hidden',
+                scrollbarWidth: 'thin',
+                scrollbarColor: '#00bfa5 rgba(255,255,255,0.08)',
+                paddingBottom: '6px',
+                '&::-webkit-scrollbar': {
+                    height: '8px',
+                },
+                '&::-webkit-scrollbar-track': {
+                    background: 'linear-gradient(90deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02))',
+                    borderRadius: '999px',
+                },
+                '&::-webkit-scrollbar-thumb': {
+                    background: 'linear-gradient(90deg, #00d4b8, #00a58f)',
+                    borderRadius: '999px',
+                    border: '1px solid rgba(255,255,255,0.28)',
+                    boxShadow: 'inset 0 0 0 1px rgba(0,0,0,0.16)',
+                },
+                '&::-webkit-scrollbar-thumb:hover': {
+                    background: 'linear-gradient(90deg, #00e0c2, #00b39b)',
+                },
+                '&::-webkit-scrollbar-corner': {
+                    background: 'transparent',
+                },
+            }}
+        >
+            <IconButton size="small" onClick={() => applyCommand('bold')} sx={{ ...getButtonStyle(activeStyles.bold), flex: '0 0 auto' }}>
                 <FormatBoldIcon />
             </IconButton>
 
-            <IconButton size="small" onClick={() => applyCommand('italic')} sx={getButtonStyle(activeStyles.italic)}>
+            <IconButton size="small" onClick={() => applyCommand('italic')} sx={{ ...getButtonStyle(activeStyles.italic), flex: '0 0 auto' }}>
                 <FormatItalicIcon />
             </IconButton>
 
-            <IconButton size="small" onClick={() => applyCommand('underline')} sx={getButtonStyle(activeStyles.underline)}>
+            <IconButton size="small" onClick={() => applyCommand('underline')} sx={{ ...getButtonStyle(activeStyles.underline), flex: '0 0 auto' }}>
                 <FormatUnderlinedIcon />
             </IconButton>
 
             <IconButton size="small" onClick={() => {
                 const url = prompt('Введите URL:');
                 if (url) applyCommand('createLink', url);
-            }} sx={{ color: '#00bfa5' }}>
+            }} sx={{ color: '#00bfa5', flex: '0 0 auto' }}>
                 <LinkIcon />
             </IconButton>
 
-            <IconButton size="small" onClick={() => applyCommand('formatBlock', '<h2>')} sx={getButtonStyle(activeStyles.h2, '#ffeb3b')}>
+            <IconButton size="small" onClick={() => applyCommand('formatBlock', '<h2>')} sx={{ ...getButtonStyle(activeStyles.h2, '#ffeb3b'), flex: '0 0 auto' }}>
                 <TitleIcon />
             </IconButton>
 
-            <IconButton size="small" onClick={() => applyCommand('insertUnorderedList')} sx={getButtonStyle(activeStyles.listBulleted)}>
+            <IconButton size="small" onClick={() => applyCommand('insertUnorderedList')} sx={{ ...getButtonStyle(activeStyles.listBulleted), flex: '0 0 auto' }}>
                 <FormatListBulletedIcon />
             </IconButton>
 
-            <IconButton size="small" onClick={() => applyCommand('insertOrderedList')} sx={getButtonStyle(activeStyles.listNumbered)}>
+            <IconButton size="small" onClick={() => applyCommand('insertOrderedList')} sx={{ ...getButtonStyle(activeStyles.listNumbered), flex: '0 0 auto' }}>
                 <FormatListNumberedIcon />
             </IconButton>
         </Box>
@@ -205,22 +240,24 @@ const PostCreationModal = ({ open, handleClose, onUnauthorized, onPostSuccess })
     // Стили для центрирования и оформления модального окна
     const modalStyle = {
         position: 'absolute',
-        top: '50%',
-        left: '50%',
-        transform: 'translate(-50%, -50%)',
-        width: { xs: '90%', sm: '600px', md: '800px' },
+        top: { xs: 0, sm: '50%' },
+        left: { xs: 0, sm: '50%' },
+        transform: { xs: 'none', sm: 'translate(-50%, -50%)' },
+        width: { xs: '100vw', sm: '90%', md: '800px' },
+        height: { xs: '100dvh', sm: 'auto' },
         bgcolor: '#383838',
-        borderRadius: '16px',
+        borderRadius: { xs: 0, sm: '16px' },
         boxShadow: 24,
-        p: 4,
+        p: { xs: 2, sm: 4 },
         color: '#ffffff',
         display: 'flex',
         flexDirection: 'column',
         gap: 2,
         // Добавление максимальной высоты и скроллинга для всего модального окна, 
         // чтобы избежать выхода за пределы экрана на маленьких устройствах
-        maxHeight: '90vh', 
+        maxHeight: { xs: '100dvh', sm: '90vh' }, 
         overflowY: 'auto',
+        overscrollBehavior: 'contain',
         
         '&::-webkit-scrollbar': {
             width: '8px', // Ширина полосы
@@ -402,9 +439,14 @@ const PostCreationModal = ({ open, handleClose, onUnauthorized, onPostSuccess })
             aria-labelledby="post-creation-modal-title"
         >
             <Box sx={modalStyle}>
-                <Typography id="post-creation-modal-title" variant="h5" component="h2" sx={{ color: '#ffffff', fontWeight: 300, textAlign: 'center', marginBottom: 2 }}>
-                    Создать новый пост
-                </Typography>
+                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1 }}>
+                    <Typography id="post-creation-modal-title" variant="h5" component="h2" sx={{ color: '#ffffff', fontWeight: 300 }}>
+                        Создать новый пост
+                    </Typography>
+                    <IconButton aria-label="Закрыть" onClick={handleClose} sx={{ color: '#bdbdbd' }}>
+                        <CloseIcon />
+                    </IconButton>
+                </Box>
 
                 {/* Поле для ввода заголовка проекта */}
                 <TextField
@@ -497,8 +539,8 @@ const PostCreationModal = ({ open, handleClose, onUnauthorized, onPostSuccess })
                         onInput={handleContentChange} // Обновляем состояние при любом изменении
                         key="content-editable-box"
                         sx={{
-                            minHeight: '200px',
-                            maxHeight: '40vh', // Установка максимальной высоты
+                            minHeight: { xs: '180px', sm: '200px' },
+                            maxHeight: { xs: '34dvh', sm: '40vh' }, // Установка максимальной высоты
                             overflowY: 'auto', // Добавление вертикальной прокрутки
                             padding: 2,
                             // Стиль поля ввода для соответствия inputStyle
@@ -561,7 +603,7 @@ const PostCreationModal = ({ open, handleClose, onUnauthorized, onPostSuccess })
                         flexWrap: 'wrap', 
                         gap: 1, 
                         // Добавлен небольшой скролл для списка тегов, если их много
-                        maxHeight: '150px',
+                        maxHeight: { xs: '120px', sm: '150px' },
                         overflowY: 'auto',
                         padding: '4px',
                         border: '1px solid #444444',
@@ -619,24 +661,34 @@ const PostCreationModal = ({ open, handleClose, onUnauthorized, onPostSuccess })
                 </Box>
                 
                 {/* Кнопка "Опубликовать" */}
-                <Button
-                    variant="contained"
-                    fullWidth
-                    onClick={handlePublish}
-                    disabled={!title || !preview || !content} // Теги и картинка опциональны
+                <Box
                     sx={{
-                        marginTop: 1,
-                        backgroundColor: '#00bfa5',
-                        '&:hover': { backgroundColor: '#009688' },
-                        color: '#ffffff',
-                        padding: '12px 0',
-                        fontWeight: 'bold',
-                        fontSize: '1rem',
-                        borderRadius: '8px'
+                        position: { xs: 'sticky', sm: 'static' },
+                        bottom: 0,
+                        pt: 1,
+                        pb: { xs: 1, sm: 0 },
+                        background: { xs: 'linear-gradient(180deg, rgba(56,56,56,0) 0%, rgba(56,56,56,1) 24%)', sm: 'transparent' }
                     }}
                 >
-                    Опубликовать
-                </Button>
+                    <Button
+                        variant="contained"
+                        fullWidth
+                        onClick={handlePublish}
+                        disabled={!title || !preview || !content} // Теги и картинка опциональны
+                        sx={{
+                            marginTop: 1,
+                            backgroundColor: '#00bfa5',
+                            '&:hover': { backgroundColor: '#009688' },
+                            color: '#ffffff',
+                            padding: '12px 0',
+                            fontWeight: 'bold',
+                            fontSize: '1rem',
+                            borderRadius: '8px'
+                        }}
+                    >
+                        Опубликовать
+                    </Button>
+                </Box>
             </Box>
         </Modal>
     );
