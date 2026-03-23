@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react'; 
+﻿import React, { useState, useEffect, useRef, useCallback } from 'react'; 
 import { 
     Box,
     Button,
@@ -9,6 +9,13 @@ import {
     TextField,
     IconButton,
     InputAdornment,
+    Menu,
+    MenuItem,
+    ListItemIcon,
+    ListItemText,
+    useMediaQuery,
+    useTheme,
+    SwipeableDrawer,
 } from '@mui/material';
 import PersonIcon from '@mui/icons-material/Person';
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
@@ -19,16 +26,26 @@ import CloseIcon from '@mui/icons-material/Close';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import SearchIcon from '@mui/icons-material/Search';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
+import MoreVertIcon from '@mui/icons-material/MoreVert';
+import MenuBookIcon from '@mui/icons-material/MenuBook';
+import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
+import AdminPanelSettingsIcon from '@mui/icons-material/AdminPanelSettings';
 
 import PostCard from './PostCard';
 import PostDetailPage from './PostDetailPage';
 import ProfileModal from './ProfileModal';
+import MobileBottomNav from './MobileBottomNav';
+import MobileFeedSegmentedControl from './MobileFeedSegmentedControl';
+import MobileFeedListSkeleton from './MobileFeedListSkeleton';
+import { useFeedTabSwipe } from './useFeedTabSwipe';
 import RegistrationModal from './RegistrationModal';
 import ForgotPasswordModal from './ForgotPasswordModal';
 import PostCreationModal from './PostCreationModal';
 import CategoryModal from './CategoryModal'; 
 import ResourcesModal from './ResourcesModal';
 import FaqModal from './FaqModal';
+import AdminPanelModal from './AdminPanelModal';
+import { buildArticleImageUrl, buildAvatarUrl, DEFAULT_AVATAR_SRC } from './avatarUtils';
 
 const API_BASE_URL = 'http://localhost:5113/api';
 
@@ -48,12 +65,24 @@ const commentsSidebarStyle = {
     minWidth: 340,
     backgroundColor: '#1f1f1f',
     borderRight: '1px solid #333',
-    display: { xs: 'none', md: 'flex' },
+    display: 'none',
+    '@media (min-width: 768px)': {
+        display: 'flex',
+    },
     flexDirection: 'column',
     height: '100vh',
     position: 'sticky',
     top: 0,
     left: 0,
+};
+
+const commentsDrawerInnerSx = {
+    width: '100%',
+    height: '100%',
+    display: 'flex',
+    flexDirection: 'column',
+    backgroundColor: '#1f1f1f',
+    overflow: 'hidden',
 };
 
 const countTreeComments = (comments = []) => comments.reduce(
@@ -74,19 +103,22 @@ const updateCommentInTree = (tree, commentId, updater) => tree.map((item) => {
 });
 
 const sidebarStyle = {
-    width: 250, 
-    minWidth: 250, 
-    backgroundColor: '#1f1f1f', 
-    padding: 2, 
-    display: { xs: 'none', md: 'flex' }, 
+    width: 250,
+    minWidth: 250,
+    backgroundColor: '#1f1f1f',
+    padding: 2,
+    display: 'none',
+    '@media (min-width: 768px)': {
+        display: 'flex',
+    },
     flexDirection: 'column',
-    justifyContent: 'flex-start', 
-    height: '95.5vh', 
+    justifyContent: 'flex-start',
+    height: '100vh',
     borderLeft: '1px solid #333',
-    position: 'sticky', 
-    top: 0, 
+    position: 'sticky',
+    top: 0,
     right: 0,
-    overflowY: 'hidden', 
+    overflowY: 'hidden',
 };
 
 const commonButtonStyle = {
@@ -116,6 +148,13 @@ const profileButtonStyle = {
     '&:hover': { borderColor: '#00897b', color: '#00897b', backgroundColor: 'rgba(0, 191, 165, 0.08)' },
 };
 
+const adminButtonStyle = {
+    ...commonButtonStyle,
+    backgroundColor: '#c62828',
+    color: '#fff',
+    '&:hover': { backgroundColor: '#ff1744' }
+};
+
 const scrollbarStyle = {
     '&::-webkit-scrollbar': {
         width: '8px', // Ширина вертикального скролла
@@ -137,7 +176,7 @@ const scrollbarStyle = {
     scrollbarColor: '#00bfa5 #1a1a1a',
 };
 
-const Sidebar = ({ handleOpen, handleProfileOpen, handlePostOpen, handleCategoryOpen, handleResourcesOpen, handleFaqOpen, currentUser }) => (
+const Sidebar = ({ handleOpen, handleProfileOpen, handlePostOpen, handleCategoryOpen, handleResourcesOpen, handleFaqOpen, handleAdminOpen, isAdmin, currentUser }) => (
     <Box sx={sidebarStyle}>
         <Typography variant="h5" sx={{ color: '#00bfa5', fontWeight: 'bold', textAlign: 'center', mb: 4, letterSpacing: 1 }}>
             Lyambda
@@ -145,7 +184,17 @@ const Sidebar = ({ handleOpen, handleProfileOpen, handlePostOpen, handleCategory
 
         {currentUser ? (
             <Box sx={{ mb: 3, p: 2, bgcolor: '#2c2c2c', borderRadius: '12px', display: 'flex', alignItems: 'center', gap: 1 }}>
-                <Avatar sx={{ bgcolor: '#00bfa5' }}>{currentUser.name[0]?.toUpperCase()}</Avatar>
+                <Avatar
+                    src={buildAvatarUrl(API_BASE_URL, currentUser.pathAvatar ?? currentUser.PathAvatar)}
+                    sx={{ bgcolor: '#00bfa5' }}
+                    imgProps={{
+                        onError: (e) => {
+                            e.currentTarget.src = DEFAULT_AVATAR_SRC;
+                        },
+                    }}
+                >
+                    {currentUser.name[0]?.toUpperCase()}
+                </Avatar>
                 <Box sx={{ overflow: 'hidden' }}>
                     <Typography variant="subtitle2" sx={{ color: '#bdbdbd', fontSize: '0.75rem' }}>Вы вошли как:</Typography>
                     <Typography variant="body1" sx={{ color: 'white', fontWeight: 'bold', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
@@ -165,7 +214,16 @@ const Sidebar = ({ handleOpen, handleProfileOpen, handlePostOpen, handleCategory
             <Button variant="contained" sx={sidebarButtonStyle} onClick={handleFaqOpen}>FAQ</Button>
         </Box>
 
-        <Box sx={{ mt: 'auto' }}>
+        <Box sx={{ mt: 'auto', display: 'flex', flexDirection: 'column', gap: 1 }}>
+            {isAdmin && (
+                <Button
+                    sx={adminButtonStyle}
+                    startIcon={<DeleteOutlineIcon />}
+                    onClick={handleAdminOpen}
+                >
+                    Админ-панель
+                </Button>
+            )}
             <Button
                 sx={profileButtonStyle}
                 startIcon={<PersonIcon />}
@@ -225,9 +283,20 @@ const FeedCommentItem = ({
                 p: 1.2,
             }}
         >
-            <Typography variant="body2" sx={{ color: '#00bfa5', fontWeight: 700 }}>
-                @{comment.authorName}
-            </Typography>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                <Avatar
+                    src={buildAvatarUrl(API_BASE_URL, comment.authorAvatar)}
+                    sx={{ width: 28, height: 28, border: '1px solid #00bfa5' }}
+                    imgProps={{
+                        onError: (e) => {
+                            e.currentTarget.src = DEFAULT_AVATAR_SRC;
+                        },
+                    }}
+                />
+                <Typography variant="body2" sx={{ color: '#00bfa5', fontWeight: 700 }}>
+                    @{comment.authorName}
+                </Typography>
+            </Box>
 
             <Typography variant="body2" sx={{ color: 'white', mt: 0.5, whiteSpace: 'pre-wrap' }}>
                 {comment.content}
@@ -413,6 +482,7 @@ const FeedCommentItem = ({
 );
 
 const CommentsFeedSidebar = ({
+    variant = 'desktop',
     activePost,
     commentsTree,
     commentsLoading,
@@ -435,22 +505,37 @@ const CommentsFeedSidebar = ({
     onCommentLikeToggle,
     onCommentToggleReplies,
     onClose,
-}) => (
-    <Box sx={commentsSidebarStyle}>
-        <Box sx={{ px: 2, py: 1.3, borderBottom: '1px solid #333', display: 'flex', alignItems: 'center', gap: 1 }}>
-            <Typography variant="h6" sx={{ color: '#00bfa5', fontWeight: 700 }}>
+}) => {
+    const isDrawer = variant === 'drawer';
+
+    const header = (
+        <Box sx={{ px: 2, py: isDrawer ? 1.5 : 1.3, borderBottom: '1px solid #333', display: 'flex', alignItems: 'center', gap: 1, flexShrink: 0 }}>
+            <Typography variant="h6" sx={{ color: '#00e5c9', fontWeight: 700, fontSize: isDrawer ? '1.05rem' : undefined }}>
                 Комментарии
             </Typography>
-            <IconButton onClick={onClose} size="small" sx={{ ml: 'auto', color: '#9e9e9e' }}>
-                <CloseIcon fontSize="small" />
+            <IconButton
+                onClick={onClose}
+                aria-label="Закрыть комментарии"
+                sx={{
+                    ml: 'auto',
+                    color: '#bdbdbd',
+                    minWidth: 44,
+                    minHeight: 44,
+                    transition: 'background-color 0.2s ease',
+                    '&:hover': { backgroundColor: 'rgba(255,255,255,0.06)' },
+                }}
+            >
+                <CloseIcon />
             </IconButton>
         </Box>
+    );
 
-        <Box sx={{ px: 2, pt: 1, pb: 1.5, borderBottom: '1px solid #333' }}>
+    const titleBlock = (
+        <Box sx={{ px: 2, pt: 1, pb: 1.5, borderBottom: '1px solid #333', flexShrink: 0 }}>
             <Typography
                 variant="body2"
                 sx={{
-                    color: 'white',
+                    color: '#f5f5f5',
                     mt: 0.4,
                     whiteSpace: 'nowrap',
                     overflow: 'hidden',
@@ -460,9 +545,20 @@ const CommentsFeedSidebar = ({
                 {activePost?.title}
             </Typography>
         </Box>
+    );
 
-        <Box sx={{ p: 1.5, borderBottom: '1px solid #333' }}>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+    const inputBlock = (
+        <Box
+            sx={{
+                p: 1.5,
+                borderTop: isDrawer ? '1px solid #333' : undefined,
+                borderBottom: !isDrawer ? '1px solid #333' : undefined,
+                flexShrink: 0,
+                backgroundColor: isDrawer ? '#181818' : 'transparent',
+                pb: isDrawer ? 'calc(12px + env(safe-area-inset-bottom, 0px))' : 1.5,
+            }}
+        >
+            <Box sx={{ display: 'flex', alignItems: 'stretch', gap: 1 }}>
                 <TextField
                     label="Написать комментарий..."
                     variant="filled"
@@ -475,7 +571,13 @@ const CommentsFeedSidebar = ({
                             onCreateRootComment();
                         }
                     }}
-                    sx={commentInputStyle}
+                    sx={{
+                        ...commentInputStyle,
+                        '& .MuiFilledInput-root': {
+                            ...commentInputStyle['& .MuiFilledInput-root'],
+                            minHeight: isDrawer ? 48 : undefined,
+                        },
+                    }}
                 />
                 <Button
                     variant="contained"
@@ -483,10 +585,14 @@ const CommentsFeedSidebar = ({
                     sx={{
                         borderRadius: '10px',
                         backgroundColor: '#00bfa5',
+                        minWidth: isDrawer ? 88 : undefined,
+                        minHeight: 48,
+                        alignSelf: 'stretch',
+                        transition: 'background-color 0.2s ease',
                         '&:hover': { backgroundColor: '#009e8a' },
                     }}
                 >
-                    Отпр.
+                    {isDrawer ? 'Отпр.' : 'Отпр.'}
                 </Button>
             </Box>
 
@@ -494,14 +600,16 @@ const CommentsFeedSidebar = ({
                 <Typography sx={{ color: '#ff8a80', mt: 1, fontSize: '0.85rem' }}>{commentsError}</Typography>
             )}
         </Box>
+    );
 
-        <Box sx={{ flex: 1, overflowY: 'auto', p: 1.5, ...scrollbarStyle}}>
+    const listBlock = (
+        <Box sx={{ flex: 1, minHeight: 0, overflowY: 'auto', p: 1.5, ...scrollbarStyle }}>
             {commentsLoading ? (
                 <Box sx={{ py: 3, textAlign: 'center' }}>
                     <CircularProgress size={26} sx={{ color: '#00bfa5' }} />
                 </Box>
             ) : commentsTree.length === 0 ? (
-                <Typography sx={{ color: '#aaa', fontSize: '0.9rem' }}>
+                <Typography sx={{ color: '#bdbdbd', fontSize: '0.9rem' }}>
                     Пока нет комментариев. Будьте первым.
                 </Typography>
             ) : (
@@ -530,8 +638,26 @@ const CommentsFeedSidebar = ({
                 </Box>
             )}
         </Box>
-    </Box>
-);
+    );
+
+    return (
+        <Box sx={isDrawer ? commentsDrawerInnerSx : commentsSidebarStyle}>
+            {header}
+            {titleBlock}
+            {isDrawer ? (
+                <>
+                    {listBlock}
+                    {inputBlock}
+                </>
+            ) : (
+                <>
+                    {inputBlock}
+                    {listBlock}
+                </>
+            )}
+        </Box>
+    );
+};
 
 const PostPage = () => {
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -539,8 +665,14 @@ const PostPage = () => {
     const [isForgotModalOpen, setIsForgotModalOpen] = useState(false);
     const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
     const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
-    const [isResourcesModalOpen, setIsResourcesModalOpen] = useState(false);
-    const [isFaqModalOpen, setIsFaqModalOpen] = useState(false);
+const [isResourcesModalOpen, setIsResourcesModalOpen] = useState(false);
+const [isFaqModalOpen, setIsFaqModalOpen] = useState(false);
+const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
+    const [moreMenuAnchor, setMoreMenuAnchor] = useState(null);
+    const moreMenuLockRef = useRef(null);
+    const moreMenuScrollTopRef = useRef(0);
+    const theme = useTheme();
+    const isDesktopLayout = useMediaQuery(theme.breakpoints.up(768));
     const isProfileModalOpenRef = useRef(false);
     
     const [viewedProfileId, setViewedProfileId] = useState(null); 
@@ -555,10 +687,12 @@ const PostPage = () => {
     const [searchQuery, setSearchQuery] = useState('');
     const searchQueryRef = useRef('');
     const lastNonSearchTypeRef = useRef('random');
+    const lastFeedTypeRef = useRef('random');
     const [selectedTagIds, setSelectedTagIds] = useState([]);
     
     const [isLoading, setIsLoading] = useState(false); 
     const [error, setError] = useState(null);
+    const [emptyStateMessage, setEmptyStateMessage] = useState('');
     const [selectedPost, setSelectedPost] = useState(null); 
     const [isViewingDetailPage, setIsViewingDetailPage] = useState(false);
     const [lastViewedArticleId, setLastViewedArticleId] = useState(null); 
@@ -571,16 +705,77 @@ const PostPage = () => {
     const [feedReplyInputs, setFeedReplyInputs] = useState({});
     const articlesRef = useRef([]);
     const hasMoreRef = useRef(hasMore);
+    const feedCacheRef = useRef({ random: null, recommend: null });
+    const switchRandomRecommendTabRef = useRef(() => {});
 
     useEffect(() => { articlesRef.current = articles; }, [articles]);
     useEffect(() => { hasMoreRef.current = hasMore; }, [hasMore]);
+
+    useEffect(() => {
+        if (paginationType !== 'random' && paginationType !== 'recommend') return;
+        feedCacheRef.current[paginationType] = {
+            articles,
+            pageNumber,
+            hasMore,
+            emptyStateMessage,
+        };
+    }, [articles, pageNumber, hasMore, emptyStateMessage, paginationType]);
     useEffect(() => { isProfileModalOpenRef.current = isProfileModalOpen; }, [isProfileModalOpen]);
     useEffect(() => { searchQueryRef.current = searchQuery; }, [searchQuery]);
     useEffect(() => {
         if (paginationType !== 'search') {
             lastNonSearchTypeRef.current = paginationType;
         }
+        if (paginationType === 'random' || paginationType === 'recommend') {
+            lastFeedTypeRef.current = paginationType;
+        }
     }, [paginationType]);
+    useEffect(() => {
+        const container = articlesContainerRef.current;
+        if (!container) return;
+
+        const shouldLockFeedScroll = Boolean(moreMenuAnchor || isResourcesModalOpen || isFaqModalOpen);
+        if (shouldLockFeedScroll) {
+            if (!moreMenuLockRef.current) {
+                moreMenuScrollTopRef.current = container.scrollTop;
+                moreMenuLockRef.current = {
+                    overflowY: container.style.overflowY,
+                    scrollBehavior: container.style.scrollBehavior,
+                    scrollSnapType: container.style.scrollSnapType,
+                    touchAction: container.style.touchAction,
+                    overscrollBehavior: container.style.overscrollBehavior,
+                };
+            }
+            container.style.overflowY = 'hidden';
+            container.style.scrollBehavior = 'auto';
+            container.style.scrollSnapType = 'none';
+            container.style.touchAction = 'none';
+            container.style.overscrollBehavior = 'contain';
+            requestAnimationFrame(() => {
+                container.scrollTop = moreMenuScrollTopRef.current;
+            });
+            return;
+        }
+
+        if (moreMenuLockRef.current) {
+            const { overflowY, scrollBehavior, scrollSnapType, touchAction, overscrollBehavior } = moreMenuLockRef.current;
+            const lockedScrollTop = moreMenuScrollTopRef.current;
+
+            // Restore the scroll position before re-enabling snap to avoid jumping to the next card.
+            container.style.overflowY = overflowY;
+            container.style.scrollBehavior = 'auto';
+            container.style.scrollSnapType = 'none';
+            container.style.touchAction = touchAction;
+            container.style.overscrollBehavior = overscrollBehavior;
+            container.scrollTop = lockedScrollTop;
+
+            moreMenuLockRef.current = null;
+            requestAnimationFrame(() => {
+                container.style.scrollBehavior = scrollBehavior;
+                container.style.scrollSnapType = scrollSnapType;
+            });
+        }
+    }, [moreMenuAnchor, isResourcesModalOpen, isFaqModalOpen]);
     const [returnToProfile, setReturnToProfile] = useState(false);
     const [returnProfileUserId, setReturnProfileUserId] = useState(null);
     const [profileReturnEnabled, setProfileReturnEnabled] = useState(false);
@@ -690,7 +885,7 @@ const PostPage = () => {
     const handleOpen = () => setIsModalOpen(true); 
     const handleClose = () => { 
         setIsModalOpen(false); 
-        checkAuth().then(isAuth => { if(isAuth) fetchArticlesPage(1, paginationType, { force: true, searchQuery: searchQueryRef.current }); });
+        void checkAuth();
     };
     
     const handlePostOpen = () => setIsPostModalOpen(true);
@@ -706,6 +901,8 @@ const PostPage = () => {
     
     const handleFaqOpen = () => setIsFaqModalOpen(true);
     const handleFaqClose = () => setIsFaqModalOpen(false);
+    const handleAdminOpen = () => setIsAdminPanelOpen(true);
+    const handleAdminClose = () => setIsAdminPanelOpen(false);
 
     const handleProfileOpen = () => {
         if (!currentUser) {
@@ -731,7 +928,7 @@ const PostPage = () => {
         setIsProfileModalOpen(false);
         isProfileModalOpenRef.current = false;
         setViewedProfileId(null);
-        fetchArticlesPage(1, paginationType, { force: true });
+        void checkAuth();
     };
     
     const handleOtherAuthorProfileOpen = (userId, options = {}) => {
@@ -763,12 +960,6 @@ const PostPage = () => {
     const handleBackToFeed = () => { 
         setSelectedPost(null); 
         setIsViewingDetailPage(false); 
-        if (returnToProfile) {
-            setViewedProfileId(returnProfileUserId ?? null);
-            setIsProfileModalOpen(true);
-        }
-        setReturnToProfile(false);
-        setReturnProfileUserId(null);
         setShouldOpenComments(false);
         if (returnToProfile) {
             setViewedProfileId(returnProfileUserId ?? null);
@@ -778,35 +969,8 @@ const PostPage = () => {
         setReturnProfileUserId(null);
     };
 
-    const handlePaginationTypeChange = (type) => {
-        if (type === paginationType || isLoading) return;
-
-        setPaginationType(type);
-        if (type !== 'search') {
-            setIsSearchMode(false);
-        }
-        if (type !== 'tags') {
-            setSelectedTagIds([]);
-        }
-        setArticles([]);
-        setPageNumber(1);
-        setHasMore(true);
-        fetchArticlesPage(1, type);
-    };
-
     const handleSearchOpen = () => {
         setIsSearchMode(true);
-    };
-
-    const handleSearchClose = () => {
-        setIsSearchMode(false);
-        setSearchQuery('');
-        const restoreType = lastNonSearchTypeRef.current || 'random';
-        setPaginationType(restoreType);
-        setArticles([]);
-        setPageNumber(1);
-        setHasMore(true);
-        fetchArticlesPage(1, restoreType);
     };
 
     const handleSearchSubmit = () => {
@@ -923,6 +1087,7 @@ const PostPage = () => {
     const enrichArticleData = async (article) => {
         const rawId = article.article_id ?? article.articleId ?? article.ArticleID;
         const rawAuthorId = article.author_id ?? article.authorId ?? article.AuthorID;
+        const rawFilePath = article.file_path ?? article.filePath ?? article.FilePath;
         const fetchOptions = { credentials: 'include' };
 
         const authorReq = rawAuthorId
@@ -946,18 +1111,37 @@ const PostPage = () => {
             article_id: rawId, 
             author_id: rawAuthorId, 
             nickname: authorData.name || 'Автор',
+            authorAvatar: authorData.pathAvatar ?? authorData.PathAvatar ?? null,
             authorBio: authorData.aboutUser || 'Описание недоступно.',
             title: article.articleTitle || article.article_title || article.ArticleTitle || 'Нет названия', 
             article_preview: article.articlePreview || article.article_preview || article.ArticlePreview || 'Нет описания',
             article_content: article.article_content || article.articleContent || article.ArticleContent || '...', 
             likesCount: likeCountData.countLikes || 0,
-            imageUrl: article.article_preview || article.ArticlePreview, 
+            file_path: rawFilePath,
+            articleImageUrl: buildArticleImageUrl(API_BASE_URL, rawFilePath),
+            imageUrl: buildArticleImageUrl(API_BASE_URL, rawFilePath),
             isLiked: isLikedStatus, 
             commentsCount: article.countComments ?? article.commentsCount ?? article.comments_count ?? article.CountComments ?? 0,
             tags: article.article_tags || article.articleTags || article.ArticleTags || [], 
         };
     };
 
+    const buildEmptyStateMessage = (type, options = {}) => {
+        const { searchQuery: providedQuery } = options;
+        const normalizedQuery = (providedQuery ?? searchQueryRef.current ?? '').trim();
+
+        if (type === 'search') {
+            return normalizedQuery
+                ? `Статей по запросу «${normalizedQuery}» не найдено.`
+                : 'Статей по такому запросу нет.';
+        }
+
+        if (type === 'tags') {
+            return 'Статей с выбранными тегами не найдено.';
+        }
+
+        return 'Статей пока нет.';
+    };
 
     // ✅ НОВАЯ ФУНКЦИЯ ЗАГРУЗКИ СТРАНИЦЫ
     const fetchArticlesPage = async (page, type = paginationType, options = {}) => {
@@ -968,6 +1152,7 @@ const PostPage = () => {
 
         setIsLoading(true);
         setError(null);
+        setEmptyStateMessage('');
         
         try {
             let url = `${API_BASE_URL}/Articles/getPaginated?typePagination=${type}&page=${page}&size=${pageSize}`;
@@ -977,6 +1162,7 @@ const PostPage = () => {
                     setArticles([]);
                     setHasMore(false);
                     setPageNumber(1);
+                    setEmptyStateMessage(buildEmptyStateMessage(type, { searchQuery: q }));
                     return;
                 }
                 url = `${API_BASE_URL}/Articles/search?q=${encodeURIComponent(q)}&page=${page}&countPages=${pageSize}`;
@@ -987,6 +1173,7 @@ const PostPage = () => {
                     setArticles([]);
                     setHasMore(false);
                     setPageNumber(1);
+                    setEmptyStateMessage(buildEmptyStateMessage(type));
                     return;
                 }
                 const params = new URLSearchParams();
@@ -998,10 +1185,15 @@ const PostPage = () => {
             const fetchOptions = { credentials: 'include' };
             const response = await fetch(url, fetchOptions);
             if (!response.ok) {
-                if (type === 'search' && (response.status === 404 || response.status === 204)) {
+                const isEmptyResponse = (type === 'search' || type === 'tags') && (response.status === 404 || response.status === 204);
+                if (isEmptyResponse) {
                     setArticles([]);
                     setHasMore(false);
                     setPageNumber(1);
+                    const messageOptions = type === 'search'
+                        ? { searchQuery: (providedQuery ?? searchQueryRef.current) }
+                        : {};
+                    setEmptyStateMessage(buildEmptyStateMessage(type, messageOptions));
                     return;
                 }
                 throw new Error(`Ошибка загрузки статей: ${response.statusText}`);
@@ -1009,10 +1201,14 @@ const PostPage = () => {
             
             const data = await response.json(); 
             const newArticlesRaw = data.articles || [];
-            if (type === 'search' && newArticlesRaw.length === 0) {
+            if (newArticlesRaw.length === 0) {
                 setArticles([]);
                 setHasMore(false);
                 setPageNumber(1);
+                const messageOptions = type === 'search'
+                    ? { searchQuery: (providedQuery ?? searchQueryRef.current) }
+                    : {};
+                setEmptyStateMessage(buildEmptyStateMessage(type, messageOptions));
                 return;
             }
             
@@ -1040,6 +1236,114 @@ const PostPage = () => {
         } finally {
             setIsLoading(false);
         }
+    };
+
+    const switchRandomRecommendTab = (type) => {
+        if (type !== 'random' && type !== 'recommend') return;
+        if (type === paginationType) return;
+        if (isLoading) return;
+
+        setPaginationType(type);
+        setIsSearchMode(false);
+        setSelectedTagIds([]);
+
+        const cached = feedCacheRef.current[type];
+        if (cached && cached.articles && cached.articles.length > 0) {
+            setArticles(cached.articles);
+            setPageNumber(cached.pageNumber);
+            setHasMore(cached.hasMore);
+            setEmptyStateMessage(cached.emptyStateMessage || '');
+            setError(null);
+            setIsLoading(false);
+            queueMicrotask(() => {
+                const el = articlesContainerRef.current;
+                if (el) el.scrollTop = 0;
+            });
+            return;
+        }
+
+        if (cached && Array.isArray(cached.articles) && cached.articles.length === 0) {
+            setArticles([]);
+            setPageNumber(1);
+            setHasMore(false);
+            setEmptyStateMessage(cached.emptyStateMessage || '');
+            setError(null);
+            setIsLoading(false);
+            queueMicrotask(() => {
+                const el = articlesContainerRef.current;
+                if (el) el.scrollTop = 0;
+            });
+            return;
+        }
+
+        setArticles([]);
+        setPageNumber(1);
+        setHasMore(true);
+        setEmptyStateMessage('');
+        setError(null);
+        fetchArticlesPage(1, type, { force: true });
+    };
+
+    switchRandomRecommendTabRef.current = switchRandomRecommendTab;
+
+    const handlePaginationTypeChange = (type) => {
+        if (type === paginationType || isLoading) return;
+
+        if (type === 'random' || type === 'recommend') {
+            switchRandomRecommendTab(type);
+            if (returnToProfile) {
+                setViewedProfileId(returnProfileUserId ?? null);
+                setIsProfileModalOpen(true);
+            }
+            setReturnToProfile(false);
+            setReturnProfileUserId(null);
+            return;
+        }
+
+        setPaginationType(type);
+        if (type !== 'search') {
+            setIsSearchMode(false);
+        }
+        if (type !== 'tags') {
+            setSelectedTagIds([]);
+        }
+        setArticles([]);
+        setPageNumber(1);
+        setHasMore(true);
+        fetchArticlesPage(1, type);
+        if (returnToProfile) {
+            setViewedProfileId(returnProfileUserId ?? null);
+            setIsProfileModalOpen(true);
+        }
+        setReturnToProfile(false);
+        setReturnProfileUserId(null);
+    };
+
+    const handleSearchClose = () => {
+        setIsSearchMode(false);
+        setSearchQuery('');
+        const restoreType = lastNonSearchTypeRef.current || 'random';
+        if (restoreType === 'random' || restoreType === 'recommend') {
+            switchRandomRecommendTab(restoreType);
+        } else {
+            setPaginationType(restoreType);
+            setArticles([]);
+            setPageNumber(1);
+            setHasMore(true);
+            fetchArticlesPage(1, restoreType, { force: true });
+        }
+    };
+
+    const handleMobileHomeNav = () => {
+        if (isViewingDetailPage) {
+            handleBackToFeed();
+        } else if (isSearchMode) {
+            handleSearchClose();
+        } else if (paginationType === 'tags') {
+            const targetFeedType = lastFeedTypeRef.current || 'random';
+            handlePaginationTypeChange(targetFeedType);
+        }
+        setIsCategoryModalOpen(false);
     };
 
     const handleLikeToggle = async (rawId, currentIsLiked) => {
@@ -1464,6 +1768,377 @@ const PostPage = () => {
         return replies;
     };
 
+    const handleCommentsCountChange = (articleId, commentsCount) => {
+        setArticles(prev => prev.map(a => (
+            a.article_id === articleId ? { ...a, commentsCount } : a
+        )));
+
+        if (selectedPost?.article_id === articleId) {
+            setSelectedPost(prev => ({ ...prev, commentsCount }));
+        }
+    };
+
+    useEffect(() => {
+        if (!activeCommentsPost) return;
+        const updatedPost = articles.find((a) => a.article_id === activeCommentsPost.article_id);
+        if (updatedPost) {
+            setActiveCommentsPost(updatedPost);
+        }
+    }, [articles, activeCommentsPost]);
+
+    const getFeedCommentAuthorInfo = async (userId) => {
+        if (feedCommentAuthorCacheRef.current[userId]) {
+            return feedCommentAuthorCacheRef.current[userId];
+        }
+
+        try {
+            const response = await fetch(`${API_BASE_URL}/Users/UserProfile/${userId}`, {
+                credentials: 'include',
+            });
+            if (!response.ok) {
+                const fallback = { name: 'Автор', avatar: null };
+                feedCommentAuthorCacheRef.current[userId] = fallback;
+                return fallback;
+            }
+
+            const data = await response.json();
+            const info = {
+                name: data.name || 'Автор',
+                avatar: data.pathAvatar ?? data.PathAvatar ?? null,
+            };
+            feedCommentAuthorCacheRef.current[userId] = info;
+            return info;
+        } catch {
+            const fallback = { name: 'Автор', avatar: null };
+            feedCommentAuthorCacheRef.current[userId] = fallback;
+            return fallback;
+        }
+    };
+
+    const getFeedCommentLikeStatus = async (commentId) => {
+        try {
+            const response = await fetch(`${API_BASE_URL}/LikeComment/isLiked/${commentId}`, {
+                credentials: 'include',
+            });
+
+            if (!response.ok) {
+                return false;
+            }
+
+            const data = await response.json();
+            return data.isLiked || false;
+        } catch {
+            return false;
+        }
+    };
+
+    const enrichFeedComment = async (comment) => {
+        const commentId = comment.commentId ?? comment.CommentId;
+        const authorId = comment.authorId ?? comment.AuthorId;
+        const hasReplies = Boolean(comment.hasReplies ?? comment.HasReplies);
+        const repliesCount = comment.repliesCount ?? comment.RepliesCount ?? 0;
+
+        const authorInfo = await getFeedCommentAuthorInfo(authorId);
+        const isLiked = await getFeedCommentLikeStatus(commentId);
+
+        return {
+            ...comment,
+            commentId,
+            authorId,
+            hasReplies,
+            repliesCount,
+            authorName: authorInfo.name,
+            authorAvatar: authorInfo.avatar,
+            isLiked,
+            replies: [],
+            repliesOpen: false,
+            repliesLoading: false,
+            repliesLoaded: false,
+        };
+    };
+
+    const loadFeedCommentsForPost = async (postData) => {
+        if (!postData?.article_id) return;
+
+        setFeedCommentsLoading(true);
+        setFeedCommentsError(null);
+
+        try {
+            const response = await fetch(`${API_BASE_URL}/Comments/get-comments/${postData.article_id}`, {
+                credentials: 'include',
+            });
+
+            if (!response.ok) {
+                throw new Error('Не удалось загрузить комментарии');
+            }
+
+            const data = await response.json();
+            const tree = await Promise.all((data.comments || []).map(enrichFeedComment));
+            setFeedCommentsTree(tree);
+            setFeedReplyEditorOpen({});
+            setFeedEditEditorOpen({});
+            setFeedEditInputs({});
+            handleCommentsCountChange(postData.article_id, countTreeComments(tree));
+        } catch (err) {
+            console.error(err);
+            setFeedCommentsError('Ошибка при загрузке комментариев');
+        } finally {
+            setFeedCommentsLoading(false);
+        }
+    };
+
+    const handleOpenCommentsSidebar = async (postData) => {
+        if (activeCommentsPost?.article_id === postData.article_id) {
+            setActiveCommentsPost(null);
+            setFeedCommentsTree([]);
+            setFeedCommentsError(null);
+            setFeedReplyEditorOpen({});
+            setFeedEditEditorOpen({});
+            setFeedEditInputs({});
+            return;
+        }
+
+        setActiveCommentsPost(postData);
+        setFeedNewCommentText('');
+        setFeedReplyInputs({});
+        setFeedReplyEditorOpen({});
+        setFeedEditEditorOpen({});
+        setFeedEditInputs({});
+        await loadFeedCommentsForPost(postData);
+    };
+
+    const createFeedComment = async (content, parentId = null) => {
+        if (!activeCommentsPost?.article_id) {
+            return;
+        }
+
+        const trimmed = content.trim();
+        if (trimmed.length < 2) {
+            setFeedCommentsError('Комментарий должен быть не короче 2 символов');
+            return;
+        }
+
+        const response = await fetch(`${API_BASE_URL}/Comments/create-comment`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            credentials: 'include',
+            body: JSON.stringify({
+                articleId: activeCommentsPost.article_id,
+                parentId,
+                content: trimmed,
+            }),
+        });
+
+        if (!response.ok) {
+            if (response.status === 401 || response.status === 403) {
+                handleOpen();
+                throw new Error('Для комментариев требуется авторизация');
+            }
+            throw new Error('Не удалось отправить комментарий');
+        }
+
+        await loadFeedCommentsForPost(activeCommentsPost);
+    };
+
+    const handleFeedCreateRootComment = async () => {
+        try {
+            setFeedCommentsError(null);
+            await createFeedComment(feedNewCommentText);
+            setFeedNewCommentText('');
+        } catch (err) {
+            setFeedCommentsError(err.message);
+        }
+    };
+
+    const handleFeedReplyChange = (commentId, value) => {
+        setFeedReplyInputs((prev) => ({ ...prev, [commentId]: value }));
+    };
+
+    const handleFeedEditChange = (commentId, value) => {
+        setFeedEditInputs((prev) => ({ ...prev, [commentId]: value }));
+    };
+
+    const handleFeedReplySubmit = async (commentId, value) => {
+        try {
+            setFeedCommentsError(null);
+            await createFeedComment(value, commentId);
+            setFeedReplyInputs((prev) => ({ ...prev, [commentId]: '' }));
+            setFeedReplyEditorOpen((prev) => ({ ...prev, [commentId]: false }));
+        } catch (err) {
+            setFeedCommentsError(err.message);
+        }
+    };
+
+    const handleFeedToggleReplyEditor = (commentId) => {
+        setFeedReplyEditorOpen((prev) => ({ ...prev, [commentId]: !prev[commentId] }));
+    };
+
+    const handleFeedToggleEditEditor = (commentId, currentContent = '') => {
+        setFeedEditEditorOpen((prev) => ({ ...prev, [commentId]: !prev[commentId] }));
+        setFeedEditInputs((prev) => ({
+            ...prev,
+            [commentId]: prev[commentId] ?? currentContent,
+        }));
+    };
+
+    const updateFeedComment = async (commentId, content) => {
+        const trimmed = content.trim();
+        if (trimmed.length < 2) {
+            setFeedCommentsError('Комментарий должен быть не короче 2 символов');
+            return false;
+        }
+
+        const response = await fetch(`${API_BASE_URL}/Comments/update-comment`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            credentials: 'include',
+            body: JSON.stringify({
+                commentId,
+                content: trimmed,
+            }),
+        });
+
+        if (response.status === 401 || response.status === 403) {
+            handleOpen();
+            throw new Error('Для комментариев требуется авторизация');
+        }
+
+        if (!response.ok) {
+            throw new Error('Не удалось обновить комментарий');
+        }
+
+        return true;
+    };
+
+    const handleFeedEditSubmit = async (commentId, value) => {
+        try {
+            setFeedCommentsError(null);
+            const ok = await updateFeedComment(commentId, value);
+            if (!ok) return;
+            setFeedEditEditorOpen((prev) => ({ ...prev, [commentId]: false }));
+            await loadFeedCommentsForPost(activeCommentsPost);
+        } catch (err) {
+            setFeedCommentsError(err.message);
+        }
+    };
+
+    const handleFeedDeleteComment = async (comment) => {
+        try {
+            setFeedCommentsError(null);
+            if (comment.hasReplies) {
+                const ok = await updateFeedComment(comment.commentId, 'Комментарий удален');
+                if (!ok) return;
+            } else {
+                const response = await fetch(`${API_BASE_URL}/Comments/delete-comment`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    credentials: 'include',
+                    body: JSON.stringify(comment.commentId),
+                });
+
+                if (response.status === 401 || response.status === 403) {
+                    handleOpen();
+                    throw new Error('Для удаления комментария требуется авторизация');
+                }
+
+                if (!response.ok) {
+                    throw new Error('Не удалось удалить комментарий');
+                }
+            }
+            await loadFeedCommentsForPost(activeCommentsPost);
+        } catch (err) {
+            setFeedCommentsError(err.message);
+        }
+    };
+
+    const handleFeedCommentLikeToggle = async (commentId, currentIsLiked) => {
+        const endpoint = currentIsLiked ? 'unLike' : 'like';
+
+        setFeedCommentsTree((prev) => updateCommentInTree(prev, commentId, (comment) => ({
+            ...comment,
+            isLiked: !currentIsLiked,
+            countLikes: currentIsLiked ? Math.max((comment.countLikes || 0) - 1, 0) : (comment.countLikes || 0) + 1,
+        })));
+
+        try {
+            const response = await fetch(`${API_BASE_URL}/LikeComment/${endpoint}/${commentId}`, {
+                method: 'POST',
+                credentials: 'include',
+            });
+
+            if (response.status === 401 || response.status === 403) {
+                handleOpen();
+                throw new Error('Для лайков комментариев требуется авторизация');
+            }
+
+            if (!response.ok) {
+                throw new Error('Не удалось изменить лайк комментария');
+            }
+
+            const data = await response.json();
+            setFeedCommentsTree((prev) => updateCommentInTree(prev, commentId, (comment) => ({
+                ...comment,
+                isLiked: !currentIsLiked,
+                countLikes: data.countLikes ?? comment.countLikes ?? 0,
+            })));
+        } catch (err) {
+            setFeedCommentsTree((prev) => updateCommentInTree(prev, commentId, (comment) => ({
+                ...comment,
+                isLiked: currentIsLiked,
+                countLikes: currentIsLiked ? (comment.countLikes || 0) + 1 : Math.max((comment.countLikes || 0) - 1, 0),
+            })));
+            setFeedCommentsError(err.message);
+        }
+    };
+
+    const handleFeedCloseComments = () => {
+        setActiveCommentsPost(null);
+        setFeedCommentsTree([]);
+        setFeedCommentsError(null);
+        setFeedReplyInputs({});
+        setFeedReplyEditorOpen({});
+        setFeedEditEditorOpen({});
+        setFeedEditInputs({});
+        setFeedNewCommentText('');
+    };
+
+    const fetchFeedRepliesTree = async (parentId) => {
+        const response = await fetch(`${API_BASE_URL}/Comments/get-replies/${parentId}`, {
+            credentials: 'include',
+        });
+
+        if (!response.ok) {
+            throw new Error('Failed to load replies');
+        }
+
+        const data = await response.json();
+        const replies = await Promise.all((data.comments || []).map(async (reply) => {
+            const enrichedReply = await enrichFeedComment(reply);
+
+            if (!enrichedReply.hasReplies) {
+                return enrichedReply;
+            }
+
+            const nestedReplies = await fetchFeedRepliesTree(enrichedReply.commentId);
+            return {
+                ...enrichedReply,
+                replies: nestedReplies,
+                repliesOpen: nestedReplies.length > 0,
+                repliesLoading: false,
+                repliesLoaded: true,
+                repliesCount: nestedReplies.length,
+            };
+        }));
+
+        return replies;
+    };
+
     const handleFeedCommentToggleReplies = async (commentId) => {
         const target = (() => {
             const stack = [...feedCommentsTree];
@@ -1508,41 +2183,109 @@ const PostPage = () => {
             setFeedCommentsError(err.message);
         }
     };
+
+    const feedSwipeEnabled =
+        !isDesktopLayout &&
+        !isViewingDetailPage &&
+        !isSearchMode &&
+        !isLoading &&
+        (paginationType === 'random' || paginationType === 'recommend');
+
+    /** Вертикальный scroll-snap между статьями на мобильной ленте (свайп / инерция к следующей карточке). */
+    const mobileArticleSnapEnabled =
+        !isDesktopLayout && !isViewingDetailPage && articles.length > 0;
+
+    const { dragOffset, swipeHandlers } = useFeedTabSwipe({
+        enabled: feedSwipeEnabled,
+        activeTab: paginationType === 'recommend' ? 'recommend' : 'random',
+        scrollContainerRef: articlesContainerRef,
+        threshold: 50,
+        onSwipeLeft: () => switchRandomRecommendTabRef.current('recommend'),
+        onSwipeRight: () => switchRandomRecommendTabRef.current('random'),
+    });
+
+    const feedCommentsSidebarProps = {
+        activePost: activeCommentsPost,
+        commentsTree: feedCommentsTree,
+        commentsLoading: feedCommentsLoading,
+        commentsError: feedCommentsError,
+        newCommentText: feedNewCommentText,
+        currentUserId: currentUser?.id,
+        replyInputs: feedReplyInputs,
+        replyEditorOpen: feedReplyEditorOpen,
+        editInputs: feedEditInputs,
+        editEditorOpen: feedEditEditorOpen,
+        onNewCommentTextChange: setFeedNewCommentText,
+        onCreateRootComment: handleFeedCreateRootComment,
+        onReplyTextChange: handleFeedReplyChange,
+        onToggleReplyEditor: handleFeedToggleReplyEditor,
+        onReplySubmit: handleFeedReplySubmit,
+        onEditTextChange: handleFeedEditChange,
+        onToggleEditEditor: handleFeedToggleEditEditor,
+        onEditSubmit: handleFeedEditSubmit,
+        onDeleteComment: handleFeedDeleteComment,
+        onCommentLikeToggle: handleFeedCommentLikeToggle,
+        onCommentToggleReplies: handleFeedCommentToggleReplies,
+        onClose: handleFeedCloseComments,
+    };
+
+    const mobileHomeActive = !isViewingDetailPage && !isSearchMode && paginationType !== 'search' && paginationType !== 'tags' && !isProfileModalOpen && !isCategoryModalOpen;
+    const mobileSearchActive = isSearchMode || paginationType === 'search';
+    const mobileCategoriesActive = isCategoryModalOpen || paginationType === 'tags';
+    const mobileProfileActive = isProfileModalOpen;
+
     return (
         <Box sx={{ display: 'flex', minHeight: '100vh', backgroundColor: '#121212', overflow: 'hidden' }}>
-            {!isViewingDetailPage && activeCommentsPost && (
-                <CommentsFeedSidebar
-                    activePost={activeCommentsPost}
-                    commentsTree={feedCommentsTree}
-                    commentsLoading={feedCommentsLoading}
-                    commentsError={feedCommentsError}
-                    newCommentText={feedNewCommentText}
-                    currentUserId={currentUser?.id}
-                    replyInputs={feedReplyInputs}
-                    replyEditorOpen={feedReplyEditorOpen}
-                    editInputs={feedEditInputs}
-                    editEditorOpen={feedEditEditorOpen}
-                    onNewCommentTextChange={setFeedNewCommentText}
-                    onCreateRootComment={handleFeedCreateRootComment}
-                    onReplyTextChange={handleFeedReplyChange}
-                    onToggleReplyEditor={handleFeedToggleReplyEditor}
-                    onReplySubmit={handleFeedReplySubmit}
-                    onEditTextChange={handleFeedEditChange}
-                    onToggleEditEditor={handleFeedToggleEditEditor}
-                    onEditSubmit={handleFeedEditSubmit}
-                    onDeleteComment={handleFeedDeleteComment}
-                    onCommentLikeToggle={handleFeedCommentLikeToggle}
-                    onCommentToggleReplies={handleFeedCommentToggleReplies}
-                    onClose={handleFeedCloseComments}
-                />
+            {!isViewingDetailPage && activeCommentsPost && isDesktopLayout && (
+                <CommentsFeedSidebar variant="desktop" {...feedCommentsSidebarProps} />
             )}
-            
+
+            {!isViewingDetailPage && activeCommentsPost && !isDesktopLayout && (
+                <SwipeableDrawer
+                    anchor="bottom"
+                    open={Boolean(activeCommentsPost)}
+                    onClose={handleFeedCloseComments}
+                    onOpen={() => {}}
+                    disableDiscovery
+                    PaperProps={{
+                        sx: {
+                            borderTopLeftRadius: 16,
+                            borderTopRightRadius: 16,
+                            height: 'min(90vh, 720px)',
+                            maxHeight: '90vh',
+                            width: '100%',
+                            maxWidth: '100vw',
+                            overflow: 'hidden',
+                            backgroundColor: '#1f1f1f',
+                            transition: 'transform 0.25s ease-out',
+                        },
+                    }}
+                >
+                    <Box sx={{ height: '100%', maxWidth: '100vw' }}>
+                        <CommentsFeedSidebar variant="drawer" {...feedCommentsSidebarProps} />
+                    </Box>
+                </SwipeableDrawer>
+            )}
+
             <Box 
                 sx={{ 
                     flex: 1, 
                     height: '100vh', 
                     overflowY: 'auto',
-                    scrollSnapType: 'y mandatory', 
+                    overflowX: 'hidden',
+                    scrollSnapType: 'none',
+                    scrollPaddingTop: 0,
+                    scrollPaddingBottom: 0,
+                    '@media (max-width: 767.95px)': mobileArticleSnapEnabled
+                        ? {
+                            scrollSnapType: 'y mandatory',
+                            scrollPaddingTop: 'calc(112px + env(safe-area-inset-top, 0px))',
+                            scrollPaddingBottom: 'calc(88px + env(safe-area-inset-bottom, 0px))',
+                        }
+                        : {},
+                    '@media (min-width: 768px)': {
+                        scrollSnapType: 'y mandatory',
+                    },
                     '&::-webkit-scrollbar': { display: 'none' }, 
                     msOverflowStyle: 'none', 
                     scrollbarWidth: 'none', 
@@ -1551,17 +2294,150 @@ const PostPage = () => {
                     alignItems: 'center',
                     scrollBehavior: 'smooth',
                     position: 'relative',
+                    width: '100%',
+                    maxWidth: '100vw',
                 }}
                 ref={articlesContainerRef} 
             >
-                
+                {!isViewingDetailPage && (
+                    <Box
+                        sx={{
+                            display: 'flex',
+                            flexDirection: 'column',
+                            '@media (min-width: 768px)': {
+                                display: 'none',
+                            },
+                            position: 'sticky',
+                            top: 0,
+                            zIndex: 11,
+                            width: '100%',
+                            maxWidth: '100vw',
+                            px: 1.25,
+                            pt: 'calc(10px + env(safe-area-inset-top, 0px))',
+                            pb: 1,
+                            gap: 1,
+                            background: 'linear-gradient(180deg, rgba(18,18,18,0.98) 0%, rgba(18,18,18,0.92) 92%, transparent 100%)',
+                            borderBottom: '1px solid rgba(0, 191, 165, 0.12)',
+                            backdropFilter: 'blur(12px)',
+                            transition: 'background 0.25s ease',
+                        }}
+                    >
+                        {isSearchMode ? (
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, width: '100%' }}>
+                                <IconButton
+                                    onClick={handleSearchClose}
+                                    aria-label="Назад"
+                                    sx={{
+                                        minWidth: 44,
+                                        minHeight: 44,
+                                        color: '#00e5c9',
+                                        border: '1px solid rgba(0, 191, 165, 0.45)',
+                                        transition: 'background-color 0.2s ease',
+                                        '&:hover': { backgroundColor: 'rgba(0, 191, 165, 0.1)' },
+                                    }}
+                                >
+                                    <ArrowBackIcon />
+                                </IconButton>
+                                <TextField
+                                    value={searchQuery}
+                                    onChange={(e) => setSearchQuery(e.target.value)}
+                                    onKeyDown={(e) => {
+                                        if (e.key === 'Enter') {
+                                            e.preventDefault();
+                                            handleSearchSubmit();
+                                        }
+                                    }}
+                                    placeholder="Поиск статей..."
+                                    variant="outlined"
+                                    size="small"
+                                    fullWidth
+                                    sx={{
+                                        flex: 1,
+                                        '& .MuiOutlinedInput-root': {
+                                            color: '#f5f5f5',
+                                            borderRadius: '12px',
+                                            minHeight: 44,
+                                            backgroundColor: 'rgba(0, 0, 0, 0.25)',
+                                            transition: 'border-color 0.2s ease',
+                                            '& fieldset': { borderColor: 'rgba(0, 191, 165, 0.4)' },
+                                            '&:hover fieldset': { borderColor: '#00d4b4' },
+                                            '&.Mui-focused fieldset': { borderColor: '#00e5c9' },
+                                        },
+                                        '& .MuiInputBase-input::placeholder': {
+                                            color: '#b0b0b0',
+                                            opacity: 1,
+                                        },
+                                    }}
+                                    InputProps={{
+                                        endAdornment: (
+                                            <InputAdornment position="end">
+                                                <IconButton
+                                                    onClick={handleSearchSubmit}
+                                                    aria-label="Искать"
+                                                    sx={{ color: '#00e5c9', minWidth: 44, minHeight: 44 }}
+                                                >
+                                                    <SearchIcon />
+                                                </IconButton>
+                                            </InputAdornment>
+                                        ),
+                                    }}
+                                />
+                            </Box>
+                        ) : (
+                            <>
+                                <Box sx={{ display: 'flex', alignItems: 'center', width: '100%', gap: 1 }}>
+                                    <Typography
+                                        variant="h6"
+                                        sx={{
+                                            fontWeight: 800,
+                                            letterSpacing: 0.5,
+                                            color: '#00e5c9',
+                                            fontSize: '1.15rem',
+                                        }}
+                                    >
+                                        Lyambda
+                                    </Typography>
+                                    <Box sx={{ flex: 1 }} />
+                                    <IconButton
+                                        onClick={(e) => {
+                                            e.preventDefault();
+                                            e.stopPropagation();
+                                            setMoreMenuAnchor(e.currentTarget);
+                                        }}
+                                        aria-label="Ещё"
+                                        sx={{ minWidth: 44, minHeight: 44, color: '#e0f7f4' }}
+                                    >
+                                        <MoreVertIcon />
+                                    </IconButton>
+                                </Box>
+                                {(paginationType === 'random' || paginationType === 'recommend') && (
+                                    <MobileFeedSegmentedControl
+                                        value={paginationType === 'recommend' ? 'recommend' : 'random'}
+                                        disabled={isLoading}
+                                        onChange={(next) => {
+                                            if (next === 'random') {
+                                                handlePaginationTypeChange('random');
+                                            } else {
+                                                handlePaginationTypeChange('recommend');
+                                            }
+                                        }}
+                                    />
+                                )}
+                            </>
+                        )}
+                    </Box>
+                )}
+
                 {!isViewingDetailPage && (
                     <Box 
                         sx={{ 
                             position: 'sticky',
                             top: 0,
                             width: '100%',
-                            display: 'flex',
+                            display: 'none',
+                            '@media (min-width: 768px)': {
+                                display: 'flex',
+                            },
                             justifyContent: 'center',
                             pt: 2,
                             pb: 2,
@@ -1718,13 +2594,23 @@ const PostPage = () => {
                 )}
 
                 {isViewingDetailPage && selectedPost ? (
-                    <Box sx={{ width: '100%', maxWidth: '680px' }}>
+                    <Box sx={{
+                        width: '100%',
+                        maxWidth: '680px',
+                        boxSizing: 'border-box',
+                        px: 1,
+                        pb: 'calc(96px + env(safe-area-inset-bottom, 0px))',
+                        '@media (min-width: 600px)': { px: 1.5 },
+                        '@media (min-width: 768px)': { px: 0, pb: 2 },
+                    }}
+                    >
                         <PostDetailPage
                             post={selectedPost}
                             onBack={handleBackToFeed}
                             backLabel={returnToProfile ? 'Назад к профилю' : 'Назад к ленте'}
                             nickname={selectedPost.nickname}
                             authorId={selectedPost.author_id} 
+                            authorAvatar={selectedPost.authorAvatar}
                             onAuthorClick={handleOtherAuthorProfileOpen} 
                             onUnauthorized={handleOpen}
                             currentUserId={currentUser?.id}
@@ -1735,11 +2621,40 @@ const PostPage = () => {
                         />
                     </Box>
                 ) : (
-                    <Box sx={{ width: '100%', maxWidth: '650px', pb: 5 }}>
-                        {articles.length === 0 && isLoading && <Typography sx={{color:'white', textAlign:'center', pt: 4}}><CircularProgress sx={{ color: '#00bfa5' }} /></Typography>}
+                    <Box
+                        sx={{
+                            width: '100%',
+                            maxWidth: { xs: '100%', sm: '650px' },
+                            boxSizing: 'border-box',
+                            px: 1,
+                            pb: 'calc(100px + env(safe-area-inset-bottom, 0px))',
+                            '@media (min-width: 600px)': {
+                                px: 1.5,
+                            },
+                        '@media (min-width: 768px)': {
+                            px: 0,
+                            pb: 5,
+                            mt: '20px',
+                        },
+                            transform: `translateX(${dragOffset}px)`,
+                            transition: Math.abs(dragOffset) > 0.5
+                                ? 'none'
+                                : 'transform 0.28s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.22s ease',
+                            touchAction: feedSwipeEnabled ? 'pan-y' : 'auto',
+                        }}
+                        {...(feedSwipeEnabled ? swipeHandlers : {})}
+                    >
+                        {articles.length === 0 && isLoading && (isDesktopLayout || (paginationType !== 'random' && paginationType !== 'recommend')) && (
+                            <Typography sx={{ color: '#f5f5f5', textAlign: 'center', pt: 4 }}>
+                                <CircularProgress sx={{ color: '#00bfa5' }} />
+                            </Typography>
+                        )}
+                        {articles.length === 0 && isLoading && !isDesktopLayout && (paginationType === 'random' || paginationType === 'recommend') && (
+                            <MobileFeedListSkeleton count={3} />
+                        )}
                         {!isLoading && articles.length === 0 && !error && (
-                            <Typography sx={{color:'white', textAlign:'center', pt: 4}}>
-                                {paginationType === 'search' ? 'Статьи не найдены :((' : 'Статей пока нет.'}
+                            <Typography sx={{ color: '#f5f5f5', textAlign: 'center', pt: 4 }}>
+                                {emptyStateMessage || (paginationType === 'search' ? 'Статьи не найдены.' : 'Статей пока нет.')}
                             </Typography>
                         )}
                         
@@ -1748,12 +2663,26 @@ const PostPage = () => {
                                 key={post.article_id}
                                 ref={setPostRef(post.article_id)}
                                 sx={{ 
-                                    minHeight: '100vh', 
-                                    display: 'flex', 
-                                    justifyContent: 'center', 
-                                    alignItems: 'center',
-                                    padding: '20px 0', 
-                                    scrollSnapAlign: 'center', 
+                                    minHeight: 'auto',
+                                    display: 'flex',
+                                    justifyContent: 'center',
+                                    alignItems: 'stretch',
+                                    py: 1,
+                                    px: 0,
+                                    scrollSnapAlign: 'none',
+                                    scrollSnapStop: 'normal',
+                                    '@media (max-width: 767.95px)': {
+                                        minHeight:
+                                            'calc(100dvh - 112px - env(safe-area-inset-top, 0px) - 88px - env(safe-area-inset-bottom, 0px))',
+                                        scrollSnapAlign: 'start',
+                                        scrollSnapStop: 'always',
+                                    },
+                                    '@media (min-width: 768px)': {
+                                        minHeight: '100vh',
+                                        alignItems: 'center',
+                                        py: '20px',
+                                        scrollSnapAlign: 'center',
+                                    },
                                 }}
                             >
                                 <PostCard
@@ -1761,9 +2690,9 @@ const PostPage = () => {
                                     authorId={post.author_id} 
                                     onAuthorClick={handleOtherAuthorProfileOpen} 
                                     onClick={() => handlePostClick(post)}
-                                            onCommentClick={() => handleOpenCommentsSidebar(post)}
+                                    onCommentClick={() => handleOpenCommentsSidebar(post)}
                                     onLike={() => handleLikeToggle(post.article_id, post.isLiked)}
-                                            showRepost={false}
+                                    showRepost={false}
                                 />
                             </Box>
                         ))}
@@ -1774,7 +2703,7 @@ const PostPage = () => {
                             </Box>
                         )}
                         
-                        {!hasMore && articles.length > 0 && <Typography sx={{color:'white', textAlign:'center', py: 4}}>Это все статьи!</Typography>}
+                        {!hasMore && articles.length > 0 && <Typography sx={{ color: '#f5f5f5', textAlign: 'center', py: 4 }}>Это все статьи!</Typography>}
                         {error && <Typography color="error" sx={{ textAlign: 'center', pt: 4 }}>{error}</Typography>}
                     </Box>
                 )}
@@ -1787,8 +2716,96 @@ const PostPage = () => {
                 handleCategoryOpen={handleCategoryOpen} 
                 handleResourcesOpen={handleResourcesOpen} 
                 handleFaqOpen={handleFaqOpen}
+                handleAdminOpen={handleAdminOpen}
+                isAdmin={currentUser?.role === 'Admin'}
                 currentUser={currentUser}
-                
+            />
+
+            <Menu
+                anchorEl={moreMenuAnchor}
+                open={Boolean(moreMenuAnchor)}
+                onClose={() => setMoreMenuAnchor(null)}
+                anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+                transformOrigin={{ vertical: 'top', horizontal: 'right' }}
+                slotProps={{
+                    paper: {
+                        sx: {
+                            mt: 1,
+                            minWidth: 220,
+                            backgroundColor: '#1e1e1e',
+                            border: '1px solid rgba(0, 191, 165, 0.25)',
+                            borderRadius: 2,
+                            color: '#f5f5f5',
+                        },
+                    },
+                }}
+            >
+                <MenuItem
+                    onClick={() => {
+                        setMoreMenuAnchor(null);
+                        handleResourcesOpen();
+                    }}
+                    sx={{ minHeight: 48, transition: 'background-color 0.2s ease' }}
+                >
+                    <ListItemIcon sx={{ color: '#00e5c9' }}>
+                        <MenuBookIcon fontSize="small" />
+                    </ListItemIcon>
+                    <ListItemText primaryTypographyProps={{ fontSize: '0.95rem' }} primary="Полезные материалы" />
+                </MenuItem>
+                <MenuItem
+                    onClick={() => {
+                        setMoreMenuAnchor(null);
+                        handleFaqOpen();
+                    }}
+                    sx={{ minHeight: 48 }}
+                >
+                    <ListItemIcon sx={{ color: '#00e5c9' }}>
+                        <HelpOutlineIcon fontSize="small" />
+                    </ListItemIcon>
+                    <ListItemText primaryTypographyProps={{ fontSize: '0.95rem' }} primary="FAQ" />
+                </MenuItem>
+                {currentUser?.role === 'Admin' && (
+                    <MenuItem
+                        onClick={() => {
+                            setMoreMenuAnchor(null);
+                            handleAdminOpen();
+                        }}
+                        sx={{ minHeight: 48 }}
+                    >
+                        <ListItemIcon sx={{ color: '#ff8a80' }}>
+                            <AdminPanelSettingsIcon fontSize="small" />
+                        </ListItemIcon>
+                        <ListItemText primaryTypographyProps={{ fontSize: '0.95rem' }} primary="Админ-панель" />
+                    </MenuItem>
+                )}
+            </Menu>
+
+            <MobileBottomNav
+                hidden={isDesktopLayout}
+                homeActive={mobileHomeActive}
+                searchActive={mobileSearchActive}
+                categoriesActive={mobileCategoriesActive}
+                profileActive={mobileProfileActive}
+                onHome={handleMobileHomeNav}
+                onSearch={() => {
+                    if (isViewingDetailPage) {
+                        handleBackToFeed();
+                    }
+                    handleSearchOpen();
+                }}
+                onCreate={handlePostOpen}
+                onCategories={() => {
+                    if (isViewingDetailPage) {
+                        handleBackToFeed();
+                    }
+                    handleCategoryOpen();
+                }}
+                onProfile={() => {
+                    if (isViewingDetailPage) {
+                        handleBackToFeed();
+                    }
+                    handleProfileOpen();
+                }}
             />
             
             <RegistrationModal 
@@ -1830,9 +2847,11 @@ const PostPage = () => {
             />
             <ResourcesModal open={isResourcesModalOpen} handleClose={handleResourcesClose} />
             <FaqModal open={isFaqModalOpen} handleClose={handleFaqClose} />
+            <AdminPanelModal open={isAdminPanelOpen} handleClose={handleAdminClose} />
             
         </Box>
     );
 };
 
 export default PostPage;
+

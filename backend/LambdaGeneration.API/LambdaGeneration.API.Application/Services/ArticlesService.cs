@@ -1,4 +1,4 @@
-﻿using LambdaGeneration.API.Application.Interfaces.Services;
+using LambdaGeneration.API.Application.Interfaces.Services;
 using LambdaGeneration.API.Core.Enums;
 using LambdaGeneration.API.Core.Models;
 using LambdaGeneration.API.Date.Repositories;
@@ -19,7 +19,8 @@ namespace LambdaGeneration.API.Application.Services
             string article_content,
             string article_preview,
             List<int> article_tags,
-            Guid author_id)
+            Guid author_id,
+            string? file_path)
         {
             await _articlesRepository.Create(
                 Articles.Create(Guid.NewGuid(),
@@ -27,7 +28,8 @@ namespace LambdaGeneration.API.Application.Services
                     article_content,
                     article_preview,
                     article_tags,
-                    author_id)
+                    author_id,
+                    file_path)
                 );
         }
         public async Task Delete(Guid article_id, Guid authorId)
@@ -43,7 +45,7 @@ namespace LambdaGeneration.API.Application.Services
             await _articlesRepository.Delete(article_id);
         }
 
-        public async Task<Articles?> Update(Guid article_id, Guid authorId, string new_title, string new_content, string new_preview)
+        public async Task<Articles?> Update(Guid article_id, Guid authorId, string new_title, string new_content, string new_preview, string file_path)
         {
             var a = await _articlesRepository.GetById(article_id);
             if (a.AuthorID != authorId)
@@ -52,7 +54,7 @@ namespace LambdaGeneration.API.Application.Services
             {
                 throw new ArgumentException("Article not exist!");
             }
-            var article = await _articlesRepository.Update(article_id, new_title, new_content, new_preview);
+            var article = await _articlesRepository.Update(article_id, new_title, new_content, new_preview, file_path);
 
             return article;
         }
@@ -75,6 +77,11 @@ namespace LambdaGeneration.API.Application.Services
             return all_articles;    
         }
 
+        public async Task<List<Articles>> GetArticlesByAuthorPaged(Guid author_id, int page, int pageSize)
+        {
+            return await _articlesRepository.GetArticlesByAuthorPaged(author_id, page, pageSize);
+        }
+
         public async Task<Articles> GetArticleByIdAsync(Guid articleId)
         {
             var article = await _articlesRepository.GetById(articleId);
@@ -82,7 +89,7 @@ namespace LambdaGeneration.API.Application.Services
                 throw new ArgumentException("Article not exist");
             return article;
         }
-        public async Task<List<Articles>> SearchArticlesAsync(string? searchTerm, int pageNumber, int countPages)
+        public async Task<List<Articles>> SearchArticlesAsync(string searchTerm, int pageNumber, int countPages)
         {
             if (string.IsNullOrEmpty(searchTerm))
             {

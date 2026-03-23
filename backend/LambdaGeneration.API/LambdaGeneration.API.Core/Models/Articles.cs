@@ -16,7 +16,8 @@ namespace LambdaGeneration.API.Core.Models
             string article_content,
             string article_preview,
             List<int> article_tags,
-            Guid author_id)
+            Guid author_id,
+            string? file_path)
         {
             CreatedDate = DateTime.UtcNow;
             ArticleID = article_id;
@@ -26,6 +27,7 @@ namespace LambdaGeneration.API.Core.Models
             ArticleTags = article_tags;
             AuthorID = author_id;
             CountComments = 0;
+            FilePath = file_path;
         }
 
         //Для мэпинга
@@ -37,7 +39,8 @@ namespace LambdaGeneration.API.Core.Models
             List<int> article_tags,
             DateTime created_date, 
             int countLikes,
-            int countComments) 
+            int countComments,
+            string file_path) 
         {
             CreatedDate = created_date;
             ArticleID = article_id;
@@ -48,6 +51,7 @@ namespace LambdaGeneration.API.Core.Models
             AuthorID = author_id;
             CountLikes = countLikes;
             CountComments = countComments;
+            FilePath = file_path;
         }
 
 
@@ -61,20 +65,23 @@ namespace LambdaGeneration.API.Core.Models
         public List<int> ArticleTags { get; } = new List<int>();
         public int CountLikes { get; } = 0;
         public int CountComments { get; } = 0;
+        public string? FilePath { get; } = string.Empty;
 
         public static Articles Create(Guid article_id,
             string article_title,
             string article_content,
             string article_preview,
             List<int> article_tags,
-            Guid author_id)
+            Guid author_id,
+            string file_path)
         {
             return new Articles(article_id,
             article_title,
             article_content,
             article_preview,
             article_tags,
-            author_id);
+            author_id,
+            file_path);
         }
 
 
@@ -86,7 +93,8 @@ namespace LambdaGeneration.API.Core.Models
             List<int> article_tags,
             DateTime date_time,
             int countLikes,
-            int countComments)
+            int countComments, 
+            string? file_path)
         {
             return new Articles(article_id,
             article_title,
@@ -96,7 +104,8 @@ namespace LambdaGeneration.API.Core.Models
             article_tags,
             date_time,
             countLikes,
-            countComments);
+            countComments, 
+            file_path);
         }
     }
 }

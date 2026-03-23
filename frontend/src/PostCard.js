@@ -5,11 +5,14 @@ import {
     Typography,
     IconButton,
     Chip,
+    Avatar,
 } from '@mui/material';
 import FavoriteIcon from '@mui/icons-material/Favorite';
 import ChatBubbleOutlineIcon from '@mui/icons-material/ChatBubbleOutline';
 import SendIcon from '@mui/icons-material/Send';
-import PersonIcon from '@mui/icons-material/Person'; 
+import { buildArticleImageUrl, buildAvatarUrl, DEFAULT_AVATAR_SRC } from './avatarUtils';
+
+const API_BASE_URL = 'http://localhost:5113/api';
 
 // --- ОБЩИЙ МАССИВ ЦВЕТОВ ДЛЯ ТЕГОВ ---
 const TAG_COLORS = [
@@ -22,13 +25,14 @@ const TAG_COLORS = [
 ];
 
 // ФИКС: ВЫНОСИМ СТИЛЬ МЕТКИ ЗА ПРЕДЕЛЫ КОМПОНЕНТА
-const labelStyle = { 
-    color: '#00bfa5', 
-    display: 'block', 
-    mb: 0.5, 
-    textTransform: 'uppercase', 
+const labelStyle = {
+    color: '#00e5c9',
+    display: 'block',
+    mb: 0.5,
+    textTransform: 'uppercase',
     fontWeight: 'bold',
-    fontSize: '0.9rem' 
+    fontSize: { xs: '0.65rem', md: '0.9rem' },
+    letterSpacing: { xs: '0.06em', md: '0.04em' },
 };
 
 // Функция для генерации цвета тега по его содержимому
@@ -44,6 +48,7 @@ const getTagColor = (tag, index) => {
 const PostCard = ({ 
     id, 
     nickname, 
+    authorAvatar,
     authorId,
     onAuthorClick,
     title, 
@@ -57,10 +62,24 @@ const PostCard = ({
     tags = [],
     sx = {}, // <-- Принимаем кастомные стили, включая фиксированную высоту
     showRepost = true,
+    showCommentAction = true,
     onShare, // optional share handler (id) => void
+    articleImageUrl,
+    file_path,
+    filePath,
+    showImage = true,
 }) => {
     const [shareNoticeOpen, setShareNoticeOpen] = useState(false);
     const shareTimerRef = useRef(null);
+    const [imageBroken, setImageBroken] = useState(false);
+
+    const withCacheBust = (url) => {
+        if (!url) return url;
+        return `${url}${url.includes('?') ? '&' : '?'}v=${Date.now()}`;
+    };
+
+    const resolvedImageUrl = articleImageUrl || buildArticleImageUrl(API_BASE_URL, file_path || filePath);
+    const resolvedAuthorAvatar = buildAvatarUrl(API_BASE_URL, authorAvatar);
 
     useEffect(() => {
         return () => {
@@ -69,6 +88,10 @@ const PostCard = ({
             }
         };
     }, []);
+
+    useEffect(() => {
+        setImageBroken(false);
+    }, [resolvedImageUrl]);
 
     const showShareNotice = () => {
         setShareNoticeOpen(true);
@@ -109,18 +132,20 @@ const PostCard = ({
         <Card 
             sx={{
                 width: '100%',
-                backgroundColor: '#2c2c2c', 
+                maxWidth: '100%',
+                backgroundColor: '#2c2c2c',
                 borderRadius: '12px',
-                height: '85vh', // По умолчанию для ленты
-                minHeight: 'unset', 
+                height: { xs: 'auto', md: '85vh' },
+                minHeight: { xs: 0, md: 'unset' },
                 cursor: onClick ? 'pointer' : 'default',
-                transition: 'box-shadow 0.3s',
+                transition: 'box-shadow 0.25s ease, transform 0.2s ease',
                 '&:hover': {
-                    boxShadow: '0 8px 16px rgba(0, 0, 0, 0.4)',
+                    boxShadow: { xs: 'none', md: '0 8px 16px rgba(0, 0, 0, 0.4)' },
                 },
                 display: 'flex',
                 flexDirection: 'column',
-                ...sx // <-- Применяем кастомные стили (например, height: '100%')
+                boxSizing: 'border-box',
+                ...sx,
             }}
             onClick={onClick}
         >
@@ -147,11 +172,18 @@ const PostCard = ({
                     </Typography>
                 </Box>
             )}
-            <Box sx={{ p: 2, flexGrow: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+            <Box sx={{ p: { xs: 1.25, sm: 1.5, md: 2 }, flexGrow: 1, display: 'flex', flexDirection: 'column', justifyContent: { xs: 'flex-start', md: 'space-between' }, minWidth: 0 }}>
                 
                 {/* 1. АВТОР и ТЕГИ */}
                 <Box>
-                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 1.5 }}>
+                    <Box sx={{
+                        display: 'flex',
+                        flexDirection: { xs: 'column', md: 'row' },
+                        justifyContent: 'space-between',
+                        alignItems: { xs: 'stretch', md: 'flex-start' },
+                        gap: { xs: 1, md: 0 },
+                        mb: { xs: 1, md: 1.5 },
+                    }}>
                         
                         {/* КЛИКАБЕЛЬНЫЙ БЛОК АВТОРА */}
                         <Box
@@ -161,25 +193,56 @@ const PostCard = ({
                                     onAuthorClick(authorId);
                                 }
                             }}
-                            sx={{ cursor: onAuthorClick && authorId ? 'pointer' : 'default' }}
+                            sx={{ cursor: onAuthorClick && authorId ? 'pointer' : 'default', minWidth: 0, flex: { md: '0 1 auto' } }}
                         >
-                            {/* МЕТКА: АВТОР */}
-                            <Typography variant="body2" sx={labelStyle}>
+                            <Typography variant="body2" sx={{ ...labelStyle, display: { xs: 'none', md: 'block' } }}>
                                 Автор
                             </Typography>
-                            <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                                <PersonIcon sx={{ color: '#00bfa5', mr: 1, fontSize: 30 }} />
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: { xs: 0.75, md: 1 } }}>
+                                <Avatar
+                                    src={resolvedAuthorAvatar}
+                                    sx={{ width: { xs: 28, md: 34 }, height: { xs: 28, md: 34 }, border: '2px solid #00bfa5' }}
+                                    imgProps={{
+                                        onError: (e) => {
+                                            if (!e.currentTarget.dataset.retried && resolvedAuthorAvatar) {
+                                                e.currentTarget.dataset.retried = '1';
+                                                e.currentTarget.src = withCacheBust(resolvedAuthorAvatar);
+                                                return;
+                                            }
+                                            e.currentTarget.src = DEFAULT_AVATAR_SRC;
+                                        },
+                                    }}
+                                />
                                 <Typography 
                                     variant="h6" 
-                                    sx={{ color: '#00bfa5', fontWeight: 'bold' }}
+                                    sx={{
+                                        color: '#00e5c9',
+                                        fontWeight: 'bold',
+                                        fontSize: { xs: '0.95rem', md: '1.25rem' },
+                                        overflow: 'hidden',
+                                        textOverflow: 'ellipsis',
+                                        whiteSpace: 'nowrap',
+                                    }}
                                 >
                                     @{nickname}
                                 </Typography>
                             </Box>
                         </Box>
                         
-                        {/* Теги */}
-                        <Box sx={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'flex-end', gap: 0.5 }}>
+                        <Box
+                            sx={{
+                                display: 'flex',
+                                flexWrap: 'nowrap',
+                                gap: 0.5,
+                                overflowX: 'auto',
+                                maxWidth: '100%',
+                                pb: 0.25,
+                                scrollbarWidth: 'thin',
+                                scrollbarColor: '#00bfa5 #2c2c2c',
+                                '&::-webkit-scrollbar': { height: 4 },
+                                '&::-webkit-scrollbar-thumb': { background: '#00bfa5', borderRadius: 4 },
+                            }}
+                        >
                             {tags.map((tag, index) => (
                                 <Chip 
                                     key={index}
@@ -189,7 +252,9 @@ const PostCard = ({
                                         backgroundColor: getTagColor(tag, index), 
                                         color: 'white', 
                                         fontWeight: 'bold',
-                                        height: '22px', 
+                                        height: { xs: 24, md: 22 },
+                                        flexShrink: 0,
+                                        fontSize: { xs: '0.7rem', md: '0.8125rem' },
                                     }}
                                 />
                             ))}
@@ -198,18 +263,16 @@ const PostCard = ({
                 </Box>
                 
               {/* 2. НАЗВАНИЕ */}
-                <Box sx={{ mb: 1.5 }}>
-                    {/* МЕТКА НАЗВАНИЯ */}
-                    <Typography variant="body2" sx={labelStyle}>
+                <Box sx={{ mb: { xs: 1, md: 1.5 } }}>
+                    <Typography variant="body2" sx={{ ...labelStyle, display: { xs: 'none', md: 'block' } }}>
                         Название
                     </Typography>
-                    {/* САМО НАЗВАНИЕ */}
                     <Typography 
                         variant="h5" 
                         sx={{ 
-                            color: 'white', 
+                            color: '#f5f5f5',
                             fontWeight: 'bold',
-                            // Ограничение по строкам для заголовка
+                            fontSize: { xs: '1.05rem', sm: '1.2rem', md: '1.5rem' },
                             overflow: 'hidden', 
                             textOverflow: 'ellipsis', 
                             display: '-webkit-box', 
@@ -221,13 +284,10 @@ const PostCard = ({
                     </Typography>
                 </Box>
 
-                {/* 3. ОПИСАНИЕ (ПРЕВЬЮ ТЕКСТ) */}
-                <Box sx={{ flexGrow: 1, mb: 2, overflow: 'hidden', color: '#bdbdbd' }}>
-                    {/* МЕТКА: ОПИСАНИЕ */}
-                    <Typography variant="body2" sx={labelStyle}>
+                <Box sx={{ flexGrow: { xs: 0, md: 1 }, mb: { xs: 1, md: 2 }, overflow: 'hidden', color: '#d0d0d0' }}>
+                    <Typography variant="body2" sx={{ ...labelStyle, display: { xs: 'none', md: 'block' } }}>
                         Описание
                     </Typography>
-                    {/* САМО ОПИСАНИЕ (ПРЕВЬЮ) */}
                     <Typography 
                         variant="body1" 
                         dangerouslySetInnerHTML={{ __html: article_preview }}
@@ -236,63 +296,111 @@ const PostCard = ({
                             overflow: 'hidden', 
                             textOverflow: 'ellipsis', 
                             display: '-webkit-box', 
-                            WebkitLineClamp: 15, // Адаптировано
+                            WebkitLineClamp: { xs: 3, md: 15 },
                             WebkitBoxOrient: 'vertical',
+                            fontSize: { xs: '0.875rem', md: '1rem' },
+                            lineHeight: 1.45,
                         }}
                     />
                 </Box>
             </Box>
 
-            {/* Панель взаимодействия (Лайки, Комментарии, Репост) */}
+            {showImage && resolvedImageUrl && !imageBroken && (
+                <Box sx={{ px: { xs: 1.25, md: 2 }, pb: { xs: 1, md: 1.5 }, width: '100%', boxSizing: 'border-box' }}>
+                    <Box
+                        component="img"
+                        src={resolvedImageUrl}
+                        alt="Фото статьи"
+                        onError={(e) => {
+                            if (!e.currentTarget.dataset.retried && resolvedImageUrl) {
+                                e.currentTarget.dataset.retried = '1';
+                                e.currentTarget.src = withCacheBust(resolvedImageUrl);
+                                return;
+                            }
+                            setImageBroken(true);
+                        }}
+                        sx={{
+                            width: '100%',
+                            maxWidth: '100%',
+                            height: { xs: 'auto', md: 200 },
+                            maxHeight: { xs: 280, sm: 320, md: 200 },
+                            aspectRatio: { xs: '16 / 10', md: 'auto' },
+                            objectFit: 'cover',
+                            borderRadius: '12px',
+                            border: '1px solid #333',
+                            display: 'block',
+                        }}
+                    />
+                </Box>
+            )}
+
             <Box sx={{ 
                 borderTop: '1px solid #333', 
-                p: 1.5, 
+                px: { xs: 0.5, md: 1.5 },
+                py: { xs: 0.75, md: 1.5 },
                 display: 'flex', 
                 justifyContent: 'space-between', 
-                alignItems: 'center' 
+                alignItems: 'center',
+                minHeight: { xs: 52, md: 'auto' },
             }}>
-                <Box sx={{ display: 'flex', gap: 1.5 }}>
-                    
-                    {/* Лайки */}
+                <Box sx={{ display: 'flex', flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-start', gap: { xs: 0.5, md: 1.5 }, flexWrap: 'nowrap', width: '100%' }}>
                     <Box sx={{ display: 'flex', alignItems: 'center' }}>
                         <IconButton
-                            sx={{ color: isLiked ? '#ff1744' : '#00bfa5' }}
-                            // Если onLike не передан (например, в модалке), кнопка неактивна
+                            sx={{
+                                color: isLiked ? '#ff1744' : '#00e5c9',
+                                minWidth: 44,
+                                minHeight: 44,
+                                transition: 'color 0.2s ease, transform 0.15s ease',
+                            }}
                             onClick={onLike ? (e) => { e.stopPropagation(); onLike(id); } : (e) => { e.stopPropagation(); }}
                             disabled={!onLike}
+                            aria-label="Лайк"
                         >
-                            <FavoriteIcon sx={{ fontSize: 30 }} />
+                            <FavoriteIcon sx={{ fontSize: { xs: 26, md: 30 } }} />
                         </IconButton>
-                        <Typography variant="subtitle1" sx={{ color: 'white', fontWeight: 'bold' }}>
+                        <Typography variant="subtitle1" sx={{ color: '#f5f5f5', fontWeight: 'bold', fontSize: { xs: '0.9rem', md: '1rem' } }}>
                             {likesCount}
                         </Typography>
                     </Box>
 
-                    {/* Комментарии */}
-                    <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                        <IconButton
-                            sx={{ color: '#00bfa5'}}
-                            onClick={(e) => {
-                                e.stopPropagation();
-                                if (onCommentClick) {
-                                    onCommentClick();
-                                }
-                            }}
-                        >
-                            <ChatBubbleOutlineIcon sx={{ fontSize: 30 }} />
-                        </IconButton>
-                        <Typography variant="subtitle1" sx={{ color: 'white', fontWeight: 'bold' }}>
-                            {commentsCount}
-                        </Typography>
-                    </Box>
+                    {showCommentAction && (
+                        <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                            <IconButton
+                                sx={{
+                                    color: '#00e5c9',
+                                    minWidth: 44,
+                                    minHeight: 44,
+                                    transition: 'color 0.2s ease',
+                                }}
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    if (onCommentClick) {
+                                        onCommentClick();
+                                    }
+                                }}
+                                aria-label="Комментарии"
+                            >
+                                <ChatBubbleOutlineIcon sx={{ fontSize: { xs: 26, md: 30 } }} />
+                            </IconButton>
+                            <Typography variant="subtitle1" sx={{ color: '#f5f5f5', fontWeight: 'bold', fontSize: { xs: '0.9rem', md: '1rem' } }}>
+                                {commentsCount}
+                            </Typography>
+                        </Box>
+                    )}
 
-                    {/* Репост */}
                     {showRepost && (
                         <IconButton
-                            sx={{ color: '#00bfa5'}}
+                            sx={{
+                                color: '#00e5c9',
+                                minWidth: 44,
+                                minHeight: 44,
+                                ml: 'auto',
+                                transition: 'color 0.2s ease',
+                            }}
                             onClick={handleShareClick}
+                            aria-label="Поделиться"
                         >
-                            <SendIcon sx={{ fontSize: 30 }} />
+                            <SendIcon sx={{ fontSize: { xs: 26, md: 30 } }} />
                         </IconButton>
                     )}
 

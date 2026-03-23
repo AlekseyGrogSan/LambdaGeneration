@@ -1,20 +1,147 @@
 import React from 'react';
-import { Modal, Box, Typography, IconButton } from '@mui/material';
+import {
+    Modal,
+    Box,
+    Typography,
+    IconButton,
+    List,
+    ListItem,
+    ListItemIcon,
+    ListItemText,
+    Link,
+    Divider,
+    Chip,
+    Accordion,
+    AccordionSummary,
+    AccordionDetails,
+} from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
+import MenuBookIcon from '@mui/icons-material/MenuBook';
+import SchoolIcon from '@mui/icons-material/School';
+import LaunchIcon from '@mui/icons-material/Launch';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 
 const style = {
     position: 'absolute',
     top: '50%',
     left: '50%',
     transform: 'translate(-50%, -50%)',
-    width: 400,
+    width: 'min(92vw, 620px)',
     bgcolor: '#2c2c2c',
     border: '2px solid #000',
     borderRadius: '12px',
     boxShadow: 24,
     p: 4,
     color: 'white',
+    maxHeight: '80vh',
+    overflowY: 'auto',
 };
+
+const scrollbarStyle = {
+    '&::-webkit-scrollbar': {
+        width: '8px',
+    },
+    '&::-webkit-scrollbar-track': {
+        background: '#1a1a1a',
+        borderRadius: '10px',
+    },
+    '&::-webkit-scrollbar-thumb': {
+        background: '#00bfa5',
+        borderRadius: '10px',
+        border: '2px solid #1a1a1a',
+    },
+    '&::-webkit-scrollbar-thumb:hover': {
+        background: '#009e8a',
+    },
+    scrollbarWidth: 'thin',
+    scrollbarColor: '#00bfa5 #1a1a1a',
+};
+
+const resources = [
+    {
+        title: 'Инструкция по сайту: что где находится',
+        description:
+            'Лента с публикациями находится в центре. Слева — кнопки «Категории», «Полезные материалы», «FAQ» и доступ к профилю. В карточке поста доступны лайк, комментарии и переход к деталям. Поиск и фильтры доступны сверху ленты.',
+        icon: <MenuBookIcon />,
+        tag: 'Навигация',
+    },
+    {
+        title: 'Как проводится модерация статей',
+        description:
+            'Материалы проверяются на соответствие правилам площадки: корректность, отсутствие спама, соблюдение тематики и авторских прав. При необходимости модератор может запросить правки или снять публикацию.',
+        icon: <SchoolIcon />,
+        tag: 'Модерация',
+    },
+    {
+        title: 'Что запрещено на сайте',
+        description:
+            'Запрещены оскорбления, дискриминация, агрессивная реклама, спам, вредоносные ссылки, публикация чужих материалов без разрешения, а также любые данные, нарушающие закон или политику платформы.',
+        icon: <MenuBookIcon />,
+        tag: 'Правила',
+    },
+    {
+        title: 'Обучающие материалы',
+        description:
+            'Подборка источников по направлениям. Открывайте нужный пункт и выбирайте, что изучать дальше.',
+        icon: <SchoolIcon />,
+        tag: 'Справочник',
+        children: [
+            {
+                group: 'Языки программирования',
+                items: [
+                    { title: 'C#', href: 'https://learn.microsoft.com/dotnet/csharp/' },
+                    { title: 'Java', href: 'https://docs.oracle.com/en/java/' },
+                    { title: 'Python', href: 'https://docs.python.org/3/' },
+                    { title: 'JavaScript', href: 'https://developer.mozilla.org/ru/docs/Web/JavaScript' },
+                    { title: 'TypeScript', href: 'https://www.typescriptlang.org/docs/' },
+                    { title: 'Go', href: 'https://go.dev/doc/' },
+                    { title: 'Rust', href: 'https://doc.rust-lang.org/book/' },
+                    { title: 'Kotlin', href: 'https://kotlinlang.org/docs/home.html' },
+                    { title: 'Swift', href: 'https://docs.swift.org/swift-book/documentation/the-swift-programming-language/' },
+                    { title: 'PHP', href: 'https://www.php.net/docs.php' },
+                    { title: 'C++', href: 'https://en.cppreference.com/w/' },
+                    { title: 'C', href: 'https://en.cppreference.com/w/c' },
+                    { title: 'Ruby', href: 'https://www.ruby-lang.org/en/documentation/' },
+                    { title: 'PascalABC', href: 'https://pascalabc.net/en/?classic=1' },
+                ],
+            },
+            {
+                group: 'Фреймворки',
+                items: [
+                    { title: '.NET', href: 'https://learn.microsoft.com/dotnet/' },
+                    { title: 'ASP.NET', href: 'https://learn.microsoft.com/aspnet/core/' },
+                    { title: 'Entity Framework', href: 'https://learn.microsoft.com/ef/' },
+                    { title: 'Spring', href: 'https://spring.io/guides' },
+                    { title: 'React', href: 'https://react.dev/learn' },
+                    { title: 'Angular', href: 'https://angular.dev/overview' },
+                    { title: 'Vue', href: 'https://vuejs.org/guide/' },
+                    { title: 'Node.js', href: 'https://nodejs.org/en/learn' },
+                    { title: 'Django', href: 'https://docs.djangoproject.com/' },
+                    { title: 'Flask', href: 'https://flask.palletsprojects.com/en/latest/' },
+                    { title: 'Unity', href: 'https://learn.unity.com/' },
+                ],
+            },
+            {
+                group: 'Технологии',
+                items: [
+                    { title: 'Math', href: 'https://www.khanacademy.org/math' },
+                    { title: 'Data Structures', href: 'https://www.geeksforgeeks.org/data-structures/' },
+                    { title: 'LLM', href: 'https://huggingface.co/learn/nlp-course/' },
+                    { title: 'ML', href: 'https://scikit-learn.org/stable/tutorial/basic/tutorial.html' },
+                ],
+            },
+            {
+                group: 'Навигация по профессиям',
+                items: [
+                    { title: 'Roadmap.sh', href: 'https://roadmap.sh/' },
+                    { title: 'freeCodeCamp', href: 'https://www.freecodecamp.org/' },
+                    { title: 'MDN Web Docs', href: 'https://developer.mozilla.org/ru/' },
+                    { title: 'Material UI', href: 'https://mui.com/material-ui/getting-started/' },
+                ],
+            },
+        ],
+    },
+];
 
 const ResourcesModal = ({ open, handleClose }) => {
     return (
@@ -23,7 +150,7 @@ const ResourcesModal = ({ open, handleClose }) => {
             onClose={handleClose}
             aria-labelledby="resources-modal-title"
         >
-            <Box sx={style}>
+            <Box sx={{ ...style, ...scrollbarStyle }}>
                 <IconButton
                     aria-label="close"
                     onClick={handleClose}
@@ -36,11 +163,140 @@ const ResourcesModal = ({ open, handleClose }) => {
                 >
                     <CloseIcon />
                 </IconButton>
-                <Typography id="resources-modal-title" variant="h6" component="h2" sx={{ color: '#00bfa5', fontWeight: 'bold', mb: 2 }}>
+                <Typography id="resources-modal-title" variant="h6" component="h2" sx={{ color: '#00bfa5', fontWeight: 'bold', mb: 1 }}>
                     Полезные материалы
                 </Typography>
-                <Typography sx={{ mt: 2 }}>
-                    Этот раздел будет содержать ссылки на официальную документацию, обучающие ресурсы и статьи, связанные с платформой или общей тематикой.
+                <Typography sx={{ color: '#bdbdbd', mb: 2 }}>
+                    Подборка актуальных источников, которые помогут быстрее разобраться с интерфейсом, публикациями и разработкой.
+                </Typography>
+                <Divider sx={{ borderColor: 'rgba(255,255,255,0.08)', mb: 2 }} />
+                <List sx={{ p: 0 }}>
+                    {resources.map((resource) => (
+                        resource.children ? (
+                            <Box
+                                key={resource.title}
+                                sx={{
+                                    borderBottom: '1px solid rgba(255,255,255,0.06)',
+                                }}
+                            >
+                                <Accordion
+                                    disableGutters
+                                    sx={{
+                                        bgcolor: 'transparent',
+                                        color: 'white',
+                                        '&::before': { display: 'none' },
+                                        boxShadow: 'none',
+                                    }}
+                                >
+                                    <AccordionSummary
+                                        expandIcon={<ExpandMoreIcon sx={{ color: '#00bfa5' }} />}
+                                        sx={{ px: 0, py: 1.25 }}
+                                    >
+                                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25, flexWrap: 'wrap' }}>
+                                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                                <ListItemIcon sx={{ minWidth: 36, color: '#00bfa5' }}>
+                                                    {resource.icon}
+                                                </ListItemIcon>
+                                                <Typography sx={{ color: 'white', fontWeight: 600 }}>
+                                                    {resource.title}
+                                                </Typography>
+                                            </Box>
+                                            <Chip
+                                                label={resource.tag}
+                                                size="small"
+                                                sx={{
+                                                    bgcolor: 'rgba(0,191,165,0.15)',
+                                                    color: '#00e5c9',
+                                                    fontWeight: 500,
+                                                }}
+                                            />
+                                        </Box>
+                                    </AccordionSummary>
+                                    <AccordionDetails sx={{ px: 0, pb: 2 }}>
+                                        <Typography sx={{ color: '#b0b0b0', mb: 1 }}>
+                                            {resource.description}
+                                        </Typography>
+                                        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.25 }}>
+                                            {resource.children.map((group) => (
+                                                <Box key={group.group}>
+                                                    <Typography sx={{ color: '#9fded5', fontWeight: 600, mb: 0.5 }}>
+                                                        {group.group}
+                                                    </Typography>
+                                                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+                                                        {group.items.map((item) => (
+                                                            <Link
+                                                                key={item.href}
+                                                                href={item.href}
+                                                                target="_blank"
+                                                                rel="noopener noreferrer"
+                                                                underline="hover"
+                                                                sx={{ color: '#d9d9d9', fontSize: '0.9rem' }}
+                                                            >
+                                                                {item.title}
+                                                            </Link>
+                                                        ))}
+                                                    </Box>
+                                                </Box>
+                                            ))}
+                                        </Box>
+                                    </AccordionDetails>
+                                </Accordion>
+                            </Box>
+                        ) : (
+                            <ListItem
+                                key={resource.title}
+                                alignItems="flex-start"
+                                sx={{
+                                    px: 0,
+                                    py: 1.25,
+                                    borderBottom: '1px solid rgba(255,255,255,0.06)',
+                                }}
+                            >
+                                <ListItemIcon sx={{ minWidth: 36, color: '#00bfa5', mt: 0.5 }}>
+                                    {resource.icon}
+                                </ListItemIcon>
+                                <ListItemText
+                                    primary={
+                                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
+                                            {resource.href ? (
+                                                <Link
+                                                    href={resource.href}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    underline="hover"
+                                                    sx={{ color: 'white', fontWeight: 600 }}
+                                                >
+                                                    {resource.title}
+                                                </Link>
+                                            ) : (
+                                                <Typography sx={{ color: 'white', fontWeight: 600 }}>
+                                                    {resource.title}
+                                                </Typography>
+                                            )}
+                                            {resource.href && <LaunchIcon fontSize="small" sx={{ color: '#757575' }} />}
+                                            <Chip
+                                                label={resource.tag}
+                                                size="small"
+                                                sx={{
+                                                    bgcolor: 'rgba(0,191,165,0.15)',
+                                                    color: '#00e5c9',
+                                                    fontWeight: 500,
+                                                }}
+                                            />
+                                        </Box>
+                                    }
+                                    secondary={
+                                        <Typography component="span" sx={{ color: '#b0b0b0', display: 'block', mt: 0.5 }}>
+                                            {resource.description}
+                                        </Typography>
+                                    }
+                                />
+                            </ListItem>
+                        )
+                    ))}
+                </List>
+                <Typography sx={{ mt: 2, color: '#8f8f8f', fontSize: '0.9rem' }}>
+                    Нужен материал под конкретную задачу? Напишите в раздел FAQ.
                 </Typography>
             </Box>
         </Modal>
