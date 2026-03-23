@@ -9,7 +9,7 @@ namespace LambdaGeneration.API.DTO.Request
         public Guid? ParentId { get; set; }
 
         [Required]
-        [StringLength(1000, MinimumLength = 5)]
+        [StringLength(1000, MinimumLength = 2)]
         public string Content { get; set; }
     }
 }

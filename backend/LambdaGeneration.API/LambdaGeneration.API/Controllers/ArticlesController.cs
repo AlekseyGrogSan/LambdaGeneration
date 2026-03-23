@@ -1,4 +1,4 @@
-﻿using LambdaGeneration.API.Application.Interfaces.Services;
+using LambdaGeneration.API.Application.Interfaces.Services;
 using LambdaGeneration.API.Application.Services;
 using LambdaGeneration.API.Core.Enums;
 using LambdaGeneration.API.Core.Models;
@@ -23,21 +23,24 @@ namespace LambdaGeneration.API.Controllers
         private readonly IGigaChatModerationService _gaChatModerationService;
         private readonly IRegexModerationService _regexModerationService;
         private readonly IRecommendationService _recommendationService;
+        private readonly IWebHostEnvironment _env;
 
         public ArticlesController(IArticlesService articles_service,
             IGigaChatModerationService gigaChatModerationService,
             IRegexModerationService regexModerationService,
-            IRecommendationService recommendationService)
+            IRecommendationService recommendationService,
+            IWebHostEnvironment env)
         {
             _articlesService = articles_service;
             _gaChatModerationService = gigaChatModerationService;
             _regexModerationService = regexModerationService;
             _recommendationService = recommendationService;
+            _env = env;
         }
 
         [HttpPost("create")]
         [Authorize]
-        public async Task<IActionResult> Create([FromBody] CreateArticleRequest request)
+        public async Task<IActionResult> Create([FromForm] CreateArticleRequest request)
         {
             try
             {
@@ -59,7 +62,6 @@ namespace LambdaGeneration.API.Controllers
                 {
                     return BadRequest(new {
                         error = "Статья не прошла проверку",
-                        reason = resultModeration.Reason,
                         flags = resultModeration.Flags,
                         field = "post"
                     });
@@ -67,18 +69,32 @@ namespace LambdaGeneration.API.Controllers
 
                 var ArticleIntTags = new List<int>();
 
-                for (var i = 0;  i < request.article_tags.Count; i++)
-                {
-                    ArticleIntTags.Add(ApiExtensions.ToTags(request.article_tags[i]));
-                }
+                if (request.article_tags != null)
+                    for (var i = 0;  i < request.article_tags.Count; i++)
+                    {
+                        ArticleIntTags.Add(ApiExtensions.ToTags(request.article_tags[i]));
+                    }
                 
                 var author_id = GetUserID();
+
+                string file_path = null; 
+                if (request.picture != null)
+                {
+                    file_path = $"{Guid.NewGuid()}{Path.GetExtension(request.picture.FileName)}";
+                    var path = Path.Combine(_env.WebRootPath, "articles_uploads", file_path);
+
+                    using (var stream = new FileStream(path, FileMode.Create))
+                    {
+                        await request.picture.CopyToAsync(stream);
+                    }
+                }
                 await _articlesService.Create(
                     request.article_title,
                     request.article_content,
                     request.article_preview,
                     ArticleIntTags,
-                    author_id
+                    author_id,
+                    file_path
                     );
                 return Ok();
             }
@@ -115,7 +131,7 @@ namespace LambdaGeneration.API.Controllers
 
         [HttpPut("update")]
         [Authorize]
-        public async Task<ActionResult<UpdateArticlesResponse>> Update(UpdateArticlesRequest request)
+        public async Task<ActionResult<UpdateArticlesResponse>> Update([FromForm] UpdateArticlesRequest request)
         {
             try 
             {
@@ -139,13 +155,27 @@ namespace LambdaGeneration.API.Controllers
                     return BadRequest(new
                     {
                         error = "Статья не прошла проверку",
-                        reason = resultModeration.Reason,
                         flags = resultModeration.Flags,
                         field = "post"
                     });
                 }
 
-                var article = await _articlesService.Update(request.article_id, GetUserID(), request.article_title, request.article_content, request.article_preview);
+                string file_path = null;
+
+                if (request.picture != null)
+                {
+                    file_path = $"{Guid.NewGuid()}{Path.GetExtension(request.picture.FileName)}";
+                    var path = Path.Combine(_env.WebRootPath, "articles_uploads", file_path);
+
+                    using (var stream = new FileStream(path, FileMode.Create))
+                    {
+                        await request.picture.CopyToAsync(stream);
+                    }
+                }
+
+
+
+                var article = await _articlesService.Update(request.article_id, GetUserID(), request.article_title, request.article_content, request.article_preview, file_path);
 
                 var ArticleTagsResponse = new List<string>();
 
@@ -154,7 +184,8 @@ namespace LambdaGeneration.API.Controllers
                     ArticleTagsResponse.Add(ApiExtensions.FromTags(article.ArticleTags[i]));
                 }
 
-                return Ok(new UpdateArticlesResponse(article.ArticleID, article.ArticleTitle, article.ArticlePreview, article.ArticleContent, ArticleTagsResponse, article.CreatedDate, article.CountLikes, article.CountComments));
+
+                return Ok(new UpdateArticlesResponse(article.ArticleID, article.ArticleTitle, article.ArticlePreview, article.ArticleContent, ArticleTagsResponse, article.CreatedDate, article.CountLikes, article.CountComments, article.FilePath));
             }   
             catch (Exception ex)
             { 
@@ -176,7 +207,7 @@ namespace LambdaGeneration.API.Controllers
             var articles = await _articlesService.UpdateTags(request.article_id, ArticleIntTags);
 
             return Ok(new UpdateArticlesResponse(articles.ArticleID, articles.ArticleTitle, articles.ArticlePreview, articles.ArticleContent,
-                articles.ArticleTags.Select(t => ApiExtensions.FromTags(t)).ToList(), articles.CreatedDate, articles.CountLikes, articles.CountComments));
+                articles.ArticleTags.Select(t => ApiExtensions.FromTags(t)).ToList(), articles.CreatedDate, articles.CountLikes, articles.CountComments, articles.FilePath));
         }
 
         [HttpGet("getArticleById/{id:guid}")]
@@ -187,7 +218,7 @@ namespace LambdaGeneration.API.Controllers
                 var articles = await _articlesService.GetArticleByIdAsync(id);
 
                 return Ok(new GetArticleResponse(articles.ArticleID,articles.AuthorID, articles.ArticleTitle, articles.ArticlePreview, articles.ArticleContent,
-                    articles.ArticleTags.Select(t => ApiExtensions.FromTags(t)).ToList(), articles.CreatedDate, articles.CountLikes, articles.CountComments));
+                    articles.ArticleTags.Select(t => ApiExtensions.FromTags(t)).ToList(), articles.CreatedDate, articles.CountLikes, articles.CountComments, articles.FilePath));
             }
             catch (Exception ex)
             {
@@ -208,7 +239,7 @@ namespace LambdaGeneration.API.Controllers
                     a.ArticleContent,
                     a.ArticleTags.Select(t => ApiExtensions.FromTags(t)).ToList(),
                     a.CreatedDate,
-                    a.CountLikes, a.CountComments)).ToList()));
+                    a.CountLikes, a.CountComments, a.FilePath)).ToList()));
         }
 
         [HttpGet("getAllOtherAuthor/{id:guid}")]
@@ -224,7 +255,32 @@ namespace LambdaGeneration.API.Controllers
                     a.ArticleContent,
                     a.ArticleTags.Select(t => ApiExtensions.FromTags(t)).ToList(),
                     a.CreatedDate,
-                    a.CountLikes, a.CountComments)).ToList()));
+                    a.CountLikes, a.CountComments, a.FilePath)).ToList()));
+        }
+
+        [HttpGet("getProfileArticles")]
+        [Authorize]
+        public async Task<ActionResult<GetArticlesResponse>> GetProfileArticles([FromQuery] Guid? userId = null, [FromQuery] int page = 1, [FromQuery] int size = 10)
+        {
+            try
+            {
+                var targetUserId = userId ?? GetUserID();
+                var articles = await _articlesService.GetArticlesByAuthorPaged(targetUserId, page, size);
+
+                return Ok(new GetArticlesResponse(articles.Select(a =>
+                    new GetArticleResponse(a.ArticleID,
+                        a.AuthorID,
+                        a.ArticleTitle,
+                        a.ArticlePreview,
+                        a.ArticleContent,
+                        a.ArticleTags.Select(t => ApiExtensions.FromTags(t)).ToList(),
+                        a.CreatedDate,
+                        a.CountLikes, a.CountComments, a.FilePath)).ToList()));
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
         }
 
         [HttpGet("getPaginated")]
@@ -250,7 +306,7 @@ namespace LambdaGeneration.API.Controllers
                         a.ArticleContent,
                         a.ArticleTags.Select(t => ApiExtensions.FromTags(t)).ToList(),
                         a.CreatedDate,
-                        a.CountLikes, a.CountComments)).ToList()));
+                        a.CountLikes, a.CountComments, a.FilePath)).ToList()));
             }
             catch (Exception ex)
             {
@@ -276,7 +332,7 @@ namespace LambdaGeneration.API.Controllers
                         a.ArticleContent,
                         a.ArticleTags.Select(t => ApiExtensions.FromTags(t)).ToList(),
                         a.CreatedDate,
-                        a.CountLikes, a.CountComments)).ToList()));
+                        a.CountLikes, a.CountComments, a.FilePath)).ToList()));
             }
             catch (ArgumentException ex)
             {
@@ -302,7 +358,7 @@ namespace LambdaGeneration.API.Controllers
                         a.ArticleContent,
                         a.ArticleTags.Select(t => ApiExtensions.FromTags(t)).ToList(),
                         a.CreatedDate,
-                        a.CountLikes, a.CountComments)).ToList()));
+                        a.CountLikes, a.CountComments, a.FilePath)).ToList()));
             }
             catch (ArgumentException ex)
             {
@@ -327,7 +383,7 @@ namespace LambdaGeneration.API.Controllers
                         a.ArticleContent,
                         a.ArticleTags.Select(t => ApiExtensions.FromTags(t)).ToList(),
                         a.CreatedDate,
-                        a.CountLikes, a.CountComments)).ToList()));
+                        a.CountLikes, a.CountComments, a.FilePath)).ToList()));
             }
             catch (ArgumentException ex) { return BadRequest(ex.Message); }
         }

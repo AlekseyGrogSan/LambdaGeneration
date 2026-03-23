@@ -2,12 +2,14 @@
 using LambdaGeneration.API.Application.Interfaces.Services;
 using LambdaGeneration.API.Application.Services;
 using LambdaGeneration.API.Core.Models;
+using LambdaGeneration.API.DTO;
 using LambdaGeneration.API.DTO.Request;
 using LambdaGeneration.API.DTO.Response;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity.Data;
 using Microsoft.AspNetCore.Mvc;
+using Org.BouncyCastle.Asn1.Ocsp;
 using System.ComponentModel.DataAnnotations;
 using System.Net.WebSockets;
 using System.Runtime.InteropServices;
@@ -25,15 +27,17 @@ namespace LambdaGeneration.API.Controllers
         private readonly IUsersService _usersService;
         private readonly ISendEmail _sendEmail;
         private readonly IVerifyCodeService _verifiCode;
-        public UsersController(IUsersService usersService, IVerifyCodeService verifyCode, ISendEmail sendEmail)
+        private readonly IWebHostEnvironment _env;
+        public UsersController(IUsersService usersService, IVerifyCodeService verifyCode, ISendEmail sendEmail, IWebHostEnvironment env)
         {
             _usersService = usersService;
             _sendEmail = sendEmail;
             _verifiCode = verifyCode;
+            _env = env;
         }
 
         [HttpPost("register")]
-        public async Task<IActionResult> Register([FromBody] RegisterUserRequest request)
+        public async Task<IActionResult> Register([FromForm] RegisterUserRequest request)
         {
             try
             {
@@ -48,8 +52,22 @@ namespace LambdaGeneration.API.Controllers
 
                 await _sendEmail.SendVerifyEmail(request.Email, code);
 
+                string fileName = null;
+
+                if (request.Avatar != null)
+                {
+                    fileName = $"{Guid.NewGuid()}{Path.GetExtension(request.Avatar.FileName)}";
+                    var filePath = Path.Combine(_env.WebRootPath, "temp", fileName);
+
+                    using (var stream = new FileStream(filePath, FileMode.Create))
+                    {
+                        await request.Avatar.CopyToAsync(stream);
+                    }
+                }
+                HttpContext.Session.SetString("pending-avatar", fileName?? "");
                 HttpContext.Session.SetString("pending-email", request.Email);
-                HttpContext.Session.SetString("pending-data", JsonSerializer.Serialize(request));
+                var new_request = new RequestToRegistr(request.UserName, request.Email, request.Password, request.aboutUser);
+                HttpContext.Session.SetString("pending-data", JsonSerializer.Serialize(new_request));
 
                 return Ok("Письмо отправлено вам на почту!");
         }
@@ -68,14 +86,31 @@ namespace LambdaGeneration.API.Controllers
                     return BadRequest("Неверный или просроченный код!");
 
                 var pendingData = HttpContext.Session.GetString("pending-data");
+                var pendingAvatar = HttpContext.Session.GetString("pending-avatar");
                 if (string.IsNullOrEmpty(pendingData))
                     return BadRequest("Данные регистрации не найдены");
 
-                var registDTO = JsonSerializer.Deserialize<RegisterUserRequest>(pendingData);
+                string avatarUrlForDb = !string.IsNullOrEmpty(pendingAvatar)
+                    ? $"/uploads/{pendingAvatar}"
+                    : null;
+                if (!string.IsNullOrEmpty(pendingAvatar))
+                {
+                    var tempPath = Path.Combine(_env.WebRootPath, "temp", pendingAvatar);
+                    var finalPath = Path.Combine(_env.WebRootPath, "uploads", pendingAvatar);
 
-                await _usersService.Register(Guid.NewGuid(), registDTO.UserName, registDTO.Email, registDTO.Password, registDTO.aboutUser);
+                    if (System.IO.File.Exists(tempPath))
+                    {
+                        // Перемещаем (физический перенос файла по адресу)
+                        System.IO.File.Move(tempPath, finalPath);
+                    }
+                }
 
-                HttpContext.Session.Remove("peding-data");
+                var registDTO = JsonSerializer.Deserialize<RequestToRegistr>(pendingData);
+
+                await _usersService.Register(Guid.NewGuid(), registDTO.UserName, registDTO.Email, registDTO.Password, registDTO.aboutUser, pendingAvatar);
+
+                HttpContext.Session.Remove("pending-data");
+                HttpContext.Session.Remove("pending-avatar");
 
                 return Ok("Регистрация успешка!");
             }
@@ -172,7 +207,9 @@ namespace LambdaGeneration.API.Controllers
                     user.CreatedDate,
                     user.FollowersCount,
                     user.FollowingCount,
-                    user.ArticlesCount
+                    user.ArticlesCount,
+                    user.PathAvatar,
+                    user.Role.ToString()
                     );
 
                 return Ok(userResponse);
@@ -197,7 +234,9 @@ namespace LambdaGeneration.API.Controllers
                     user.CreatedDate,
                     user.FollowersCount,
                     user.FollowingCount,
-                    user.ArticlesCount
+                    user.ArticlesCount,
+                    user.PathAvatar,
+                    user.Role.ToString()
                     );
 
                 return Ok(userResponse);
@@ -209,7 +248,7 @@ namespace LambdaGeneration.API.Controllers
         }
         [HttpPut]
         [Authorize]
-        public async Task<ActionResult<MyProfileResponse>> Update([FromBody] UpdateUserRequest request)
+        public async Task<ActionResult<MyProfileResponse>> Update([FromForm] UpdateUserRequest request)
         {
             try
             {
@@ -219,8 +258,32 @@ namespace LambdaGeneration.API.Controllers
                 {
                     return BadRequest("It`s not your email!");
                 }
-                
-                (Users user, string token) = await _usersService.Update(id, request.name, request.email, request.aboutUser);
+
+                string fileName = null;
+                string avatarPathForDb = null; // Создаем переменную для пути в БД
+
+                if (request.avatar != null)
+                {
+                    fileName = $"{Guid.NewGuid()}{Path.GetExtension(request.avatar.FileName)}";
+                    var filePath = Path.Combine(_env.WebRootPath, "uploads", fileName);
+
+                    using (var stream = new FileStream(filePath, FileMode.Create))
+                    {
+                        await request.avatar.CopyToAsync(stream);
+                    }
+
+                    // Формируем путь, который пойдет в базу
+                    avatarPathForDb = $"/uploads/{fileName}";
+                }
+
+                // Передаем в Update именно путь (avatarPathForDb), а не просто имя файла
+                (Users user, string token) = await _usersService.Update(
+                    id,
+                    request.name,
+                    request.email,
+                    request.aboutUser,
+                    avatarPathForDb
+                );
 
                 var userProfile = new MyProfileResponse(
                     user.UserID,
@@ -230,7 +293,9 @@ namespace LambdaGeneration.API.Controllers
                     user.CreatedDate,
                     user.FollowersCount,
                     user.FollowingCount,
-                    user.ArticlesCount
+                    user.ArticlesCount,
+                    user.PathAvatar,
+                    user.Role.ToString()
                     );
 
                 HttpContext.Response.Cookies.Append("auth_cookies", token,
@@ -297,7 +362,8 @@ namespace LambdaGeneration.API.Controllers
                         user.AboutUser,
                         user.FollowersCount,
                         user.FollowingCount,
-                        user.ArticlesCount
+                        user.ArticlesCount,
+                        user.PathAvatar
                         ))
                     .ToList();
 

@@ -5,11 +5,11 @@ namespace LambdaGeneration.API.Application.Services
 {
     public interface IUsersService
     {
-        Task Register(Guid id, string userName, string email, string password, string aboutUser);
+        Task Register(Guid id, string userName, string email, string password, string aboutUser, string pathAvatar);
         Task<string> Login (string email, string password);
         Task Delete(Guid id, string email, string password);
         Task<Users> GetProfile(Guid id);
-        Task<(Users, string token)> Update(Guid id, string name, string email, string aboutUser);
+        Task<(Users, string token)> Update(Guid id, string name, string email, string aboutUser, string pathAvatar);
         Task checkedUser(string email, string userName);
         Task Subscribe(Guid followerId, Guid followingId);
         Task Unsubscribe(Guid followerId, Guid followingId);

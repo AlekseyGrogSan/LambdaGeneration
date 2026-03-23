@@ -93,6 +93,41 @@ namespace LambdaGeneration.API.Date.Repositories
             )).ToList();
         }
 
+        public async Task<ICollection<UserCommentInfo>> GetCommentsByAuthorAsync(Guid authorId)
+        {
+            var comments = await _context.Comments
+                .AsNoTracking()
+                .Where(c => c.AuthorId == authorId)
+                .OrderByDescending(c => c.DatePublish)
+                .Select(c => new
+                {
+                    c.Id,
+                    c.ArticleId,
+                    c.Content,
+                    c.ParentCommentId,
+                    c.IsApproved,
+                    c.IsUpdate,
+                    c.DatePublish,
+                    c.CountLikes,
+                    HasReplies = _context.Comments.Any(child => child.ParentCommentId == c.Id),
+                    ArticleTitle = _context.Articles.Where(a => a.ArticleID == c.ArticleId).Select(a => a.ArticleTitle).FirstOrDefault()
+                })
+                .ToListAsync();
+
+            return comments.Select(c => UserCommentInfo.Map(
+                c.Id,
+                c.ArticleId,
+                c.ArticleTitle,
+                c.Content,
+                c.ParentCommentId,
+                c.DatePublish,
+                c.CountLikes,
+                c.HasReplies,
+                c.IsApproved,
+                c.IsUpdate
+            )).ToList();
+        }
+
         public async Task<ICollection<Comments>> GetChildrenCommentsByIdAsync(Guid idParentComment)
         {
             var childrenEntities = await _context.Comments

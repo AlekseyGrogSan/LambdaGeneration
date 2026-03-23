@@ -59,6 +59,9 @@ namespace LambdaGeneration.API.Date.Migrations
                     b.Property<DateTime>("CreatedDate")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<string>("FilePath")
+                        .HasColumnType("text");
+
                     b.HasKey("ArticleID");
 
                     b.HasIndex("AuthorID");
@@ -193,6 +196,9 @@ namespace LambdaGeneration.API.Date.Migrations
                         .HasMaxLength(256)
                         .HasColumnType("character varying(256)");
 
+                    b.Property<string>("PathAvatar")
+                        .HasColumnType("text");
+
                     b.Property<int>("Role")
                         .HasColumnType("integer");
 
@@ -267,6 +273,41 @@ namespace LambdaGeneration.API.Date.Migrations
                         .OnDelete(DeleteBehavior.Restrict);
 
                     b.Navigation("ParentComment");
+                });
+
+            modelBuilder.Entity("LambdaGeneration.API.Date.Entities.LikeEntity", b =>
+                {
+                    b.HasOne("LambdaGeneration.API.Date.Entities.ArticlesEntity", "Articles")
+                        .WithMany("Likes")
+                        .HasForeignKey("ArticleId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Articles");
+                });
+
+            modelBuilder.Entity("LambdaGeneration.API.Date.Entities.SubscriptionEntity", b =>
+                {
+                    b.HasOne("LambdaGeneration.API.Date.Entities.UsersEntity", "Follower")
+                        .WithMany("Following")
+                        .HasForeignKey("FollowerId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("LambdaGeneration.API.Date.Entities.UsersEntity", "Following")
+                        .WithMany("Followers")
+                        .HasForeignKey("FollowingId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Follower");
+
+                    b.Navigation("Following");
+                });
+
+            modelBuilder.Entity("LambdaGeneration.API.Date.Entities.ArticlesEntity", b =>
+                {
+                    b.Navigation("Likes");
                 });
 
             modelBuilder.Entity("LambdaGeneration.API.Date.Entities.CommentsEntity", b =>

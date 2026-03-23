@@ -52,13 +52,13 @@ namespace LambdaGeneration.API.Midleware
 
         }
 
-        public static void AddAuthorization(this IServiceCollection services, 
+        public static void AddAuthorization(this IServiceCollection services,
                                                  IOptions<JwtOptions> jwtOptions)
         {
             services.AddAuthorization(options =>
             {
                 options.AddPolicy("Admin", policy =>
-                    policy.RequireRole("UserRole",Role.Admin.ToString()));
+                    policy.RequireRole("UserRole", Role.Admin.ToString()));
                 options.AddPolicy("Authenticated", policy =>
                     policy.RequireAuthenticatedUser());
                 options.AddPolicy("User", policy =>
@@ -158,6 +158,8 @@ namespace LambdaGeneration.API.Midleware
                 25 => "Data Structures",
                 26 => "LLM",
                 27 => "ML",
+                28 => "PascalABC",
+                29 => "Unity",
 
                 _ => ""
             };
@@ -168,7 +170,7 @@ namespace LambdaGeneration.API.Midleware
             return tagsString switch
             {
                 // Programming Languages
-                "C#" => 1,
+                "C#" or "CSharp" => 1,
                 "Java" => 2,
                 "Python" => 3,
                 "JavaScript" => 4,
@@ -183,23 +185,25 @@ namespace LambdaGeneration.API.Midleware
                 "Ruby" => 13,
 
                 // Frameworks and Libraries
-                ".NET" => 14,
-                "ASP.NET" => 15,
-                "Entity Framework" => 16,
+                ".NET" or "DotNet" => 14,
+                "ASP.NET" or "ASPNET" => 15,
+                "Entity Framework" or "EntityFramework" => 16,
                 "Spring" => 17,
                 "React" => 18,
                 "Angular" => 19,
                 "Vue" => 20,
-                "Node.js" => 21,
+                "Node.js" or "NodeJS" => 21,
                 "Django" => 22,
                 "Flask" => 23,
 
                 "Math" => 24,
-                "Data Structures" => 25,
+                "Data Structures" or "DataStructures" => 25,
                 "LLM" => 26,
-                "ML" => 27
+                "ML" => 27,
+                "PascalABC" => 28,
+                "Unity" => 29,
 
-                , _ => 0
+                _ => 0
             };
         }
 
@@ -256,7 +260,7 @@ namespace LambdaGeneration.API.Midleware
                         foreach (var tagName in tagNames)
                         {
                             int tagId = ToTags(tagName);
-                            if (tagId != -1)
+                            if (tagId != 0)
                             {
                                 tagIds.Add(tagId);
                             }
@@ -267,7 +271,7 @@ namespace LambdaGeneration.API.Midleware
                             tagIds.Add(1);
                         }
 
-                        await articlesService.Create(title, content, preview, tagIds, admin.UserID);
+                        await articlesService.Create(title, content, preview, tagIds, admin.UserID, "/articles_uploads/admin.png");
                         count++;
                     }
 
@@ -283,7 +287,7 @@ namespace LambdaGeneration.API.Midleware
 
         public static async Task InitialAdmin(this IHost host)
         {
-            using (var scope = host.Services.CreateScope()) 
+            using (var scope = host.Services.CreateScope())
             {
                 var services = scope.ServiceProvider;
                 var logger = services.GetRequiredService<ILogger<IHost>>();
@@ -295,7 +299,8 @@ namespace LambdaGeneration.API.Midleware
 
                     await adminService.Create();
                 }
-                catch (Exception ex) {
+                catch (Exception ex)
+                {
                     logger.LogWarning(ex.Message);
                 }
             }

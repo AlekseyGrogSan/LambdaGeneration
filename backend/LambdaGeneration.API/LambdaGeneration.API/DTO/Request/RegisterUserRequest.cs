@@ -9,5 +9,6 @@ namespace LambdaGeneration.API.DTO.Request
         public string Email { get; set; }
         public string Password { get; set; }
         public string aboutUser { get; set; }
+        public IFormFile? Avatar { get; set; }
     }
 }

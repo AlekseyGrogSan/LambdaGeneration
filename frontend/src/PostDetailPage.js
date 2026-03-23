@@ -8,15 +8,20 @@ import {
     Button,
     Collapse,
     CircularProgress,
+    Avatar,
+    SwipeableDrawer,
+    useMediaQuery,
+    useTheme,
 } from '@mui/material';
 import FavoriteIcon from '@mui/icons-material/Favorite';
 import ChatBubbleOutlineIcon from '@mui/icons-material/ChatBubbleOutline';
 import SendIcon from '@mui/icons-material/Send';
-import PersonIcon from '@mui/icons-material/Person';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
+import CloseIcon from '@mui/icons-material/Close';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import ExpandLessIcon from '@mui/icons-material/ExpandLess';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
+import { buildArticleImageUrl, buildAvatarUrl, DEFAULT_AVATAR_SRC } from './avatarUtils';
 
 const API_BASE_URL = 'http://localhost:5113/api';
 
@@ -100,9 +105,20 @@ const CommentItem = ({
                 p: 1.5,
             }}
         >
-            <Typography variant="body2" sx={{ color: '#00bfa5', fontWeight: 700 }}>
-                @{comment.authorName}
-            </Typography>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                <Avatar
+                    src={buildAvatarUrl(API_BASE_URL, comment.authorAvatar)}
+                    sx={{ width: 28, height: 28, border: '1px solid #00bfa5' }}
+                    imgProps={{
+                        onError: (e) => {
+                            e.currentTarget.src = DEFAULT_AVATAR_SRC;
+                        },
+                    }}
+                />
+                <Typography variant="body2" sx={{ color: '#00bfa5', fontWeight: 700 }}>
+                    @{comment.authorName}
+                </Typography>
+            </Box>
             <Typography variant="body1" sx={{ color: 'white', mt: 0.5, whiteSpace: 'pre-wrap' }}>
                 {comment.content}
             </Typography>
@@ -289,9 +305,10 @@ const PostDetailPage = ({
     currentUserId,
     nickname,
     authorId,
+    authorAvatar,
+    containerRef,
     onCommentsCountChange,
     initialOpenComments = false,
-    containerRef, // <-- Новый пропс: реф контейнера ленты
     backLabel
 }) => {
     const [commentsOpen, setCommentsOpen] = useState(false);
@@ -304,6 +321,9 @@ const PostDetailPage = ({
     const [editInputs, setEditInputs] = useState({});
     const [editEditorOpen, setEditEditorOpen] = useState({});
     const authorCacheRef = useRef({});
+    const [imageBroken, setImageBroken] = useState(false);
+    const theme = useTheme();
+    const isDesktopComments = useMediaQuery(theme.breakpoints.up(768));
 
     useEffect(() => {
         if (containerRef && containerRef.current) {
@@ -320,14 +340,20 @@ const PostDetailPage = ({
         }
     }, [initialOpenComments, post.article_id]);
 
+    useEffect(() => {
+        setImageBroken(false);
+    }, [post.article_id]);
+
     if (!post) return <Box sx={{ color: 'white' }}>Пост не найден.</Box>;
+
+    const articleImageUrl = post.articleImageUrl || buildArticleImageUrl(API_BASE_URL, post.file_path || post.filePath);
 
     const getTagColor = (tag, index) => {
         const hash = tag.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
         return TAG_COLORS[(hash + index) % TAG_COLORS.length];
     };
 
-    const getAuthorName = async (userId) => {
+    const getAuthorInfo = async (userId) => {
         if (authorCacheRef.current[userId]) {
             return authorCacheRef.current[userId];
         }
@@ -338,17 +364,22 @@ const PostDetailPage = ({
             });
 
             if (!response.ok) {
-                authorCacheRef.current[userId] = 'Автор';
-                return 'Автор';
+                const fallback = { name: 'Автор', avatar: null };
+                authorCacheRef.current[userId] = fallback;
+                return fallback;
             }
 
             const data = await response.json();
-            const name = data.name || 'Автор';
-            authorCacheRef.current[userId] = name;
-            return name;
+            const info = {
+                name: data.name || 'Автор',
+                avatar: data.pathAvatar ?? data.PathAvatar ?? null,
+            };
+            authorCacheRef.current[userId] = info;
+            return info;
         } catch {
-            authorCacheRef.current[userId] = 'Автор';
-            return 'Автор';
+            const fallback = { name: 'Автор', avatar: null };
+            authorCacheRef.current[userId] = fallback;
+            return fallback;
         }
     };
 
@@ -358,7 +389,7 @@ const PostDetailPage = ({
         const hasReplies = Boolean(comment.hasReplies ?? comment.HasReplies);
         const repliesCount = comment.repliesCount ?? comment.RepliesCount ?? 0;
 
-        const authorName = await getAuthorName(authorId);
+        const authorInfo = await getAuthorInfo(authorId);
         const isLikedResponse = await fetch(`${API_BASE_URL}/LikeComment/isLiked/${commentId}`, {
             credentials: 'include',
         }).catch(() => null);
@@ -372,7 +403,8 @@ const PostDetailPage = ({
             authorId,
             hasReplies,
             repliesCount,
-            authorName,
+            authorName: authorInfo.name,
+            authorAvatar: authorInfo.avatar,
             isLiked,
             replies: [],
             repliesOpen: false,
@@ -422,8 +454,8 @@ const PostDetailPage = ({
 
     const createComment = async (content, parentId = null) => {
         const trimmed = content.trim();
-        if (trimmed.length < 5) {
-            setCommentsError('Комментарий должен быть не короче 5 символов');
+        if (trimmed.length < 2) {
+            setCommentsError('Комментарий должен быть не короче 2 символов');
             return;
         }
 
@@ -483,8 +515,8 @@ const PostDetailPage = ({
 
     const updateComment = async (commentId, content) => {
         const trimmed = content.trim();
-        if (trimmed.length < 5) {
-            setCommentsError('Комментарий должен быть не короче 5 символов');
+        if (trimmed.length < 2) {
+            setCommentsError('Комментарий должен быть не короче 2 символов');
             return false;
         }
 
@@ -689,19 +721,42 @@ const PostDetailPage = ({
                 backgroundColor: '#2c2c2c',
                 borderRadius: '12px',
                 boxShadow: '0 4px 12px rgba(0, 0, 0, 0.5)',
-                m: 2,
+                m: { xs: 0, sm: 1, md: 2 },
                 pb: 2,
                 color: 'white',
             }}
         >
-            <Box sx={{ p: 2, borderBottom: '1px solid #333', display: 'flex', alignItems: 'center' }}>
-                <IconButton onClick={onBack} sx={{ color: '#00bfa5' }}>
+            <Box sx={{ p: { xs: 1.25, md: 2 }, borderBottom: '1px solid #333', display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                <IconButton
+                    onClick={onBack}
+                    aria-label="Назад"
+                    sx={{
+                        color: '#00e5c9',
+                        minWidth: 44,
+                        minHeight: 44,
+                        transition: 'background-color 0.2s ease',
+                        '&:hover': { backgroundColor: 'rgba(0, 191, 165, 0.1)' },
+                    }}
+                >
                     <ArrowBackIcon />
                 </IconButton>
-                <Typography variant="h6" sx={{ color: 'white', ml: 1 }}>{backLabel || 'Назад к ленте'}</Typography>
+                <Typography
+                    variant="h6"
+                    sx={{
+                        color: '#f5f5f5',
+                        ml: 0.5,
+                        fontSize: { xs: '1rem', md: '1.25rem' },
+                        fontWeight: 700,
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap',
+                    }}
+                >
+                    {backLabel || 'Назад к ленте'}
+                </Typography>
             </Box>
 
-            <Box sx={{ p: 2 }}>
+            <Box sx={{ p: { xs: 1.25, md: 2 } }}>
                 <Typography variant="body2" sx={labelStyle}>Название</Typography>
                 <Typography variant="h4" sx={{ fontWeight: 'bold', mb: 2 }}>{post.title}</Typography>
 
@@ -715,15 +770,35 @@ const PostDetailPage = ({
                     sx={{ cursor: onAuthorClick && authorId ? 'pointer' : 'default' }}
                 >
                     <Typography variant="body2" sx={labelStyle}>Автор</Typography>
-                    <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                        <PersonIcon sx={{ color: '#00bfa5', mr: 1, fontSize: 30 }} />
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <Avatar
+                            src={buildAvatarUrl(API_BASE_URL, authorAvatar)}
+                            sx={{ width: 34, height: 34, border: '2px solid #00bfa5' }}
+                            imgProps={{
+                                onError: (e) => {
+                                    e.currentTarget.src = DEFAULT_AVATAR_SRC;
+                                },
+                            }}
+                        />
                         <Typography variant="h6" sx={{ color: '#00bfa5', fontWeight: 'bold' }}>
                             {nickname}
                         </Typography>
                     </Box>
                 </Box>
 
-                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mb: 3 }}>
+                <Box
+                    sx={{
+                        display: 'flex',
+                        flexWrap: 'nowrap',
+                        gap: 0.75,
+                        mb: 3,
+                        overflowX: 'auto',
+                        maxWidth: '100%',
+                        pb: 0.5,
+                        scrollbarWidth: 'thin',
+                        '&::-webkit-scrollbar': { height: 4 },
+                    }}
+                >
                     {post.tags.map((tag, index) => (
                         <Chip
                             key={index}
@@ -733,10 +808,30 @@ const PostDetailPage = ({
                                 color: 'white',
                                 fontWeight: 'bold',
                                 borderRadius: '10px',
+                                flexShrink: 0,
                             }}
                         />
                     ))}
                 </Box>
+
+                {articleImageUrl && !imageBroken && (
+                    <Box sx={{ mb: 3 }}>
+                        <Box
+                            component="img"
+                            src={articleImageUrl}
+                            alt="Фото статьи"
+                            onError={() => setImageBroken(true)}
+                            sx={{
+                                width: '100%',
+                                maxHeight: 420,
+                                objectFit: 'cover',
+                                borderRadius: '14px',
+                                border: '1px solid #333',
+                            }}
+                        />
+                    </Box>
+                )}
+
 
                 <Box
                     dangerouslySetInnerHTML={{ __html: post.article_content }}
@@ -755,33 +850,43 @@ const PostDetailPage = ({
 
             <Box
                 sx={{
-                    p: 2,
+                    px: { xs: 1, md: 2 },
+                    py: { xs: 1, md: 2 },
                     borderTop: '1px solid #333',
                     display: 'flex',
-                    gap: 3,
+                    gap: { xs: 1, md: 3 },
                     alignItems: 'center',
+                    flexWrap: 'nowrap',
                 }}
             >
                 <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                    <IconButton onClick={onLike} sx={{ color: post.isLiked ? '#ff1744' : '#00bfa5', p: 0.5 }}>
-                        <FavoriteIcon sx={{ fontSize: 24 }} />
+                    <IconButton
+                        onClick={onLike}
+                        aria-label="Лайк"
+                        sx={{ color: post.isLiked ? '#ff1744' : '#00e5c9', minWidth: 44, minHeight: 44 }}
+                    >
+                        <FavoriteIcon sx={{ fontSize: 26 }} />
                     </IconButton>
-                    <Typography variant="subtitle1" sx={{ color: 'white', fontWeight: 'bold', ml: 0.5 }}>
+                    <Typography variant="subtitle1" sx={{ color: '#f5f5f5', fontWeight: 'bold', ml: 0.25 }}>
                         {post.likesCount}
                     </Typography>
                 </Box>
 
                 <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                    <IconButton onClick={handleToggleComments} sx={{ color: commentsOpen ? '#048b79' : '#00bfa5', p: 0.5 }}>
-                        <ChatBubbleOutlineIcon sx={{ fontSize: 24 }} />
+                    <IconButton
+                        onClick={handleToggleComments}
+                        aria-label="Комментарии"
+                        sx={{ color: commentsOpen ? '#048b79' : '#00e5c9', minWidth: 44, minHeight: 44 }}
+                    >
+                        <ChatBubbleOutlineIcon sx={{ fontSize: 26 }} />
                     </IconButton>
-                    <Typography variant="subtitle1" sx={{ color: 'white', fontWeight: 'bold', ml: 0.5 }}>
+                    <Typography variant="subtitle1" sx={{ color: '#f5f5f5', fontWeight: 'bold', ml: 0.25 }}>
                         {post.commentsCount}
                     </Typography>
                 </Box>
 
                 <IconButton
-                    sx={{ color: '#00bfa5' }}
+                    sx={{ color: '#00e5c9', minWidth: 44, minHeight: 44, ml: 'auto' }}
                     onClick={(e) => {
                         e.stopPropagation();
                         const shareUrl = `${window.location.origin}/?article=${post.article_id}`;
@@ -809,77 +914,227 @@ const PostDetailPage = ({
                 </IconButton>
             </Box>
 
-            <Collapse in={commentsOpen} timeout="auto" unmountOnExit>
-                <Box sx={{ p: 2, borderTop: '1px solid #333' }}>
-                    <Typography variant="h6" sx={{ color: 'white', mb: 2 }}>Комментарии</Typography>
+            {isDesktopComments && (
+                <Collapse in={commentsOpen} timeout="auto" unmountOnExit>
+                    <Box sx={{ p: 2, borderTop: '1px solid #333' }}>
+                        <Typography variant="h6" sx={{ color: '#f5f5f5', mb: 2 }}>Комментарии</Typography>
 
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
-                        <TextField
-                            label="Написать комментарий..."
-                            variant="filled"
-                            fullWidth
-                            value={newCommentText}
-                            onChange={(e) => setNewCommentText(e.target.value)}
-                            onKeyDown={(e) => {
-                                if (e.key === 'Enter' && !e.shiftKey) {
-                                    e.preventDefault();
-                                    handleCreateRootComment();
-                                }
-                            }}
-                            sx={commentInputStyle}
-                        />
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
+                            <TextField
+                                label="Написать комментарий..."
+                                variant="filled"
+                                fullWidth
+                                value={newCommentText}
+                                onChange={(e) => setNewCommentText(e.target.value)}
+                                onKeyDown={(e) => {
+                                    if (e.key === 'Enter' && !e.shiftKey) {
+                                        e.preventDefault();
+                                        handleCreateRootComment();
+                                    }
+                                }}
+                                sx={commentInputStyle}
+                            />
 
-                        <Button
-                            variant="contained"
-                            onClick={handleCreateRootComment}
+                            <Button
+                                variant="contained"
+                                onClick={handleCreateRootComment}
+                                sx={{
+                                    borderRadius: '10px',
+                                    backgroundColor: '#00bfa5',
+                                    px: 2,
+                                    '&:hover': { backgroundColor: '#009e8a' },
+                                }}
+                            >
+                                Отправить
+                            </Button>
+                        </Box>
+
+                        {commentsError && (
+                            <Typography sx={{ color: '#ff8a80', mb: 1 }}>{commentsError}</Typography>
+                        )}
+
+                        {commentsLoading ? (
+                            <Box sx={{ py: 2, textAlign: 'center' }}>
+                                <CircularProgress size={28} sx={{ color: '#00bfa5' }} />
+                            </Box>
+                        ) : commentsTree.length === 0 ? (
+                            <Typography sx={{ color: '#bdbdbd' }}>Пока нет комментариев. Будьте первым.</Typography>
+                        ) : (
+                            <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
+                                {commentsTree.map((comment) => (
+                                    <CommentItem
+                                        key={comment.commentId}
+                                        comment={comment}
+                                        depth={0}
+                                        currentUserId={currentUserId}
+                                        replyInputs={replyInputs}
+                                        replyEditorOpen={replyEditorOpen}
+                                        editInputs={editInputs}
+                                        editEditorOpen={editEditorOpen}
+                                        onReplyTextChange={handleReplyChange}
+                                        onToggleReplyEditor={handleToggleReplyEditor}
+                                        onReplySubmit={handleReplySubmit}
+                                        onEditTextChange={handleEditChange}
+                                        onToggleEditEditor={handleToggleEditEditor}
+                                        onEditSubmit={handleEditSubmit}
+                                        onDeleteComment={handleDeleteComment}
+                                        onLikeToggle={handleCommentLikeToggle}
+                                        onToggleReplies={handleToggleReplies}
+                                    />
+                                ))}
+                            </Box>
+                        )}
+                    </Box>
+                </Collapse>
+            )}
+
+            {!isDesktopComments && (
+                <SwipeableDrawer
+                    anchor="bottom"
+                    open={commentsOpen}
+                    onClose={() => setCommentsOpen(false)}
+                    onOpen={() => {}}
+                    disableDiscovery
+                    PaperProps={{
+                        sx: {
+                            borderTopLeftRadius: 16,
+                            borderTopRightRadius: 16,
+                            height: 'min(92vh, 780px)',
+                            maxHeight: '92vh',
+                            width: '100%',
+                            maxWidth: '100vw',
+                            overflow: 'hidden',
+                            backgroundColor: '#1f1f1f',
+                            transition: 'transform 0.25s ease-out',
+                        },
+                    }}
+                >
+                    <Box
+                        sx={{
+                            height: '100%',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            maxWidth: '100vw',
+                        }}
+                    >
+                        <Box
                             sx={{
-                                borderRadius: '10px',
-                                backgroundColor: '#00bfa5',
+                                flexShrink: 0,
                                 px: 2,
-                                '&:hover': { backgroundColor: '#009e8a' },
+                                py: 1.25,
+                                borderBottom: '1px solid #333',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: 1,
                             }}
                         >
-                            Отправить
-                        </Button>
-                    </Box>
-
-                    {commentsError && (
-                        <Typography sx={{ color: '#ff8a80', mb: 1 }}>{commentsError}</Typography>
-                    )}
-
-                    {commentsLoading ? (
-                        <Box sx={{ py: 2, textAlign: 'center' }}>
-                            <CircularProgress size={28} sx={{ color: '#00bfa5' }} />
+                            <Typography variant="h6" sx={{ color: '#00e5c9', fontWeight: 700, fontSize: '1.05rem' }}>
+                                Комментарии
+                            </Typography>
+                            <IconButton
+                                onClick={() => setCommentsOpen(false)}
+                                aria-label="Закрыть"
+                                sx={{ ml: 'auto', minWidth: 44, minHeight: 44, color: '#bdbdbd' }}
+                            >
+                                <CloseIcon />
+                            </IconButton>
                         </Box>
-                    ) : commentsTree.length === 0 ? (
-                        <Typography sx={{ color: '#aaa' }}>Пока нет комментариев. Будьте первым.</Typography>
-                    ) : (
-                        <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
-                            {commentsTree.map((comment) => (
-                                <CommentItem
-                                    key={comment.commentId}
-                                    comment={comment}
-                                    depth={0}
-                                    currentUserId={currentUserId}
-                                    replyInputs={replyInputs}
-                                    replyEditorOpen={replyEditorOpen}
-                                    editInputs={editInputs}
-                                    editEditorOpen={editEditorOpen}
-                                    onReplyTextChange={handleReplyChange}
-                                    onToggleReplyEditor={handleToggleReplyEditor}
-                                    onReplySubmit={handleReplySubmit}
-                                    onEditTextChange={handleEditChange}
-                                    onToggleEditEditor={handleToggleEditEditor}
-                                    onEditSubmit={handleEditSubmit}
-                                    onDeleteComment={handleDeleteComment}
-                                    onLikeToggle={handleCommentLikeToggle}
-                                    onToggleReplies={handleToggleReplies}
+
+                        <Box
+                            sx={{
+                                flex: 1,
+                                minHeight: 0,
+                                overflowY: 'auto',
+                                p: 2,
+                                pt: 1.5,
+                            }}
+                        >
+                            {commentsError && (
+                                <Typography sx={{ color: '#ff8a80', mb: 1 }}>{commentsError}</Typography>
+                            )}
+
+                            {commentsLoading ? (
+                                <Box sx={{ py: 2, textAlign: 'center' }}>
+                                    <CircularProgress size={28} sx={{ color: '#00bfa5' }} />
+                                </Box>
+                            ) : commentsTree.length === 0 ? (
+                                <Typography sx={{ color: '#bdbdbd' }}>Пока нет комментариев. Будьте первым.</Typography>
+                            ) : (
+                                <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
+                                    {commentsTree.map((comment) => (
+                                        <CommentItem
+                                            key={comment.commentId}
+                                            comment={comment}
+                                            depth={0}
+                                            currentUserId={currentUserId}
+                                            replyInputs={replyInputs}
+                                            replyEditorOpen={replyEditorOpen}
+                                            editInputs={editInputs}
+                                            editEditorOpen={editEditorOpen}
+                                            onReplyTextChange={handleReplyChange}
+                                            onToggleReplyEditor={handleToggleReplyEditor}
+                                            onReplySubmit={handleReplySubmit}
+                                            onEditTextChange={handleEditChange}
+                                            onToggleEditEditor={handleToggleEditEditor}
+                                            onEditSubmit={handleEditSubmit}
+                                            onDeleteComment={handleDeleteComment}
+                                            onLikeToggle={handleCommentLikeToggle}
+                                            onToggleReplies={handleToggleReplies}
+                                        />
+                                    ))}
+                                </Box>
+                            )}
+                        </Box>
+
+                        <Box
+                            sx={{
+                                flexShrink: 0,
+                                borderTop: '1px solid #333',
+                                p: 2,
+                                pb: 'calc(12px + env(safe-area-inset-bottom, 0px))',
+                                backgroundColor: '#181818',
+                            }}
+                        >
+                            <Box sx={{ display: 'flex', alignItems: 'stretch', gap: 1 }}>
+                                <TextField
+                                    label="Написать комментарий..."
+                                    variant="filled"
+                                    fullWidth
+                                    value={newCommentText}
+                                    onChange={(e) => setNewCommentText(e.target.value)}
+                                    onKeyDown={(e) => {
+                                        if (e.key === 'Enter' && !e.shiftKey) {
+                                            e.preventDefault();
+                                            handleCreateRootComment();
+                                        }
+                                    }}
+                                    sx={{
+                                        ...commentInputStyle,
+                                        '& .MuiFilledInput-root': {
+                                            ...commentInputStyle['& .MuiFilledInput-root'],
+                                            minHeight: 48,
+                                        },
+                                    }}
                                 />
-                            ))}
+                                <Button
+                                    variant="contained"
+                                    onClick={handleCreateRootComment}
+                                    sx={{
+                                        borderRadius: '10px',
+                                        backgroundColor: '#00bfa5',
+                                        minWidth: 88,
+                                        minHeight: 48,
+                                        alignSelf: 'stretch',
+                                        '&:hover': { backgroundColor: '#009e8a' },
+                                    }}
+                                >
+                                    Отпр.
+                                </Button>
+                            </Box>
                         </Box>
-                    )}
-                </Box>
-            </Collapse>
+                    </Box>
+                </SwipeableDrawer>
+            )}
         </Box>
     );
 };

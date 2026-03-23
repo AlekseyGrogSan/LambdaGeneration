@@ -23,9 +23,9 @@ namespace LambdaGeneration.API.Date
             modelBuilder.ApplyConfiguration<ArticlesEntity>(new Configurations.ArticlesConfiguration());
             modelBuilder.ApplyConfiguration<UsersEntity>(new Configurations.UsersConfiguration());
             modelBuilder.ApplyConfiguration<LikeEntity>(new Configurations.LikesConfiguration());
+            modelBuilder.ApplyConfiguration<SubscriptionEntity>(new Configurations.SubscriptionsConfiguration());
             modelBuilder.ApplyConfiguration<CommentsEntity>(new Configurations.CommentsConfiguration());
             modelBuilder.ApplyConfiguration<LikeCommentEntity>(new Configurations.LikeCommentConfiguration());
-            modelBuilder.ApplyConfiguration<SubscriptionEntity>(new Configurations.SubscriptionsConfiguration());
             modelBuilder.ApplyConfigurationsFromAssembly(typeof(LambdaGenerationDbContext).Assembly);
         }
 

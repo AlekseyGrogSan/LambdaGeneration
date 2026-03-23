@@ -15,5 +15,6 @@ namespace LambdaGeneration.API.Date.Entities
         public List<int> ArticleTags { get; set; } = new List<int>();
         //Фиктивный список для связи БД лайков и статей, в бизнес-модели не используется
         public List<LikeEntity> Likes { get; set; }
+        public string? FilePath { get; set; } = string.Empty;
     }
 }
