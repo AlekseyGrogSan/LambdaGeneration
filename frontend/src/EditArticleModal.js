@@ -42,18 +42,20 @@ const AVAILABLE_TAGS = [
 
 const modalStyle = {
     position: 'absolute',
-    top: '50%',
-    left: '50%',
-    transform: 'translate(-50%, -50%)',
-    width: { xs: '95%', sm: 800 },
-    maxHeight: '90vh',
+    top: { xs: 0, sm: '50%' },
+    left: { xs: 0, sm: '50%' },
+    transform: { xs: 'none', sm: 'translate(-50%, -50%)' },
+    width: { xs: '100vw', sm: '95%', md: 800 },
+    height: { xs: '100dvh', sm: 'auto' },
+    maxHeight: { xs: '100dvh', sm: '90vh' },
     bgcolor: '#2c2c2c',
     border: '1px solid #444',
-    borderRadius: '12px',
+    borderRadius: { xs: 0, sm: '12px' },
     boxShadow: 24,
-    p: 3,
+    p: { xs: 2, sm: 3 },
     color: 'white',
     overflowY: 'auto',
+    overscrollBehavior: 'contain',
     '&::-webkit-scrollbar': { width: '8px' },
     '&::-webkit-scrollbar-track': { background: 'rgba(255, 255, 255, 0.05)', borderRadius: '10px' },
     '&::-webkit-scrollbar-thumb': { background: '#00bfa5', borderRadius: '10px' },
@@ -119,14 +121,48 @@ const EditorToolbar = ({ editorRef }) => {
     });
 
     return (
-        <Box sx={{ display: 'flex', gap: 1, padding: 1, backgroundColor: '#444', borderRadius: '8px 8px 0 0', border: '1px solid #555' }}>
-            <IconButton size="small" onClick={() => applyCommand('bold')} sx={getButtonStyle(activeStyles.bold)}><FormatBoldIcon /></IconButton>
-            <IconButton size="small" onClick={() => applyCommand('italic')} sx={getButtonStyle(activeStyles.italic)}><FormatItalicIcon /></IconButton>
-            <IconButton size="small" onClick={() => applyCommand('underline')} sx={getButtonStyle(activeStyles.underline)}><FormatUnderlinedIcon /></IconButton>
-            <IconButton size="small" onClick={() => { const url = prompt('URL:'); if(url) applyCommand('createLink', url); }} sx={{ color: '#00bfa5' }}><LinkIcon /></IconButton>
-            <IconButton size="small" onClick={() => applyCommand('formatBlock', '<h2>')} sx={getButtonStyle(activeStyles.h2, '#ffeb3b')}><TitleIcon /></IconButton>
-            <IconButton size="small" onClick={() => applyCommand('insertUnorderedList')} sx={getButtonStyle(activeStyles.listBulleted)}><FormatListBulletedIcon /></IconButton>
-            <IconButton size="small" onClick={() => applyCommand('insertOrderedList')} sx={getButtonStyle(activeStyles.listNumbered)}><FormatListNumberedIcon /></IconButton>
+        <Box
+            sx={{
+                display: 'flex',
+                gap: 1,
+                padding: 1,
+                backgroundColor: '#444',
+                borderRadius: '8px 8px 0 0',
+                border: '1px solid #555',
+                flexWrap: 'nowrap',
+                overflowX: 'auto',
+                overflowY: 'hidden',
+                scrollbarWidth: 'thin',
+                scrollbarColor: '#00bfa5 rgba(255,255,255,0.08)',
+                paddingBottom: '6px',
+                '&::-webkit-scrollbar': {
+                    height: '8px',
+                },
+                '&::-webkit-scrollbar-track': {
+                    background: 'linear-gradient(90deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02))',
+                    borderRadius: '999px',
+                },
+                '&::-webkit-scrollbar-thumb': {
+                    background: 'linear-gradient(90deg, #00d4b8, #00a58f)',
+                    borderRadius: '999px',
+                    border: '1px solid rgba(255,255,255,0.28)',
+                    boxShadow: 'inset 0 0 0 1px rgba(0,0,0,0.16)',
+                },
+                '&::-webkit-scrollbar-thumb:hover': {
+                    background: 'linear-gradient(90deg, #00e0c2, #00b39b)',
+                },
+                '&::-webkit-scrollbar-corner': {
+                    background: 'transparent',
+                },
+            }}
+        >
+            <IconButton size="small" onClick={() => applyCommand('bold')} sx={{ ...getButtonStyle(activeStyles.bold), flex: '0 0 auto' }}><FormatBoldIcon /></IconButton>
+            <IconButton size="small" onClick={() => applyCommand('italic')} sx={{ ...getButtonStyle(activeStyles.italic), flex: '0 0 auto' }}><FormatItalicIcon /></IconButton>
+            <IconButton size="small" onClick={() => applyCommand('underline')} sx={{ ...getButtonStyle(activeStyles.underline), flex: '0 0 auto' }}><FormatUnderlinedIcon /></IconButton>
+            <IconButton size="small" onClick={() => { const url = prompt('URL:'); if(url) applyCommand('createLink', url); }} sx={{ color: '#00bfa5', flex: '0 0 auto' }}><LinkIcon /></IconButton>
+            <IconButton size="small" onClick={() => applyCommand('formatBlock', '<h2>')} sx={{ ...getButtonStyle(activeStyles.h2, '#ffeb3b'), flex: '0 0 auto' }}><TitleIcon /></IconButton>
+            <IconButton size="small" onClick={() => applyCommand('insertUnorderedList')} sx={{ ...getButtonStyle(activeStyles.listBulleted), flex: '0 0 auto' }}><FormatListBulletedIcon /></IconButton>
+            <IconButton size="small" onClick={() => applyCommand('insertOrderedList')} sx={{ ...getButtonStyle(activeStyles.listNumbered), flex: '0 0 auto' }}><FormatListNumberedIcon /></IconButton>
         </Box>
     );
 };
@@ -424,11 +460,23 @@ const EditArticleModal = ({ open, handleClose, post, onUpdateSuccess, onDeleteSu
             sx={{ zIndex: 1500 }}
         >
             <Box sx={modalStyle}>
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                <Box
+                    sx={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        mb: 2,
+                        position: { xs: 'sticky', sm: 'static' },
+                        top: 0,
+                        py: 0.5,
+                        zIndex: 2,
+                        backgroundColor: '#2c2c2c'
+                    }}
+                >
                     <Typography variant="h6" sx={{ color: '#00bfa5', fontWeight: 'bold' }}>
                         Редактирование
                     </Typography>
-                    <IconButton onClick={handleClose} sx={{ color: '#bdbdbd' }}>
+                    <IconButton aria-label="Закрыть" onClick={handleClose} sx={{ color: '#bdbdbd' }}>
                         <CloseIcon />
                     </IconButton>
                 </Box>
@@ -442,15 +490,16 @@ const EditArticleModal = ({ open, handleClose, post, onUpdateSuccess, onDeleteSu
                         aria-label="edit mode"
                         sx={{ 
                             bgcolor: '#3a3a3a',
+                            width: { xs: '100%', sm: 'auto' },
                             '& .MuiToggleButton-root': { color: '#bdbdbd', border: '1px solid #555' },
                             '& .Mui-selected': { color: '#fff !important', bgcolor: '#00bfa5 !important' }
                         }}
                     >
-                        <ToggleButton value="content" sx={{ px: 3 }}>
+                        <ToggleButton value="content" sx={{ px: { xs: 1.5, sm: 3 }, flex: { xs: 1, sm: 'none' } }}>
                             <EditNoteIcon sx={{ mr: 1 }} />
                             Статья
                         </ToggleButton>
-                        <ToggleButton value="tags" sx={{ px: 3 }}>
+                        <ToggleButton value="tags" sx={{ px: { xs: 1.5, sm: 3 }, flex: { xs: 1, sm: 'none' } }}>
                             <LabelIcon sx={{ mr: 1 }} />
                             Теги
                         </ToggleButton>
@@ -492,8 +541,8 @@ const EditArticleModal = ({ open, handleClose, post, onUpdateSuccess, onDeleteSu
                                 contentEditable={true}
                                 onInput={handleContentChange}
                                 sx={{
-                                    minHeight: '200px',
-                                    maxHeight: '300px',
+                                    minHeight: { xs: '180px', sm: '200px' },
+                                    maxHeight: { xs: '34dvh', sm: '300px' },
                                     overflowY: 'auto',
                                     p: 2,
                                     bgcolor: '#3a3a3a',
@@ -590,6 +639,8 @@ const EditArticleModal = ({ open, handleClose, post, onUpdateSuccess, onDeleteSu
                             flexWrap: 'wrap', 
                             gap: 1, 
                             p: 2,
+                            maxHeight: { xs: '42dvh', sm: 'none' },
+                            overflowY: { xs: 'auto', sm: 'visible' },
                             border: '1px solid #444',
                             borderRadius: '8px',
                             bgcolor: 'rgba(255, 255, 255, 0.05)'

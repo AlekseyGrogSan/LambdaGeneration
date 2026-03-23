@@ -176,41 +176,6 @@ namespace LambdaGeneration.API.Date.Repositories
             await _context.SaveChangesAsync();
         }
 
-        public async Task Subscribe(Guid followerId, Guid followingId)
-        {
-            if (followerId == followingId)
-                throw new ArgumentException("You can not subscribe to yourself");
-
-            var usersExist = await _context.Users
-                .Where(u => u.UserID == followerId || u.UserID == followingId)
-                .CountAsync();
-
-            if (usersExist < 2)
-                throw new Exception("User not found");
-
-            var alreadySubscribed = await _context.Subscriptions
-                .AnyAsync(s => s.FollowerId == followerId && s.FollowingId == followingId);
-
-            if (alreadySubscribed)
-                throw new ArgumentException("Subscription already exists");
-
-            _context.Subscriptions.Add(new SubscriptionEntity
-            {
-                FollowerId = followerId,
-                FollowingId = followingId
-            });
-
-            await _context.Users
-                .Where(u => u.UserID == followerId)
-                .ExecuteUpdateAsync(u => u.SetProperty(x => x.countFollowing, x => x.countFollowing + 1));
-
-            await _context.Users
-                .Where(u => u.UserID == followingId)
-                .ExecuteUpdateAsync(u => u.SetProperty(x => x.countSubscribers, x => x.countSubscribers + 1));
-
-            await _context.SaveChangesAsync();
-        }
-
         public async Task Unsubscribe(Guid followerId, Guid followingId)
         {
             var subscription = await _context.Subscriptions

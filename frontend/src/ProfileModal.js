@@ -38,19 +38,21 @@ const API_BASE_URL = 'http://localhost:5113/api';
 
 const modalStyle = {
     position: 'absolute',
-    top: '50%',
-    left: '50%',
-    transform: 'translate(-50%, -50%)',
-    width: { xs: '95%', sm: 1000, md: 1200 }, 
-    maxHeight: '90vh', 
+    top: { xs: 0, sm: '50%' },
+    left: { xs: 0, sm: '50%' },
+    transform: { xs: 'none', sm: 'translate(-50%, -50%)' },
+    width: { xs: '100vw', sm: '95%', md: 1200 }, 
+    height: { xs: '100dvh', sm: 'auto' },
+    maxHeight: { xs: '100dvh', sm: '90vh' }, 
     background: 'linear-gradient(180deg, rgba(34, 34, 34, 0.72), rgba(18, 18, 18, 0.82))',
     backdropFilter: 'blur(16px) saturate(120%)', 
-    borderRadius: '16px', 
+    borderRadius: { xs: 0, sm: '16px' }, 
     boxShadow: '0 16px 48px rgba(0, 0, 0, 0.65)',
     border: '1px solid rgba(255, 255, 255, 0.18)',
     padding: '0', 
     color: 'white',
     overflowY: 'auto',
+    overscrollBehavior: 'contain',
     
     '&::-webkit-scrollbar': {
         width: '8px',
@@ -82,14 +84,15 @@ const inputStyle = {
 };
 
 const cardContainerStyle = { 
-    height: '420px', 
+    height: { xs: '390px', sm: '420px' }, 
     position: 'relative',
-    // ✅ ВОССТАНОВЛЕНО: Стиль для показа оверлея при наведении
-    '&:hover .actions-overlay': { opacity: 1 } 
+    '@media (hover: hover) and (pointer: fine)': {
+        '&:hover .actions-overlay': { opacity: 1 }
+    }
 };
 
 const sectionStyle = {
-    p: 4,
+    p: { xs: 2, sm: 4 },
     backgroundColor: 'rgba(30, 30, 30, 0.78)',
     borderRadius: '20px',
     boxShadow: '0 14px 30px rgba(0, 0, 0, 0.45)',
@@ -743,7 +746,7 @@ const ProfileModal = ({ open, handleClose, userId, onUnauthorized, onLogout, onP
                     
                     <IconButton
                         onClick={handleProfileModalClose}
-                        sx={{ position: 'absolute', top: 15, right: 15, color: '#bdbdbd', zIndex: 5 }}
+                        sx={{ position: 'absolute', top: { xs: 8, sm: 15 }, right: { xs: 8, sm: 15 }, color: '#bdbdbd', zIndex: 5 }}
                     >
                         <CloseIcon />
                     </IconButton>
@@ -751,7 +754,7 @@ const ProfileModal = ({ open, handleClose, userId, onUnauthorized, onLogout, onP
                     {isMyProfile && isEditingProfile ? (
                         <Box
                             sx={{
-                                p: 4,
+                                p: { xs: 2, sm: 4 },
                                 display: 'flex',
                                 flexDirection: 'column',
                                 gap: 2,
@@ -760,7 +763,7 @@ const ProfileModal = ({ open, handleClose, userId, onUnauthorized, onLogout, onP
                                 border: '1px solid rgba(255, 255, 255, 0.08)',
                                 borderRadius: '20px',
                                 boxShadow: '0 18px 48px rgba(0, 0, 0, 0.55)',
-                                margin: '32px',
+                                margin: { xs: '12px', sm: '32px' },
                             }}
                         >
                             <Typography variant="h5" sx={{ color: '#00bfa5', fontWeight: 'bold', textAlign: 'center' }}>
@@ -833,7 +836,7 @@ const ProfileModal = ({ open, handleClose, userId, onUnauthorized, onLogout, onP
                         <>
 
                     {/* --- ВЕРХНЯЯ ЧАСТЬ ПРОФИЛЯ (ИМЯ/EMAIL/ДАТА) --- */}
-                    <Box sx={{ p: 4, display: 'flex', flexDirection: 'column', alignItems: 'center', background: 'linear-gradient(180deg, #252525 0%, #1e1e1e 100%)' }}>
+                    <Box sx={{ p: { xs: 2, sm: 4 }, display: 'flex', flexDirection: 'column', alignItems: 'center', background: 'linear-gradient(180deg, #252525 0%, #1e1e1e 100%)' }}>
                         
                         <Avatar
                             src={buildAvatarUrl(API_BASE_URL, profileData?.pathAvatar ?? profileData?.PathAvatar)}
@@ -845,7 +848,7 @@ const ProfileModal = ({ open, handleClose, userId, onUnauthorized, onLogout, onP
                             }}
                         />
 
-                        <Typography variant="h4" sx={{ color: 'white', fontWeight: 'bold', mb: 0.5 }}>
+                        <Typography variant="h4" sx={{ color: 'white', fontWeight: 'bold', mb: 0.5, textAlign: 'center', fontSize: { xs: '1.65rem', sm: '2.125rem' } }}>
                             {profileData.name}
                         </Typography>
                         {isMyProfile && (
@@ -874,7 +877,7 @@ const ProfileModal = ({ open, handleClose, userId, onUnauthorized, onLogout, onP
                         </Typography>
 
                         <Box sx={{ mt: 3, width: '100%', maxWidth: 720, mx: 'auto' }}>
-                            <Grid container spacing={2} justifyContent="center">
+                            <Grid container spacing={{ xs: 1.5, sm: 2 }} justifyContent="center">
                                 <Grid item xs={12} sm={6} md={3}>
                                     <ButtonBase
                                         onClick={isMyProfile ? handleOpenFollowingList : undefined}
@@ -992,7 +995,7 @@ const ProfileModal = ({ open, handleClose, userId, onUnauthorized, onLogout, onP
                     <Divider sx={{ backgroundColor: '#333' }} />
 
                     {/* --- СЕКЦИЯ "О СЕБЕ" --- */}
-                    <Box sx={{ ...sectionStyle, m: 3, textAlign: 'center' }}>
+                    <Box sx={{ ...sectionStyle, m: { xs: 1.5, sm: 3 }, textAlign: 'center' }}>
                         <Typography variant="h5" sx={{ color: '#bdbdbd', fontWeight: 'bold', mb: 2 }}>
                             О себе
                         </Typography>
@@ -1005,7 +1008,7 @@ const ProfileModal = ({ open, handleClose, userId, onUnauthorized, onLogout, onP
                     <Divider sx={{ backgroundColor: '#333' }} />
                     
                     {/* --- ПУБЛИКАЦИИ --- */}
-                    <Box sx={{ p: 4 }}>
+                    <Box sx={{ p: { xs: 2, sm: 4 } }}>
                         <Typography variant="h4" sx={{ mb: 3, color: '#00bfa5', fontWeight: 'bold' }}>
                             Публикации ({articlesCount})
                         </Typography>
@@ -1054,7 +1057,7 @@ const ProfileModal = ({ open, handleClose, userId, onUnauthorized, onLogout, onP
                                                         justifyContent: 'center',
                                                         alignItems: 'center',
                                                         gap: 2,
-                                                        opacity: 0, // Изначально скрыто
+                                                        opacity: { xs: 1, sm: 0 },
                                                         transition: 'opacity 0.2s',
                                                         borderRadius: '12px',
                                                         zIndex: 2
@@ -1132,7 +1135,7 @@ const ProfileModal = ({ open, handleClose, userId, onUnauthorized, onLogout, onP
 
                     {/* --- КНОПКИ УПРАВЛЕНИЯ АККАУНТОМ --- */}
                     {isMyProfile && (
-                        <Box sx={{ p: 3, display: 'flex', justifyContent: 'center', gap: 3, borderTop: '1px solid #333' }}>
+                        <Box sx={{ p: { xs: 2, sm: 3 }, display: 'flex', justifyContent: 'center', gap: 2, flexWrap: 'wrap', borderTop: '1px solid #333' }}>
                             <Button
                                 variant="text"
                                 startIcon={<LogoutIcon />}
