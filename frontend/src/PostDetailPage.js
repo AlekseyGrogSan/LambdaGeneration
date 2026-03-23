@@ -23,7 +23,7 @@ import ExpandLessIcon from '@mui/icons-material/ExpandLess';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import { buildArticleImageUrl, buildAvatarUrl, DEFAULT_AVATAR_SRC } from './avatarUtils';
 
-const API_BASE_URL = 'http://localhost:5113/api';
+const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || '/api';
 
 const TAG_COLORS = [
     '#ff6f00',

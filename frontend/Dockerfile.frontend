@@ -2,6 +2,8 @@
 # ЭТАП 1: СБОРКА (BUILD STAGE)
 # -----------------------------------------------------------
 FROM node:20-alpine AS build
+ENV LANG=C.UTF-8
+ENV LC_ALL=C.UTF-8
 
 # Устанавливаем рабочую директорию
 WORKDIR /app
@@ -11,9 +13,8 @@ WORKDIR /app
 # эта команда копирует все файлы (включая package.json, src и т.д.)
 COPY . . 
 
-# Устанавливаем зависимости
-# Теперь мы уверены, что package.json находится в /app
-RUN npm install --frozen-lockfile
+# Устанавливаем зависимости reproducible-способом по package-lock.json
+RUN npm ci
 
 # Запускаем сборку React-приложения. 
 RUN npm run build 

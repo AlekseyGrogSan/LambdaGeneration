@@ -5,5 +5,5 @@ namespace LambdaGeneration.API.DTO
     public record RequestToRegistr(string UserName,
     string Email,
     string Password,
-    string aboutUser);
+        string aboutUser = "");
 }

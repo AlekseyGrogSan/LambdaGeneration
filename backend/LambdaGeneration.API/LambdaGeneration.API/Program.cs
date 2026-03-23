@@ -6,6 +6,7 @@ using LambdaGeneration.API.Midleware;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.RateLimiting;
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
@@ -30,13 +31,11 @@ namespace LambdaGeneration.API
                 options.AddPolicy(name: "AllowFrontend",
                                   policy =>
                                   {
-                                      // Разрешаем запросы с порта, где работает React (обычно 3000)
-                                      policy.WithOrigins("http://localhost:3000")
-                                            // Обязательно для передачи кук (auth_cookies)
+                                      var clientUrl = builder.Configuration["ClientUrl"] ?? "http://localhost:3000";
+
+                                      policy.WithOrigins(clientUrl)
                                             .AllowCredentials()
-                                            // Разрешаем все заголовки
                                             .AllowAnyHeader()
-                                            // Разрешаем все методы (GET, POST, PUT, DELETE)
                                             .AllowAnyMethod();
                                   });
             });
@@ -67,7 +66,6 @@ namespace LambdaGeneration.API
 
             builder.Services.AddAuthentication(jwtOptions);
             builder.Services.AddAuthorization(jwtOptions);
-            // Ограничение попыток входа
             builder.Services.AddRateLimiter(options =>
             {
                 options.AddFixedWindowLimiter("Fixed", opt =>
@@ -78,6 +76,11 @@ namespace LambdaGeneration.API
             });
 
             var app = builder.Build();
+
+            app.UseForwardedHeaders(new ForwardedHeadersOptions
+            {
+                ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto
+            });
 
             using (var scope = app.Services.CreateScope())
             {
@@ -91,10 +94,10 @@ namespace LambdaGeneration.API
 
             await app.InitialAdmin();
 
-            //string adminEmail = "alexkernel05@gmail.com";
-            //string seedFilePath = "wwwroot/articles_seed.txt";
+            string adminEmail = "admin@lambda-gen.ru";
+            string seedFilePath = "wwwroot/articles_seed.txt";
 
-            //await app.SeedArticlesFromTxt(adminEmail, seedFilePath);
+            await app.SeedArticlesFromTxt(adminEmail, seedFilePath);
 
             // Configure the HTTP request pipeline.
             if (app.Environment.IsDevelopment())
@@ -107,7 +110,10 @@ namespace LambdaGeneration.API
             app.UseSession();
             app.UseCors("AllowFrontend");
 
-            app.UseHttpsRedirection();
+            if (app.Environment.IsDevelopment())
+            {
+                app.UseHttpsRedirection();
+            }
 
             app.UseAuthentication();
             app.UseAuthorization();

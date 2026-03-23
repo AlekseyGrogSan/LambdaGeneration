@@ -1,4 +1,4 @@
-﻿using LambdaGeneration.API.Application.Interfaces.Infrastructure;
+using LambdaGeneration.API.Application.Interfaces.Infrastructure;
 using LambdaGeneration.API.Application.Interfaces.Services;
 using LambdaGeneration.API.Application.Services;
 using LambdaGeneration.API.Core.Models;
@@ -27,13 +27,15 @@ namespace LambdaGeneration.API.Controllers
         private readonly IUsersService _usersService;
         private readonly ISendEmail _sendEmail;
         private readonly IVerifyCodeService _verifiCode;
+        private readonly IRegexModerationService _regexModeration;
         private readonly IWebHostEnvironment _env;
-        public UsersController(IUsersService usersService, IVerifyCodeService verifyCode, ISendEmail sendEmail, IWebHostEnvironment env)
+        public UsersController(IUsersService usersService, IVerifyCodeService verifyCode, ISendEmail sendEmail, IWebHostEnvironment env, IRegexModerationService regexModeration)
         {
             _usersService = usersService;
             _sendEmail = sendEmail;
             _verifiCode = verifyCode;
             _env = env;
+            _regexModeration = regexModeration;
         }
 
         [HttpPost("register")]
@@ -44,6 +46,14 @@ namespace LambdaGeneration.API.Controllers
                 if (!ModelState.IsValid)
                 {
                     return BadRequest(ModelState);
+                }
+
+                string fullText = request.UserName + " " + request.aboutUser;
+                var moderation = _regexModeration.ModerationComment(fullText);
+
+                if (!moderation.Result.IsApproved)
+                {
+                    return BadRequest(moderation.Result.Reason);
                 }
 
                 await _usersService.checkedUser(request.Email, request.UserName);
@@ -66,7 +76,7 @@ namespace LambdaGeneration.API.Controllers
                 }
                 HttpContext.Session.SetString("pending-avatar", fileName?? "");
                 HttpContext.Session.SetString("pending-email", request.Email);
-                var new_request = new RequestToRegistr(request.UserName, request.Email, request.Password, request.aboutUser);
+                var new_request = new RequestToRegistr(request.UserName, request.Email, request.Password, request.aboutUser ?? string.Empty);
                 HttpContext.Session.SetString("pending-data", JsonSerializer.Serialize(new_request));
 
                 return Ok("Письмо отправлено вам на почту!");
@@ -254,9 +264,18 @@ namespace LambdaGeneration.API.Controllers
             {
                 var id = GetUserID();
 
+
                 if (request.email != User.FindFirst("UserEmail")?.Value)
                 {
                     return BadRequest("It`s not your email!");
+                }
+
+                string fullText = request.name + " " + request.aboutUser;
+                var moderation = _regexModeration.ModerationComment(fullText);
+
+                if (!moderation.Result.IsApproved)
+                {
+                    return BadRequest(moderation.Result.Reason);
                 }
 
                 string fileName = null;

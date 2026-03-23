@@ -12,7 +12,7 @@ import ChatBubbleOutlineIcon from '@mui/icons-material/ChatBubbleOutline';
 import SendIcon from '@mui/icons-material/Send';
 import { buildArticleImageUrl, buildAvatarUrl, DEFAULT_AVATAR_SRC } from './avatarUtils';
 
-const API_BASE_URL = 'http://localhost:5113/api';
+const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || '/api';
 
 // --- ОБЩИЙ МАССИВ ЦВЕТОВ ДЛЯ ТЕГОВ ---
 const TAG_COLORS = [

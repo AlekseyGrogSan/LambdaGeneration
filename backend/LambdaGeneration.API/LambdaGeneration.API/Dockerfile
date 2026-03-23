@@ -1,8 +1,10 @@
 FROM mcr.microsoft.com/dotnet/aspnet:9.0-noble AS base
-USER $APP_UID
 WORKDIR /app
 EXPOSE 8080
 EXPOSE 8081
+ENV ASPNETCORE_URLS=http://+:8080
+ENV LANG=C.UTF-8
+ENV LC_ALL=C.UTF-8
 
 # -------------------------------------------------------------------
 # ЭТАП 1: СБОРКА (BUILD STAGE)
@@ -41,4 +43,11 @@ RUN dotnet publish "LambdaGeneration.API.csproj" -c $BUILD_CONFIGURATION -o /app
 FROM base AS final
 WORKDIR /app
 COPY --from=publish /app/publish .
+
+# Prepare writable upload directories for runtime user.
+RUN mkdir -p /app/wwwroot/uploads /app/wwwroot/temp /app/wwwroot/articles_uploads \
+	&& chown -R $APP_UID:0 /app/wwwroot \
+	&& chmod -R g+rwX /app/wwwroot
+
+USER $APP_UID
 ENTRYPOINT ["dotnet", "LambdaGeneration.API.dll"]
