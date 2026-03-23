@@ -10,7 +10,7 @@ import {
 import EmailVerificationModal from './EmailVerificationModal';
 import { formatBytes, isAvatarTooLarge, MAX_AVATAR_BYTES } from './avatarUtils';
 
-const API_BASE_URL = 'http://localhost:5113/api';
+const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || '/api';
 
 const inputStyle = {
     '& .MuiFilledInput-root': {
@@ -230,32 +230,19 @@ const RegistrationModal = ({ open, handleClose, onForgotPassword }) => {
                     <TextField label="Пароль" name="password" type="password" variant="filled" fullWidth sx={inputStyle} value={formData.password} onChange={handleChange} required />
                     
                     {isRegisterMode && (
-                        <TextField label="О себе" name="aboutUser" variant="filled" fullWidth multiline rows={2} sx={inputStyle} value={formData.aboutUser} onChange={handleChange} required={false} />
-                    )}
-                    {isRegisterMode && (
-                        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-                            <Button
-                                variant="outlined"
-                                component="label"
-                                sx={{ color: '#00bfa5', borderColor: '#00bfa5', '&:hover': { borderColor: '#009688', backgroundColor: 'rgba(0, 191, 165, 0.08)' } }}
-                            >
-                                Загрузить аватар
-                                <input hidden type="file" accept="image/*" onChange={handleAvatarChange} />
-                            </Button>
-                            {avatarFile && (
-                                <Typography variant="body2" sx={{ color: '#bdbdbd' }}>
-                                    {avatarFile.name}
-                                </Typography>
-                            )}
-                            {avatarError && (
-                                <Typography variant="caption" sx={{ color: '#ff8a80' }}>
-                                    {avatarError}
-                                </Typography>
-                            )}
-                            <Typography variant="caption" sx={{ color: '#7e7e7e' }}>
-                                Максимум {formatBytes(MAX_AVATAR_BYTES)}
-                            </Typography>
-                        </Box>
+                        <TextField
+                            label="О себе"
+                            name="aboutUser"
+                            variant="filled"
+                            fullWidth
+                            multiline
+                            rows={2}
+                            sx={inputStyle}
+                            value={formData.aboutUser}
+                            onChange={handleChange}
+                            required={false}
+                            inputProps={{ required: false }}
+                        />
                     )}
                     {isRegisterMode && (
                         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>

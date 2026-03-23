@@ -1,7 +1,6 @@
 ﻿version: '3.8'
 
 services:
-  # 1. СЕРВИС БАЗЫ ДАННЫХ (PostgreSQL)
   postgres:
     image: postgres:16-alpine
     container_name: postgres
@@ -9,6 +8,9 @@ services:
       POSTGRES_USER: ${POSTGRES_USER:-postgres}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-mysecretpassword}
       POSTGRES_DB: ${POSTGRES_DB:-lambdadb}
+      LANG: C.UTF-8
+      LC_ALL: C.UTF-8
+      POSTGRES_INITDB_ARGS: "--encoding=UTF8 --locale=C.UTF-8"
     ports:
       - "5432:5432"
     volumes:
@@ -20,7 +22,6 @@ services:
       retries: 5
     restart: unless-stopped
 
-  # 2. СЕРВИС БЭКЕНДА (ASP.NET Core API)
   app:
     container_name: app
     build:
@@ -28,28 +29,28 @@ services:
       dockerfile: ./backend/LambdaGeneration.API/LambdaGeneration.API/Dockerfile
     ports:
       - "8080:8080"
-    # КРИТИЧЕСКОЕ ИСПРАВЛЕНИЕ: Чтение ВСЕХ переменных из .env
     env_file:
       - .env
 
     environment:
-      ConnectionStrings__LambdaGenerationDatabase: Host=postgres;Port=5432;Database=db;Username=postgres;Password=123
-      # Настройки JWT
+      ASPNETCORE_ENVIRONMENT: Production
+      ASPNETCORE_URLS: http://+:8080
+      LANG: C.UTF-8
+      LC_ALL: C.UTF-8
+      ConnectionStrings__LambdaGenerationDatabase: Host=${DB_HOST:-postgres};Port=${DB_PORT:-5432};Database=${POSTGRES_DB:-lambdadb};Username=${POSTGRES_USER:-postgres};Password=${POSTGRES_PASSWORD:-mysecretpassword}
       JwtOptions__SecretKey: ${JWTOPTIONS__SECRETKEY}
       JwtOptions__Issuer: ${JWTOPTIONS__ISSUER}
       JwtOptions__Audience: ${JWTOPTIONS__AUDIENCE}
       JwtOptions__ExpiresHours: ${JWTOPTIONS__EXPIRESHOURS}
 
-      # Настройки АДМИНА
       AdminConfig__Name: ${ADMINCONFIG__NAME}
       AdminConfig__Email: ${ADMINCONFIG__EMAIL}
       AdminConfig__Password: ${ADMINCONFIG__PASSWORD}
 
-      # GigaChat
-      GigaChat__ClientId: ${GigaChat__ClientId}
-      GigaChat__ClientSecret: ${GigaChat__ClientSecret}
-      GigaChat__Scope: ${GigaChat__Scope}
-      # Email
+      GigaChat__ClientId: ${GIGACHAT__CLIENTID}
+      GigaChat__ClientSecret: ${GIGACHAT__CLIENTSECRET}
+      GigaChat__Scope: ${GIGACHAT__SCOPE}
+
       EmailSettings__Host: ${EMAILSETTINGS__HOST}
       EmailSettings__Port: ${EMAILSETTINGS__PORT}
       EmailSettings__Username: ${EMAILSETTINGS__USERNAME}
@@ -58,7 +59,6 @@ services:
       EmailSettings__FromName: ${EMAILSETTINGS__FROMNAME}
       EmailSettings__EnableSsl: ${EMAILSETTINGS__ENABLESSL}
 
-      # URL клиента
       ClientUrl: ${CLIENTURL}
 
     depends_on:
@@ -66,14 +66,13 @@ services:
         condition: service_healthy
     restart: always
 
-  # 3. СЕРВИС ФРОНТЕНДА (React Build + Nginx)
   frontend:
     container_name: frontend
     build:
       context: ./frontend
       dockerfile: Dockerfile.frontend
     ports:
-      - "8088:80"
+      - "80:80"
     volumes:
       - ./nginx/nginx.conf:/etc/nginx/conf.d/default.conf:ro
     depends_on:

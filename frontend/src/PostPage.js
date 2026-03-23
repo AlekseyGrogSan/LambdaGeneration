@@ -47,7 +47,7 @@ import FaqModal from './FaqModal';
 import AdminPanelModal from './AdminPanelModal';
 import { buildArticleImageUrl, buildAvatarUrl, DEFAULT_AVATAR_SRC } from './avatarUtils';
 
-const API_BASE_URL = 'http://localhost:5113/api';
+const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || '/api';
 
 const commentInputStyle = {
     '& .MuiFilledInput-root': {

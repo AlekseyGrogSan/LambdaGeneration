@@ -34,7 +34,7 @@ import EditArticleModal from './EditArticleModal';
 import EmailVerificationModal from './EmailVerificationModal'; 
 import { buildArticleImageUrl, buildAvatarUrl, DEFAULT_AVATAR_SRC, formatBytes, isAvatarTooLarge, MAX_AVATAR_BYTES } from './avatarUtils';
 
-const API_BASE_URL = 'http://localhost:5113/api';
+const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || '/api';
 
 const modalStyle = {
     position: 'absolute',
@@ -348,7 +348,7 @@ const ProfileModal = ({ open, handleClose, userId, onUnauthorized, onLogout, onP
             const formData = new FormData();
             formData.append('name', editData.name || '');
             formData.append('email', profileData?.email || emailEdit || '');
-            formData.append('aboutUser', editData.aboutUser || '');
+            formData.append('aboutUser', editData.aboutUser ?? '');
             if (avatarFile) {
                 formData.append('avatar', avatarFile);
             }
@@ -464,7 +464,7 @@ const ProfileModal = ({ open, handleClose, userId, onUnauthorized, onLogout, onP
             const formData = new FormData();
             formData.append('name', profileData?.name || editData.name || '');
             formData.append('email', pendingEmail || '');
-            formData.append('aboutUser', profileData?.aboutUser || editData.aboutUser || '');
+            formData.append('aboutUser', editData.aboutUser ?? profileData?.aboutUser ?? '');
             const response = await fetch(`${API_BASE_URL}/Users`, {
                 method: 'PUT',
                 credentials: 'include',
@@ -815,6 +815,7 @@ const ProfileModal = ({ open, handleClose, userId, onUnauthorized, onLogout, onP
                                     label="О себе"
                                     value={editData.aboutUser}
                                     onChange={(e) => setEditData({...editData, aboutUser: e.target.value})}
+                                    required={false}
                                     fullWidth
                                     multiline
                                     rows={4}

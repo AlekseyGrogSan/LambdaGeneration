@@ -22,7 +22,7 @@ import FormatListNumberedIcon from '@mui/icons-material/FormatListNumbered';
 import { formatBytes, isArticleImageTooLarge, MAX_ARTICLE_IMAGE_BYTES } from './avatarUtils';
 
 // Базовый URL для API (должен быть определен в реальном приложении)
-const API_BASE_URL = 'http://localhost:5113/api';
+const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || '/api';
 
 // --- СПИСОК ДОСТУПНЫХ ТЕГОВ ---
 const AVAILABLE_TAGS = [
