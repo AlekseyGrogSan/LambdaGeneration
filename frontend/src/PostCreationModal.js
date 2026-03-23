@@ -205,22 +205,21 @@ const PostCreationModal = ({ open, handleClose, onUnauthorized, onPostSuccess })
     // Стили для центрирования и оформления модального окна
     const modalStyle = {
         position: 'absolute',
-        top: { xs: 0, sm: '50%' },
-        left: { xs: 0, sm: '50%' },
-        transform: { xs: 'none', sm: 'translate(-50%, -50%)' },
-        width: { xs: '100%', sm: '600px', md: '800px' },
-        height: { xs: '100%', sm: 'auto' },
+        top: '50%',
+        left: '50%',
+        transform: 'translate(-50%, -50%)',
+        width: { xs: '90%', sm: '600px', md: '800px' },
         bgcolor: '#383838',
-        borderRadius: { xs: 0, sm: '16px' },
+        borderRadius: '16px',
         boxShadow: 24,
-        p: { xs: 2, sm: 4 },
+        p: 4,
         color: '#ffffff',
         display: 'flex',
         flexDirection: 'column',
         gap: 2,
         // Добавление максимальной высоты и скроллинга для всего модального окна, 
         // чтобы избежать выхода за пределы экрана на маленьких устройствах
-        maxHeight: { xs: '100vh', sm: '90vh' }, 
+        maxHeight: '90vh', 
         overflowY: 'auto',
         
         '&::-webkit-scrollbar': {
@@ -432,7 +431,7 @@ const PostCreationModal = ({ open, handleClose, onUnauthorized, onPostSuccess })
                     maxRows={4} 
                 />
 
-                {/* --- ДОБАВЛЕНИЕ ФОТО --- */}
+                {/* --- Р”РћР‘РђР’Р›Р•РќРР• Р¤РћРўРћ --- */}
                 <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
                     <Typography variant="body2" sx={{ color: '#bdbdbd', fontWeight: 'bold' }}>
                         Фото статьи (до {formatBytes(MAX_ARTICLE_IMAGE_BYTES)})

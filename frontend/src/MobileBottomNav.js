@@ -1,5 +1,5 @@
 import React from 'react';
-import { Avatar, Box, Typography } from '@mui/material';
+import { Box, Typography } from '@mui/material';
 import HomeOutlinedIcon from '@mui/icons-material/HomeOutlined';
 import HomeIcon from '@mui/icons-material/Home';
 import SearchOutlinedIcon from '@mui/icons-material/SearchOutlined';
@@ -58,14 +58,8 @@ const MobileBottomNav = ({
     onCreate,
     onCategories,
     onProfile,
-    currentUser,
-    currentUserAvatar,
 }) => {
     if (hidden) return null;
-
-    const hasUser = Boolean(currentUser);
-    const avatarLetter = currentUser?.name?.[0]?.toUpperCase() || '';
-    const avatarAlt = currentUser?.name ? `Аватар ${currentUser.name}` : 'Аватар пользователя';
 
     return (
         <Box
@@ -209,28 +203,7 @@ const MobileBottomNav = ({
                     color: profileActive ? '#00e5c9' : '#9e9e9e',
                 }}
             >
-                {hasUser ? (
-                    <Avatar
-                        src={currentUserAvatar || undefined}
-                        alt={avatarAlt}
-                        sx={{
-                            width: 28,
-                            height: 28,
-                            fontSize: '0.75rem',
-                            bgcolor: '#1a1a1a',
-                            color: '#00e5c9',
-                            border: profileActive
-                                ? '2px solid rgba(0, 229, 201, 0.9)'
-                                : '1px solid rgba(0, 229, 201, 0.35)',
-                            boxShadow: profileActive
-                                ? '0 0 0 2px rgba(0, 229, 201, 0.2)'
-                                : 'none',
-                            transition: 'border-color 0.2s ease, box-shadow 0.2s ease',
-                        }}
-                    >
-                        {avatarLetter}
-                    </Avatar>
-                ) : profileActive ? (
+                {profileActive ? (
                     <PersonIcon sx={{ fontSize: 26 }} />
                 ) : (
                     <PersonOutlineIcon sx={{ fontSize: 26 }} />

@@ -38,22 +38,18 @@ const API_BASE_URL = 'http://localhost:5113/api';
 
 const modalStyle = {
     position: 'absolute',
-    top: { xs: 0, sm: '50%' },
-    left: { xs: 0, sm: '50%' },
-    transform: { xs: 'none', sm: 'translate(-50%, -50%)' },
-    width: { xs: '100%', sm: '94vw', md: '92vw', lg: 1200 },
-    maxWidth: '1200px',
-    height: { xs: '100%', sm: 'auto' },
-    maxHeight: { xs: '100vh', sm: '90vh' }, 
+    top: '50%',
+    left: '50%',
+    transform: 'translate(-50%, -50%)',
+    width: { xs: '95%', sm: 1000, md: 1200 }, 
+    maxHeight: '90vh', 
     background: 'linear-gradient(180deg, rgba(34, 34, 34, 0.72), rgba(18, 18, 18, 0.82))',
     backdropFilter: 'blur(16px) saturate(120%)', 
-    borderRadius: { xs: 0, sm: '16px' }, 
+    borderRadius: '16px', 
     boxShadow: '0 16px 48px rgba(0, 0, 0, 0.65)',
     border: '1px solid rgba(255, 255, 255, 0.18)',
     padding: '0', 
     color: 'white',
-    boxSizing: 'border-box',
-    overflowX: 'hidden',
     overflowY: 'auto',
     
     '&::-webkit-scrollbar': {
@@ -86,16 +82,16 @@ const inputStyle = {
 };
 
 const cardContainerStyle = { 
-    height: { xs: 320, sm: 420 }, 
+    height: '420px', 
     position: 'relative',
     // ✅ ВОССТАНОВЛЕНО: Стиль для показа оверлея при наведении
     '&:hover .actions-overlay': { opacity: 1 } 
 };
 
 const sectionStyle = {
-    p: { xs: 2, sm: 4 },
+    p: 4,
     backgroundColor: 'rgba(30, 30, 30, 0.78)',
-    borderRadius: { xs: '14px', sm: '20px' },
+    borderRadius: '20px',
     boxShadow: '0 14px 30px rgba(0, 0, 0, 0.45)',
     border: '1px solid rgba(255, 255, 255, 0.05)'
 };
@@ -103,8 +99,8 @@ const sectionStyle = {
 const statCardStyle = {
     width: '100%',
     textAlign: 'center',
-    padding: { xs: '12px 14px', sm: '16px 18px' },
-    borderRadius: { xs: '12px', sm: '16px' },
+    padding: '16px 18px',
+    borderRadius: '16px',
     backgroundColor: 'rgba(255, 255, 255, 0.04)',
     border: '1px solid rgba(255, 255, 255, 0.18)',
     boxShadow: '0 10px 24px rgba(0, 0, 0, 0.35)',
@@ -755,7 +751,7 @@ const ProfileModal = ({ open, handleClose, userId, onUnauthorized, onLogout, onP
                     {isMyProfile && isEditingProfile ? (
                         <Box
                             sx={{
-                                p: { xs: 2, sm: 4 },
+                                p: 4,
                                 display: 'flex',
                                 flexDirection: 'column',
                                 gap: 2,
@@ -764,7 +760,7 @@ const ProfileModal = ({ open, handleClose, userId, onUnauthorized, onLogout, onP
                                 border: '1px solid rgba(255, 255, 255, 0.08)',
                                 borderRadius: '20px',
                                 boxShadow: '0 18px 48px rgba(0, 0, 0, 0.55)',
-                                margin: { xs: 1.5, sm: '32px' },
+                                margin: '32px',
                             }}
                         >
                             <Typography variant="h5" sx={{ color: '#00bfa5', fontWeight: 'bold', textAlign: 'center' }}>
@@ -837,11 +833,11 @@ const ProfileModal = ({ open, handleClose, userId, onUnauthorized, onLogout, onP
                         <>
 
                     {/* --- ВЕРХНЯЯ ЧАСТЬ ПРОФИЛЯ (ИМЯ/EMAIL/ДАТА) --- */}
-                    <Box sx={{ p: { xs: 2.5, sm: 4 }, display: 'flex', flexDirection: 'column', alignItems: 'center', background: 'linear-gradient(180deg, #252525 0%, #1e1e1e 100%)' }}>
+                    <Box sx={{ p: 4, display: 'flex', flexDirection: 'column', alignItems: 'center', background: 'linear-gradient(180deg, #252525 0%, #1e1e1e 100%)' }}>
                         
                         <Avatar
                             src={buildAvatarUrl(API_BASE_URL, profileData?.pathAvatar ?? profileData?.PathAvatar)}
-                            sx={{ width: { xs: 90, sm: 110 }, height: { xs: 90, sm: 110 }, border: '3px solid #00bfa5', mb: 2 }}
+                            sx={{ width: 110, height: 110, border: '3px solid #00bfa5', mb: 2 }}
                             imgProps={{
                                 onError: (e) => {
                                     e.currentTarget.src = DEFAULT_AVATAR_SRC;
@@ -849,21 +845,12 @@ const ProfileModal = ({ open, handleClose, userId, onUnauthorized, onLogout, onP
                             }}
                         />
 
-                        <Typography variant="h4" sx={{ color: 'white', fontWeight: 'bold', mb: 0.5, fontSize: { xs: '1.6rem', sm: '2.125rem' } }}>
+                        <Typography variant="h4" sx={{ color: 'white', fontWeight: 'bold', mb: 0.5 }}>
                             {profileData.name}
                         </Typography>
                         {isMyProfile && (
-                            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', flexWrap: 'wrap', gap: 1, mb: 1 }}>
-                                <Typography
-                                    variant="h6"
-                                    sx={{
-                                        color: '#00bfa5',
-                                        fontSize: { xs: '1rem', sm: '1.25rem' },
-                                        textAlign: 'center',
-                                        overflowWrap: 'anywhere',
-                                        maxWidth: '100%',
-                                    }}
-                                >
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+                                <Typography variant="h6" sx={{ color: '#00bfa5' }}>
                                     {profileData.email}
                                 </Typography>
                                 <IconButton
@@ -1005,7 +992,7 @@ const ProfileModal = ({ open, handleClose, userId, onUnauthorized, onLogout, onP
                     <Divider sx={{ backgroundColor: '#333' }} />
 
                     {/* --- СЕКЦИЯ "О СЕБЕ" --- */}
-                    <Box sx={{ ...sectionStyle, m: { xs: 1.5, sm: 3 }, textAlign: 'center' }}>
+                    <Box sx={{ ...sectionStyle, m: 3, textAlign: 'center' }}>
                         <Typography variant="h5" sx={{ color: '#bdbdbd', fontWeight: 'bold', mb: 2 }}>
                             О себе
                         </Typography>
@@ -1018,7 +1005,7 @@ const ProfileModal = ({ open, handleClose, userId, onUnauthorized, onLogout, onP
                     <Divider sx={{ backgroundColor: '#333' }} />
                     
                     {/* --- ПУБЛИКАЦИИ --- */}
-                    <Box sx={{ p: { xs: 2, sm: 4 } }}>
+                    <Box sx={{ p: 4 }}>
                         <Typography variant="h4" sx={{ mb: 3, color: '#00bfa5', fontWeight: 'bold' }}>
                             Публикации ({articlesCount})
                         </Typography>
@@ -1145,14 +1132,14 @@ const ProfileModal = ({ open, handleClose, userId, onUnauthorized, onLogout, onP
 
                     {/* --- КНОПКИ УПРАВЛЕНИЯ АККАУНТОМ --- */}
                     {isMyProfile && (
-                        <Box sx={{ p: { xs: 2, sm: 3 }, display: 'flex', justifyContent: 'center', gap: 2, flexWrap: 'wrap', borderTop: '1px solid #333' }}>
+                        <Box sx={{ p: 3, display: 'flex', justifyContent: 'center', gap: 3, borderTop: '1px solid #333' }}>
                             <Button
                                 variant="text"
                                 startIcon={<LogoutIcon />}
                                 onClick={onLogout} 
                                 sx={{
                                     color: '#ff5252',
-                                    fontSize: { xs: '0.95rem', sm: '1.1rem' },
+                                    fontSize: '1.1rem',
                                     '&:hover': { backgroundColor: 'rgba(255, 82, 82, 0.1)' }
                                 }}
                             >
@@ -1166,7 +1153,7 @@ const ProfileModal = ({ open, handleClose, userId, onUnauthorized, onLogout, onP
                                 sx={{
                                     color: '#ff5252',
                                     borderColor: '#ff5252',
-                                    fontSize: { xs: '0.95rem', sm: '1.1rem' },
+                                    fontSize: '1.1rem',
                                     '&:hover': { 
                                         backgroundColor: 'rgba(255, 82, 82, 0.1)',
                                         borderColor: '#ff5252' 
@@ -1443,4 +1430,7 @@ const ProfileModal = ({ open, handleClose, userId, onUnauthorized, onLogout, onP
 };
 
 export default ProfileModal;
+
+
+
 
