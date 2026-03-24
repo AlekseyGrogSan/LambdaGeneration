@@ -2,13 +2,11 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Net;
-using System.Net.Mail;
-using System.Net.Sockets;
-using System.Text;
 using System.Threading.Tasks;
+using MailKit.Net.Smtp;
+using MailKit.Security;
+using MimeKit;
 
 namespace LambdaGeneration.API.Application.Services
 {
@@ -59,31 +57,22 @@ namespace LambdaGeneration.API.Application.Services
                     return false;
                 }
 
-                using var client = new SmtpClient(host, port)
-                {
-                    EnableSsl = enableSsl,
-                    Credentials = new NetworkCredential(
-                        username,
-                        password
-                    ),
-                    Timeout = 30000
-                };
+                var message = new MimeMessage();
+                message.From.Add(new MailboxAddress(fromName, fromEmail));
+                message.To.Add(new MailboxAddress("", email));
+                message.Subject = subject;
 
-                var message = new MailMessage
-                {
-                    From = new MailAddress(
-                        fromEmail,
-                        fromName
-                        ),
-                    Subject = subject,
-                    Body = body,
-                    IsBodyHtml = true,
-                    Priority = MailPriority.Normal
-                };
+                var bodyBuilder = new BodyBuilder { HtmlBody = body };
+                message.Body = bodyBuilder.ToMessageBody();
 
-                message.To.Add(email);
+                using var client = new MailKit.Net.Smtp.SmtpClient();
+                client.Timeout = 15000;
 
-                await client.SendMailAsync(message).WaitAsync(TimeSpan.FromSeconds(15));
+                await client.ConnectAsync(host, port, enableSsl ? SecureSocketOptions.Auto : SecureSocketOptions.None);
+                await client.AuthenticateAsync(username, password);
+                await client.SendAsync(message);
+                await client.DisconnectAsync(true);
+
                 _logger.LogInformation($"Email sent successfully to {email}");
                 return true;
 
