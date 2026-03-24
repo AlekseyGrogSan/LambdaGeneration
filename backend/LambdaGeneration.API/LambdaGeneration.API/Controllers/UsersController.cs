@@ -60,7 +60,12 @@ namespace LambdaGeneration.API.Controllers
 
                 var code = _verifiCode.GeneratedCodeAttribute(email : request.Email);
 
-                await _sendEmail.SendVerifyEmail(request.Email, code);
+                var emailSent = await _sendEmail.SendVerifyEmail(request.Email, code);
+                if (!emailSent)
+                {
+                    return StatusCode(StatusCodes.Status503ServiceUnavailable,
+                        "Не удалось отправить письмо подтверждения. Попробуйте позже.");
+                }
 
                 string fileName = null;
 
@@ -134,7 +139,12 @@ namespace LambdaGeneration.API.Controllers
         public async Task<IActionResult> ResendCode([FromBody] string email)
         {
             var code = _verifiCode.GeneratedCodeAttribute(email);
-            await _sendEmail.SendVerifyEmail(email, code);
+            var emailSent = await _sendEmail.SendVerifyEmail(email, code);
+            if (!emailSent)
+            {
+                return StatusCode(StatusCodes.Status503ServiceUnavailable,
+                    "Не удалось отправить письмо подтверждения. Попробуйте позже.");
+            }
             return Ok("Код отправлен повторно!");
         }
 

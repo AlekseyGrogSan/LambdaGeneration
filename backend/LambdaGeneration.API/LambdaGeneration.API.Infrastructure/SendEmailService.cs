@@ -27,14 +27,43 @@ namespace LambdaGeneration.API.Application.Services
             try
             {
                 var emailSetting = _configuration.GetSection("EmailSettings");
+                var host = emailSetting["Host"];
+                var portValue = emailSetting["Port"];
+                var enableSslValue = emailSetting["EnableSsl"];
+                var username = emailSetting["Username"];
+                var password = emailSetting["Password"];
+                var fromEmail = emailSetting["FromEmail"];
+                var fromName = emailSetting["FromName"];
 
-                using var client = new SmtpClient(emailSetting["Host"],
-                    int.Parse(emailSetting["Port"]))
+                if (string.IsNullOrWhiteSpace(host) ||
+                    string.IsNullOrWhiteSpace(portValue) ||
+                    string.IsNullOrWhiteSpace(enableSslValue) ||
+                    string.IsNullOrWhiteSpace(username) ||
+                    string.IsNullOrWhiteSpace(password) ||
+                    string.IsNullOrWhiteSpace(fromEmail))
                 {
-                    EnableSsl = bool.Parse(emailSetting["EnableSsl"]),
+                    _logger.LogError("EmailSettings are not fully configured");
+                    return false;
+                }
+
+                if (!int.TryParse(portValue, out var port))
+                {
+                    _logger.LogError("Invalid EmailSettings: Port value {Port}", portValue);
+                    return false;
+                }
+
+                if (!bool.TryParse(enableSslValue, out var enableSsl))
+                {
+                    _logger.LogError("Invalid EmailSettings: EnableSsl value {EnableSsl}", enableSslValue);
+                    return false;
+                }
+
+                using var client = new SmtpClient(host, port)
+                {
+                    EnableSsl = enableSsl,
                     Credentials = new NetworkCredential(
-                        emailSetting["Username"],
-                        emailSetting["Password"]
+                        username,
+                        password
                     ),
                     Timeout = 30000
                 };
@@ -42,8 +71,8 @@ namespace LambdaGeneration.API.Application.Services
                 var message = new MailMessage
                 {
                     From = new MailAddress(
-                        emailSetting["FromEmail"],
-                        emailSetting["FromName"]
+                        fromEmail,
+                        fromName
                         ),
                     Subject = subject,
                     Body = body,
@@ -53,14 +82,19 @@ namespace LambdaGeneration.API.Application.Services
 
                 message.To.Add(email);
 
-                await client.SendMailAsync(message);
+                await client.SendMailAsync(message).WaitAsync(TimeSpan.FromSeconds(15));
                 _logger.LogInformation($"Email sent successfully to {email}");
                 return true;
 
             }
-            catch
+            catch (TimeoutException ex)
             {
-                _logger.LogError($"Failed to send email to {email}");
+                _logger.LogError(ex, "SMTP send timeout for {Email}", email);
+                return false;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to send email to {Email}", email);
                 return false;
             }
         }
