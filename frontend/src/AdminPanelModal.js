@@ -19,6 +19,26 @@ import {
 
 const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || '/api';
 
+const scrollbarStyle = {
+    '&::-webkit-scrollbar': {
+        width: '8px',
+    },
+    '&::-webkit-scrollbar-track': {
+        background: '#1a1a1a',
+        borderRadius: '10px',
+    },
+    '&::-webkit-scrollbar-thumb': {
+        background: '#00bfa5',
+        borderRadius: '10px',
+        border: '2px solid #1a1a1a',
+    },
+    '&::-webkit-scrollbar-thumb:hover': {
+        background: '#009e8a',
+    },
+    scrollbarWidth: 'thin',
+    scrollbarColor: '#00bfa5 #1a1a1a',
+};
+
 const modalStyle = {
     position: 'absolute',
     top: '50%',
@@ -34,10 +54,7 @@ const modalStyle = {
     py: 3,
     color: 'white',
     overflowY: 'auto',
-    '&::-webkit-scrollbar': { width: '8px' },
-    '&::-webkit-scrollbar-track': { background: 'rgba(255,255,255,0.05)', borderRadius: '10px' },
-    '&::-webkit-scrollbar-thumb': { background: '#00bfa5', borderRadius: '10px' },
-    '&::-webkit-scrollbar-thumb:hover': { background: '#009688' },
+    ...scrollbarStyle,
 };
 
 const sectionStyle = {
@@ -410,7 +427,7 @@ const AdminPanelModal = ({ open, handleClose }) => {
                     ) : articles.length === 0 ? (
                         <Typography sx={{ color: '#bbb', mt: 1 }}>Нет статей.</Typography>
                     ) : (
-                        <List sx={{ mt: 1, maxHeight: 220, overflowY: 'auto' }}>
+                        <List sx={{ mt: 1, maxHeight: 220, overflowY: 'auto', ...scrollbarStyle }}>
                             {articles.map((article) => (
                                 <ListItem key={article.articleID} sx={{ borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
                                     <ListItemText
@@ -474,7 +491,7 @@ const AdminPanelModal = ({ open, handleClose }) => {
                     ) : userComments.length === 0 ? (
                         <Typography sx={{ color: '#bbb', mt: 1 }}>Нет комментариев.</Typography>
                     ) : (
-                        <List sx={{ mt: 1, maxHeight: 220, overflowY: 'auto' }}>
+                        <List sx={{ mt: 1, maxHeight: 220, overflowY: 'auto', ...scrollbarStyle }}>
                             {userComments.map((comment) => (
                                 <ListItem key={comment.id} sx={{ borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
                                     <ListItemText
@@ -529,7 +546,7 @@ const AdminPanelModal = ({ open, handleClose }) => {
                         ) : comments.length === 0 ? (
                             <Typography sx={{ color: '#bbb', mt: 1 }}>Комментариев нет.</Typography>
                         ) : (
-                            <List sx={{ mt: 1, maxHeight: 220, overflowY: 'auto' }}>
+                            <List sx={{ mt: 1, maxHeight: 220, overflowY: 'auto', ...scrollbarStyle }}>
                                 {comments.map((comment) => (
                                     <ListItem
                                         key={comment.id}
