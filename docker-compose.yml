@@ -33,6 +33,7 @@
     environment:
       ASPNETCORE_ENVIRONMENT: Production
       ASPNETCORE_URLS: http://+:8080
+      DOTNET_SYSTEM_NET_DISABLEIPV6: "1"
       LANG: C.UTF-8
       LC_ALL: C.UTF-8
       ConnectionStrings__LambdaGenerationDatabase: Host=${DB_HOST:-postgres};Port=${DB_PORT:-5432};Database=${POSTGRES_DB:-lambdadb};Username=${POSTGRES_USER:-postgres};Password=${POSTGRES_PASSWORD:-mysecretpassword}
