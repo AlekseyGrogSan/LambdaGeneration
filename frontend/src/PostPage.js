@@ -884,7 +884,14 @@ const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
     const handleOpen = () => setIsModalOpen(true); 
     const handleClose = () => { 
         setIsModalOpen(false); 
-        void checkAuth();
+        void checkAuth().then(() => {
+            // ФОРСИРОВАТЬ перезагрузку ленты для применения актуальных лайков
+            feedCacheRef.current = {};
+            setArticles([]);
+            setPageNumber(1);
+            setHasMore(true);
+            fetchArticlesPage(1, paginationType, { force: true });
+        });
     };
     
     const handlePostOpen = () => setIsPostModalOpen(true);
@@ -1002,6 +1009,12 @@ const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
             localStorage.removeItem('authToken');
             setCurrentUser(null); 
             handleProfileClose(); 
+            // ФОРСИРОВАТЬ перезагрузку ленты, чтобы сбросить сохраненные лайки
+            feedCacheRef.current = {};
+            setArticles([]);
+            setPageNumber(1);
+            setHasMore(true);
+            fetchArticlesPage(1, paginationType, { force: true });
         }
     };
 
@@ -1087,7 +1100,7 @@ const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
         const rawId = article.article_id ?? article.articleId ?? article.ArticleID;
         const rawAuthorId = article.author_id ?? article.authorId ?? article.AuthorID;
         const rawFilePath = article.file_path ?? article.filePath ?? article.FilePath;
-        const fetchOptions = { credentials: 'include' };
+        const fetchOptions = { credentials: 'include', headers: { 'Cache-Control': 'no-cache', 'Pragma': 'no-cache' } };
 
         const authorReq = rawAuthorId
             ? fetch(`${API_BASE_URL}/Users/UserProfile/${rawAuthorId}`).then(r => r.json()).catch(() => ({}))
@@ -1372,12 +1385,12 @@ const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
                 if (!shouldFreezeFeed) {
                     setArticles(prev => prev.map(a => 
                         a.article_id === rawId 
-                            ? { ...a, isLiked: currentIsLiked, likesCount: currentIsLiked ? a.likesCount + 1 : a.likesCount - 1 }
+                            ? { ...a, isLiked: currentIsLiked, likesCount: currentIsLiked ? Math.max((a.likesCount || 0) + 1, 0) : Math.max((a.likesCount || 0) - 1, 0) }
                             : a
                     ));
                      if (selectedPost && selectedPost.article_id === rawId) {
                         setSelectedPost(prev => 
-                            ({ ...prev, isLiked: currentIsLiked, likesCount: currentIsLiked ? prev.likesCount + 1 : prev.likesCount - 1 })
+                            ({ ...prev, isLiked: currentIsLiked, likesCount: currentIsLiked ? Math.max((prev.likesCount || 0) + 1, 0) : Math.max((prev.likesCount || 0) - 1, 0) })
                         );
                     }
                 }
@@ -1387,7 +1400,7 @@ const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
             
             if (response.ok) {
                 const res = await response.json();
-                const realCount = res.countLikes;
+                const realCount = res.countLikes !== undefined ? res.countLikes : (res.CountLikes !== undefined ? res.CountLikes : 0);
                 if (!shouldFreezeFeed) {
                     setArticles(prev => prev.map(a => 
                         a.article_id === rawId ? { ...a, likesCount: realCount } : a
@@ -1396,9 +1409,35 @@ const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
                         setSelectedPost(prev => ({ ...prev, likesCount: realCount, isLiked: !currentIsLiked }));
                     }
                 }
+            } else {
+                // Если сервер вернул ошибку, откатываем оптимистичное обновление
+                if (!shouldFreezeFeed) {
+                    setArticles(prev => prev.map(a => 
+                        a.article_id === rawId 
+                            ? { ...a, isLiked: currentIsLiked, likesCount: currentIsLiked ? Math.max((a.likesCount || 0) + 1, 0) : Math.max((a.likesCount || 0) - 1, 0) }
+                            : a
+                    ));
+                     if (selectedPost && selectedPost.article_id === rawId) {
+                        setSelectedPost(prev => 
+                            ({ ...prev, isLiked: currentIsLiked, likesCount: currentIsLiked ? Math.max((prev.likesCount || 0) + 1, 0) : Math.max((prev.likesCount || 0) - 1, 0) })
+                        );
+                    }
+                }
             }
         } catch (e) {
             console.error("Like error:", e);
+            if (!shouldFreezeFeed) {
+                setArticles(prev => prev.map(a => 
+                    a.article_id === rawId 
+                        ? { ...a, isLiked: currentIsLiked, likesCount: currentIsLiked ? Math.max((a.likesCount || 0) + 1, 0) : Math.max((a.likesCount || 0) - 1, 0) }
+                        : a
+                ));
+                 if (selectedPost && selectedPost.article_id === rawId) {
+                    setSelectedPost(prev => 
+                        ({ ...prev, isLiked: currentIsLiked, likesCount: currentIsLiked ? Math.max((prev.likesCount || 0) + 1, 0) : Math.max((prev.likesCount || 0) - 1, 0) })
+                    );
+                }
+            }
         }
     };
 
