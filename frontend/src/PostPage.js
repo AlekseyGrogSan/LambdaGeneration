@@ -2037,7 +2037,7 @@ const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
                                             fontSize: '1.15rem',
                                         }}
                                     >
-                                        Lyambda
+                                        Lambda
                                     </Typography>
                                     <Box sx={{ flex: 1 }} />
                                     <IconButton
