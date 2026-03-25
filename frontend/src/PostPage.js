@@ -178,7 +178,7 @@ const scrollbarStyle = {
 const Sidebar = ({ handleOpen, handleProfileOpen, handlePostOpen, handleCategoryOpen, handleResourcesOpen, handleFaqOpen, handleAdminOpen, isAdmin, currentUser }) => (
     <Box sx={sidebarStyle}>
         <Typography variant="h5" sx={{ color: '#00bfa5', fontWeight: 'bold', textAlign: 'center', mb: 4, letterSpacing: 1 }}>
-            Lyambda
+            Lambda
         </Typography>
 
         {currentUser ? (
