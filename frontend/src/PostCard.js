@@ -322,6 +322,7 @@ const PostCard = ({
                             WebkitBoxOrient: 'vertical',
                             fontSize: { xs: '0.875rem', md: '1rem' },
                             lineHeight: 1.45,
+                            '& .hljs': { background: 'transparent !important', padding: '0 !important' },
                         }}
                     />
                 </Box>

@@ -865,6 +865,7 @@ const PostDetailPage = ({
                         '& h3': { fontSize: '1.7rem', mt: 1.5, mb: 0.5, color: 'white' },
                         '& p': { marginBottom: 1, marginTop: 1, fontSize: '1.15rem' },
                         '& strong': { fontWeight: 'bold', color: 'white' },
+                        '& .hljs': { background: 'transparent !important', padding: '0 !important' },
                     }}
                 />
             </Box>
