@@ -13,3 +13,6 @@
 
 **Окно регистрации**
 <img width="918" height="509" alt="Окно регистрации" src="https://github.com/user-attachments/assets/fd5e69ab-3718-4f0e-b424-e12a241bb162" />
+
+**Мобильная версия**
+<img width="1280" height="853" alt="image" src="https://github.com/user-attachments/assets/9cb14741-4d6a-4293-84a1-422a3aa6526a" />
