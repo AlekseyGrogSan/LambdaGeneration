@@ -21,7 +21,7 @@ namespace LambdaGeneration.API.Date.Configurations
             builder.Property(a => a.CreatedDate).IsRequired();
             builder.Property(a => a.CountLikes).IsRequired();
             builder.Property(a => a.CountComments).IsRequired();
-            builder.Property(a => a.ArticleTags).IsRequired().HasConversion<int>();
+            builder.Property(a => a.ArticleTags).IsRequired();
 
             builder.HasOne<UsersEntity>()
                    .WithMany(u => u.Articles)

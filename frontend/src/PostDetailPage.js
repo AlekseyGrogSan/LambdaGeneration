@@ -22,6 +22,8 @@ import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import ExpandLessIcon from '@mui/icons-material/ExpandLess';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import { buildArticleImageUrl, buildAvatarUrl, DEFAULT_AVATAR_SRC } from './avatarUtils';
+import hljs from 'highlight.js';
+import 'highlight.js/styles/atom-one-dark.css';
 
 const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || '/api';
 
@@ -324,6 +326,15 @@ const PostDetailPage = ({
     const [imageBroken, setImageBroken] = useState(false);
     const theme = useTheme();
     const isDesktopComments = useMediaQuery(theme.breakpoints.up(768));
+    const contentRef = useRef(null);
+
+    useEffect(() => {
+        if (contentRef.current) {
+            contentRef.current.querySelectorAll('pre code').forEach((block) => {
+                hljs.highlightElement(block);
+            });
+        }
+    }, [post.article_content]);
 
     useEffect(() => {
         if (containerRef && containerRef.current) {
@@ -834,6 +845,7 @@ const PostDetailPage = ({
 
 
                 <Box
+                    ref={contentRef}
                     dangerouslySetInnerHTML={{ __html: post.article_content }}
                     sx={{
                         color: 'white',
