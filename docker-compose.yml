@@ -60,8 +60,7 @@
       ClientUrl: ${CLIENTURL}
 
     volumes:
-      - app_uploads:/app/wwwroot/uploads
-      - app_articles_uploads:/app/wwwroot/articles_uploads
+      - ./backend/LambdaGeneration.API/LambdaGeneration.API/wwwroot:/app/wwwroot
     depends_on:
       postgres:
         condition: service_healthy
@@ -82,5 +81,3 @@
 
 volumes:
   postgres_data:
-  app_uploads:
-  app_articles_uploads:
