@@ -331,7 +331,16 @@ const PostDetailPage = ({
     useEffect(() => {
         if (contentRef.current) {
             contentRef.current.querySelectorAll('pre code').forEach((block) => {
-                hljs.highlightElement(block);
+                if (!block.dataset.highlighted) {
+                    let html = block.innerHTML;
+                    html = html.replace(/<br\s*[\/]?>/gi, '\n');
+                    html = html.replace(/<div[^>]*>/gi, '\n');
+                    html = html.replace(/<\/div>/gi, '');
+                    html = html.replace(/<p[^>]*>/gi, '\n');
+                    html = html.replace(/<\/p>/gi, '');
+                    block.innerHTML = html;
+                    hljs.highlightElement(block);
+                }
             });
         }
     }, [post.article_content]);
