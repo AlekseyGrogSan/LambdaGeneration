@@ -1,4 +1,4 @@
-# Дизайн страниц сайта
+![Категории и создание поста](https://github.com/user-attachments/assets/5e8f3401-f0ca-4153-9ed0-8c8482a33b47)# Дизайн страниц сайта
 **Страница профиля**
 <img width="4800" height="2685" alt="Страница профиля" src="https://github.com/user-attachments/assets/78825cc1-7fdd-4d89-8e10-2ea3a5caf021" />
 
@@ -16,3 +16,6 @@
 
 **Мобильная версия**
 <img width="1280" height="853" alt="image" src="https://github.com/user-attachments/assets/9cb14741-4d6a-4293-84a1-422a3aa6526a" />
+
+**Категории и создание поста**
+![Категории и создание поста](https://github.com/user-attachments/assets/bd3d037a-84a9-471c-9306-febbf50ffeb5)
