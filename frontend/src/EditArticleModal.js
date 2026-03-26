@@ -10,7 +10,9 @@ import {
     Chip,
     ToggleButton,
     ToggleButtonGroup,
-    CircularProgress // Добавлен импорт для использования в кнопке
+    CircularProgress, // Добавлен импорт для использования в кнопке
+    Menu,
+    MenuItem
 } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
 import SaveIcon from '@mui/icons-material/Save';
@@ -27,6 +29,8 @@ import LinkIcon from '@mui/icons-material/Link';
 import TitleIcon from '@mui/icons-material/Title';
 import FormatListBulletedIcon from '@mui/icons-material/FormatListBulleted';
 import FormatListNumberedIcon from '@mui/icons-material/FormatListNumbered';
+import CodeIcon from '@mui/icons-material/Code';
+import FormatSizeIcon from '@mui/icons-material/FormatSize';
 import { buildArticleImageUrl, formatBytes, isArticleImageTooLarge, MAX_ARTICLE_IMAGE_BYTES } from './avatarUtils';
 
 const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || '/api';
@@ -81,6 +85,7 @@ const EditorToolbar = ({ editorRef }) => {
         listNumbered: false,
         h2: false
     });
+    const [fontSizeAnchor, setFontSizeAnchor] = useState(null);
 
     const updateToolbarStatus = useCallback(() => {
         setActiveStyles({
@@ -111,6 +116,30 @@ const EditorToolbar = ({ editorRef }) => {
         document.execCommand(command, false, value);
         updateToolbarStatus();
     }, [editorRef, updateToolbarStatus]);
+
+    const insertCodeBlock = useCallback(() => {
+        const lang = prompt('Введите язык программирования (например, python, javascript, cpp) или оставьте пустым:', 'text');
+        if (lang === null) return; // cancelled
+        
+        // We use a table because contenteditable handles cursor placement around tables much better than nested divs
+        const codeHTML = `<br><table class="code-block-table" style="width: 100%; background: #1e1e1e; border-radius: 8px; border: 1px solid #333; border-collapse: collapse; margin: 10px 0;">
+            <thead>
+                <tr>
+                    <th style="background: #333; padding: 4px 10px; color: #acc; font-family: monospace; font-size: 13px; text-align: left; border-radius: 8px 8px 0 0; user-select: none;">
+                        ${lang || 'code'}
+                    </th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td style="padding: 12px;">
+                        <pre style="margin: 0; white-space: pre-wrap;"><code style="font-family: Consolas, monospace; color: #d4d4d4; font-size: 14px;">// ваш код...</code></pre>
+                    </td>
+                </tr>
+            </tbody>
+        </table><br><div style="min-height: 20px;"></div>`;
+        applyCommand('insertHTML', codeHTML);
+    }, [applyCommand]);
 
     const getButtonStyle = (isActive, activeColor = '#00bfa5') => ({
         color: isActive ? activeColor : '#ffffff',
@@ -163,6 +192,32 @@ const EditorToolbar = ({ editorRef }) => {
             <IconButton size="small" onClick={() => applyCommand('formatBlock', '<h2>')} sx={{ ...getButtonStyle(activeStyles.h2, '#ffeb3b'), flex: '0 0 auto' }}><TitleIcon /></IconButton>
             <IconButton size="small" onClick={() => applyCommand('insertUnorderedList')} sx={{ ...getButtonStyle(activeStyles.listBulleted), flex: '0 0 auto' }}><FormatListBulletedIcon /></IconButton>
             <IconButton size="small" onClick={() => applyCommand('insertOrderedList')} sx={{ ...getButtonStyle(activeStyles.listNumbered), flex: '0 0 auto' }}><FormatListNumberedIcon /></IconButton>
+            
+            <Box sx={{ width: '1px', backgroundColor: '#666', marginX: 1, my: 0.5 }} />
+
+            <IconButton size="small" onClick={insertCodeBlock} sx={{ color: '#00bfa5', flex: '0 0 auto' }} title="Вставить код">
+                <CodeIcon />
+            </IconButton>
+
+            <IconButton size="small" onClick={(e) => setFontSizeAnchor(e.currentTarget)} sx={{ color: '#ffffff', flex: '0 0 auto' }} title="Размер текста">
+                <FormatSizeIcon />
+            </IconButton>
+            <Menu
+                anchorEl={fontSizeAnchor}
+                open={Boolean(fontSizeAnchor)}
+                onClose={() => setFontSizeAnchor(null)}
+                PaperProps={{
+                    sx: {
+                        backgroundColor: '#333',
+                        color: 'white',
+                    }
+                }}
+            >
+                <MenuItem onClick={() => { applyCommand('fontSize', '2'); setFontSizeAnchor(null); }}>Маленький</MenuItem>
+                <MenuItem onClick={() => { applyCommand('fontSize', '3'); setFontSizeAnchor(null); }}>Обычный</MenuItem>
+                <MenuItem onClick={() => { applyCommand('fontSize', '4'); setFontSizeAnchor(null); }}>Большой</MenuItem>
+                <MenuItem onClick={() => { applyCommand('fontSize', '5'); setFontSizeAnchor(null); }}>Огромный</MenuItem>
+            </Menu>
         </Box>
     );
 };
