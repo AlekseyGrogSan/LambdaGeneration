@@ -35,7 +35,7 @@
       ASPNETCORE_URLS: http://+:8080
       LANG: C.UTF-8
       LC_ALL: C.UTF-8
-      ConnectionStrings__LambdaGenerationDatabase: Host=${DB_HOST:-postgres};Port=${DB_PORT:-5432};Database=${POSTGRES_DB:-lambdadb};Username=${POSTGRES_USER:-postgres};Password=${POSTGRES_PASSWORD:-mysecretpassword}
+      ConnectionStrings__LambdaGenerationDatabase: "Host=${DB_HOST:-postgres};Port=${DB_PORT:-5432};Database=${POSTGRES_DB:-lambdadb};Username=${POSTGRES_USER:-postgres};Password='${POSTGRES_PASSWORD:-mysecretpassword}'"
       JwtOptions__SecretKey: ${JWTOPTIONS__SECRETKEY}
       JwtOptions__Issuer: ${JWTOPTIONS__ISSUER}
       JwtOptions__Audience: ${JWTOPTIONS__AUDIENCE}
