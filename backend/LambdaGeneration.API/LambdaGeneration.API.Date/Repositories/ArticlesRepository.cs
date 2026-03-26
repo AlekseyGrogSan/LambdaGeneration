@@ -89,16 +89,12 @@ namespace LambdaGeneration.API.Date.Repositories
         public async Task<Articles?> UpdateTags(Guid article_id, List<int> new_tags)
         {
             var article_entity = await _context.Articles.FirstOrDefaultAsync(a => a.ArticleID == article_id);
-            if (article_entity.ArticleTags.Contains(0))
-            {
-                while (article_entity.ArticleTags.Contains(0))
-                {
-                    article_entity.ArticleTags.Remove(0);
-                }
-            }
             if (article_entity == null)
                 return null;
-            article_entity.ArticleTags = new_tags;
+            
+            // Заменяем коллекцию тегов на новую
+            article_entity.ArticleTags = new_tags.Where(t => t != 0).ToList();
+            
             await _context.SaveChangesAsync();
             return Map(article_entity);
         }

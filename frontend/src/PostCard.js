@@ -11,6 +11,8 @@ import FavoriteIcon from '@mui/icons-material/Favorite';
 import ChatBubbleOutlineIcon from '@mui/icons-material/ChatBubbleOutline';
 import SendIcon from '@mui/icons-material/Send';
 import { buildArticleImageUrl, buildAvatarUrl, DEFAULT_AVATAR_SRC } from './avatarUtils';
+import hljs from 'highlight.js';
+import 'highlight.js/styles/atom-one-dark.css';
 
 const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || '/api';
 
@@ -127,6 +129,16 @@ const PostCard = ({
             showShareNotice();
         }
     };
+
+    const contentRef = useRef(null);
+
+    useEffect(() => {
+        if (contentRef.current) {
+            contentRef.current.querySelectorAll('pre code').forEach((block) => {
+                hljs.highlightElement(block);
+            });
+        }
+    }, [article_preview]);
 
     return (
         <Card 
@@ -288,10 +300,11 @@ const PostCard = ({
                     <Typography variant="body2" sx={{ ...labelStyle, display: { xs: 'none', md: 'block' } }}>
                         Описание
                     </Typography>
-                    <Typography 
-                        variant="body1" 
+                    <Typography
+                        ref={contentRef}
+                        variant="body1"
                         dangerouslySetInnerHTML={{ __html: article_preview }}
-                        sx={{ 
+                        sx={{
                             color: 'inherit',
                             overflow: 'hidden', 
                             textOverflow: 'ellipsis', 

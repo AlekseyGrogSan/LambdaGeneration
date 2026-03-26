@@ -133,7 +133,7 @@ const EditorToolbar = ({ editorRef }) => {
             <tbody>
                 <tr>
                     <td style="padding: 12px;">
-                        <pre style="margin: 0; white-space: pre-wrap;"><code style="font-family: Consolas, monospace; color: #d4d4d4; font-size: 14px;">// ваш код...</code></pre>
+                        <pre style="margin: 0; white-space: pre-wrap; font-family: Consolas, monospace; font-size: 14px;"><code class="${lang ? 'language-' + lang : 'language-text'}">// Ваш код...</code></pre>
                     </td>
                 </tr>
             </tbody>
