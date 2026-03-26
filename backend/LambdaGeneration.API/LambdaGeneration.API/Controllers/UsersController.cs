@@ -280,7 +280,7 @@ namespace LambdaGeneration.API.Controllers
                     return BadRequest("It`s not your email!");
                 }
 
-                string fullText = request.name + " " + request.aboutUser;
+                string fullText = request.name + " " + (request.aboutUser ?? "");
                 var moderation = _regexModeration.ModerationComment(fullText);
 
                 if (!moderation.Result.IsApproved)
@@ -310,7 +310,7 @@ namespace LambdaGeneration.API.Controllers
                     id,
                     request.name,
                     request.email,
-                    request.aboutUser,
+                    request.aboutUser ?? "",
                     avatarPathForDb
                 );
 

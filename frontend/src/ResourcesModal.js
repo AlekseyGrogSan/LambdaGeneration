@@ -296,7 +296,7 @@ const ResourcesModal = ({ open, handleClose }) => {
                     ))}
                 </List>
                 <Typography sx={{ mt: 2, color: '#8f8f8f', fontSize: '0.9rem' }}>
-                    Нужен материал под конкретную задачу? Напишите в раздел FAQ.
+                    Нужен материал под конкретную задачу? Ищите на нашем сайте!
                 </Typography>
             </Box>
         </Modal>

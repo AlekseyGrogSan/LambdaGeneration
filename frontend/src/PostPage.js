@@ -922,7 +922,12 @@ const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
         }
     };
     
-    const handleProfileClose = () => {
+    const handleProfileClose = (options = {}) => {
+        if (options?.skipReturn) {
+            setIsProfileModalOpen(false);
+            isProfileModalOpenRef.current = false;
+            return;
+        }
         if (profileReturnEnabled) {
             setViewedProfileId(profileReturnUserId ?? null);
             setProfileReturnEnabled(false);

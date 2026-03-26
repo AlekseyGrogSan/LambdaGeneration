@@ -133,6 +133,52 @@ const validateEmail = (email) => {
             /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/
         );
 };
+
+const flattenErrorMessages = (errors) => {
+    if (!errors) return '';
+    if (typeof errors === 'string') return errors;
+    if (Array.isArray(errors)) {
+        return errors.filter(Boolean).join(' ');
+    }
+    if (typeof errors === 'object') {
+        return Object.entries(errors)
+            .map(([field, value]) => {
+                const messages = Array.isArray(value) ? value : [value];
+                const joined = messages.filter(Boolean).join(' ');
+                return joined ? `${field}: ${joined}` : '';
+            })
+            .filter(Boolean)
+            .join(', ');
+    }
+    return '';
+};
+
+const extractApiErrorMessage = async (response) => {
+    const clone = response.clone();
+    try {
+        const payload = await response.json();
+        if (payload) {
+            if (payload.message) return payload.message;
+            if (payload.detail) return payload.detail;
+            if (payload.error) return payload.error;
+            const flattened = flattenErrorMessages(
+                payload.errors ?? payload.Errors ?? payload.modelState ?? payload.response ?? payload
+            );
+            if (flattened) return flattened;
+        }
+    } catch (e) {
+        // Ignore JSON parsing issues
+    }
+
+    try {
+        const text = await clone.text();
+        if (text) return text;
+    } catch {
+        // Ignore text parsing issues
+    }
+
+    return response.statusText || 'Ошибка';
+};
 const ProfileModal = ({ open, handleClose, userId, onUnauthorized, onLogout, onPostClick, onLikes, openProfile }) => {
     const profileModalRef = useRef(null);
     const isMyProfile = userId === null; 
@@ -365,8 +411,8 @@ const ProfileModal = ({ open, handleClose, userId, onUnauthorized, onLogout, onP
             }
 
             if (!response.ok) {
-                const errorText = await response.text();
-                throw new Error(errorText || 'Не удалось обновить профиль.');
+                const errorMsg = await extractApiErrorMessage(response);
+                throw new Error(errorMsg || 'Не удалось обновить профиль.');
             }
 
             const updatedProfile = await response.json(); 
@@ -1026,12 +1072,12 @@ const ProfileModal = ({ open, handleClose, userId, onUnauthorized, onLogout, onP
                                                 authorId={post.author_id} 
                                                 onClick={() => {
                                                     if (isMyProfile) {
-                                                        handleClose();
+                                                        handleClose({ skipReturn: true });
                                                         if (onPostClick){
                                                             onPostClick(post, { returnToProfile: true, profileUserId: null });
                                                         }
                                                     } else {
-                                                        handleClose(); 
+                                                        handleClose({ skipReturn: true }); 
                                                         if (onPostClick){
                                                             onPostClick(post, { returnToProfile: true, profileUserId: userId });
                                                         }
@@ -1070,7 +1116,7 @@ const ProfileModal = ({ open, handleClose, userId, onUnauthorized, onLogout, onP
                                                         fullWidth
                                                         onClick={(e) => {
                                                             e.stopPropagation();
-                                                            handleClose();
+                                                            handleClose({ skipReturn: true });
                                                             if (onPostClick){
                                                                 onPostClick(post, { returnToProfile: true, profileUserId: null });
                                                             }
@@ -1390,7 +1436,7 @@ const ProfileModal = ({ open, handleClose, userId, onUnauthorized, onLogout, onP
                                     <ListItemButton
                                         onClick={() => {
                                             handleCloseLikesList();
-                                            handleClose();
+                                            handleClose({ skipReturn: true });
                                             if (onPostClick) {
                                                 onPostClick(article, { returnToProfile: true, profileUserId: null });
                                             }
