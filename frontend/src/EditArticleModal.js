@@ -308,16 +308,16 @@ const EditArticleModal = ({ open, handleClose, post, onUpdateSuccess, onDeleteSu
                     throw new Error('Unable to download the current article image. Please choose a new photo.');
                 }
                 const blob = await response.blob();
-                let filename = 'article-image';
+                let filename = 'article-image.png';
                 try {
                     const urlObj = new URL(existingPictureUrl, window.location.origin);
                     const candidate = urlObj.pathname.split('/').pop();
-                    if (candidate) filename = candidate;
+                    if (candidate && candidate.includes('.')) filename = candidate;
                 } catch {
                     const fallback = existingPictureUrl.split('/').pop()?.split('?')[0];
-                    if (fallback) filename = fallback;
+                    if (fallback && fallback.includes('.')) filename = fallback;
                 }
-                const file = new File([blob], filename, { type: blob.type || 'image/jpeg' });
+                const file = new File([blob], filename, { type: blob.type || 'image/png' });
                 existingPictureFileRef.current = file;
                 return file;
             })();
