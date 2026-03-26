@@ -248,6 +248,7 @@ const EditorToolbar = ({ editorRef }) => {
                 anchorEl={fontSizeAnchor}
                 open={Boolean(fontSizeAnchor)}
                 onClose={() => setFontSizeAnchor(null)}
+                sx={{ zIndex: 1600 }}
                 PaperProps={{
                     sx: {
                         backgroundColor: '#333',
