@@ -2,8 +2,7 @@ services:
   app:
     ports: !reset []
     volumes:
-      - app_uploads:/app/wwwroot/uploads
-      - app_articles_uploads:/app/wwwroot/articles_uploads
+      - app_wwwroot:/app/wwwroot
 
   postgres:
     ports: !reset []
@@ -27,5 +26,4 @@ services:
     restart: unless-stopped
 
 volumes:
-  app_uploads:
-  app_articles_uploads:
+  app_wwwroot:
