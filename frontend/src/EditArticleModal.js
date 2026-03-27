@@ -32,6 +32,7 @@ import FormatListNumberedIcon from '@mui/icons-material/FormatListNumbered';
 import CodeIcon from '@mui/icons-material/Code';
 import FormatSizeIcon from '@mui/icons-material/FormatSize';
 import { buildArticleImageUrl, formatBytes, isArticleImageTooLarge, MAX_ARTICLE_IMAGE_BYTES } from './avatarUtils';
+import { normalizeContentForSubmit } from './contentFormatting';
 
 const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || '/api';
 
@@ -460,10 +461,11 @@ const EditArticleModal = ({ open, handleClose, post, onUpdateSuccess, onDeleteSu
                 throw new Error(message);
             }
             const formData = new FormData();
+            const normalizedContent = normalizeContentForSubmit(content);
             formData.append('article_id', post.id);
             formData.append('article_title', title);
             formData.append('article_preview', preview);
-            formData.append('article_content', content);
+            formData.append('article_content', normalizedContent);
             formData.append('picture', pictureFile);
 
             const response = await fetch(`${API_BASE_URL}/Articles/update`, {

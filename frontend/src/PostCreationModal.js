@@ -24,6 +24,7 @@ import FormatListNumberedIcon from '@mui/icons-material/FormatListNumbered';
 import CodeIcon from '@mui/icons-material/Code';
 import FormatSizeIcon from '@mui/icons-material/FormatSize';
 import { formatBytes, isArticleImageTooLarge, MAX_ARTICLE_IMAGE_BYTES } from './avatarUtils';
+import { normalizeContentForSubmit } from './contentFormatting';
 
 // Базовый URL для API (должен быть определен в реальном приложении)
 const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || '/api';
@@ -284,6 +285,7 @@ const PostCreationModal = ({ open, handleClose, onUnauthorized, onPostSuccess })
     const [imageError, setImageError] = useState(null);
     // 5. Состояние для тегов
     const [selectedTags, setSelectedTags] = useState([]);
+    const [isLoading, setIsLoading] = useState(false);
 
     // Ссылка на DOM-элемент редактора (div с contenteditable)
     const editorRef = useRef(null);
@@ -398,6 +400,10 @@ const PostCreationModal = ({ open, handleClose, onUnauthorized, onPostSuccess })
 
     // --- ОБРАБОТЧИК СОХРАНЕНИЯ (ОБНОВЛЕН) ---
     const handlePublish = async () => {
+        if (isLoading) {
+            return;
+        }
+
         // Проверка на заполнение всех обязательных полей
         if (!title || !preview || !content) {
             alert('Пожалуйста, заполните заголовок, анонс и текст статьи.');
@@ -410,15 +416,17 @@ const PostCreationModal = ({ open, handleClose, onUnauthorized, onPostSuccess })
         }
 
         const formData = new FormData();
+        const normalizedContent = normalizeContentForSubmit(content);
         formData.append('article_title', title);
         formData.append('article_preview', preview);
-        formData.append('article_content', content);
+        formData.append('article_content', normalizedContent);
         selectedTags.forEach((tag) => formData.append('article_tags', tag));
         if (file) {
             formData.append('picture', file);
         }
 
         try {
+            setIsLoading(true);
             const response = await fetch(`${API_BASE_URL}/Articles/create`, {
                 method: 'POST',
                 body: formData,
@@ -486,6 +494,8 @@ const PostCreationModal = ({ open, handleClose, onUnauthorized, onPostSuccess })
             // Этот блок будет ловить сетевые ошибки или необработанные исключения (например, ошибку парсинга)
             console.error('Произошла ошибка при обработке запроса:', error);
             alert(`Произошла ошибка при связи с сервером: ${error.message}`);
+        } finally {
+            setIsLoading(false);
         }
     };
 
@@ -734,7 +744,7 @@ const PostCreationModal = ({ open, handleClose, onUnauthorized, onPostSuccess })
                         variant="contained"
                         fullWidth
                         onClick={handlePublish}
-                        disabled={!title || !preview || !content} // Теги и картинка опциональны
+                        disabled={!title || !preview || !content || isLoading} // Теги и картинка опциональны
                         sx={{
                             marginTop: 1,
                             backgroundColor: '#00bfa5',
@@ -746,7 +756,7 @@ const PostCreationModal = ({ open, handleClose, onUnauthorized, onPostSuccess })
                             borderRadius: '8px'
                         }}
                     >
-                        Опубликовать
+                        {isLoading ? 'Публикация...' : 'Опубликовать'}
                     </Button>
                 </Box>
             </Box>

@@ -55,7 +55,7 @@ namespace LambdaGeneration.API.Application.Services
                 var user = await _userRepository.GetByEmail(email);
 
                 if (user == null)
-                    return "User is not exist!";
+                    throw new Exception("Пользователь с таким email не найден");
 
                 var sessionId = Guid.NewGuid().ToString();
 
@@ -73,9 +73,11 @@ namespace LambdaGeneration.API.Application.Services
                 var resetLink = $"{_configuration["ClientUrl"]}/" +
                     $"reset-password?data={Uri.EscapeDataString(encryptData)}";
 
-                await _sendEmail.SendPasswordResetEmail(user.Email, resetLink);
+                var emailSent = await _sendEmail.SendPasswordResetEmail(user.Email, resetLink);
+                if (!emailSent)
+                    throw new Exception("Не удалось отправить письмо для сброса пароля. Проверьте адрес почты и попробуйте снова");
 
-                return "If the user exists, an email will be sent";
+                return "Ссылка для сброса пароля отправлена на указанную почту";
             }
             catch (Exception ex)
             {

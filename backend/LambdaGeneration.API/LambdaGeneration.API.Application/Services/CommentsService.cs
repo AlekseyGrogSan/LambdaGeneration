@@ -13,6 +13,7 @@ namespace LambdaGeneration.API.Application.Services
 {
     public class CommentsService : ICommentsService
     {
+        private const int MaxCommentDepth = 2;
         private readonly ICommentsRepository _commentsRepository;
 
         public CommentsService(ICommentsRepository commentsRepository)
@@ -25,7 +26,28 @@ namespace LambdaGeneration.API.Application.Services
             if (!isAprooved)
                 throw new Exception("Контент не прошел модерацию");
 
+            if (parentCommentId.HasValue)
+            {
+                var parentDepth = await GetCommentDepthAsync(parentCommentId.Value);
+                if (parentDepth >= MaxCommentDepth)
+                    throw new Exception("Достигнут максимальный уровень вложенности комментариев (3 уровня)");
+            }
+
             return await _commentsRepository.CreateCommentAsync(Comments.Create(Guid.NewGuid(), articleId, authorId, content, true, parentCommentId));
+        }
+
+        private async Task<int> GetCommentDepthAsync(Guid commentId)
+        {
+            var depth = 0;
+            var current = await _commentsRepository.GetCommentByIdAsync(commentId);
+
+            while (current?.ParentCommentId != null)
+            {
+                depth++;
+                current = await _commentsRepository.GetCommentByIdAsync(current.ParentCommentId.Value);
+            }
+
+            return depth;
         }
 
         public async Task<ICollection<Comments>> GetCommentsByIdAsync(Guid articleId)

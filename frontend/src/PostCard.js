@@ -9,10 +9,11 @@ import {
 } from '@mui/material';
 import FavoriteIcon from '@mui/icons-material/Favorite';
 import ChatBubbleOutlineIcon from '@mui/icons-material/ChatBubbleOutline';
-import SendIcon from '@mui/icons-material/Send';
+import ShortcutRoundedIcon from '@mui/icons-material/ShortcutRounded';
 import { buildArticleImageUrl, buildAvatarUrl, DEFAULT_AVATAR_SRC } from './avatarUtils';
 import hljs from 'highlight.js';
 import 'highlight.js/styles/atom-one-dark.css';
+import { formatContentForRender } from './contentFormatting';
 
 const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || '/api';
 
@@ -108,29 +109,45 @@ const PostCard = ({
     const handleShareClick = async (event) => {
         event.stopPropagation();
         const shareId = id;
-
-        if (onShare) {
-            onShare(shareId);
-            showShareNotice();
-            return;
-        }
-
         const shareUrl = `${window.location.origin}/?article=${shareId}`;
+        const canUseNativeShare = typeof navigator !== 'undefined'
+            && typeof navigator.share === 'function'
+            && (
+                (typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(max-width: 900px)').matches)
+                || /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent || '')
+            );
 
         try {
+            if (canUseNativeShare) {
+                await navigator.share({
+                    title: title || 'Статья Lambda Generation',
+                    text: title || 'Посмотри эту статью',
+                    url: shareUrl,
+                });
+                if (onShare) onShare(shareId);
+                return;
+            }
+
             await navigator.clipboard.writeText(shareUrl);
+            if (onShare) onShare(shareId);
+            showShareNotice();
         } catch (err) {
+            if (err?.name === 'AbortError') {
+                return;
+            }
+
             try {
                 window.prompt('Скопируйте ссылку на статью:', shareUrl);
+                if (onShare) onShare(shareId);
+                showShareNotice();
             } catch (promptError) {
                 // ignore
             }
-        } finally {
-            showShareNotice();
         }
     };
 
     const contentRef = useRef(null);
+    const renderedPreviewContent = formatContentForRender(article_preview || '');
 
     useEffect(() => {
         if (contentRef.current) {
@@ -147,7 +164,7 @@ const PostCard = ({
                 }
             });
         }
-    }, [article_preview]);
+    }, [renderedPreviewContent]);
 
     return (
         <Card 
@@ -293,12 +310,15 @@ const PostCard = ({
                         sx={{ 
                             color: '#f5f5f5',
                             fontWeight: 'bold',
-                            fontSize: { xs: '1.05rem', sm: '1.2rem', md: '1.5rem' },
+                            fontSize: { xs: '0.92rem', sm: '1.1rem', md: '1.5rem' },
                             overflow: 'hidden', 
                             textOverflow: 'ellipsis', 
                             display: '-webkit-box', 
                             WebkitLineClamp: 2, 
                             WebkitBoxOrient: 'vertical',
+                            overflowWrap: 'anywhere',
+                            wordBreak: 'break-word',
+                            lineHeight: { xs: 1.25, md: 1.35 },
                         }}
                     >
                         {title} 
@@ -312,7 +332,7 @@ const PostCard = ({
                     <Typography
                         ref={contentRef}
                         variant="body1"
-                        dangerouslySetInnerHTML={{ __html: article_preview }}
+                        dangerouslySetInnerHTML={{ __html: renderedPreviewContent }}
                         sx={{
                             color: 'inherit',
                             overflow: 'hidden', 
@@ -322,6 +342,16 @@ const PostCard = ({
                             WebkitBoxOrient: 'vertical',
                             fontSize: { xs: '0.875rem', md: '1rem' },
                             lineHeight: 1.45,
+                            '& .tg-code-block': {
+                                background: '#1f2937',
+                                border: '1px solid rgba(255,255,255,0.12)',
+                                borderRadius: '8px',
+                                padding: '8px 10px',
+                                margin: '8px 0',
+                                overflowX: 'auto',
+                                whiteSpace: 'pre',
+                                fontSize: '0.85rem',
+                            },
                             '& .hljs': { background: 'transparent !important', padding: '0 !important' },
                         }}
                     />
@@ -423,7 +453,7 @@ const PostCard = ({
                             onClick={handleShareClick}
                             aria-label="Поделиться"
                         >
-                            <SendIcon sx={{ fontSize: { xs: 26, md: 30 } }} />
+                            <ShortcutRoundedIcon sx={{ fontSize: { xs: 26, md: 30 }, transform: 'rotate(-20deg)' }} />
                         </IconButton>
                     )}
 
