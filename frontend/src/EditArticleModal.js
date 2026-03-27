@@ -1,4 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
+import ConfirmationDialog from './ConfirmationDialog';
+import InputDialog from './InputDialog';
 import {
     Modal,
     Box,
@@ -275,27 +277,33 @@ const EditorToolbar = ({ editorRef }) => {
     }, [editorRef, applyCommand, applyTextColor]);
 
     const insertCodeBlock = useCallback(() => {
-        const lang = prompt('Введите язык программирования (например, python, javascript, cpp) или оставьте пустым:', 'text');
-        if (lang === null) return; // cancelled
-        
-        // We use a table because contenteditable handles cursor placement around tables much better than nested divs
-        const codeHTML = `<br><table class="code-block-table" style="width: 100%; background: #282c34; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1); border-collapse: separate; border-spacing: 0; margin: 10px 0; overflow: hidden; table-layout: fixed;">
-            <thead>
-                <tr>
-                    <th style="padding: 4px 12px; color: rgba(255,255,255,0.5); font-family: monospace; font-size: 11px; text-align: right; user-select: none; font-weight: normal; border-bottom: 1px solid rgba(255,255,255,0.1);">
-                        ${lang || 'code'}
-                    </th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr>
-                    <td style="padding: 12px;">
-                        <pre style="margin: 0; white-space: pre-wrap; word-wrap: break-word; word-break: break-all; overflow-wrap: break-word; font-family: Consolas, monospace; font-size: 14px; max-width: 100%;"><code class="${lang ? 'language-' + lang : 'language-text'}">// Ваш код...</code></pre>
-                    </td>
-                </tr>
-            </tbody>
-        </table><br><div style="min-height: 20px;"></div>`;
-        applyCommand('insertHTML', codeHTML);
+        setInputDialog({
+            open: true,
+            title: 'Добавление кода',
+            label: 'Введите язык программирования (например, python, javascript) или оставьте пустым',
+            initialValue: 'text',
+            onConfirm: (lang) => {
+                setInputDialog(prev => ({ ...prev, open: false }));
+                // We use a table because contenteditable handles cursor placement around tables much better than nested divs
+                const codeHTML = `<br><table class="code-block-table" style="width: 100%; background: #282c34; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1); border-collapse: separate; border-spacing: 0; margin: 10px 0; overflow: hidden; table-layout: fixed;">
+                    <thead>
+                        <tr>
+                            <th style="padding: 4px 12px; color: rgba(255,255,255,0.5); font-family: monospace; font-size: 11px; text-align: right; user-select: none; font-weight: normal; border-bottom: 1px solid rgba(255,255,255,0.1);">
+                                ${lang || 'code'}
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td style="padding: 12px;">
+                                <pre style="margin: 0; white-space: pre-wrap; word-wrap: break-word; word-break: break-all; overflow-wrap: break-word; font-family: Consolas, monospace; font-size: 14px; max-width: 100%;"><code class="${lang ? 'language-' + lang : 'language-text'}">// Ваш код...</code></pre>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table><br><div style="min-height: 20px;"></div>`;
+                applyCommand('insertHTML', codeHTML);
+            }
+        });
     }, [applyCommand]);
 
     const getButtonStyle = (isActive, activeColor = '#00bfa5') => ({
@@ -571,6 +579,8 @@ const extractApiErrorMessage = async (response, fallback = 'Ошибка зап�
 
 // ✅ ДОБАВЛЕН onDeleteSuccess
 const EditArticleModal = ({ open, handleClose, post, onUpdateSuccess, onDeleteSuccess, container, disablePortal }) => {
+    const [confirmDialog, setConfirmDialog] = useState({ open: false, title: '', message: '', onConfirm: null });
+    const [inputDialog, setInputDialog] = useState({ open: false, title: '', label: '', initialValue: '', onConfirm: null });
     // Режим: 'content' или 'tags'
     const [editMode, setEditMode] = useState('content');
 
@@ -677,36 +687,40 @@ const EditArticleModal = ({ open, handleClose, post, onUpdateSuccess, onDeleteSu
 
     // ✅ НОВЫЙ МЕТОД: Удаление статьи
     const handleDeleteArticle = async () => {
-        if (!window.confirm("Вы уверены, что хотите удалить эту статью? Это действие необратимо.")) {
-            return;
-        }
+        setConfirmDialog({
+            open: true,
+            title: 'Удалить статью',
+            message: 'Вы уверены, что хотите удалить эту статью? Это действие необратимо.',
+            onConfirm: async () => {
+                setConfirmDialog(prev => ({ ...prev, open: false }));
+                setIsLoading(true);
+                setError(null); 
+                setSuccessMsg(''); 
 
-        setIsLoading(true);
-        setError(null); 
-        setSuccessMsg(''); 
+                try {
+                    // Используется ваш маршрут DELETE /Articles/delete/{id}
+                    const response = await fetch(`${API_BASE_URL}/Articles/delete/${post.id}`, { 
+                        method: 'DELETE', 
+                        credentials: 'include' // Важно для куки-авторизации
+                    });
 
-        try {
-            // Используется ваш маршрут DELETE /Articles/delete/{id}
-            const response = await fetch(`${API_BASE_URL}/Articles/delete/${post.id}`, { 
-                method: 'DELETE', 
-                credentials: 'include' // Важно для куки-авторизации
-            });
-
-            if (response.ok) {
-                // Успех: вызываем колбэк для обновления списка статей в ProfileModal и закрываемся
-                onDeleteSuccess(post.id); 
-                handleClose(); 
-            } else if (response.status === 403) {
-                 throw new Error("У вас нет прав для удаления этой статьи. (Вы не автор)");
-            } else {
-                const errorText = await extractApiErrorMessage(response, response.statusText || 'Неизвестная ошибка');
-                throw new Error(`Ошибка удаления: ${errorText}`);
+                    if (response.ok) {
+                        // Успех: вызываем колбэк для обновления списка статей в ProfileModal и закрываемся
+                        onDeleteSuccess(post.id); 
+                        handleClose(); 
+                    } else if (response.status === 403) {
+                         throw new Error("У вас нет прав для удаления этой статьи. (Вы не автор)");
+                    } else {
+                        const errorText = await extractApiErrorMessage(response, response.statusText || 'Неизвестная ошибка');
+                        throw new Error(`Ошибка удаления: ${errorText}`);
+                    }
+                } catch (err) {
+                    setError(err.message);
+                } finally {
+                    setIsLoading(false);
+                }
             }
-        } catch (err) {
-            setError(err.message);
-        } finally {
-            setIsLoading(false);
-        }
+        });
     };
     
     // МЕТОД: Сохранение контента
@@ -1052,6 +1066,27 @@ const EditArticleModal = ({ open, handleClose, post, onUpdateSuccess, onDeleteSu
                     </Button>
                 </Box>
             </Box>
+
+            <InputDialog
+                open={inputDialog.open}
+                title={inputDialog.title}
+                label={inputDialog.label}
+                initialValue={inputDialog.initialValue}
+                onConfirm={inputDialog.onConfirm}
+                onCancel={() => setInputDialog(prev => ({ ...prev, open: false }))}
+            />
+            
+            <ConfirmationDialog
+                open={confirmDialog.open}
+                title={confirmDialog.title}
+                message={confirmDialog.message}
+                onConfirm={confirmDialog.onConfirm}
+                onCancel={() => setConfirmDialog(prev => ({ ...prev, open: false }))}
+                confirmText="Удалить"
+                cancelText="Отмена"
+                isLoading={isLoading}
+            />
+
         </Modal>
     );
 };
