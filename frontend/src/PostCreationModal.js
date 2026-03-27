@@ -1,4 +1,5 @@
 import React, { useState, useRef, useCallback, useEffect } from 'react';
+import InputDialog from './InputDialog';
 import {
     Modal,
     Box,
@@ -276,27 +277,33 @@ const EditorToolbar = ({ editorRef }) => {
     }, [editorRef, applyCommand, applyTextColor]);
     
     const insertCodeBlock = useCallback(() => {
-        const lang = prompt('Введите язык программирования (например, python, javascript, cpp) или оставьте пустым:', 'text');
-        if (lang === null) return; // cancelled
-        
-        // We use a table because contenteditable handles cursor placement around tables much better than nested divs
-        const codeHTML = `<br><table class="code-block-table" style="width: 100%; background: #282c34; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1); border-collapse: separate; border-spacing: 0; margin: 10px 0; overflow: hidden; table-layout: fixed;">
-            <thead>
-                <tr>
-                    <th style="padding: 4px 12px; color: rgba(255,255,255,0.5); font-family: monospace; font-size: 11px; text-align: right; user-select: none; font-weight: normal; border-bottom: 1px solid rgba(255,255,255,0.1);">
-                        ${lang || 'code'}
-                    </th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr>
-                    <td style="padding: 12px;">
-                        <pre style="margin: 0; white-space: pre-wrap; word-wrap: break-word; word-break: break-all; overflow-wrap: break-word; font-family: Consolas, monospace; font-size: 14px; max-width: 100%;"><code class="${lang ? 'language-' + lang : 'language-text'}">// Ваш код...</code></pre>
-                    </td>
-                </tr>
-            </tbody>
-        </table><br><div style="min-height: 20px;"></div>`;
-        applyCommand('insertHTML', codeHTML);
+        setInputDialog({
+            open: true,
+            title: 'Добавление кода',
+            label: 'Введите язык программирования (например, python, javascript) или оставьте пустым',
+            initialValue: 'text',
+            onConfirm: (lang) => {
+                setInputDialog(prev => ({ ...prev, open: false }));
+                // We use a table because contenteditable handles cursor placement around tables much better than nested divs
+                const codeHTML = `<br><table class="code-block-table" style="width: 100%; background: #282c34; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1); border-collapse: separate; border-spacing: 0; margin: 10px 0; overflow: hidden; table-layout: fixed;">
+                    <thead>
+                        <tr>
+                            <th style="padding: 4px 12px; color: rgba(255,255,255,0.5); font-family: monospace; font-size: 11px; text-align: right; user-select: none; font-weight: normal; border-bottom: 1px solid rgba(255,255,255,0.1);">
+                                ${lang || 'code'}
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td style="padding: 12px;">
+                                <pre style="margin: 0; white-space: pre-wrap; word-wrap: break-word; word-break: break-all; overflow-wrap: break-word; font-family: Consolas, monospace; font-size: 14px; max-width: 100%;"><code class="${lang ? 'language-' + lang : 'language-text'}">// Ваш код...</code></pre>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table><br><div style="min-height: 20px;"></div>`;
+                applyCommand('insertHTML', codeHTML);
+            }
+        });
     }, [applyCommand]);
 
     const getButtonStyle = (isActive, activeColor = '#00bfa5') => ({
@@ -535,6 +542,7 @@ const EditorToolbar = ({ editorRef }) => {
 
 // --- ОБНОВЛЕННЫЙ КОМПОНЕНТ: Создание поста (PostCreationModal) ---
 const PostCreationModal = ({ open, handleClose, onUnauthorized, onPostSuccess, onPublishSuccessMessage }) => {
+    const [inputDialog, setInputDialog] = useState({ open: false, title: '', label: '', initialValue: '', onConfirm: null });
     // 1. Состояние для заголовка
     const [title, setTitle] = useState('');
     // 2. Состояние для анонса/превью
@@ -1037,6 +1045,15 @@ const PostCreationModal = ({ open, handleClose, onUnauthorized, onPostSuccess, o
                 </Box>
                 </Box>
             </Modal>
+
+            <InputDialog
+                open={inputDialog.open}
+                title={inputDialog.title}
+                label={inputDialog.label}
+                initialValue={inputDialog.initialValue}
+                onConfirm={inputDialog.onConfirm}
+                onCancel={() => setInputDialog(prev => ({ ...prev, open: false }))}
+            />
 
             <Snackbar
                 open={notification.open}

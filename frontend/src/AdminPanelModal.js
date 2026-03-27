@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import ConfirmationDialog from './ConfirmationDialog';
 import {
     Modal,
     Box,
@@ -67,6 +68,7 @@ const sectionStyle = {
 };
 
 const AdminPanelModal = ({ open, handleClose }) => {
+    const [confirmDialog, setConfirmDialog] = useState({ open: false, title: '', message: '', onConfirm: null });
     const [userList, setUserList] = useState([]);
     const [selectedUserId, setSelectedUserId] = useState('');
     const [userData, setUserData] = useState(null);
@@ -188,45 +190,59 @@ const AdminPanelModal = ({ open, handleClose }) => {
 
     const handleDeleteUser = async () => {
         if (!userData) return;
-        if (!window.confirm('Вы действительно хотите удалить этого пользователя?')) return;
-        setActionLoading(true);
-        try {
-            const response = await fetch(`${API_BASE_URL}/admin/users/${userData.userID}`, {
-                method: 'DELETE',
-                credentials: 'include'
-            });
-            if (!response.ok) throw new Error('Не удалось удалить пользователя');
-            const data = await response.json();
-            setStatus(data.message || 'Пользователь удалён');
-            clearPanelState();
-        } catch (err) {
-            setStatus(err.message || 'Ошибка удаления');
-        } finally {
-            setActionLoading(false);
-        }
+        setConfirmDialog({
+            open: true,
+            title: 'Удаление пользователя',
+            message: 'Вы действительно хотите удалить этого пользователя?',
+            onConfirm: async () => {
+                setConfirmDialog(prev => ({ ...prev, open: false }));
+                setActionLoading(true);
+                try {
+                    const response = await fetch(`${API_BASE_URL}/admin/users/${userData.userID}`, {
+                        method: 'DELETE',
+                        credentials: 'include'
+                    });
+                    if (!response.ok) throw new Error('Не удалось удалить пользователя');
+                    const data = await response.json();
+                    setStatus(data.message || 'Пользователь удалён');
+                    clearPanelState();
+                } catch (err) {
+                    setStatus(err.message || 'Ошибка удаления');
+                } finally {
+                    setActionLoading(false);
+                }
+            }
+        });
     };
 
     const handleDeleteArticle = async (articleId, articleTitle) => {
-        if (!window.confirm(`Удалить статью "${articleTitle}"?`)) return;
-        setActionLoading(true);
-        try {
-            const response = await fetch(`${API_BASE_URL}/admin/articles/${articleId}`, {
-                method: 'DELETE',
-                credentials: 'include'
-            });
-            if (!response.ok) throw new Error('Не удалось удалить статью');
-            const data = await response.json();
-            setArticles(prev => prev.filter((article) => article.articleID !== articleId));
-            if (selectedArticle?.id === articleId) {
-                setSelectedArticle(null);
-                setComments([]);
+        setConfirmDialog({
+            open: true,
+            title: 'Удаление статьи',
+            message: `Удалить статью "${articleTitle}"?`,
+            onConfirm: async () => {
+                setConfirmDialog(prev => ({ ...prev, open: false }));
+                setActionLoading(true);
+                try {
+                    const response = await fetch(`${API_BASE_URL}/admin/articles/${articleId}`, {
+                        method: 'DELETE',
+                        credentials: 'include'
+                    });
+                    if (!response.ok) throw new Error('Не удалось удалить статью');
+                    const data = await response.json();
+                    setArticles(prev => prev.filter((article) => article.articleID !== articleId));
+                    if (selectedArticle?.id === articleId) {
+                        setSelectedArticle(null);
+                        setComments([]);
+                    }
+                    setStatus(data.message || `Статья "${articleTitle}" удалена`);
+                } catch (err) {
+                    setStatus(err.message || 'Ошибка удаления статьи');
+                } finally {
+                    setActionLoading(false);
+                }
             }
-            setStatus(data.message || `Статья "${articleTitle}" удалена`);
-        } catch (err) {
-            setStatus(err.message || 'Ошибка удаления статьи');
-        } finally {
-            setActionLoading(false);
-        }
+        });
     };
 
     const handleLoadComments = async (articleId, articleTitle) => {
@@ -248,39 +264,53 @@ const AdminPanelModal = ({ open, handleClose }) => {
     };
 
     const handleDeleteComment = async (commentId) => {
-        if (!window.confirm('Удалить этот комментарий?')) return;
-        try {
-            const response = await fetch(`${API_BASE_URL}/admin/comments/${commentId}`, {
-                method: 'DELETE',
-                credentials: 'include'
-            });
-            if (!response.ok) throw new Error('Не удалось удалить комментарий');
-            setComments(prev => prev.filter((comment) => comment.id !== commentId));
-            setUserComments(prev => prev.filter((comment) => comment.id !== commentId));
-            setStatus('Комментарий удалён');
-        } catch (err) {
-            setStatus(err.message || 'Ошибка удаления комментария');
-        }
+        setConfirmDialog({
+            open: true,
+            title: 'Удаление комментария',
+            message: 'Удалить этот комментарий?',
+            onConfirm: async () => {
+                setConfirmDialog(prev => ({ ...prev, open: false }));
+                try {
+                    const response = await fetch(`${API_BASE_URL}/admin/comments/${commentId}`, {
+                        method: 'DELETE',
+                        credentials: 'include'
+                    });
+                    if (!response.ok) throw new Error('Не удалось удалить комментарий');
+                    setComments(prev => prev.filter((comment) => comment.id !== commentId));
+                    setUserComments(prev => prev.filter((comment) => comment.id !== commentId));
+                    setStatus('Комментарий удалён');
+                } catch (err) {
+                    setStatus(err.message || 'Ошибка удаления комментария');
+                }
+            }
+        });
     };
 
     const handleDeleteUserComment = async (commentId, commentSnippet) => {
-        if (!window.confirm(`Удалить комментарий: "${commentSnippet?.slice(0, 80) || '...'}"?`)) return;
-        setActionLoading(true);
-        try {
-            const response = await fetch(`${API_BASE_URL}/admin/comments/${commentId}`, {
-                method: 'DELETE',
-                credentials: 'include'
-            });
-            if (!response.ok) throw new Error('Не удалось удалить комментарий');
-            setUserComments(prev => prev.filter((comment) => comment.id !== commentId));
-            setComments(prev => prev.filter((comment) => comment.id !== commentId));
-            const messageData = await response.json();
-            setStatus(messageData.message || 'Комментарий удалён');
-        } catch (err) {
-            setStatus(err.message || 'Ошибка удаления комментария');
-        } finally {
-            setActionLoading(false);
-        }
+        setConfirmDialog({
+            open: true,
+            title: 'Удаление комментария',
+            message: `Удалить комментарий: "${commentSnippet?.slice(0, 80) || '...'}"?`,
+            onConfirm: async () => {
+                setConfirmDialog(prev => ({ ...prev, open: false }));
+                setActionLoading(true);
+                try {
+                    const response = await fetch(`${API_BASE_URL}/admin/comments/${commentId}`, {
+                        method: 'DELETE',
+                        credentials: 'include'
+                    });
+                    if (!response.ok) throw new Error('Не удалось удалить комментарий');
+                    setUserComments(prev => prev.filter((comment) => comment.id !== commentId));
+                    setComments(prev => prev.filter((comment) => comment.id !== commentId));
+                    const messageData = await response.json();
+                    setStatus(messageData.message || 'Комментарий удалён');
+                } catch (err) {
+                    setStatus(err.message || 'Ошибка удаления комментария');
+                } finally {
+                    setActionLoading(false);
+                }
+            }
+        });
     };
 
     const fetchUserComments = async (targetId) => {
@@ -303,22 +333,29 @@ const AdminPanelModal = ({ open, handleClose }) => {
 
     const handleDeleteAllComments = async () => {
         if (!selectedArticle) return;
-        if (!window.confirm('Удалить все комментарии к этой статье?')) return;
-        setCommentsLoading(true);
-        try {
-            const response = await fetch(`${API_BASE_URL}/admin/articles/${selectedArticle.id}/comments`, {
-                method: 'DELETE',
-                credentials: 'include'
-            });
-            if (!response.ok) throw new Error('Не удалось удалить комментарии');
-            const data = await response.json();
-            setComments([]);
-            setStatus(data.message || 'Комментарии удалены');
-        } catch (err) {
-            setStatus(err.message || 'Ошибка удаления комментариев');
-        } finally {
-            setCommentsLoading(false);
-        }
+        setConfirmDialog({
+            open: true,
+            title: 'Удаление всех комментариев',
+            message: 'Удалить все комментарии к этой статье?',
+            onConfirm: async () => {
+                setConfirmDialog(prev => ({ ...prev, open: false }));
+                setCommentsLoading(true);
+                try {
+                    const response = await fetch(`${API_BASE_URL}/admin/articles/${selectedArticle.id}/comments`, {
+                        method: 'DELETE',
+                        credentials: 'include'
+                    });
+                    if (!response.ok) throw new Error('Не удалось удалить комментарии');
+                    const data = await response.json();
+                    setComments([]);
+                    setStatus(data.message || 'Комментарии удалены');
+                } catch (err) {
+                    setStatus(err.message || 'Ошибка удаления комментариев');
+                } finally {
+                    setCommentsLoading(false);
+                }
+            }
+        });
     };
 
     return (
@@ -578,6 +615,18 @@ const AdminPanelModal = ({ open, handleClose }) => {
                     </Paper>
                 )}
             </Box>
+
+            <ConfirmationDialog
+                open={confirmDialog.open}
+                title={confirmDialog.title}
+                message={confirmDialog.message}
+                onConfirm={confirmDialog.onConfirm}
+                onCancel={() => setConfirmDialog(prev => ({ ...prev, open: false }))}
+                confirmText="Удалить"
+                cancelText="Отмена"
+                isLoading={actionLoading || commentsLoading}
+            />
+
         </Modal>
     );
 };
