@@ -44,6 +44,23 @@ const getTagColor = (tag, index) => {
     return TAG_COLORS[(hash + index) % TAG_COLORS.length];
 };
 
+const normalizeCodeBlockText = (block) => {
+    let html = block.innerHTML || '';
+    html = html.replace(/<br\s*[\/]?>/gi, '\n');
+    html = html.replace(/<div[^>]*>/gi, '\n');
+    html = html.replace(/<\/div>/gi, '');
+    html = html.replace(/<p[^>]*>/gi, '\n');
+    html = html.replace(/<\/p>/gi, '');
+
+    const temp = document.createElement('textarea');
+    temp.innerHTML = html;
+
+    return (temp.value || '')
+        .replace(/\r\n?/g, '\n')
+        .replace(/\u200b/g, '')
+        .trim();
+};
+
 /**
  * PostCard - Компонент для отображения краткой информации о посте в ленте.
  * Принимает props.sx для кастомизации стилей (например, фиксированная высота)
@@ -153,14 +170,17 @@ const PostCard = ({
         if (contentRef.current) {
             contentRef.current.querySelectorAll('pre code').forEach((block) => {
                 if (!block.dataset.highlighted) {
-                    let html = block.innerHTML;
-                    html = html.replace(/<br\s*[\/]?>/gi, '\n');
-                    html = html.replace(/<div[^>]*>/gi, '\n');
-                    html = html.replace(/<\/div>/gi, '');
-                    html = html.replace(/<p[^>]*>/gi, '\n');
-                    html = html.replace(/<\/p>/gi, '');
-                    block.innerHTML = html;
-                    hljs.highlightElement(block);
+                    const codeText = normalizeCodeBlockText(block);
+                    block.textContent = codeText;
+
+                    const languageClass = Array.from(block.classList).find((cls) => cls.startsWith('language-'));
+                    const language = languageClass ? languageClass.replace('language-', '') : '';
+
+                    if (language && hljs.getLanguage(language)) {
+                        hljs.highlightElement(block);
+                    } else {
+                        block.innerHTML = hljs.highlightAuto(codeText).value;
+                    }
                 }
             });
         }
