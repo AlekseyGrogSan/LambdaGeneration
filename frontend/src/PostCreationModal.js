@@ -8,7 +8,9 @@ import {
     IconButton,
     Chip,
     Menu,
-    MenuItem
+    MenuItem,
+    Snackbar,
+    Alert,
 } from '@mui/material';
 
 // Импорт иконок для редактора и галочки
@@ -286,6 +288,15 @@ const PostCreationModal = ({ open, handleClose, onUnauthorized, onPostSuccess })
     // 5. Состояние для тегов
     const [selectedTags, setSelectedTags] = useState([]);
     const [isLoading, setIsLoading] = useState(false);
+    const [notification, setNotification] = useState({ open: false, message: '', severity: 'info' });
+
+    const showNotification = useCallback((message, severity = 'info') => {
+        setNotification({ open: true, message, severity });
+    }, []);
+
+    const closeNotification = useCallback(() => {
+        setNotification((prev) => ({ ...prev, open: false }));
+    }, []);
 
     // Ссылка на DOM-элемент редактора (div с contenteditable)
     const editorRef = useRef(null);
@@ -406,12 +417,12 @@ const PostCreationModal = ({ open, handleClose, onUnauthorized, onPostSuccess })
 
         // Проверка на заполнение всех обязательных полей
         if (!title || !preview || !content) {
-            alert('Пожалуйста, заполните заголовок, анонс и текст статьи.');
+            showNotification('Пожалуйста, заполните заголовок, анонс и текст статьи.', 'warning');
             return;
         }
 
         if (imageError) {
-            alert(imageError);
+            showNotification(imageError, 'warning');
             return;
         }
 
@@ -435,7 +446,7 @@ const PostCreationModal = ({ open, handleClose, onUnauthorized, onPostSuccess })
 
             // 1. Обработка 401 Unauthorized
             if (response.status === 401) {
-                alert('Для публикации статьи необходимо войти или зарегистрироваться.');
+                showNotification('Для публикации статьи необходимо войти или зарегистрироваться.', 'warning');
                 onUnauthorized();
                 return;
             }
@@ -464,14 +475,14 @@ const PostCreationModal = ({ open, handleClose, onUnauthorized, onPostSuccess })
                 const detailedReason = errorDetails.reason ? ` Причина: ${errorDetails.reason}` : '';
                 const suggestion = errorDetails.suggestion ? ` Предложение: ${errorDetails.suggestion}` : '';
                 
-                alert(`Ошибка публикации: ${errorMessage}${detailedReason}${suggestion}`);
+                showNotification(`Ошибка публикации: ${errorMessage}${detailedReason}${suggestion}`, 'error');
                 console.error('Ошибка публикации:', errorDetails);
                 return;
             }
 
             // 3. Успешная публикация (Status 200 OK или 204 No Content)
             
-            alert('Статья успешно опубликована! ✅');
+            showNotification('Статья успешно опубликована!', 'success');
             console.log('Статья успешно создана (Статус:', response.status, '). Бэкенд вернул пустое тело.');
 
             // ✅ КЛЮЧЕВОЕ ИЗМЕНЕНИЕ: Вызов функции обновления ленты
@@ -493,7 +504,7 @@ const PostCreationModal = ({ open, handleClose, onUnauthorized, onPostSuccess })
         } catch (error) {
             // Этот блок будет ловить сетевые ошибки или необработанные исключения (например, ошибку парсинга)
             console.error('Произошла ошибка при обработке запроса:', error);
-            alert(`Произошла ошибка при связи с сервером: ${error.message}`);
+            showNotification(`Произошла ошибка при связи с сервером: ${error.message}`, 'error');
         } finally {
             setIsLoading(false);
         }
@@ -503,12 +514,13 @@ const PostCreationModal = ({ open, handleClose, onUnauthorized, onPostSuccess })
 
     // --- ОСНОВНОЙ РЕНДЕРИНГ МОДАЛЬНОГО ОКНА ---
     return (
-        <Modal
-            open={open}
-            onClose={handleClose}
-            aria-labelledby="post-creation-modal-title"
-        >
-            <Box sx={modalStyle}>
+        <>
+            <Modal
+                open={open}
+                onClose={handleClose}
+                aria-labelledby="post-creation-modal-title"
+            >
+                <Box sx={modalStyle}>
                 <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1 }}>
                     <Typography id="post-creation-modal-title" variant="h5" component="h2" sx={{ color: '#ffffff', fontWeight: 300 }}>
                         Создать новый пост
@@ -759,8 +771,20 @@ const PostCreationModal = ({ open, handleClose, onUnauthorized, onPostSuccess })
                         {isLoading ? 'Публикация...' : 'Опубликовать'}
                     </Button>
                 </Box>
-            </Box>
-        </Modal>
+                </Box>
+            </Modal>
+
+            <Snackbar
+                open={notification.open}
+                autoHideDuration={3500}
+                onClose={closeNotification}
+                anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+            >
+                <Alert onClose={closeNotification} severity={notification.severity} variant="filled" sx={{ width: '100%' }}>
+                    {notification.message}
+                </Alert>
+            </Snackbar>
+        </>
     );
 };
 

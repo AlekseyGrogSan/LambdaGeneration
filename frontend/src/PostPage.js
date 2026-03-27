@@ -90,6 +90,8 @@ const countTreeComments = (comments = []) => comments.reduce(
     0,
 );
 
+const MAX_COMMENT_DEPTH = 2;
+
 const updateCommentInTree = (tree, commentId, updater) => tree.map((item) => {
     if (item.commentId === commentId) {
         return updater(item);
@@ -263,7 +265,10 @@ const FeedCommentItem = ({
     onDeleteComment,
     onLikeToggle,
     onToggleReplies,
-}) => (
+}) => {
+    const canReply = depth < MAX_COMMENT_DEPTH;
+
+    return (
     <Box
         sx={{
             ml: Math.min(depth, 3) * 1.2,
@@ -341,20 +346,22 @@ const FeedCommentItem = ({
                     </Button>
                 )}
 
-                <Button
-                    size="small"
-                    onClick={() => onToggleReplyEditor(comment.commentId)}
-                    sx={{
-                        ml: 1,
-                        color: '#00bfa5',
-                        textTransform: 'none',
-                        borderRadius: '8px',
-                        minWidth: 'auto',
-                        px: 1,
-                    }}
-                >
-                    Ответить на комментарий
-                </Button>
+                {canReply && (
+                    <Button
+                        size="small"
+                        onClick={() => onToggleReplyEditor(comment.commentId)}
+                        sx={{
+                            ml: 1,
+                            color: '#00bfa5',
+                            textTransform: 'none',
+                            borderRadius: '8px',
+                            minWidth: 'auto',
+                            px: 1,
+                        }}
+                    >
+                        Ответить на комментарий
+                    </Button>
+                )}
 
                 {currentUserId && comment.authorId === currentUserId && (
                     <Button
@@ -404,14 +411,14 @@ const FeedCommentItem = ({
                         onKeyDown={(e) => {
                             if (e.key === 'Enter' && !e.shiftKey) {
                                 e.preventDefault();
-                                onReplySubmit(comment.commentId, replyInputs[comment.commentId] || '');
+                                onReplySubmit(comment.commentId, replyInputs[comment.commentId] || '', depth);
                             }
                         }}
                         sx={commentInputStyle}
                     />
                     <Button
                         variant="contained"
-                        onClick={() => onReplySubmit(comment.commentId, replyInputs[comment.commentId] || '')}
+                        onClick={() => onReplySubmit(comment.commentId, replyInputs[comment.commentId] || '', depth)}
                         sx={{
                             minWidth: 'auto',
                             borderRadius: '10px',
@@ -478,7 +485,8 @@ const FeedCommentItem = ({
             );
         })}
     </Box>
-);
+    );
+};
 
 const CommentsFeedSidebar = ({
     variant = 'desktop',
@@ -897,12 +905,6 @@ const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
                 isProfileModalOpenRef.current = true;
             }
             setOpenProfileAfterAuth(false);
-            // ФОРСИРОВАТЬ перезагрузку ленты для применения актуальных лайков
-            feedCacheRef.current = {};
-            setArticles([]);
-            setPageNumber(1);
-            setHasMore(true);
-            fetchArticlesPage(1, paginationType, { force: true });
         });
     };
     
@@ -1658,7 +1660,12 @@ const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
         setFeedEditInputs((prev) => ({ ...prev, [commentId]: value }));
     };
 
-    const handleFeedReplySubmit = async (commentId, value) => {
+    const handleFeedReplySubmit = async (commentId, value, depth) => {
+        if (depth >= MAX_COMMENT_DEPTH) {
+            setFeedReplyEditorOpen((prev) => ({ ...prev, [commentId]: false }));
+            return;
+        }
+
         try {
             setFeedCommentsError(null);
             await createFeedComment(value, commentId);

@@ -12,6 +12,8 @@ import {
     SwipeableDrawer,
     useMediaQuery,
     useTheme,
+    Snackbar,
+    Alert,
 } from '@mui/material';
 import FavoriteIcon from '@mui/icons-material/Favorite';
 import ChatBubbleOutlineIcon from '@mui/icons-material/ChatBubbleOutline';
@@ -333,10 +335,19 @@ const PostDetailPage = ({
     const [editEditorOpen, setEditEditorOpen] = useState({});
     const authorCacheRef = useRef({});
     const [imageBroken, setImageBroken] = useState(false);
+    const [notification, setNotification] = useState({ open: false, message: '', severity: 'info' });
     const theme = useTheme();
     const isDesktopComments = useMediaQuery(theme.breakpoints.up(768));
     const contentRef = useRef(null);
     const renderedArticleContent = formatContentForRender(post?.article_content || '');
+
+    const showNotification = (message, severity = 'info') => {
+        setNotification({ open: true, message, severity });
+    };
+
+    const closeNotification = () => {
+        setNotification((prev) => ({ ...prev, open: false }));
+    };
 
     useEffect(() => {
         if (contentRef.current) {
@@ -504,7 +515,7 @@ const PostDetailPage = ({
 
             if (navigator.clipboard && navigator.clipboard.writeText) {
                 await navigator.clipboard.writeText(shareUrl);
-                alert('Ссылка скопирована в буфер обмена');
+                showNotification('Ссылка скопирована в буфер обмена', 'success');
             } else {
                 window.prompt('Скопируйте ссылку на статью:', shareUrl);
             }
@@ -516,7 +527,7 @@ const PostDetailPage = ({
             console.error('Copy/share failed', err);
             try {
                 await navigator.clipboard.writeText(shareUrl);
-                alert('Ссылка скопирована в буфер обмена');
+                showNotification('Ссылка скопирована в буфер обмена', 'success');
             } catch {
                 window.prompt('Скопируйте ссылку на статью:', shareUrl);
             }
@@ -1214,6 +1225,17 @@ const PostDetailPage = ({
                     </Box>
                 </SwipeableDrawer>
             )}
+
+            <Snackbar
+                open={notification.open}
+                autoHideDuration={3000}
+                onClose={closeNotification}
+                anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+            >
+                <Alert onClose={closeNotification} severity={notification.severity} variant="filled" sx={{ width: '100%' }}>
+                    {notification.message}
+                </Alert>
+            </Snackbar>
         </Box>
     );
 };
