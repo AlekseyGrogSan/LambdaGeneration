@@ -112,7 +112,15 @@ const EmailVerificationModal = ({ open, handleClose, email, onVerificationSucces
                     fullWidth 
                     disabled={!canResend || resendLoading} 
                     onClick={handleResend}
-                    sx={{ mt: 1, color: canResend && !resendLoading ? '#00bfa5' : '#b1b1b1' }}
+                    sx={{
+                        mt: 1,
+                        color: canResend && !resendLoading ? '#00bfa5' : '#bdbdbd',
+                        '&.Mui-disabled': {
+                            color: '#bdbdbd',
+                            opacity: 1,
+                            WebkitTextFillColor: '#bdbdbd',
+                        },
+                    }}
                 >
                     {resendLoading
                         ? 'Отправка...'
