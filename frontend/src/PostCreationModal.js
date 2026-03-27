@@ -101,7 +101,7 @@ const inputStyle = {
 };
 
 // --- КОМПОНЕНТ: Панель Инструментов Редактора ---
-const EditorToolbar = ({ editorRef }) => {
+const EditorToolbar = ({ editorRef, setInputDialog }) => {
     const selectionRangeRef = useRef(null);
     const [activeStyles, setActiveStyles] = useState({
         bold: false,
@@ -884,7 +884,7 @@ const PostCreationModal = ({ open, handleClose, onUnauthorized, onPostSuccess, o
                 {/* --- СЕКЦИЯ РЕДАКТОРА ТЕКСТА (с красивым скроллом) --- */}
                 <Box>
                     {/* --- 1. Панель Инструментов --- */}
-                    <EditorToolbar editorRef={editorRef} />
+                    <EditorToolbar editorRef={editorRef} setInputDialog={setInputDialog} />
 
                     {/* --- 2. Область Редактирования (contenteditable) --- */}
                     <Box

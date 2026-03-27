@@ -106,7 +106,7 @@ const inputStyle = {
     }
 };
 
-const EditorToolbar = ({ editorRef }) => {
+const EditorToolbar = ({ editorRef, setInputDialog }) => {
     const selectionRangeRef = useRef(null);
     const [activeStyles, setActiveStyles] = useState({
         bold: false,
@@ -899,7 +899,7 @@ const EditArticleModal = ({ open, handleClose, post, onUpdateSuccess, onDeleteSu
                             <Typography variant="caption" sx={{ color: '#bdbdbd', mb: 0.5, display: 'block' }}>
                                 Полный текст
                             </Typography>
-                            <EditorToolbar editorRef={editorRef} />
+                            <EditorToolbar editorRef={editorRef} setInputDialog={setInputDialog} />
                             <Box
                                 ref={editorRef}
                                 contentEditable={true}
