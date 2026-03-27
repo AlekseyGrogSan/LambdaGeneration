@@ -816,6 +816,7 @@ const EditArticleModal = ({ open, handleClose, post, onUpdateSuccess, onDeleteSu
     if (!post) return null;
 
     return (
+        <>
         <Modal
             open={open}
             onClose={handleClose}
@@ -1066,6 +1067,7 @@ const EditArticleModal = ({ open, handleClose, post, onUpdateSuccess, onDeleteSu
                     </Button>
                 </Box>
             </Box>
+        </Modal>
 
             <InputDialog
                 open={inputDialog.open}
@@ -1075,7 +1077,7 @@ const EditArticleModal = ({ open, handleClose, post, onUpdateSuccess, onDeleteSu
                 onConfirm={inputDialog.onConfirm}
                 onCancel={() => setInputDialog(prev => ({ ...prev, open: false }))}
             />
-            
+
             <ConfirmationDialog
                 open={confirmDialog.open}
                 title={confirmDialog.title}
@@ -1086,8 +1088,7 @@ const EditArticleModal = ({ open, handleClose, post, onUpdateSuccess, onDeleteSu
                 cancelText="Отмена"
                 isLoading={isLoading}
             />
-
-        </Modal>
+        </>
     );
 };
 
