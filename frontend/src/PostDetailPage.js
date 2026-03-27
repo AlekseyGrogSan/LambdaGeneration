@@ -170,21 +170,22 @@ const CommentItem = ({
                     </Button>
                 )}
 
-                <Button
-                    size="small"
-                    onClick={() => onToggleReplyEditor(comment.commentId)}
-                    disabled={!canReply}
-                    sx={{
-                        ml: 1,
-                        color: canReply ? '#00bfa5' : '#777',
-                        textTransform: 'none',
-                        borderRadius: '8px',
-                        minWidth: 'auto',
-                        px: 1,
-                    }}
-                >
-                    {canReply ? 'Ответить на комментарий' : 'Макс. вложенность: 3 уровня'}
-                </Button>
+                {canReply && (
+                    <Button
+                        size="small"
+                        onClick={() => onToggleReplyEditor(comment.commentId)}
+                        sx={{
+                            ml: 1,
+                            color: '#00bfa5',
+                            textTransform: 'none',
+                            borderRadius: '8px',
+                            minWidth: 'auto',
+                            px: 1,
+                        }}
+                    >
+                        Ответить на комментарий
+                    </Button>
+                )}
 
                 {currentUserId && comment.authorId === currentUserId && (
                     <Button
@@ -616,7 +617,6 @@ const PostDetailPage = ({
 
     const handleReplySubmit = async (commentId, value, depth) => {
         if (depth >= MAX_COMMENT_DEPTH) {
-            setCommentsError('Достигнут максимальный уровень вложенности комментариев (3 уровня)');
             setReplyEditorOpen((prev) => ({ ...prev, [commentId]: false }));
             return;
         }
