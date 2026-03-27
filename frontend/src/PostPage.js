@@ -926,12 +926,20 @@ const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
 
     useEffect(() => {
         const init = async () => {
-            await checkAuth();
+            const isAuthorized = await checkAuth();
             const restored = restoredNavStateRef.current;
             const allowedTypes = ['random', 'recommend', 'search', 'tags'];
             const restoredType = allowedTypes.includes(restored?.paginationType)
                 ? restored.paginationType
                 : 'random';
+            const shouldRestoreProfileModal = Boolean(restored?.isProfileModalOpen)
+                && (restored?.profileViewedUserId != null || isAuthorized);
+
+            if (shouldRestoreProfileModal) {
+                setViewedProfileId(restored?.profileViewedUserId ?? null);
+                setIsProfileModalOpen(true);
+                isProfileModalOpenRef.current = true;
+            }
 
             if (restoredType === 'search') {
                 const restoredQuery = (restored?.searchQuery ?? '').trim();
@@ -964,8 +972,10 @@ const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
             searchQuery,
             selectedTagIds,
             selectedArticleId: isViewingDetailPage ? (selectedPost?.article_id ?? null) : null,
+            isProfileModalOpen,
+            profileViewedUserId: viewedProfileId,
         });
-    }, [paginationType, isSearchMode, searchQuery, selectedTagIds, isViewingDetailPage, selectedPost]);
+    }, [paginationType, isSearchMode, searchQuery, selectedTagIds, isViewingDetailPage, selectedPost, isProfileModalOpen, viewedProfileId]);
 
     useEffect(() => {
         const currentUrl = new URL(window.location.href);
