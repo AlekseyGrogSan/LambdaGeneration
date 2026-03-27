@@ -15,7 +15,7 @@ import {
 } from '@mui/material';
 import FavoriteIcon from '@mui/icons-material/Favorite';
 import ChatBubbleOutlineIcon from '@mui/icons-material/ChatBubbleOutline';
-import SendIcon from '@mui/icons-material/Send';
+import ShortcutRoundedIcon from '@mui/icons-material/ShortcutRounded';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import CloseIcon from '@mui/icons-material/Close';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
@@ -24,6 +24,7 @@ import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import { buildArticleImageUrl, buildAvatarUrl, DEFAULT_AVATAR_SRC } from './avatarUtils';
 import hljs from 'highlight.js';
 import 'highlight.js/styles/atom-one-dark.css';
+import { formatContentForRender } from './contentFormatting';
 
 const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || '/api';
 
@@ -55,6 +56,8 @@ const labelStyle = {
     fontWeight: 'bold',
     fontSize: '0.9rem',
 };
+
+const MAX_COMMENT_DEPTH = 2;
 
 const countTreeComments = (comments = []) => comments.reduce(
     (sum, comment) => sum + 1 + countTreeComments(comment.replies || []),
@@ -90,7 +93,10 @@ const CommentItem = ({
     onDeleteComment,
     onLikeToggle,
     onToggleReplies,
-}) => (
+}) => {
+    const canReply = depth < MAX_COMMENT_DEPTH;
+
+    return (
     <Box
         sx={{
             ml: Math.min(depth, 3) * 1.5,
@@ -167,16 +173,17 @@ const CommentItem = ({
                 <Button
                     size="small"
                     onClick={() => onToggleReplyEditor(comment.commentId)}
+                    disabled={!canReply}
                     sx={{
                         ml: 1,
-                        color: '#00bfa5',
+                        color: canReply ? '#00bfa5' : '#777',
                         textTransform: 'none',
                         borderRadius: '8px',
                         minWidth: 'auto',
                         px: 1,
                     }}
                 >
-                    Ответить на комментарий
+                    {canReply ? 'Ответить на комментарий' : 'Макс. вложенность: 3 уровня'}
                 </Button>
 
                 {currentUserId && comment.authorId === currentUserId && (
@@ -227,14 +234,14 @@ const CommentItem = ({
                         onKeyDown={(e) => {
                             if (e.key === 'Enter' && !e.shiftKey) {
                                 e.preventDefault();
-                                onReplySubmit(comment.commentId, replyInputs[comment.commentId] || '');
+                                onReplySubmit(comment.commentId, replyInputs[comment.commentId] || '', depth);
                             }
                         }}
                         sx={commentInputStyle}
                     />
                     <Button
                         variant="contained"
-                        onClick={() => onReplySubmit(comment.commentId, replyInputs[comment.commentId] || '')}
+                        onClick={() => onReplySubmit(comment.commentId, replyInputs[comment.commentId] || '', depth)}
                         sx={{
                             minWidth: 'auto',
                             borderRadius: '10px',
@@ -296,7 +303,8 @@ const CommentItem = ({
             />
         ))}
     </Box>
-);
+    );
+};
 
 const PostDetailPage = ({
     post,
@@ -327,6 +335,7 @@ const PostDetailPage = ({
     const theme = useTheme();
     const isDesktopComments = useMediaQuery(theme.breakpoints.up(768));
     const contentRef = useRef(null);
+    const renderedArticleContent = formatContentForRender(post?.article_content || '');
 
     useEffect(() => {
         if (contentRef.current) {
@@ -343,7 +352,7 @@ const PostDetailPage = ({
                 }
             });
         }
-    }, [post.article_content]);
+    }, [renderedArticleContent]);
 
     useEffect(() => {
         if (containerRef && containerRef.current) {
@@ -472,6 +481,47 @@ const PostDetailPage = ({
         }
     };
 
+    const handleShareArticle = async (e) => {
+        e.stopPropagation();
+        const shareUrl = `${window.location.origin}/?article=${post.article_id}`;
+        const canUseNativeShare = typeof navigator !== 'undefined'
+            && typeof navigator.share === 'function'
+            && (
+                (typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(max-width: 900px)').matches)
+                || /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent || '')
+            );
+
+        try {
+            if (canUseNativeShare) {
+                await navigator.share({
+                    title: post.title || 'Статья Lambda Generation',
+                    text: post.title || 'Посмотри эту статью',
+                    url: shareUrl,
+                });
+                return;
+            }
+
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                await navigator.clipboard.writeText(shareUrl);
+                alert('Ссылка скопирована в буфер обмена');
+            } else {
+                window.prompt('Скопируйте ссылку на статью:', shareUrl);
+            }
+        } catch (err) {
+            if (err?.name === 'AbortError') {
+                return;
+            }
+
+            console.error('Copy/share failed', err);
+            try {
+                await navigator.clipboard.writeText(shareUrl);
+                alert('Ссылка скопирована в буфер обмена');
+            } catch {
+                window.prompt('Скопируйте ссылку на статью:', shareUrl);
+            }
+        }
+    };
+
     const createComment = async (content, parentId = null) => {
         const trimmed = content.trim();
         if (trimmed.length < 2) {
@@ -564,7 +614,13 @@ const PostDetailPage = ({
         return true;
     };
 
-    const handleReplySubmit = async (commentId, value) => {
+    const handleReplySubmit = async (commentId, value, depth) => {
+        if (depth >= MAX_COMMENT_DEPTH) {
+            setCommentsError('Достигнут максимальный уровень вложенности комментариев (3 уровня)');
+            setReplyEditorOpen((prev) => ({ ...prev, [commentId]: false }));
+            return;
+        }
+
         try {
             setCommentsError(null);
             await createComment(value, commentId);
@@ -778,7 +834,19 @@ const PostDetailPage = ({
 
             <Box sx={{ p: { xs: 1.25, md: 2 } }}>
                 <Typography variant="body2" sx={labelStyle}>Название</Typography>
-                <Typography variant="h4" sx={{ fontWeight: 'bold', mb: 2 }}>{post.title}</Typography>
+                <Typography
+                    variant="h4"
+                    sx={{
+                        fontWeight: 'bold',
+                        mb: 2,
+                        fontSize: { xs: '1.1rem', sm: '1.35rem', md: '2.125rem' },
+                        lineHeight: { xs: 1.25, md: 1.35 },
+                        overflowWrap: 'anywhere',
+                        wordBreak: 'break-word',
+                    }}
+                >
+                    {post.title}
+                </Typography>
 
                 <Box
                     onClick={(e) => {
@@ -855,7 +923,7 @@ const PostDetailPage = ({
 
                 <Box
                     ref={contentRef}
-                    dangerouslySetInnerHTML={{ __html: post.article_content }}
+                    dangerouslySetInnerHTML={{ __html: renderedArticleContent }}
                     sx={{
                         color: 'white',
                         lineHeight: 1.6,
@@ -865,6 +933,16 @@ const PostDetailPage = ({
                         '& h3': { fontSize: '1.7rem', mt: 1.5, mb: 0.5, color: 'white' },
                         '& p': { marginBottom: 1, marginTop: 1, fontSize: '1.15rem' },
                         '& strong': { fontWeight: 'bold', color: 'white' },
+                        '& .tg-code-block': {
+                            background: '#1f2937',
+                            border: '1px solid rgba(255,255,255,0.12)',
+                            borderRadius: '10px',
+                            padding: '12px 14px',
+                            margin: '14px 0',
+                            overflowX: 'auto',
+                            whiteSpace: 'pre',
+                            fontSize: '0.95rem',
+                        },
                         '& .hljs': { background: 'transparent !important', padding: '0 !important' },
                     }}
                 />
@@ -909,30 +987,9 @@ const PostDetailPage = ({
 
                 <IconButton
                     sx={{ color: '#00e5c9', minWidth: 44, minHeight: 44, ml: 'auto' }}
-                    onClick={(e) => {
-                        e.stopPropagation();
-                        const shareUrl = `${window.location.origin}/?article=${post.article_id}`;
-                        (async () => {
-                            try {
-                                if (navigator.clipboard && navigator.clipboard.writeText) {
-                                    await navigator.clipboard.writeText(shareUrl);
-                                    alert('Ссылка скопирована в буфер обмена');
-                                } else {
-                                    window.prompt('Скопируйте ссылку на статью:', shareUrl);
-                                }
-                            } catch (err) {
-                                console.error('Copy failed', err);
-                                try {
-                                    await navigator.clipboard.writeText(shareUrl);
-                                    alert('Ссылка скопирована в буфер обмена');
-                                } catch {
-                                    window.prompt('Скопируйте ссылку на статью:', shareUrl);
-                                }
-                            }
-                        })();
-                    }}
+                    onClick={handleShareArticle}
                 >
-                    <SendIcon sx={{ fontSize: 24 }} />
+                    <ShortcutRoundedIcon sx={{ fontSize: 24, transform: 'rotate(-20deg)' }} />
                 </IconButton>
             </Box>
 

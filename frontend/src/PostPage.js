@@ -660,6 +660,7 @@ const CommentsFeedSidebar = ({
 
 const PostPage = () => {
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [openProfileAfterAuth, setOpenProfileAfterAuth] = useState(false);
     const [isPostModalOpen, setIsPostModalOpen] = useState(false);
     const [isForgotModalOpen, setIsForgotModalOpen] = useState(false);
     const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
@@ -881,10 +882,21 @@ const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
         init();
     }, []);
 
-    const handleOpen = () => setIsModalOpen(true); 
+    const handleOpen = (options = {}) => {
+        setOpenProfileAfterAuth(Boolean(options?.openProfileAfterAuth));
+        setIsModalOpen(true);
+    };
     const handleClose = () => { 
         setIsModalOpen(false); 
-        void checkAuth().then(() => {
+        void checkAuth().then((isAuthorized) => {
+            if (isAuthorized && openProfileAfterAuth) {
+                setViewedProfileId(null);
+                setProfileReturnEnabled(false);
+                setProfileReturnUserId(null);
+                setIsProfileModalOpen(true);
+                isProfileModalOpenRef.current = true;
+            }
+            setOpenProfileAfterAuth(false);
             // ФОРСИРОВАТЬ перезагрузку ленты для применения актуальных лайков
             feedCacheRef.current = {};
             setArticles([]);
@@ -912,7 +924,7 @@ const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
 
     const handleProfileOpen = () => {
         if (!currentUser) {
-            handleOpen();
+            handleOpen({ openProfileAfterAuth: true });
         } else {
             setViewedProfileId(null); 
             setProfileReturnEnabled(false);
@@ -2501,6 +2513,7 @@ const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
                 open={isModalOpen} 
                 handleClose={handleClose} 
                 onForgotPassword={handleForgotOpen} 
+                onAuthSuccess={checkAuth}
             />
             
             <PostCreationModal 

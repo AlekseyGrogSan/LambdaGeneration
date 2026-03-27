@@ -11,6 +11,7 @@ namespace LambdaGeneration.API.Application.Services
 {
     public class RegexModerationService : IRegexModerationService
     {
+        private const bool EnableRegexModeration = false;
         private readonly List<Regex> _forbiddenPatterns;
 
         public RegexModerationService()
@@ -125,6 +126,14 @@ namespace LambdaGeneration.API.Application.Services
 
         private async Task<ModerationRegex> ModerateContent(string content)
         {
+            if (!EnableRegexModeration)
+            {
+                return await Task.FromResult(new ModerationRegex
+                {
+                    IsApproved = true,
+                });
+            }
+
             return await Task.Run(() =>
             {
                 var result = new ModerationRegex();

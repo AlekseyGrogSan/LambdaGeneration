@@ -6,6 +6,7 @@ const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || '/api';
 const EmailVerificationModal = ({ open, handleClose, email, onVerificationSuccess }) => {
     const [code, setCode] = useState('');
     const [loading, setLoading] = useState(false);
+    const [resendLoading, setResendLoading] = useState(false);
     const [timer, setTimer] = useState(60); // Таймер на 60 секунд
     const [canResend, setCanResend] = useState(false);
     const [error, setError] = useState('');
@@ -51,17 +52,27 @@ const EmailVerificationModal = ({ open, handleClose, email, onVerificationSucces
     };
 
     const handleResend = async () => {
+        if (!canResend || resendLoading) return;
+
+        setResendLoading(true);
         setCanResend(false);
         setTimer(60);
         try {
-            await fetch(`${API_BASE_URL}/Users/resend-code`, {
+            const response = await fetch(`${API_BASE_URL}/Users/resend-code`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(email),
                 credentials: 'include',
             });
+
+            if (!response.ok) {
+                const text = await response.text();
+                setError(text || 'Не удалось отправить код');
+            }
         } catch (err) {
             setError('Не удалось отправить код');
+        } finally {
+            setResendLoading(false);
         }
     };
 
@@ -79,7 +90,18 @@ const EmailVerificationModal = ({ open, handleClose, email, onVerificationSucces
                     variant="filled"
                     value={code}
                     onChange={(e) => setCode(e.target.value)}
-                    sx={{ input: { color: '#fff' }, mb: 2 }}
+                    sx={{
+                        mb: 2,
+                        '& .MuiFilledInput-root': {
+                            backgroundColor: 'rgba(255,255,255,0.12)',
+                            color: '#fff',
+                            '&:hover': { backgroundColor: 'rgba(255,255,255,0.18)' },
+                            '&.Mui-focused': { backgroundColor: 'rgba(255,255,255,0.2)' },
+                        },
+                        '& .MuiInputBase-input': { color: '#fff' },
+                        '& .MuiInputLabel-root': { color: '#fff' },
+                        '& .MuiInputLabel-root.Mui-focused': { color: '#fff' },
+                    }}
                 />
 
                 <Button fullWidth variant="contained" onClick={handleVerify} disabled={loading} sx={{ bgcolor: '#00bea5' }}>
@@ -88,11 +110,15 @@ const EmailVerificationModal = ({ open, handleClose, email, onVerificationSucces
 
                 <Button 
                     fullWidth 
-                    disabled={!canResend} 
+                    disabled={!canResend || resendLoading} 
                     onClick={handleResend}
-                    sx={{ mt: 1, color: canResend ? '#00bfa5' : '#b1b1b1' }}
+                    sx={{ mt: 1, color: canResend && !resendLoading ? '#00bfa5' : '#b1b1b1' }}
                 >
-                    {canResend ? 'Отправить код повторно' : `Повторная отправка через ${timer}с`}
+                    {resendLoading
+                        ? 'Отправка...'
+                        : canResend
+                            ? 'Отправить код повторно'
+                            : `Повторная отправка через ${timer}с`}
                 </Button>
             </Box>
         </Modal>

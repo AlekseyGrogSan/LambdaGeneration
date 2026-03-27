@@ -49,6 +49,19 @@ const ForgotPasswordModal = ({ open, handleClose }) => {
     const [isLoading, setIsLoading] = useState(false);
     const [lastSentEmail, setLastSentEmail] = useState('');
 
+    const extractResponseMessage = async (response) => {
+        try {
+            const data = await response.clone().json();
+            return data?.message || data?.error || data?.detail || '';
+        } catch {
+            try {
+                return (await response.text()) || '';
+            } catch {
+                return '';
+            }
+        }
+    };
+
     const modalStyle = {
         position: 'absolute',
         top: '50%',
@@ -88,8 +101,8 @@ const ForgotPasswordModal = ({ open, handleClose }) => {
                 setIsSent(true);
                 setLastSentEmail(email);
             } else {
-                const errorData = await response.json();
-                setError(errorData.message || 'Ошибка при отправке ссылки.');
+                const serverMessage = await extractResponseMessage(response);
+                setError(serverMessage || 'Ошибка при отправке ссылки.');
             }
         } catch (err) {
             setError('Не удалось подключиться к API.');

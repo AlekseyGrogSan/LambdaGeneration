@@ -83,7 +83,7 @@ const extractApiErrorMessage = async (response) => {
     return response.statusText || 'Ошибка запроса';
 };
 
-const RegistrationModal = ({ open, handleClose, onForgotPassword }) => {
+const RegistrationModal = ({ open, handleClose, onForgotPassword, onAuthSuccess }) => {
     const [isRegisterMode, setIsRegisterMode] = useState(true);
     const [formData, setFormData] = useState({
         userName: '',
@@ -93,6 +93,7 @@ const RegistrationModal = ({ open, handleClose, onForgotPassword }) => {
     });
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
+    const [isSubmitting, setIsSubmitting] = useState(false);
     const [showVerification, setShowVerification] = useState(false);
     const [pendingEmail, setPendingEmail] = useState('');
     const [avatarFile, setAvatarFile] = useState(null);
@@ -107,6 +108,7 @@ const RegistrationModal = ({ open, handleClose, onForgotPassword }) => {
             setPendingEmail('');
             setAvatarFile(null);
             setAvatarError('');
+            setIsSubmitting(false);
         }
     }, [open]);
 
@@ -144,8 +146,11 @@ const RegistrationModal = ({ open, handleClose, onForgotPassword }) => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+        if (isSubmitting) return;
+
         setError('');
         setSuccess('');
+        setIsSubmitting(true);
 
         if (!validateEmail(formData.email)) {
             setError('Введите корректный адрес электронной почты.');
@@ -192,6 +197,9 @@ const RegistrationModal = ({ open, handleClose, onForgotPassword }) => {
                     setPendingEmail(formData.email);
                     setShowVerification(true); // Открываем верификацию
                 } else {
+                    if (onAuthSuccess) {
+                        await onAuthSuccess();
+                    }
                     handleClose();
                     setFormData({ userName: '', email: '', password: '', aboutUser: '' });
                     setAvatarFile(null);
@@ -203,6 +211,8 @@ const RegistrationModal = ({ open, handleClose, onForgotPassword }) => {
             }
         } catch (err) {
             setError('Не удалось связаться с сервером. Проверьте подключение и повторите попытку.');
+        } finally {
+            setIsSubmitting(false);
         }
     };
 
@@ -270,8 +280,16 @@ const RegistrationModal = ({ open, handleClose, onForgotPassword }) => {
                         </Box>
                     )}
 
-                    <Button type="submit" variant="contained" fullWidth sx={{ bgcolor: '#00bfa5', '&:hover': { bgcolor: '#009688' }, mt: 1 }}>
-                        {isRegisterMode ? 'Зарегистрироваться' : 'Войти'}
+                    <Button
+                        type="submit"
+                        variant="contained"
+                        fullWidth
+                        disabled={isSubmitting}
+                        sx={{ bgcolor: '#00bfa5', '&:hover': { bgcolor: '#009688' }, mt: 1 }}
+                    >
+                        {isSubmitting
+                            ? 'Отправка...'
+                            : (isRegisterMode ? 'Зарегистрироваться' : 'Войти')}
                     </Button>
                         
                     <Box sx={{ mt: 2, textAlign: 'center' }}>
