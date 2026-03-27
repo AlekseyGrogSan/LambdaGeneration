@@ -9,6 +9,7 @@ import {
     Chip,
     Menu,
     MenuItem,
+    Divider,
     Snackbar,
     Alert,
 } from '@mui/material';
@@ -25,6 +26,8 @@ import FormatListBulletedIcon from '@mui/icons-material/FormatListBulleted';
 import FormatListNumberedIcon from '@mui/icons-material/FormatListNumbered';
 import CodeIcon from '@mui/icons-material/Code';
 import FormatSizeIcon from '@mui/icons-material/FormatSize';
+import FormatColorTextIcon from '@mui/icons-material/FormatColorText';
+import PriorityHighIcon from '@mui/icons-material/PriorityHigh';
 import { formatBytes, isArticleImageTooLarge, MAX_ARTICLE_IMAGE_BYTES } from './avatarUtils';
 import { normalizeContentForSubmit } from './contentFormatting';
 
@@ -107,6 +110,29 @@ const EditorToolbar = ({ editorRef }) => {
         h2: false
     });
     const [fontSizeAnchor, setFontSizeAnchor] = useState(null);
+    const [textColorAnchor, setTextColorAnchor] = useState(null);
+    const [helpAnchor, setHelpAnchor] = useState(null);
+
+    const basicTextColors = [
+        { name: 'Черный', value: '#000000' },
+        { name: 'Белый', value: '#ffffff' },
+        { name: 'Красный', value: '#f44336' },
+        { name: 'Оранжевый', value: '#ff9800' },
+        { name: 'Желтый', value: '#ffeb3b' },
+        { name: 'Зеленый', value: '#4caf50' },
+        { name: 'Синий', value: '#2196f3' }
+    ];
+
+    const textEditorShortcuts = [
+        { combo: 'Ctrl+B', action: 'Жирный текст' },
+        { combo: 'Ctrl+I', action: 'Курсив' },
+        { combo: 'Ctrl+U', action: 'Подчеркнутый текст' },
+        { combo: 'Ctrl+Shift+8', action: 'Маркированный список' },
+        { combo: 'Ctrl+Shift+7', action: 'Нумерованный список' },
+        { combo: 'Ctrl+Alt+2', action: 'Заголовок H2' },
+        { combo: 'Ctrl+K', action: 'Добавить ссылку' },
+        { combo: 'Ctrl+Shift+0', action: 'Сбросить цвет текста (по умолчанию)' }
+    ];
 
     // Функция проверки: какие стили активны в месте курсора
     const updateToolbarStatus = useCallback(() => {
@@ -142,6 +168,71 @@ const EditorToolbar = ({ editorRef }) => {
         document.execCommand(command, false, value);
         updateToolbarStatus();
     }, [editorRef, updateToolbarStatus]);
+
+    useEffect(() => {
+        const editor = editorRef.current;
+        if (!editor) return;
+
+        const onKeyDown = (event) => {
+            if (!(event.ctrlKey || event.metaKey)) return;
+
+            const key = event.key.toLowerCase();
+
+            if (key === 'b') {
+                event.preventDefault();
+                applyCommand('bold');
+                return;
+            }
+
+            if (key === 'i') {
+                event.preventDefault();
+                applyCommand('italic');
+                return;
+            }
+
+            if (key === 'u') {
+                event.preventDefault();
+                applyCommand('underline');
+                return;
+            }
+
+            if (key === 'k') {
+                event.preventDefault();
+                const url = prompt('Введите URL:');
+                if (url) applyCommand('createLink', url);
+                return;
+            }
+
+            if (event.shiftKey && key === '8') {
+                event.preventDefault();
+                applyCommand('insertUnorderedList');
+                return;
+            }
+
+            if (event.shiftKey && key === '7') {
+                event.preventDefault();
+                applyCommand('insertOrderedList');
+                return;
+            }
+
+            if (event.altKey && key === '2') {
+                event.preventDefault();
+                applyCommand('formatBlock', '<h2>');
+                return;
+            }
+
+            if (event.shiftKey && key === '0') {
+                event.preventDefault();
+                applyCommand('foreColor', '#ffffff');
+            }
+        };
+
+        editor.addEventListener('keydown', onKeyDown);
+
+        return () => {
+            editor.removeEventListener('keydown', onKeyDown);
+        };
+    }, [editorRef, applyCommand]);
     
     const insertCodeBlock = useCallback(() => {
         const lang = prompt('Введите язык программирования (например, python, javascript, cpp) или оставьте пустым:', 'text');
@@ -242,6 +333,56 @@ const EditorToolbar = ({ editorRef }) => {
                 <FormatListNumberedIcon />
             </IconButton>
 
+            <IconButton size="small" onClick={(e) => setTextColorAnchor(e.currentTarget)} sx={{ color: '#ffffff', flex: '0 0 auto' }} title="Цвет текста">
+                <FormatColorTextIcon />
+            </IconButton>
+
+            <Menu
+                anchorEl={textColorAnchor}
+                open={Boolean(textColorAnchor)}
+                onClose={() => setTextColorAnchor(null)}
+                sx={{ zIndex: 1600 }}
+                PaperProps={{
+                    sx: {
+                        backgroundColor: '#333',
+                        color: 'white'
+                    }
+                }}
+            >
+                <MenuItem
+                    onClick={() => {
+                        applyCommand('foreColor', '#ffffff');
+                        setTextColorAnchor(null);
+                    }}
+                >
+                    Сбросить цвет (по умолчанию)
+                </MenuItem>
+
+                <Divider sx={{ borderColor: 'rgba(255,255,255,0.12)' }} />
+
+                {basicTextColors.map((colorOption) => (
+                    <MenuItem
+                        key={colorOption.value}
+                        onClick={() => {
+                            applyCommand('foreColor', colorOption.value);
+                            setTextColorAnchor(null);
+                        }}
+                        sx={{ display: 'flex', gap: 1.5, alignItems: 'center' }}
+                    >
+                        <Box
+                            sx={{
+                                width: 14,
+                                height: 14,
+                                borderRadius: '50%',
+                                backgroundColor: colorOption.value,
+                                border: colorOption.value === '#ffffff' ? '1px solid #777' : 'none'
+                            }}
+                        />
+                        {colorOption.name}
+                    </MenuItem>
+                ))}
+            </Menu>
+
             <Box sx={{ width: '1px', backgroundColor: '#666', marginX: 1, my: 0.5 }} />
 
             <IconButton size="small" onClick={insertCodeBlock} sx={{ color: '#00bfa5', flex: '0 0 auto' }} title="Вставить код">
@@ -267,6 +408,73 @@ const EditorToolbar = ({ editorRef }) => {
                 <MenuItem onClick={() => { applyCommand('fontSize', '3'); setFontSizeAnchor(null); }}>Обычный</MenuItem>
                 <MenuItem onClick={() => { applyCommand('fontSize', '4'); setFontSizeAnchor(null); }}>Большой</MenuItem>
                 <MenuItem onClick={() => { applyCommand('fontSize', '5'); setFontSizeAnchor(null); }}>Огромный</MenuItem>
+            </Menu>
+
+            <Box sx={{ marginLeft: 'auto' }} />
+
+            <IconButton
+                size="small"
+                onClick={(e) => setHelpAnchor(e.currentTarget)}
+                sx={{
+                    color: '#ffffff',
+                    border: '1px solid rgba(255,255,255,0.25)',
+                    width: 24,
+                    height: 24,
+                    flex: '0 0 auto',
+                    '&:hover': { backgroundColor: 'rgba(255,255,255,0.12)' }
+                }}
+                title="Горячие клавиши"
+            >
+                <PriorityHighIcon sx={{ fontSize: 14 }} />
+            </IconButton>
+
+            <Menu
+                anchorEl={helpAnchor}
+                open={Boolean(helpAnchor)}
+                onClose={() => setHelpAnchor(null)}
+                sx={{ zIndex: 1600 }}
+                PaperProps={{
+                    sx: {
+                        backgroundColor: '#232323',
+                        color: 'white',
+                        width: 340,
+                        border: '1px solid rgba(255,255,255,0.12)'
+                    }
+                }}
+            >
+                <Box
+                    sx={{
+                        p: 1.5,
+                        maxHeight: 220,
+                        overflowY: 'auto',
+                        '&::-webkit-scrollbar': {
+                            width: '8px'
+                        },
+                        '&::-webkit-scrollbar-track': {
+                            background: 'rgba(255, 255, 255, 0.06)',
+                            borderRadius: '10px'
+                        },
+                        '&::-webkit-scrollbar-thumb': {
+                            background: 'linear-gradient(180deg, #00d4b8, #00a58f)',
+                            borderRadius: '10px'
+                        },
+                        '&::-webkit-scrollbar-thumb:hover': {
+                            background: 'linear-gradient(180deg, #00e0c2, #00b39b)'
+                        },
+                        scrollbarWidth: 'thin',
+                        scrollbarColor: '#00bfa5 rgba(255,255,255,0.06)'
+                    }}
+                >
+                    <Typography sx={{ fontWeight: 700, color: '#00bfa5', mb: 1 }}>
+                        Горячие клавиши редактора
+                    </Typography>
+                    {textEditorShortcuts.map((shortcut) => (
+                        <Box key={shortcut.combo} sx={{ display: 'flex', justifyContent: 'space-between', gap: 1, mb: 0.7 }}>
+                            <Typography sx={{ color: '#e0e0e0', fontWeight: 600 }}>{shortcut.combo}</Typography>
+                            <Typography sx={{ color: '#bdbdbd', textAlign: 'right' }}>{shortcut.action}</Typography>
+                        </Box>
+                    ))}
+                </Box>
             </Menu>
         </Box>
     );
