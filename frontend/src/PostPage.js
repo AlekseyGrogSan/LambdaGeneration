@@ -48,6 +48,26 @@ import AdminPanelModal from './AdminPanelModal';
 import { buildArticleImageUrl, buildAvatarUrl, DEFAULT_AVATAR_SRC } from './avatarUtils';
 
 const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || '/api';
+const POST_PAGE_NAV_STATE_KEY = 'lambda.postPage.navState.v1';
+
+const readPostPageNavState = () => {
+    try {
+        const raw = sessionStorage.getItem(POST_PAGE_NAV_STATE_KEY);
+        if (!raw) return null;
+        const parsed = JSON.parse(raw);
+        return parsed && typeof parsed === 'object' ? parsed : null;
+    } catch {
+        return null;
+    }
+};
+
+const writePostPageNavState = (state) => {
+    try {
+        sessionStorage.setItem(POST_PAGE_NAV_STATE_KEY, JSON.stringify(state));
+    } catch {
+        // Ignore storage failures (private mode/quota issues)
+    }
+};
 
 const commentInputStyle = {
     '& .MuiFilledInput-root': {
@@ -788,12 +808,21 @@ const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
     const [returnProfileUserId, setReturnProfileUserId] = useState(null);
     const [profileReturnEnabled, setProfileReturnEnabled] = useState(false);
     const [profileReturnUserId, setProfileReturnUserId] = useState(null);
+    const restoredNavStateRef = useRef(readPostPageNavState());
 
     // On mount: if URL contains ?article=<id>, try to open that article in detail view
     useEffect(() => {
         const params = new URLSearchParams(window.location.search);
-        const articleId = params.get('article');
+        const articleIdFromUrl = params.get('article');
+        const articleIdFromState = restoredNavStateRef.current?.selectedArticleId;
+        const articleId = articleIdFromUrl || articleIdFromState;
         if (!articleId) return;
+
+        if (!articleIdFromUrl && articleIdFromState) {
+            params.set('article', String(articleIdFromState));
+            const nextUrl = `${window.location.pathname}?${params.toString()}${window.location.hash}`;
+            window.history.replaceState({}, '', nextUrl);
+        }
 
         let cancelled = false;
 
@@ -898,10 +927,64 @@ const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
     useEffect(() => {
         const init = async () => {
             await checkAuth();
-            await fetchArticlesPage(1);
+            const restored = restoredNavStateRef.current;
+            const allowedTypes = ['random', 'recommend', 'search', 'tags'];
+            const restoredType = allowedTypes.includes(restored?.paginationType)
+                ? restored.paginationType
+                : 'random';
+
+            if (restoredType === 'search') {
+                const restoredQuery = (restored?.searchQuery ?? '').trim();
+                setIsSearchMode(true);
+                setPaginationType('search');
+                setSearchQuery(restoredQuery);
+                searchQueryRef.current = restoredQuery;
+                await fetchArticlesPage(1, 'search', { force: true, searchQuery: restoredQuery });
+                return;
+            }
+
+            if (restoredType === 'tags') {
+                const restoredTagIds = Array.isArray(restored?.selectedTagIds) ? restored.selectedTagIds : [];
+                setSelectedTagIds(restoredTagIds);
+                setPaginationType('tags');
+                await fetchArticlesPage(1, 'tags', { force: true, tagIds: restoredTagIds });
+                return;
+            }
+
+            setPaginationType(restoredType);
+            await fetchArticlesPage(1, restoredType, { force: true });
         };
         init();
     }, []);
+
+    useEffect(() => {
+        writePostPageNavState({
+            paginationType,
+            isSearchMode,
+            searchQuery,
+            selectedTagIds,
+            selectedArticleId: isViewingDetailPage ? (selectedPost?.article_id ?? null) : null,
+        });
+    }, [paginationType, isSearchMode, searchQuery, selectedTagIds, isViewingDetailPage, selectedPost]);
+
+    useEffect(() => {
+        const currentUrl = new URL(window.location.href);
+        const currentArticleParam = currentUrl.searchParams.get('article');
+        const detailArticleId = isViewingDetailPage ? String(selectedPost?.article_id ?? '') : '';
+
+        if (detailArticleId) {
+            if (currentArticleParam !== detailArticleId) {
+                currentUrl.searchParams.set('article', detailArticleId);
+                window.history.replaceState({}, '', `${currentUrl.pathname}${currentUrl.search}${currentUrl.hash}`);
+            }
+            return;
+        }
+
+        if (currentArticleParam) {
+            currentUrl.searchParams.delete('article');
+            window.history.replaceState({}, '', `${currentUrl.pathname}${currentUrl.search}${currentUrl.hash}`);
+        }
+    }, [isViewingDetailPage, selectedPost]);
 
     useEffect(() => {
         return () => {
@@ -2028,15 +2111,16 @@ const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
                 {publishNotice && (
                     <Box
                         sx={{
-                            position: 'sticky',
-                            top: { xs: 'calc(72px + env(safe-area-inset-top, 0px))', md: 20 },
-                            zIndex: 40,
-                            width: '100%',
+                            position: 'fixed',
+                            left: '50%',
+                            bottom: { xs: 'calc(14px + env(safe-area-inset-bottom, 0px))', md: 20 },
+                            transform: 'translateX(-50%)',
+                            zIndex: 1500,
+                            width: 'auto',
                             display: 'flex',
                             justifyContent: 'center',
                             px: 1,
                             pointerEvents: 'none',
-                            mb: 1,
                         }}
                     >
                         <Box
@@ -2048,7 +2132,7 @@ const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
                                 color: '#0f0f0f',
                                 fontWeight: 700,
                                 boxShadow: '0 8px 24px rgba(0,0,0,0.35)',
-                                maxWidth: '92%',
+                                maxWidth: { xs: '92vw', sm: '560px' },
                                 textAlign: 'center',
                             }}
                         >
