@@ -79,6 +79,20 @@ const faqItems = [
         answer:
             'Раздел «Полезные материалы» содержит подборку документации и обучающих ссылок. Также используйте поиск и фильтры в ленте.',
     },
+    {
+        question: 'Какие горячие клавиши доступны в редакторе?',
+        answer:
+            'В текстовом редакторе поддерживаются:\n' +
+            'Ctrl+B - жирный текст\n' +
+            'Ctrl+I - курсив\n' +
+            'Ctrl+U - подчеркивание\n' +
+            'Ctrl+Shift+8 - маркированный список\n' +
+            'Ctrl+Shift+7 - нумерованный список\n' +
+            'Ctrl+Alt+2 - заголовок H2\n' +
+            'Ctrl+K - добавить ссылку\n' +
+            'Ctrl+Shift+0 - сброс цвета текста к стандартному\n\n' +
+            'В тулбаре редактора справа есть маленький значок «!». Нажмите его, чтобы открыть мини-инструкцию с этими сочетаниями.',
+    },
 ];
 
 const FaqModal = ({ open, handleClose }) => {
@@ -126,7 +140,7 @@ const FaqModal = ({ open, handleClose }) => {
                         >
                             <Typography sx={{ fontWeight: 600 }}>{item.question}</Typography>
                         </AccordionSummary>
-                        <AccordionDetails sx={{ px: 2, pb: 2, color: '#cfcfcf' }}>
+                        <AccordionDetails sx={{ px: 2, pb: 2, color: '#cfcfcf', whiteSpace: 'pre-line' }}>
                             {item.answer}
                         </AccordionDetails>
                     </Accordion>
