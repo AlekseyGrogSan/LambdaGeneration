@@ -45,7 +45,7 @@ namespace LambdaGeneration.API.Application.Services
             await _articlesRepository.Delete(article_id);
         }
 
-        public async Task<Articles?> Update(Guid article_id, Guid authorId, string new_title, string new_content, string new_preview, string file_path)
+        public async Task<Articles?> Update(Guid article_id, Guid authorId, string new_title, string new_content, string new_preview, string? file_path)
         {
             var a = await _articlesRepository.GetById(article_id);
             if (a.AuthorID != authorId)

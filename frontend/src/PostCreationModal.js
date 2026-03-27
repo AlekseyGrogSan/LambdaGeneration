@@ -274,7 +274,7 @@ const EditorToolbar = ({ editorRef }) => {
 
 
 // --- ОБНОВЛЕННЫЙ КОМПОНЕНТ: Создание поста (PostCreationModal) ---
-const PostCreationModal = ({ open, handleClose, onUnauthorized, onPostSuccess }) => {
+const PostCreationModal = ({ open, handleClose, onUnauthorized, onPostSuccess, onPublishSuccessMessage }) => {
     // 1. Состояние для заголовка
     const [title, setTitle] = useState('');
     // 2. Состояние для анонса/превью
@@ -482,7 +482,11 @@ const PostCreationModal = ({ open, handleClose, onUnauthorized, onPostSuccess })
 
             // 3. Успешная публикация (Status 200 OK или 204 No Content)
             
-            showNotification('Статья успешно опубликована!', 'success');
+            if (onPublishSuccessMessage) {
+                onPublishSuccessMessage('Статья успешно опубликована!');
+            } else {
+                showNotification('Статья успешно опубликована!', 'success');
+            }
             console.log('Статья успешно создана (Статус:', response.status, '). Бэкенд вернул пустое тело.');
 
             // ✅ КЛЮЧЕВОЕ ИЗМЕНЕНИЕ: Вызов функции обновления ленты

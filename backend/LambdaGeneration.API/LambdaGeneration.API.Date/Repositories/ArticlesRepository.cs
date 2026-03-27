@@ -66,16 +66,27 @@ namespace LambdaGeneration.API.Date.Repositories
             return Map(article_entity);
         }
 
-        public async Task<Articles?> Update(Guid article_id, string new_title, string new_content, string new_preview, string file_path)
+        public async Task<Articles?> Update(Guid article_id, string new_title, string new_content, string new_preview, string? file_path)
         {
-            await _context.Articles
-                .Where(a => a.ArticleID == article_id)
-                .ExecuteUpdateAsync(setter => setter
+            var query = _context.Articles.Where(a => a.ArticleID == article_id);
+
+            if (file_path is null)
+            {
+                await query.ExecuteUpdateAsync(setter => setter
+                    .SetProperty(ar => ar.ArticleTitle, new_title)
+                    .SetProperty(ar => ar.ArticleContent, new_content)
+                    .SetProperty(ar => ar.ArticlePreview, new_preview)
+                );
+            }
+            else
+            {
+                await query.ExecuteUpdateAsync(setter => setter
                     .SetProperty(ar => ar.ArticleTitle, new_title)
                     .SetProperty(ar => ar.ArticleContent, new_content)
                     .SetProperty(ar => ar.ArticlePreview, new_preview)
                     .SetProperty(ar => ar.FilePath, file_path)
                 );
+            }
 
             await _context.SaveChangesAsync();
 

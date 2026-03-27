@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
     Modal,
     Box,
@@ -258,6 +258,57 @@ const getAuthHeaders = () => {
     };
 };
 
+const flattenErrorMessages = (errors) => {
+    if (!errors) return '';
+    if (typeof errors === 'string') return errors;
+    if (Array.isArray(errors)) {
+        return errors.filter(Boolean).join(' ');
+    }
+    if (typeof errors === 'object') {
+        return Object.entries(errors)
+            .map(([field, value]) => {
+                const messages = Array.isArray(value) ? value : [value];
+                const joined = messages.filter(Boolean).join(' ');
+                return joined ? `${field}: ${joined}` : '';
+            })
+            .filter(Boolean)
+            .join(' ');
+    }
+    return '';
+};
+
+const extractApiErrorMessage = async (response, fallback = 'Ошибка запроса') => {
+    const clone = response.clone();
+
+    try {
+        const payload = await response.json();
+        if (payload) {
+            if (payload.message) return payload.message;
+            if (payload.detail) return payload.detail;
+            if (payload.error) {
+                const reason = payload.reason ? ` Причина: ${payload.reason}` : '';
+                const suggestion = payload.suggestion ? ` Рекомендация: ${payload.suggestion}` : '';
+                return `${payload.error}${reason}${suggestion}`.trim();
+            }
+            const flattened = flattenErrorMessages(
+                payload.errors ?? payload.Errors ?? payload.modelState ?? payload.response ?? payload
+            );
+            if (flattened) return flattened;
+        }
+    } catch {
+        // Ignore JSON parse errors
+    }
+
+    try {
+        const text = await clone.text();
+        if (text) return text;
+    } catch {
+        // Ignore text parse errors
+    }
+
+    return fallback;
+};
+
 // ✅ ДОБАВЛЕН onDeleteSuccess
 const EditArticleModal = ({ open, handleClose, post, onUpdateSuccess, onDeleteSuccess, container, disablePortal }) => {
     // Режим: 'content' или 'tags'
@@ -277,15 +328,6 @@ const EditArticleModal = ({ open, handleClose, post, onUpdateSuccess, onDeleteSu
     
     const editorRef = useRef(null);
     const fileInputRef = useRef(null);
-    const existingPictureFileRef = useRef(null);
-    const existingPictureFetchPromiseRef = useRef(null);
-
-    const existingPictureUrl = useMemo(() => {
-        if (!post) return '';
-        const path = post.file_path || post.filePath || post.articleImageUrl || post.article_image_url || post.picture || '';
-        return buildArticleImageUrl(API_BASE_URL, path);
-    }, [post]);
-
     useEffect(() => {
         if (post && open) {
             setEditMode('content'); // Сброс режима при открытии
@@ -317,11 +359,6 @@ const EditArticleModal = ({ open, handleClose, post, onUpdateSuccess, onDeleteSu
             }
         };
     }, [imagePreview]);
-
-    useEffect(() => {
-        existingPictureFileRef.current = null;
-        existingPictureFetchPromiseRef.current = null;
-    }, [existingPictureUrl, open]);
 
     const handleContentChange = () => {
         if (editorRef.current) {
@@ -378,38 +415,6 @@ const EditArticleModal = ({ open, handleClose, post, onUpdateSuccess, onDeleteSu
         }
     };
 
-    const getPictureForUpload = useCallback(async (selectedFile) => {
-        if (selectedFile) return selectedFile;
-        if (!existingPictureUrl) return null;
-        if (existingPictureFileRef.current) return existingPictureFileRef.current;
-        if (!existingPictureFetchPromiseRef.current) {
-            existingPictureFetchPromiseRef.current = (async () => {
-                const response = await fetch(existingPictureUrl, { credentials: 'include' });
-                if (!response.ok) {
-                    throw new Error('Unable to download the current article image. Please choose a new photo.');
-                }
-                const blob = await response.blob();
-                let filename = 'article-image.png';
-                try {
-                    const urlObj = new URL(existingPictureUrl, window.location.origin);
-                    const candidate = urlObj.pathname.split('/').pop();
-                    if (candidate && candidate.includes('.')) filename = candidate;
-                } catch {
-                    const fallback = existingPictureUrl.split('/').pop()?.split('?')[0];
-                    if (fallback && fallback.includes('.')) filename = fallback;
-                }
-                const file = new File([blob], filename, { type: blob.type || 'image/png' });
-                existingPictureFileRef.current = file;
-                return file;
-            })();
-        }
-        try {
-            return await existingPictureFetchPromiseRef.current;
-        } finally {
-            existingPictureFetchPromiseRef.current = null;
-        }
-    }, [existingPictureUrl]);
-
     // ✅ НОВЫЙ МЕТОД: Удаление статьи
     const handleDeleteArticle = async () => {
         if (!window.confirm("Вы уверены, что хотите удалить эту статью? Это действие необратимо.")) {
@@ -434,8 +439,8 @@ const EditArticleModal = ({ open, handleClose, post, onUpdateSuccess, onDeleteSu
             } else if (response.status === 403) {
                  throw new Error("У вас нет прав для удаления этой статьи. (Вы не автор)");
             } else {
-                const errorText = await response.text();
-                throw new Error(`Ошибка удаления: ${errorText || response.statusText}`);
+                const errorText = await extractApiErrorMessage(response, response.statusText || 'Неизвестная ошибка');
+                throw new Error(`Ошибка удаления: ${errorText}`);
             }
         } catch (err) {
             setError(err.message);
@@ -451,22 +456,22 @@ const EditArticleModal = ({ open, handleClose, post, onUpdateSuccess, onDeleteSu
             return;
         }
 
+        if (!title.trim() || !preview.trim() || !content.trim()) {
+            setError('Для сохранения заполните название, превью и основной контент статьи.');
+            return;
+        }
+
         setIsLoading(true); setError(null); setSuccessMsg('');
         try {
-            const pictureFile = await getPictureForUpload(imageFile);
-            if (!pictureFile) {
-                const message = existingPictureUrl
-                    ? 'Unable to load the current article image. Please select a new photo before saving.'
-                    : 'This article does not have an image yet. Choose a file to save your changes.';
-                throw new Error(message);
-            }
             const formData = new FormData();
             const normalizedContent = normalizeContentForSubmit(content);
             formData.append('article_id', post.id);
             formData.append('article_title', title);
             formData.append('article_preview', preview);
             formData.append('article_content', normalizedContent);
-            formData.append('picture', pictureFile);
+            if (imageFile) {
+                formData.append('picture', imageFile);
+            }
 
             const response = await fetch(`${API_BASE_URL}/Articles/update`, {
                 method: 'PUT',
@@ -475,8 +480,8 @@ const EditArticleModal = ({ open, handleClose, post, onUpdateSuccess, onDeleteSu
             });
 
             if (!response.ok) {
-                const text = await response.text();
-                throw new Error(text || 'Ошибка обновления контента');
+                const errorMessage = await extractApiErrorMessage(response, 'Ошибка обновления контента');
+                throw new Error(errorMessage);
             }
             const updatedData = await response.json();
             
@@ -504,7 +509,10 @@ const EditArticleModal = ({ open, handleClose, post, onUpdateSuccess, onDeleteSu
                 })
             });
 
-            if (!response.ok) throw new Error('Ошибка обновления тегов');
+            if (!response.ok) {
+                const errorMessage = await extractApiErrorMessage(response, 'Ошибка обновления тегов');
+                throw new Error(errorMessage);
+            }
             const updatedData = await response.json();
 
             // Передаем только article_tags для обновления

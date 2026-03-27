@@ -857,11 +857,24 @@ const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
     const [feedEditInputs, setFeedEditInputs] = useState({});
     const [feedEditEditorOpen, setFeedEditEditorOpen] = useState({});
     const feedCommentAuthorCacheRef = useRef({});
+    const [publishNotice, setPublishNotice] = useState('');
+    const publishNoticeTimerRef = useRef(null);
 
     const articlesContainerRef = useRef(null); 
     const postRefs = useRef({}); 
     const setPostRef = (id) => (el) => { postRefs.current[id] = el; };
     const lastCenteredIdRef = useRef(null);
+
+    const showFeedPublishNotice = useCallback((message) => {
+        setPublishNotice(message);
+        if (publishNoticeTimerRef.current) {
+            clearTimeout(publishNoticeTimerRef.current);
+        }
+        publishNoticeTimerRef.current = setTimeout(() => {
+            setPublishNotice('');
+            publishNoticeTimerRef.current = null;
+        }, 3000);
+    }, []);
 
     
     const checkAuth = async () => {
@@ -888,6 +901,14 @@ const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
             await fetchArticlesPage(1);
         };
         init();
+    }, []);
+
+    useEffect(() => {
+        return () => {
+            if (publishNoticeTimerRef.current) {
+                clearTimeout(publishNoticeTimerRef.current);
+            }
+        };
     }, []);
 
     const handleOpen = (options = {}) => {
@@ -2004,6 +2025,38 @@ const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
                 }}
                 ref={articlesContainerRef} 
             >
+                {publishNotice && (
+                    <Box
+                        sx={{
+                            position: 'sticky',
+                            top: { xs: 'calc(72px + env(safe-area-inset-top, 0px))', md: 20 },
+                            zIndex: 40,
+                            width: '100%',
+                            display: 'flex',
+                            justifyContent: 'center',
+                            px: 1,
+                            pointerEvents: 'none',
+                            mb: 1,
+                        }}
+                    >
+                        <Box
+                            sx={{
+                                px: 2,
+                                py: 1,
+                                borderRadius: '12px',
+                                backgroundColor: 'rgba(0, 191, 165, 0.92)',
+                                color: '#0f0f0f',
+                                fontWeight: 700,
+                                boxShadow: '0 8px 24px rgba(0,0,0,0.35)',
+                                maxWidth: '92%',
+                                textAlign: 'center',
+                            }}
+                        >
+                            {publishNotice}
+                        </Box>
+                    </Box>
+                )}
+
                 {!isViewingDetailPage && (
                     <Box
                         sx={{
@@ -2527,6 +2580,7 @@ const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
                 open={isPostModalOpen} 
                 handleClose={handlePostClose} 
                 onUnauthorized={handleOpen}
+                onPublishSuccessMessage={showFeedPublishNotice}
                 onPostSuccess={() => {
                     setArticles([]);
                     setPageNumber(1);
