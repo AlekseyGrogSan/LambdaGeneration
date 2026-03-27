@@ -101,6 +101,7 @@ const inputStyle = {
 
 // --- КОМПОНЕНТ: Панель Инструментов Редактора ---
 const EditorToolbar = ({ editorRef }) => {
+    const selectionRangeRef = useRef(null);
     const [activeStyles, setActiveStyles] = useState({
         bold: false,
         italic: false,
@@ -134,6 +135,26 @@ const EditorToolbar = ({ editorRef }) => {
         { combo: 'Ctrl+Shift+0', action: 'Сбросить цвет текста (по умолчанию)' }
     ];
 
+    const saveSelection = useCallback(() => {
+        const editor = editorRef.current;
+        const selection = window.getSelection();
+        if (!editor || !selection || selection.rangeCount === 0) return;
+
+        const range = selection.getRangeAt(0);
+        if (editor.contains(range.commonAncestorContainer)) {
+            selectionRangeRef.current = range.cloneRange();
+        }
+    }, [editorRef]);
+
+    const restoreSelection = useCallback(() => {
+        const selection = window.getSelection();
+        const savedRange = selectionRangeRef.current;
+        if (!selection || !savedRange) return;
+
+        selection.removeAllRanges();
+        selection.addRange(savedRange);
+    }, []);
+
     // Функция проверки: какие стили активны в месте курсора
     const updateToolbarStatus = useCallback(() => {
         setActiveStyles({
@@ -154,20 +175,38 @@ const EditorToolbar = ({ editorRef }) => {
         
         editor.addEventListener('mouseup', updateToolbarStatus);
         editor.addEventListener('keyup', updateToolbarStatus);
+        editor.addEventListener('mouseup', saveSelection);
+        editor.addEventListener('keyup', saveSelection);
 
         return () => {
             editor.removeEventListener('mouseup', updateToolbarStatus);
             editor.removeEventListener('keyup', updateToolbarStatus);
+            editor.removeEventListener('mouseup', saveSelection);
+            editor.removeEventListener('keyup', saveSelection);
         };
-    }, [editorRef, updateToolbarStatus]);
+    }, [editorRef, updateToolbarStatus, saveSelection]);
 
     const applyCommand = useCallback((command, value = null) => {
         if (editorRef.current) {
             editorRef.current.focus();
+            restoreSelection();
         }
         document.execCommand(command, false, value);
+        saveSelection();
         updateToolbarStatus();
-    }, [editorRef, updateToolbarStatus]);
+    }, [editorRef, updateToolbarStatus, restoreSelection, saveSelection]);
+
+    const applyTextColor = useCallback((color) => {
+        if (editorRef.current) {
+            editorRef.current.focus();
+            restoreSelection();
+        }
+
+        document.execCommand('styleWithCSS', false, true);
+        document.execCommand('foreColor', false, color);
+        saveSelection();
+        updateToolbarStatus();
+    }, [editorRef, restoreSelection, saveSelection, updateToolbarStatus]);
 
     useEffect(() => {
         const editor = editorRef.current;
@@ -223,7 +262,7 @@ const EditorToolbar = ({ editorRef }) => {
 
             if (event.shiftKey && key === '0') {
                 event.preventDefault();
-                applyCommand('foreColor', '#ffffff');
+                applyTextColor('#ffffff');
             }
         };
 
@@ -232,7 +271,7 @@ const EditorToolbar = ({ editorRef }) => {
         return () => {
             editor.removeEventListener('keydown', onKeyDown);
         };
-    }, [editorRef, applyCommand]);
+    }, [editorRef, applyCommand, applyTextColor]);
     
     const insertCodeBlock = useCallback(() => {
         const lang = prompt('Введите язык программирования (например, python, javascript, cpp) или оставьте пустым:', 'text');
@@ -333,7 +372,7 @@ const EditorToolbar = ({ editorRef }) => {
                 <FormatListNumberedIcon />
             </IconButton>
 
-            <IconButton size="small" onClick={(e) => setTextColorAnchor(e.currentTarget)} sx={{ color: '#ffffff', flex: '0 0 auto' }} title="Цвет текста">
+            <IconButton size="small" onClick={(e) => { saveSelection(); setTextColorAnchor(e.currentTarget); }} sx={{ color: '#ffffff', flex: '0 0 auto' }} title="Цвет текста">
                 <FormatColorTextIcon />
             </IconButton>
 
@@ -351,7 +390,7 @@ const EditorToolbar = ({ editorRef }) => {
             >
                 <MenuItem
                     onClick={() => {
-                        applyCommand('foreColor', '#ffffff');
+                        applyTextColor('#ffffff');
                         setTextColorAnchor(null);
                     }}
                 >
@@ -364,7 +403,7 @@ const EditorToolbar = ({ editorRef }) => {
                     <MenuItem
                         key={colorOption.value}
                         onClick={() => {
-                            applyCommand('foreColor', colorOption.value);
+                            applyTextColor(colorOption.value);
                             setTextColorAnchor(null);
                         }}
                         sx={{ display: 'flex', gap: 1.5, alignItems: 'center' }}
