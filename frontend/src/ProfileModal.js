@@ -1348,7 +1348,13 @@ const ProfileModal = ({ open, handleClose, userId, onUnauthorized, onLogout, onP
                 <DialogTitle sx={{ color: '#00bfa5', fontWeight: 'bold' }}>
                     Мои подписки
                 </DialogTitle>
-                <DialogContent>
+                <DialogContent sx={{
+                    overflowY: 'auto',
+                    '&::-webkit-scrollbar': { width: '8px' },
+                    '&::-webkit-scrollbar-track': { background: 'rgba(255, 255, 255, 0.05)', borderRadius: '10px' },
+                    '&::-webkit-scrollbar-thumb': { background: '#00bfa5', borderRadius: '10px' },
+                    '&::-webkit-scrollbar-thumb:hover': { background: '#009688' }
+                }}>
                     {isFollowingListLoading && (
                         <Box sx={{ display: 'flex', justifyContent: 'center', py: 3 }}>
                             <CircularProgress size={28} sx={{ color: '#00bfa5' }} />
@@ -1417,7 +1423,13 @@ const ProfileModal = ({ open, handleClose, userId, onUnauthorized, onLogout, onP
                 <DialogTitle sx={{ color: '#00bfa5', fontWeight: 'bold' }}>
                     Понравившиеся статьи
                 </DialogTitle>
-                <DialogContent>
+                <DialogContent sx={{
+                    overflowY: 'auto',
+                    '&::-webkit-scrollbar': { width: '8px' },
+                    '&::-webkit-scrollbar-track': { background: 'rgba(255, 255, 255, 0.05)', borderRadius: '10px' },
+                    '&::-webkit-scrollbar-thumb': { background: '#00bfa5', borderRadius: '10px' },
+                    '&::-webkit-scrollbar-thumb:hover': { background: '#009688' }
+                }}>
                     {isLikesListLoading && (
                         <Box sx={{ display: 'flex', justifyContent: 'center', py: 3 }}>
                             <CircularProgress size={28} sx={{ color: '#00bfa5' }} />

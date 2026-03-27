@@ -6,6 +6,7 @@ using LambdaGeneration.API.Date;
 using LambdaGeneration.API.Date.Repositories;
 using LambdaGeneration.API.Infrastructure;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
@@ -167,41 +168,48 @@ namespace LambdaGeneration.API.Midleware
 
         public static int ToTags(string tagsString)
         {
-            return tagsString switch
+            if (string.IsNullOrWhiteSpace(tagsString))
+            {
+                return 0;
+            }
+
+            var normalizedTag = tagsString.Trim().ToLowerInvariant();
+
+            return normalizedTag switch
             {
                 // Programming Languages
-                "C#" or "CSharp" => 1,
-                "Java" => 2,
-                "Python" => 3,
-                "JavaScript" => 4,
-                "TypeScript" => 5,
-                "Go" => 6,
-                "Rust" => 7,
-                "Kotlin" => 8,
-                "Swift" => 9,
-                "PHP" => 10,
-                "C++" => 11,
-                "C" => 12,
-                "Ruby" => 13,
+                "c#" or "csharp" => 1,
+                "java" => 2,
+                "python" => 3,
+                "javascript" => 4,
+                "typescript" => 5,
+                "go" => 6,
+                "rust" => 7,
+                "kotlin" => 8,
+                "swift" => 9,
+                "php" => 10,
+                "c++" => 11,
+                "c" => 12,
+                "ruby" => 13,
 
                 // Frameworks and Libraries
-                ".NET" or "DotNet" => 14,
-                "ASP.NET" or "ASPNET" => 15,
-                "Entity Framework" or "EntityFramework" => 16,
-                "Spring" => 17,
-                "React" => 18,
-                "Angular" => 19,
-                "Vue" => 20,
-                "Node.js" or "NodeJS" => 21,
-                "Django" => 22,
-                "Flask" => 23,
+                ".net" or "dotnet" => 14,
+                "asp.net" or "aspnet" => 15,
+                "entity framework" or "entityframework" => 16,
+                "spring" => 17,
+                "react" => 18,
+                "angular" => 19,
+                "vue" => 20,
+                "node.js" or "nodejs" => 21,
+                "django" => 22,
+                "flask" => 23,
 
-                "Math" => 24,
-                "Data Structures" or "DataStructures" => 25,
-                "LLM" => 26,
-                "ML" => 27,
-                "PascalABC" => 28,
-                "Unity" => 29,
+                "math" => 24,
+                "data structures" or "datastructures" => 25,
+                "llm" => 26,
+                "ml" => 27,
+                "pascalabc" => 28,
+                "unity" => 29,
 
                 _ => 0
             };
@@ -216,6 +224,7 @@ namespace LambdaGeneration.API.Midleware
                 var articlesService = services.GetRequiredService<IArticlesService>();
 
                 var usersRepository = services.GetRequiredService<IUsersRepository>();
+                var dbContext = services.GetRequiredService<LambdaGenerationDbContext>();
 
                 try
                 {
@@ -252,6 +261,15 @@ namespace LambdaGeneration.API.Midleware
                         string preview = parts[1].Trim();
                         string tagsRaw = parts[2].Trim();
                         string content = parts[3].Trim();
+
+                        var alreadyExists = await dbContext.Articles
+                            .AsNoTracking()
+                            .AnyAsync(a => a.AuthorID == admin.UserID && a.ArticleTitle == title);
+
+                        if (alreadyExists)
+                        {
+                            continue;
+                        }
 
 
                         List<int> tagIds = new List<int>();
