@@ -77,7 +77,7 @@ namespace LambdaGeneration.API.Controllers
                 
                 var author_id = GetUserID();
 
-                string file_path = null; 
+                string? file_path = null;
                 if (request.picture != null)
                 {
                     file_path = $"{Guid.NewGuid()}{Path.GetExtension(request.picture.FileName)}";
@@ -155,6 +155,7 @@ namespace LambdaGeneration.API.Controllers
                     return BadRequest(new
                     {
                         error = "Статья не прошла проверку",
+                        reason = resultModeration.Reason,
                         flags = resultModeration.Flags,
                         field = "post"
                     });
@@ -188,8 +189,12 @@ namespace LambdaGeneration.API.Controllers
                 return Ok(new UpdateArticlesResponse(article.ArticleID, article.ArticleTitle, article.ArticlePreview, article.ArticleContent, ArticleTagsResponse, article.CreatedDate, article.CountLikes, article.CountComments, article.FilePath));
             }   
             catch (Exception ex)
-            { 
-                return BadRequest(ex.Message); 
+            {
+                return BadRequest(new
+                {
+                    error = "Не удалось обновить статью",
+                    detail = ex.Message
+                });
             }
         }
 
