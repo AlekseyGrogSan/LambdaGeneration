@@ -24,6 +24,7 @@ const ConfirmationDialog = ({
             onClose={onCancel}
             maxWidth="xs"
             fullWidth
+            sx={{ zIndex: 9999 }}
             PaperProps={{
                 sx: {
                     backgroundColor: '#1e1e1e', // matching lambda generation dark theme mostly

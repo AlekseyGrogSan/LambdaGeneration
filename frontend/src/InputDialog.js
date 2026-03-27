@@ -15,7 +15,7 @@ const InputDialog = ({ open, title, label, initialValue = '', onConfirm, onCance
     };
 
     return (
-        <Dialog open={open} onClose={onCancel} PaperProps={{ sx: { bgcolor: '#2a2a2a', color: '#fff', minWidth: '300px' } }}>
+        <Dialog open={open} onClose={onCancel} sx={{ zIndex: 9999 }} PaperProps={{ sx: { bgcolor: '#2a2a2a', color: '#fff', minWidth: '300px' } }}>
             <DialogTitle>{title}</DialogTitle>
             <DialogContent>
                 <TextField
