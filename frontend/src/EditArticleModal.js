@@ -72,8 +72,32 @@ const inputStyle = {
         color: 'white',
         '&:hover': { backgroundColor: '#454545' },
         '&.Mui-focused': { backgroundColor: '#454545' },
+        overflowY: 'auto',
+        '&::-webkit-scrollbar': {
+            width: '8px',
+        },
+        '&::-webkit-scrollbar-track': {
+            background: 'rgba(255, 255, 255, 0.05)',
+            borderRadius: '10px',
+        },
+        '&::-webkit-scrollbar-thumb': {
+            background: '#00bfa5',
+            borderRadius: '10px',
+        },
+        '&::-webkit-scrollbar-thumb:hover': {
+            background: '#009688',
+        },
     },
     '& .MuiInputLabel-root': { color: '#bdbdbd' },
+    '& .MuiInputBase-input': {
+        padding: '16px 12px 16px 12px',
+        maxHeight: '4.5em',
+        overflowY: 'auto',
+        '&::-webkit-scrollbar': { width: '8px' },
+        '&::-webkit-scrollbar-track': { background: 'rgba(255, 255, 255, 0.05)', borderRadius: '10px' },
+        '&::-webkit-scrollbar-thumb': { background: '#00bfa5', borderRadius: '10px' },
+        '&::-webkit-scrollbar-thumb:hover': { background: '#009688' }
+    }
 };
 
 const EditorToolbar = ({ editorRef }) => {

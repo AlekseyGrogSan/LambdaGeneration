@@ -157,20 +157,15 @@ namespace LambdaGeneration.API.Date.Repositories
 
             int skip = (page - 1) * countPages;
 
-            // 3. Теперь фильтруем статьи по тегам
-            var articles = await _context.Articles
-                .OrderByDescending(a => a.CreatedDate)
-                .OrderBy(a => EF.Functions.Random())
-                .ToListAsync();
-
-            var result = articles
+            // 3. Фильтруем и пагинируем на стороне БД, чтобы рекомендации не деградировали при росте таблицы.
+            return await _context.Articles
+                .AsNoTracking()
                 .Where(a => a.ArticleTags.Any(tag => relevantArticlesTags.Contains(tag)))
+                .OrderByDescending(a => a.CreatedDate)
                 .Skip(skip)
                 .Take(countPages)
-                .Select(Map)
-                .ToList();
-
-            return result;
+                .Select(a => Map(a))
+                .ToListAsync();
         }
 
         public async Task<List<Articles>> GetRandomArticles(int page, int countPages)
@@ -411,17 +406,15 @@ namespace LambdaGeneration.API.Date.Repositories
                 .ToListAsync();
             }
 
-            // Фильтруем статьи по выбранным тегам
-            var articles = await _context.Articles
+            // Фильтруем статьи по выбранным тегам до пагинации, иначе релевантные статьи могут "теряться".
+            return await _context.Articles
+                .AsNoTracking()
+                .Where(a => a.ArticleTags.Any(t => tags.Contains(t)))
                 .OrderByDescending(a => a.CreatedDate)
                 .Skip(skip)
                 .Take(pageSize)
                 .Select(a => Map(a))
                 .ToListAsync();
-
-            return articles
-                .Where(a => a.ArticleTags.Any(t => tags.Contains(t)))
-                .ToList();
         }
 
         public async Task<List<Articles>> GetLatestAsync(int page, int countPages)
