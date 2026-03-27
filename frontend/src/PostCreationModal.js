@@ -280,7 +280,7 @@ const EditorToolbar = ({ editorRef }) => {
         if (lang === null) return; // cancelled
         
         // We use a table because contenteditable handles cursor placement around tables much better than nested divs
-        const codeHTML = `<br><table class="code-block-table" style="width: 100%; background: #282c34; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1); border-collapse: separate; border-spacing: 0; margin: 10px 0; overflow: hidden;">
+        const codeHTML = `<br><table class="code-block-table" style="width: 100%; background: #282c34; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1); border-collapse: separate; border-spacing: 0; margin: 10px 0; overflow: hidden; table-layout: fixed;">
             <thead>
                 <tr>
                     <th style="padding: 4px 12px; color: rgba(255,255,255,0.5); font-family: monospace; font-size: 11px; text-align: right; user-select: none; font-weight: normal; border-bottom: 1px solid rgba(255,255,255,0.1);">
@@ -291,7 +291,7 @@ const EditorToolbar = ({ editorRef }) => {
             <tbody>
                 <tr>
                     <td style="padding: 12px;">
-                        <pre style="margin: 0; white-space: pre-wrap; font-family: Consolas, monospace; font-size: 14px;"><code class="${lang ? 'language-' + lang : 'language-text'}">// Ваш код...</code></pre>
+                        <pre style="margin: 0; white-space: pre-wrap; word-wrap: break-word; word-break: break-all; overflow-wrap: break-word; font-family: Consolas, monospace; font-size: 14px; max-width: 100%;"><code class="${lang ? 'language-' + lang : 'language-text'}">// Ваш код...</code></pre>
                     </td>
                 </tr>
             </tbody>
