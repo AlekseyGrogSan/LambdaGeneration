@@ -113,6 +113,7 @@ const EditorToolbar = ({ editorRef }) => {
     const [fontSizeAnchor, setFontSizeAnchor] = useState(null);
     const [textColorAnchor, setTextColorAnchor] = useState(null);
     const [helpAnchor, setHelpAnchor] = useState(null);
+    const [currentTextColor, setCurrentTextColor] = useState('#ffffff');
 
     const basicTextColors = [
         { name: 'Черный', value: '#000000' },
@@ -204,6 +205,7 @@ const EditorToolbar = ({ editorRef }) => {
 
         document.execCommand('styleWithCSS', false, true);
         document.execCommand('foreColor', false, color);
+        setCurrentTextColor(color);
         saveSelection();
         updateToolbarStatus();
     }, [editorRef, restoreSelection, saveSelection, updateToolbarStatus]);
@@ -372,7 +374,18 @@ const EditorToolbar = ({ editorRef }) => {
                 <FormatListNumberedIcon />
             </IconButton>
 
-            <IconButton size="small" onClick={(e) => { saveSelection(); setTextColorAnchor(e.currentTarget); }} sx={{ color: '#ffffff', flex: '0 0 auto' }} title="Цвет текста">
+            <IconButton
+                size="small"
+                onClick={(e) => { saveSelection(); setTextColorAnchor(e.currentTarget); }}
+                sx={{
+                    color: currentTextColor,
+                    flex: '0 0 auto',
+                    borderBottom: `2px solid ${currentTextColor}`,
+                    borderRadius: '4px',
+                    '&:hover': { backgroundColor: 'rgba(255,255,255,0.1)' }
+                }}
+                title="Цвет текста"
+            >
                 <FormatColorTextIcon />
             </IconButton>
 
