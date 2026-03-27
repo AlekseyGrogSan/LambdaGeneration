@@ -359,6 +359,7 @@ const AdminPanelModal = ({ open, handleClose }) => {
     };
 
     return (
+        <>
         <Modal open={open} onClose={handleCloseModal}>
             <Box sx={modalStyle}>
                 <Typography variant="h5" sx={{ mb: 2, color: '#00bfa5' }}>
@@ -615,6 +616,7 @@ const AdminPanelModal = ({ open, handleClose }) => {
                     </Paper>
                 )}
             </Box>
+        </Modal>
 
             <ConfirmationDialog
                 open={confirmDialog.open}
@@ -626,8 +628,7 @@ const AdminPanelModal = ({ open, handleClose }) => {
                 cancelText="Отмена"
                 isLoading={actionLoading || commentsLoading}
             />
-
-        </Modal>
+        </>
     );
 };
 
