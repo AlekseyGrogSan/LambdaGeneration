@@ -1,0 +1,29 @@
+diff --git a/frontend/src/PostDetailPage.js b/frontend/src/PostDetailPage.js
+index c728792..6882921 100644
+--- a/frontend/src/PostDetailPage.js
++++ b/frontend/src/PostDetailPage.js
+@@ -78,23 +78,7 @@ const updateCommentInTree = (tree, commentId, updater) => tree.map((item) => {
+     return item;
+ });
+ 
+-const normalizeCodeBlockText = (block) => {
+-    let html = block.innerHTML || '';
+-    html = html.replace(/<br\s*[\/]?>/gi, '\n');
+-    html = html.replace(/<div[^>]*>/gi, '\n');
+-    html = html.replace(/<\/div>/gi, '');
+-    html = html.replace(/<p[^>]*>/gi, '\n');
+-    html = html.replace(/<\/p>/gi, '');
+-
+-    const temp = document.createElement('textarea');
+-    temp.innerHTML = html;
+-
+-    return (temp.value || '')
+-        .replace(/\r\n?/g, '\n')
+-        .replace(/\u200b/g, '')
+-        .trim();
+-};
+-
++const normalizeCodeBlockText = (block) => { let cleanText = block.innerText; if (cleanText === undefined) cleanText = block.textContent; return (cleanText || '').replace(/\\u200b/g, '').trim(); };
+ const CommentItem = ({
+     comment,
+     depth,

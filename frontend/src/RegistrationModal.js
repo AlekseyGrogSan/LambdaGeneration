@@ -83,8 +83,8 @@ const extractApiErrorMessage = async (response) => {
     return response.statusText || 'Ошибка запроса';
 };
 
-const RegistrationModal = ({ open, handleClose, onForgotPassword, onAuthSuccess }) => {
-    const [isRegisterMode, setIsRegisterMode] = useState(true);
+const RegistrationModal = ({ open, handleClose, onForgotPassword, onAuthSuccess, initialMode = 'login' }) => {
+    const [isRegisterMode, setIsRegisterMode] = useState(initialMode === 'register');
     const [formData, setFormData] = useState({
         userName: '',
         email: '',
@@ -98,6 +98,12 @@ const RegistrationModal = ({ open, handleClose, onForgotPassword, onAuthSuccess 
     const [pendingEmail, setPendingEmail] = useState('');
     const [avatarFile, setAvatarFile] = useState(null);
     const [avatarError, setAvatarError] = useState('');
+
+    useEffect(() => {
+        if (open) {
+            setIsRegisterMode(initialMode === 'register');
+        }
+    }, [open, initialMode]);
 
     useEffect(() => {
         if (!open) {

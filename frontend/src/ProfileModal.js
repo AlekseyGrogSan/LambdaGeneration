@@ -21,7 +21,10 @@ import {
     ListItemAvatar,
     ListItemText,
     Avatar,
-    Stack
+    Stack,
+    Menu,
+    MenuItem,
+    ListItemIcon
 } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
 import LogoutIcon from '@mui/icons-material/Logout';
@@ -29,6 +32,7 @@ import EditIcon from '@mui/icons-material/Edit';
 import SaveIcon from '@mui/icons-material/Save'; 
 import DeleteIcon from '@mui/icons-material/Delete'; 
 import VisibilityIcon from '@mui/icons-material/Visibility';
+import MoreVertIcon from '@mui/icons-material/MoreVert';
 import PostCard from './PostCard'; 
 import EditArticleModal from './EditArticleModal';
 import EmailVerificationModal from './EmailVerificationModal'; 
@@ -223,6 +227,10 @@ const ProfileModal = ({ open, handleClose, userId, onUnauthorized, onLogout, onP
     
     const [error, setError] = useState(null);
 
+    const [menuAnchorEl, setMenuAnchorEl] = useState(null);
+    const handleMenuOpen = (event) => setMenuAnchorEl(event.currentTarget);
+    const handleMenuClose = () => setMenuAnchorEl(null);
+
     // --- FETCHING LOGIC ---
 
     const fetchProfileData = async () => {
@@ -286,7 +294,7 @@ const ProfileModal = ({ open, handleClose, userId, onUnauthorized, onLogout, onP
                     if (likesResponse.ok) {
                         const likesJson = await likesResponse.json();
                         const likedArticlesRaw = likesJson.articles || likesJson || [];
-                        const mappedArticles = likedArticlesRaw.map(article => mapArticleFromApi(article));
+                        const mappedArticles = likedArticlesRaw.map(article => ({ ...mapArticleFromApi(article), isLiked: true }));
                         const enrichedArticles = await Promise.all(mappedArticles.map(enrichArticleWithAuthorProfile));
                         setLikesList(enrichedArticles);
                         setLikedArticlesCount(enrichedArticles.length);
@@ -676,9 +684,10 @@ const ProfileModal = ({ open, handleClose, userId, onUnauthorized, onLogout, onP
             if (!response.ok) throw new Error('Не удалось загрузить понравившиеся статьи.');
             const data = await response.json();
             const likedArticlesRaw = data.articles || data || [];
-            const likedArticles = likedArticlesRaw.map(article => mapArticleFromApi(article));
-            setLikesList(likedArticles);
-            setLikedArticlesCount(likedArticles.length);
+            const mappedArticles = likedArticlesRaw.map(article => ({ ...mapArticleFromApi(article), isLiked: true }));
+            const enrichedArticles = await Promise.all(mappedArticles.map(enrichArticleWithAuthorProfile));
+            setLikesList(enrichedArticles);
+            setLikedArticlesCount(enrichedArticles.length);
         } catch (err) {
             setLikesListError(err.message || 'Ошибка загрузки понравившихся статей.');
         } finally {
@@ -789,13 +798,52 @@ const ProfileModal = ({ open, handleClose, userId, onUnauthorized, onLogout, onP
         <>
             <Modal open={open} onClose={handleProfileModalClose}>
                 <Box sx={modalStyle} ref={profileModalRef}>
-                    
-                    <IconButton
-                        onClick={handleProfileModalClose}
-                        sx={{ position: 'absolute', top: { xs: 8, sm: 15 }, right: { xs: 8, sm: 15 }, color: '#bdbdbd', zIndex: 5 }}
-                    >
-                        <CloseIcon />
-                    </IconButton>
+                    {/* Left Actions */}
+                    {isMyProfile && !isEditingProfile && (
+                        <Box sx={{ position: 'absolute', top: { xs: 8, sm: 15 }, left: { xs: 8, sm: 15 }, zIndex: 5 }}>
+                            <IconButton onClick={handleMenuOpen} sx={{ color: '#bdbdbd' }}>
+                                <MoreVertIcon />
+                            </IconButton>
+                            <Menu
+                                anchorEl={menuAnchorEl}
+                                open={Boolean(menuAnchorEl)}
+                                onClose={handleMenuClose}
+                                slotProps={{
+                                    paper: {
+                                        sx: {
+                                            backgroundColor: '#2c2c2c',
+                                            color: 'white',
+                                            borderRadius: '8px',
+                                            boxShadow: '0 8px 16px rgba(0,0,0,0.5)',
+                                            border: '1px solid rgba(255, 255, 255, 0.1)',
+                                            mt: 1.5,
+                                        }
+                                    }
+                                }}
+                                transformOrigin={{ horizontal: 'left', vertical: 'top' }}
+                                anchorOrigin={{ horizontal: 'left', vertical: 'bottom' }}
+                            >
+                                <MenuItem onClick={() => { handleMenuClose(); onLogout && onLogout(); }} sx={{ color: '#ff5252', '&:hover': { backgroundColor: 'rgba(255, 82, 82, 0.1)' } }}>
+                                    <ListItemIcon><LogoutIcon sx={{ color: '#ff5252' }} fontSize="small" /></ListItemIcon>
+                                    <ListItemText>Выйти из аккаунта</ListItemText>
+                                </MenuItem>
+                                <MenuItem onClick={() => { handleMenuClose(); handleDeleteUserOpen(); }} sx={{ color: '#ff5252', '&:hover': { backgroundColor: 'rgba(255, 82, 82, 0.1)' } }}>
+                                    <ListItemIcon><DeleteIcon sx={{ color: '#ff5252' }} fontSize="small" /></ListItemIcon>
+                                    <ListItemText>Удалить аккаунт</ListItemText>
+                                </MenuItem>
+                            </Menu>
+                        </Box>
+                    )}
+
+                    {/* Right Close Action */}
+                    <Box sx={{ position: 'absolute', top: { xs: 8, sm: 15 }, right: { xs: 8, sm: 15 }, zIndex: 5 }}>
+                        <IconButton
+                            onClick={handleProfileModalClose}
+                            sx={{ color: '#bdbdbd', '&:hover': { backgroundColor: 'rgba(255,255,255,0.1)' } }}
+                        >
+                            <CloseIcon />
+                        </IconButton>
+                    </Box>
 
                     {isMyProfile && isEditingProfile ? (
                         <Box
@@ -1179,41 +1227,6 @@ const ProfileModal = ({ open, handleClose, userId, onUnauthorized, onLogout, onP
                         )}
                     </Box>
 
-
-                    {/* --- КНОПКИ УПРАВЛЕНИЯ АККАУНТОМ --- */}
-                    {isMyProfile && (
-                        <Box sx={{ p: { xs: 2, sm: 3 }, display: 'flex', justifyContent: 'center', gap: 2, flexWrap: 'wrap', borderTop: '1px solid #333' }}>
-                            <Button
-                                variant="text"
-                                startIcon={<LogoutIcon />}
-                                onClick={onLogout} 
-                                sx={{
-                                    color: '#ff5252',
-                                    fontSize: '1.1rem',
-                                    '&:hover': { backgroundColor: 'rgba(255, 82, 82, 0.1)' }
-                                }}
-                            >
-                                Выйти из аккаунта
-                            </Button>
-                            
-                            <Button
-                                variant="outlined"
-                                startIcon={<DeleteIcon />}
-                                onClick={handleDeleteUserOpen} 
-                                sx={{
-                                    color: '#ff5252',
-                                    borderColor: '#ff5252',
-                                    fontSize: '1.1rem',
-                                    '&:hover': { 
-                                        backgroundColor: 'rgba(255, 82, 82, 0.1)',
-                                        borderColor: '#ff5252' 
-                                    }
-                                }}
-                            >
-                                Удалить аккаунт
-                            </Button>
-                        </Box>
-                    )}
                         </>
                     )}
                 </Box>

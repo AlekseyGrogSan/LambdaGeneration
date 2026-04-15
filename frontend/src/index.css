@@ -46,7 +46,7 @@ body {
     scrollbar-color: #00bfa5 rgba(255, 255, 255, 0.05);
 }
 
-/* --- Фікс для код-блоків --- */
+/* --- ФіпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅ-пїЅпїЅпїЅпїЅпїЅ --- */
 .code-block-table { table-layout: fixed !important; width: 100% !important; }
 .code-block-table pre, .code-block-table code { white-space: pre-wrap !important; word-wrap: break-word !important; word-break: break-all !important; overflow-wrap: break-word !important; max-width: 100% !important; }
 
@@ -55,4 +55,12 @@ body {
 pre { white-space: pre-wrap !important; word-wrap: break-word !important; overflow-wrap: break-word !important; word-break: break-all !important; max-width: 100% !important; overflow-x: auto !important; }
 code { white-space: pre-wrap !important; word-wrap: break-word !important; overflow-wrap: break-word !important; word-break: break-all !important; max-width: 100% !important; }
 table { table-layout: fixed !important; width: 100% !important; max-width: 100% !important; overflow-wrap: break-word !important; }
+
+
+/* Fix codeblocks rendering and synicing */
+.code-block-table pre, .code-block-table code, .tg-code-block code, .tg-code-block pre {
+    white-space: pre-wrap !important;
+    word-wrap: break-word !important;
+    overflow-x: auto !important;
+}
 

@@ -30,7 +30,9 @@ import FormatSizeIcon from '@mui/icons-material/FormatSize';
 import FormatColorTextIcon from '@mui/icons-material/FormatColorText';
 import PriorityHighIcon from '@mui/icons-material/PriorityHigh';
 import { formatBytes, isArticleImageTooLarge, MAX_ARTICLE_IMAGE_BYTES } from './avatarUtils';
-import { normalizeContentForSubmit } from './contentFormatting';
+import { normalizeContentForSubmit, formatContentForRender } from './contentFormatting';
+import hljs from 'highlight.js';
+import 'highlight.js/styles/atom-one-dark.css';
 
 // Базовый URL для API (должен быть определен в реальном приложении)
 const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || '/api';
@@ -285,22 +287,7 @@ const EditorToolbar = ({ editorRef, setInputDialog }) => {
             onConfirm: (lang) => {
                 setInputDialog(prev => ({ ...prev, open: false }));
                 // We use a table because contenteditable handles cursor placement around tables much better than nested divs
-                const codeHTML = `<br><table class="code-block-table" style="width: 100%; background: #282c34; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1); border-collapse: separate; border-spacing: 0; margin: 10px 0; overflow: hidden; table-layout: fixed;">
-                    <thead>
-                        <tr>
-                            <th style="padding: 4px 12px; color: rgba(255,255,255,0.5); font-family: monospace; font-size: 11px; text-align: right; user-select: none; font-weight: normal; border-bottom: 1px solid rgba(255,255,255,0.1);">
-                                ${lang || 'code'}
-                            </th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <td style="padding: 12px;">
-                                <pre style="margin: 0; white-space: pre-wrap; word-wrap: break-word; word-break: break-all; overflow-wrap: break-word; font-family: Consolas, monospace; font-size: 14px; max-width: 100%;"><code class="${lang ? 'language-' + lang : 'language-text'}">// Ваш код...</code></pre>
-                            </td>
-                        </tr>
-                    </tbody>
-                </table><br><div style="min-height: 20px;"></div>`;
+                const codeHTML = `<br><table class="tg-code-block code-block-table" style="width: 100%; background: #282c34; border-radius: 8px; border: 1px solid rgba(255,255,255,0.12); border-collapse: separate; border-spacing: 0; margin: 14px 0; overflow: hidden; table-layout: fixed;"><thead><tr><th style="padding: 2px 6px; background: #21252b; color: rgba(255,255,255,0.6); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 11px; text-align: left; font-weight: bold; border-bottom: 1px solid rgba(255,255,255,0.12); user-select: none;">${lang ? lang.charAt(0).toUpperCase() + lang.slice(1) : 'Code'}</th></tr></thead><tbody><tr><td style="padding: 10px; overflow-x: auto;"><pre style="margin: 0; white-space: pre-wrap !important; word-wrap: break-word; background: transparent;"><code class="${lang ? 'language-' + lang : 'language-text'}" style="font-family: Consolas, monospace; font-size: 14px; background: transparent !important; padding: 0 !important; border: none !important;">// Ваш код...</code></pre></td></tr></tbody></table><br><div style="min-height: 20px;"></div>`;
                 applyCommand('insertHTML', codeHTML);
             }
         });

@@ -15,23 +15,26 @@ const decodeHtmlEntities = (value) => String(value)
     .replace(/&#39;/gi, "'")
     .replace(/&amp;/gi, '&');
 
-const normalizeCodeText = (rawCode) => decodeHtmlEntities(String(rawCode)
-    .replace(/\r\n?/g, '\n')
-    .replace(/<br\s*\/?\s*>/gi, '\n')
-    .replace(/<\/div>\s*<div[^>]*>/gi, '\n')
-    .replace(/<div[^>]*>/gi, '')
-    .replace(/<\/div>/gi, '')
-    .replace(/<\/p>\s*<p[^>]*>/gi, '\n')
-    .replace(/<p[^>]*>/gi, '')
-    .replace(/<\/p>/gi, '')
-    .replace(/\u200b/g, '')
-    .replace(/\n{3,}/g, '\n\n')
-    .trim());
+const normalizeCodeText = (rawCode) => {
+    let str = String(rawCode)
+        .replace(/\r\n?/g, '\n')
+        .replace(/<br\s*[\/]?>/gi, '\n')
+        .replace(/<div[^>]*>/gi, '\n')
+        .replace(/<\/div>/gi, '')
+        .replace(/<p[^>]*>/gi, '\n')
+        .replace(/<\/p>/gi, '')
+        .replace(/<[^>]+>/g, '');
+
+    return decodeHtmlEntities(str)
+        .replace(/\u200b/g, '')
+        .replace(/\n{3,}/g, '\n\n')
+        .trim();
+};
 
 const toTelegramLikeCodeBlock = (lang, code) => {
     const language = (lang || 'text').trim().toLowerCase() || 'text';
     const codeText = normalizeCodeText(code);
-    return `<pre class="tg-code-block"><code class="language-${escapeHtml(language)}">${escapeHtml(codeText)}</code></pre>`;
+    return `<table class="tg-code-block code-block-table" style="width: 100%; background: #282c34; border-radius: 8px; border: 1px solid rgba(255,255,255,0.12); border-collapse: separate; border-spacing: 0; margin: 14px 0; overflow: hidden; table-layout: fixed;"><thead><tr><th style="padding: 2px 6px; background: #21252b; color: rgba(255,255,255,0.6); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 11px; text-align: left; font-weight: bold; border-bottom: 1px solid rgba(255,255,255,0.12); user-select: none;">${escapeHtml(language.charAt(0).toUpperCase() + language.slice(1))}</th></tr></thead><tbody><tr><td style="padding: 10px; overflow-x: auto;"><pre style="margin: 0; white-space: pre-wrap !important; word-wrap: break-word; background: transparent;"><code class="language-${escapeHtml(language)}" style="font-family: Consolas, monospace; font-size: 14px; background: transparent !important; padding: 0 !important; border: none !important;">${escapeHtml(codeText)}</code></pre></td></tr></tbody></table>`;
 };
 
 const hasHtmlTag = (value) => /<\/?[a-z][\s\S]*>/i.test(value);

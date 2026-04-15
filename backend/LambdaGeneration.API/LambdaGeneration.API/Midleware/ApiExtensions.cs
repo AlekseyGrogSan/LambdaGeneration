@@ -100,6 +100,7 @@ namespace LambdaGeneration.API.Midleware
                     config["GigaChat:Scope"] ?? "GigaChat"
                 );
             });
+            
             services.AddHttpClient();
             return services;
         }

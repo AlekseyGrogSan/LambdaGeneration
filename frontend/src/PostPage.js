@@ -30,6 +30,7 @@ import MoreVertIcon from '@mui/icons-material/MoreVert';
 import MenuBookIcon from '@mui/icons-material/MenuBook';
 import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
 import AdminPanelSettingsIcon from '@mui/icons-material/AdminPanelSettings';
+import RefreshIcon from '@mui/icons-material/Refresh';
 
 import PostCard from './PostCard';
 import PostDetailPage from './PostDetailPage';
@@ -260,7 +261,7 @@ const Sidebar = ({ handleOpen, handleProfileOpen, handlePostOpen, handleCategory
         {!currentUser && (
             <Box sx={{ paddingTop: 2, textAlign: 'center' }}>
                 <Typography variant="body2" sx={{ color: '#757575', marginBottom: 0.5 }}>Нет аккаунта?</Typography>
-                <MuiLink component="span" onClick={handleOpen} sx={{ color: '#757575', cursor: 'pointer', textDecoration: 'none', '&:hover': { color: '#00bfa5' } }}>
+                <MuiLink component="span" onClick={() => handleOpen('register')} sx={{ color: '#757575', cursor: 'pointer', textDecoration: 'none', '&:hover': { color: '#00bfa5' } }}>
                     Зарегистрироваться?
                 </MuiLink>
             </Box>
@@ -721,6 +722,10 @@ const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
     const [isLoading, setIsLoading] = useState(false); 
     const [error, setError] = useState(null);
     const [emptyStateMessage, setEmptyStateMessage] = useState('');
+    const [pullDistance, setPullDistance] = useState(0);
+    const [isPulling, setIsPulling] = useState(false);
+    const pullStartYRef = useRef(null);
+    const [isRefreshingFeed, setIsRefreshingFeed] = useState(false);
     const [selectedPost, setSelectedPost] = useState(null); 
     const [isViewingDetailPage, setIsViewingDetailPage] = useState(false);
     const [lastViewedArticleId, setLastViewedArticleId] = useState(null); 
@@ -911,10 +916,35 @@ const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
             const response = await fetch(`${API_BASE_URL}/Users/MyProfile`, { credentials: 'include' });
             if (response.ok) {
                 const userData = await response.json();
+                const wasGuest = !currentUser;
                 setCurrentUser(userData);
+                
+                if (wasGuest && articlesRef.current.length > 0) {
+                    // Update isLiked statuses for currently loaded articles without clearing feed
+                    const updatedArticles = await Promise.all(articlesRef.current.map(async (article) => {
+                        const rawId = article.article_id;
+                        try {
+                            const isLikedReq = await fetch(`${API_BASE_URL}/Like/isLiked/${rawId}`, { credentials: 'include', headers: { 'Cache-Control': 'no-cache' } });
+                            if (isLikedReq.ok) {
+                                const data = await isLikedReq.json();
+                                return { ...article, isLiked: data.isLiked || false };
+                            }
+                        } catch (e) {
+                            // ignore
+                        }
+                        return article;
+                    }));
+                    setArticles(updatedArticles);
+                }
+
                 return true;
             } else {
                 setCurrentUser(null);
+                
+                // If logged out user already had articles loaded, reset their liked status
+                if (currentUser && articlesRef.current.length > 0) {
+                    setArticles(articlesRef.current.map(a => ({ ...a, isLiked: false })));
+                }
                 return false;
             }
         } catch (e) {
@@ -996,6 +1026,8 @@ const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
         }
     }, [isViewingDetailPage, selectedPost]);
 
+    const [openMode, setOpenMode] = useState('login');
+
     useEffect(() => {
         return () => {
             if (publishNoticeTimerRef.current) {
@@ -1004,7 +1036,12 @@ const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
         };
     }, []);
 
-    const handleOpen = (options = {}) => {
+    const handleOpen = (mode = 'login', options = {}) => {
+        if (typeof mode === 'object') {
+            options = mode;
+            mode = 'login';
+        }
+        setOpenMode(mode);
         setOpenProfileAfterAuth(Boolean(options?.openProfileAfterAuth));
         setIsModalOpen(true);
     };
@@ -1106,6 +1143,54 @@ const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
         }
         setReturnToProfile(false);
         setReturnProfileUserId(null);
+    };
+
+    const handleRefreshFeed = async () => {
+        setIsRefreshingFeed(true);
+        setPageNumber(1);
+        setHasMore(true);
+        setArticles([]);
+        setEmptyStateMessage('');
+        feedCacheRef.current[paginationType] = null;
+        
+        try {
+            await fetchArticlesPage(1, paginationType, { force: true, searchQuery: searchQueryRef.current });
+        } finally {
+            setIsRefreshingFeed(false);
+            setPullDistance(0);
+        }
+    };
+
+    const handlePullStart = (clientY) => {
+        const container = articlesContainerRef.current;
+        if (!container) return;
+        if (container.scrollTop === 0) {
+            pullStartYRef.current = clientY;
+            setIsPulling(true);
+        }
+    };
+
+    const handlePullMove = (clientY) => {
+        if (!isPulling || isRefreshingFeed || pullStartYRef.current === null) return;
+        const delta = clientY - pullStartYRef.current;
+        const container = articlesContainerRef.current;
+        if (delta > 0 && container && container.scrollTop === 0) {
+            const distance = Math.min(delta * 0.4, 120);
+            setPullDistance(distance);
+        } else {
+            setPullDistance(0);
+        }
+    };
+
+    const handlePullEnd = () => {
+        if (!isPulling) return;
+        setIsPulling(false);
+        pullStartYRef.current = null;
+        if (pullDistance > 80 && !isRefreshingFeed) {
+            handleRefreshFeed();
+        } else {
+            setPullDistance(0);
+        }
     };
 
     const handleSearchOpen = () => {
@@ -1492,19 +1577,16 @@ const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
     };
 
     const handleLikeToggle = async (rawId, currentIsLiked) => {
-        const shouldFreezeFeed = isProfileModalOpenRef.current;
-        if (!shouldFreezeFeed) {
-            setArticles(prev => prev.map(a => 
-                a.article_id === rawId 
-                    ? { ...a, isLiked: !currentIsLiked, likesCount: currentIsLiked ? a.likesCount - 1 : a.likesCount + 1 }
-                    : a
-            ));
+        setArticles(prev => prev.map(a => 
+            a.article_id === rawId 
+                ? { ...a, isLiked: !currentIsLiked, likesCount: currentIsLiked ? a.likesCount - 1 : a.likesCount + 1 }
+                : a
+        ));
 
-            if (selectedPost && selectedPost.article_id === rawId) {
-                 setSelectedPost(prev => 
-                    ({ ...prev, isLiked: !currentIsLiked, likesCount: currentIsLiked ? prev.likesCount - 1 : prev.likesCount + 1 })
-                );
-            }
+        if (selectedPost && selectedPost.article_id === rawId) {
+             setSelectedPost(prev => prev ? 
+                ({ ...prev, isLiked: !currentIsLiked, likesCount: currentIsLiked ? prev.likesCount - 1 : prev.likesCount + 1 }) : prev
+            );
         }
 
         const endpoint = currentIsLiked ? 'unLike' : 'like';
@@ -1515,17 +1597,15 @@ const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
             }); 
 
             if (response.status === 401 || response.status === 403) {
-                if (!shouldFreezeFeed) {
-                    setArticles(prev => prev.map(a => 
-                        a.article_id === rawId 
-                            ? { ...a, isLiked: currentIsLiked, likesCount: currentIsLiked ? Math.max((a.likesCount || 0) + 1, 0) : Math.max((a.likesCount || 0) - 1, 0) }
-                            : a
-                    ));
-                     if (selectedPost && selectedPost.article_id === rawId) {
-                        setSelectedPost(prev => 
-                            ({ ...prev, isLiked: currentIsLiked, likesCount: currentIsLiked ? Math.max((prev.likesCount || 0) + 1, 0) : Math.max((prev.likesCount || 0) - 1, 0) })
-                        );
-                    }
+                setArticles(prev => prev.map(a => 
+                    a.article_id === rawId 
+                        ? { ...a, isLiked: currentIsLiked, likesCount: currentIsLiked ? Math.max((a.likesCount || 0) + 1, 0) : Math.max((a.likesCount || 0) - 1, 0) }
+                        : a
+                ));
+                 if (selectedPost && selectedPost.article_id === rawId) {
+                    setSelectedPost(prev => prev ? 
+                        ({ ...prev, isLiked: currentIsLiked, likesCount: currentIsLiked ? Math.max((prev.likesCount || 0) + 1, 0) : Math.max((prev.likesCount || 0) - 1, 0) }) : prev
+                    );
                 }
                 handleOpen();
                 return; 
@@ -1534,42 +1614,36 @@ const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
             if (response.ok) {
                 const res = await response.json();
                 const realCount = res.countLikes !== undefined ? res.countLikes : (res.CountLikes !== undefined ? res.CountLikes : 0);
-                if (!shouldFreezeFeed) {
-                    setArticles(prev => prev.map(a => 
-                        a.article_id === rawId ? { ...a, likesCount: realCount } : a
-                    ));
-                    if (selectedPost?.article_id === rawId) {
-                        setSelectedPost(prev => ({ ...prev, likesCount: realCount, isLiked: !currentIsLiked }));
-                    }
+                setArticles(prev => prev.map(a => 
+                    a.article_id === rawId ? { ...a, likesCount: realCount } : a
+                ));
+                if (selectedPost?.article_id === rawId) {
+                    setSelectedPost(prev => ({ ...prev, likesCount: realCount, isLiked: !currentIsLiked }));
                 }
             } else {
                 // Если сервер вернул ошибку, откатываем оптимистичное обновление
-                if (!shouldFreezeFeed) {
-                    setArticles(prev => prev.map(a => 
-                        a.article_id === rawId 
-                            ? { ...a, isLiked: currentIsLiked, likesCount: currentIsLiked ? Math.max((a.likesCount || 0) + 1, 0) : Math.max((a.likesCount || 0) - 1, 0) }
-                            : a
-                    ));
-                     if (selectedPost && selectedPost.article_id === rawId) {
-                        setSelectedPost(prev => 
-                            ({ ...prev, isLiked: currentIsLiked, likesCount: currentIsLiked ? Math.max((prev.likesCount || 0) + 1, 0) : Math.max((prev.likesCount || 0) - 1, 0) })
-                        );
-                    }
-                }
-            }
-        } catch (e) {
-            console.error("Like error:", e);
-            if (!shouldFreezeFeed) {
                 setArticles(prev => prev.map(a => 
                     a.article_id === rawId 
                         ? { ...a, isLiked: currentIsLiked, likesCount: currentIsLiked ? Math.max((a.likesCount || 0) + 1, 0) : Math.max((a.likesCount || 0) - 1, 0) }
                         : a
                 ));
                  if (selectedPost && selectedPost.article_id === rawId) {
-                    setSelectedPost(prev => 
-                        ({ ...prev, isLiked: currentIsLiked, likesCount: currentIsLiked ? Math.max((prev.likesCount || 0) + 1, 0) : Math.max((prev.likesCount || 0) - 1, 0) })
+                    setSelectedPost(prev => prev ? 
+                        ({ ...prev, isLiked: currentIsLiked, likesCount: currentIsLiked ? Math.max((prev.likesCount || 0) + 1, 0) : Math.max((prev.likesCount || 0) - 1, 0) }) : prev
                     );
                 }
+            }
+        } catch (e) {
+            console.error("Like error:", e);
+            setArticles(prev => prev.map(a => 
+                a.article_id === rawId 
+                    ? { ...a, isLiked: currentIsLiked, likesCount: currentIsLiked ? Math.max((a.likesCount || 0) + 1, 0) : Math.max((a.likesCount || 0) - 1, 0) }
+                    : a
+            ));
+             if (selectedPost && selectedPost.article_id === rawId) {
+                setSelectedPost(prev => prev ? 
+                    ({ ...prev, isLiked: currentIsLiked, likesCount: currentIsLiked ? Math.max((prev.likesCount || 0) + 1, 0) : Math.max((prev.likesCount || 0) - 1, 0) }) : prev
+                );
             }
         }
     };
@@ -2116,8 +2190,36 @@ const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
                     width: '100%',
                     maxWidth: '100vw',
                 }}
-                ref={articlesContainerRef} 
+                ref={articlesContainerRef}
+                onTouchStart={(e) => handlePullStart(e.touches[0].clientY)}
+                onTouchMove={(e) => handlePullMove(e.touches[0].clientY)}
+                onTouchEnd={handlePullEnd}
+                onMouseDown={(e) => handlePullStart(e.clientY)}
+                onMouseMove={(e) => handlePullMove(e.clientY)}
+                onMouseUp={handlePullEnd}
+                onMouseLeave={handlePullEnd}
             >
+                <div 
+                    style={{
+                        width: '100%',
+                        height: pullDistance > 0 ? pullDistance : isRefreshingFeed ? 60 : 0,
+                        transition: isPulling ? 'none' : 'height 0.3s cubic-bezier(0.25, 0.8, 0.25, 1)',
+                        display: 'flex',
+                        justifyContent: 'center',
+                        alignItems: 'center',
+                        overflow: 'hidden',
+                        opacity: pullDistance > 10 || isRefreshingFeed ? 1 : 0
+                    }}
+                >
+                    <CircularProgress 
+                        size={28} 
+                        thickness={4} 
+                        variant={isRefreshingFeed ? 'indeterminate' : 'determinate'}
+                        value={isRefreshingFeed ? undefined : Math.min((pullDistance / 80) * 100, 100)}
+                        sx={{ color: '#00bfa5' }}
+                    />
+                </div>
+
                 {publishNotice && (
                     <Box
                         sx={{
@@ -2424,8 +2526,8 @@ const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
                                         sx={{ 
                                             textTransform: 'none',
                                             borderRadius: '25px',
-                                            px: 3,
-                                            py: 1,
+                                            minWidth: '40px',
+                                            p: 1,
                                             fontWeight: 'bold',
                                             transition: 'all 0.3s ease',
                                             borderColor: '#00bfa5',
@@ -2437,7 +2539,7 @@ const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
                                             }
                                         }}
                                     >
-                                        Поиск
+                                        <SearchIcon />
                                     </Button>
                                 </>
                             )}
@@ -2668,6 +2770,7 @@ const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
                 handleClose={handleClose} 
                 onForgotPassword={handleForgotOpen} 
                 onAuthSuccess={checkAuth}
+                initialMode={openMode}
             />
             
             <PostCreationModal 

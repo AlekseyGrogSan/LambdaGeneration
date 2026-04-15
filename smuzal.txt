@@ -1,0 +1,60 @@
+commit d5b5c848972f7c3283470f460ef67c039c9253d6
+Author: Smuzal777 <smuzal@yandex.ru>
+Date:   Fri Mar 27 11:11:58 2026 +0300
+
+    FIx Code-area
+
+diff --git a/frontend/src/PostDetailPage.js b/frontend/src/PostDetailPage.js
+index b9e6e4e..c728792 100644
+--- a/frontend/src/PostDetailPage.js
++++ b/frontend/src/PostDetailPage.js
+@@ -78,6 +78,23 @@ const updateCommentInTree = (tree, commentId, updater) => tree.map((item) => {
+     return item;
+ });
+ 
++const normalizeCodeBlockText = (block) => {
++    let html = block.innerHTML || '';
++    html = html.replace(/<br\s*[\/]?>/gi, '\n');
++    html = html.replace(/<div[^>]*>/gi, '\n');
++    html = html.replace(/<\/div>/gi, '');
++    html = html.replace(/<p[^>]*>/gi, '\n');
++    html = html.replace(/<\/p>/gi, '');
++
++    const temp = document.createElement('textarea');
++    temp.innerHTML = html;
++
++    return (temp.value || '')
++        .replace(/\r\n?/g, '\n')
++        .replace(/\u200b/g, '')
++        .trim();
++};
++
+ const CommentItem = ({
+     comment,
+     depth,
+@@ -353,14 +370,17 @@ const PostDetailPage = ({
+         if (contentRef.current) {
+             contentRef.current.querySelectorAll('pre code').forEach((block) => {
+                 if (!block.dataset.highlighted) {
+-                    let html = block.innerHTML;
+-                    html = html.replace(/<br\s*[\/]?>/gi, '\n');
+-                    html = html.replace(/<div[^>]*>/gi, '\n');
+-                    html = html.replace(/<\/div>/gi, '');
+-                    html = html.replace(/<p[^>]*>/gi, '\n');
+-                    html = html.replace(/<\/p>/gi, '');
+-                    block.innerHTML = html;
+-                    hljs.highlightElement(block);
++                    const codeText = normalizeCodeBlockText(block);
++                    block.textContent = codeText;
++
++                    const languageClass = Array.from(block.classList).find((cls) => cls.startsWith('language-'));
++                    const language = languageClass ? languageClass.replace('language-', '') : '';
++
++                    if (language && hljs.getLanguage(language)) {
++                        hljs.highlightElement(block);
++                    } else {
++                        block.innerHTML = hljs.highlightAuto(codeText).value;
++                    }
+                 }
+             });
+         }
