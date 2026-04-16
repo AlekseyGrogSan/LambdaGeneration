@@ -14,6 +14,7 @@ WORKDIR /app
 COPY . . 
 
 # Устанавливаем зависимости reproducible-способом по package-lock.json
+ENV PUPPETEER_SKIP_DOWNLOAD=true
 RUN npm ci
 
 # Запускаем сборку React-приложения. 

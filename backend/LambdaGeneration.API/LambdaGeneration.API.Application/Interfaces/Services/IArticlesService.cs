@@ -7,7 +7,7 @@ namespace LambdaGeneration.API.Application.Interfaces.Services
         Task Create(string article_title, string article_content, string article_preview, List<int> article_tags, Guid author_id, string file_apth);
         Task Delete(Guid article_id, Guid authorId);
         Task<Articles?> Update(Guid article_id, Guid authorId, string new_title, string new_content, string new_preview, string? file_path);
-        Task<Articles?> UpdateTags(Guid article_id, List<int> new_tags);
+        Task<Articles?> UpdateTags(Guid article_id, Guid authorId, List<int> new_tags);
         Task<List<Articles>> GetAllArticlesUser(Guid author_id);
         Task<List<Articles>> GetArticlesByAuthorPaged(Guid author_id, int page, int pageSize);
         Task<List<Articles>> SearchArticlesAsync(string? searchTerm, int pageNumber, int countPages);

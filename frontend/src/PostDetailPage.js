@@ -6,6 +6,35 @@ import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import CheckIcon from '@mui/icons-material/Check';
 import { createRoot } from 'react-dom/client';
 
+import {
+    Box,
+    Typography,
+    IconButton,
+    TextField,
+    Chip,
+    Button,
+    Collapse,
+    CircularProgress,
+    Avatar,
+    SwipeableDrawer,
+    useMediaQuery,
+    useTheme,
+    Snackbar,
+    Alert,
+} from '@mui/material';
+import FavoriteIcon from '@mui/icons-material/Favorite';
+import ChatBubbleOutlineIcon from '@mui/icons-material/ChatBubbleOutline';
+import ShortcutRoundedIcon from '@mui/icons-material/ShortcutRounded';
+import ArrowBackIcon from '@mui/icons-material/ArrowBack';
+import CloseIcon from '@mui/icons-material/Close';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import ExpandLessIcon from '@mui/icons-material/ExpandLess';
+import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
+import { buildArticleImageUrl, buildAvatarUrl, DEFAULT_AVATAR_SRC } from './avatarUtils';
+import hljs from 'highlight.js';
+import 'highlight.js/styles/atom-one-dark.css';
+import { formatContentForRender } from './contentFormatting';
+
 const CodeBlock = ({ language, value }) => {
     const [isCopied, setIsCopied] = React.useState(false);
 
@@ -54,35 +83,6 @@ const normalizeCodeBlockText = (block) => {
         .replace(/\u200b/g, '')
         .trim();
 };
-
-import {
-    Box,
-    Typography,
-    IconButton,
-    TextField,
-    Chip,
-    Button,
-    Collapse,
-    CircularProgress,
-    Avatar,
-    SwipeableDrawer,
-    useMediaQuery,
-    useTheme,
-    Snackbar,
-    Alert,
-} from '@mui/material';
-import FavoriteIcon from '@mui/icons-material/Favorite';
-import ChatBubbleOutlineIcon from '@mui/icons-material/ChatBubbleOutline';
-import ShortcutRoundedIcon from '@mui/icons-material/ShortcutRounded';
-import ArrowBackIcon from '@mui/icons-material/ArrowBack';
-import CloseIcon from '@mui/icons-material/Close';
-import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
-import ExpandLessIcon from '@mui/icons-material/ExpandLess';
-import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
-import { buildArticleImageUrl, buildAvatarUrl, DEFAULT_AVATAR_SRC } from './avatarUtils';
-import hljs from 'highlight.js';
-import 'highlight.js/styles/atom-one-dark.css';
-import { formatContentForRender } from './contentFormatting';
 
 const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || '/api';
 
@@ -506,7 +506,7 @@ const PostDetailPage = ({
         setImageBroken(false);
     }, [post.article_id]);
 
-    if (!post) return <Box sx={{ color: 'white' }}>Пост не найден.</Box>;
+    
 
     const articleImageUrl = post.articleImageUrl || buildArticleImageUrl(API_BASE_URL, post.file_path || post.filePath);
 

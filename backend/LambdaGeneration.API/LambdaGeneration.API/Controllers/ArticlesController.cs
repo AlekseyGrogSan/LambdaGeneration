@@ -209,7 +209,7 @@ namespace LambdaGeneration.API.Controllers
                 ArticleIntTags.Add(ApiExtensions.ToTags(request.article_tags[i]));
             }
 
-            var articles = await _articlesService.UpdateTags(request.article_id, ArticleIntTags);
+            var articles = await _articlesService.UpdateTags(request.article_id, GetUserID(), ArticleIntTags);
 
             return Ok(new UpdateArticlesResponse(articles.ArticleID, articles.ArticleTitle, articles.ArticlePreview, articles.ArticleContent,
                 articles.ArticleTags.Select(t => ApiExtensions.FromTags(t)).ToList(), articles.CreatedDate, articles.CountLikes, articles.CountComments, articles.FilePath));

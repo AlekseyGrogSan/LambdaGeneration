@@ -59,12 +59,16 @@ namespace LambdaGeneration.API.Application.Services
             return article;
         }
 
-        public async Task<Articles?> UpdateTags(Guid article_id, List<int> new_tags)
+        public async Task<Articles?> UpdateTags(Guid article_id, Guid author_id, List<int> new_tags)
         {
             var a = await _articlesRepository.GetById(article_id);
             if (a == null)
             {
                 throw new ArgumentException("Article not exist!");
+            }
+            if (a.AuthorID != author_id)
+            {
+                throw new Exception("Fuck You, Hacker!");
             }
             var article = await _articlesRepository.UpdateTags(article_id, new_tags);
 

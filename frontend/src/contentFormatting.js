@@ -1,3 +1,5 @@
+import DOMPurify from 'isomorphic-dompurify';
+
 const FENCED_CODE_REGEX = /```\s*([a-zA-Z0-9_+\-.#]*)?\s*\r?\n([\s\S]*?)\r?\n```/g;
 
 const escapeHtml = (value) => String(value)
@@ -50,9 +52,16 @@ export const formatContentForRender = (content = '') => {
     const normalized = String(content).replace(/\r\n?/g, '\n');
     const contentWithCodeBlocks = normalized.replace(FENCED_CODE_REGEX, (_, lang, code) => toTelegramLikeCodeBlock(lang, code));
 
+    let htmlContent = contentWithCodeBlocks;
+
+    // Apply safe HTML tags strictly
     if (!hasHtmlTag(contentWithCodeBlocks)) {
-        return escapeHtml(contentWithCodeBlocks).replace(/\n/g, '<br />');
+        htmlContent = escapeHtml(contentWithCodeBlocks).replace(/\n/g, '<br />');      
     }
 
-    return contentWithCodeBlocks;
+    // Sanitize any resulting HTML output from script tags and malformed input
+    return DOMPurify.sanitize(htmlContent, {
+        ADD_TAGS: ['iframe'], // if you need youtube/embed functionality
+        ADD_ATTR: ['allow', 'allowfullscreen', 'frameborder', 'scrolling']
+    });
 };
