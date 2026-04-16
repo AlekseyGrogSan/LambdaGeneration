@@ -1766,7 +1766,8 @@ const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
             setFeedReplyEditorOpen({});
             setFeedEditEditorOpen({});
             setFeedEditInputs({});
-            handleCommentsCountChange(postData.article_id, countTreeComments(tree));
+            // Counter relies on backend value, no need to recalculate tree
+            // handleCommentsCountChange(postData.article_id, countTreeComments(tree));
         } catch (err) {
             console.error(err);
             setFeedCommentsError('Ошибка при загрузке комментариев');
@@ -1828,6 +1829,7 @@ const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
         }
 
         await loadFeedCommentsForPost(activeCommentsPost);
+        handleCommentsCountChange(activeCommentsPost.article_id, (activeCommentsPost.commentsCount || 0) + 1);
     };
 
     const handleFeedCreateRootComment = async () => {
@@ -1945,6 +1947,9 @@ const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
                 }
             }
             await loadFeedCommentsForPost(activeCommentsPost);
+            if (!comment.hasReplies) {
+                handleCommentsCountChange(activeCommentsPost.article_id, Math.max((activeCommentsPost.commentsCount || 0) - 1, 0));
+            }
         } catch (err) {
             setFeedCommentsError(err.message);
         }

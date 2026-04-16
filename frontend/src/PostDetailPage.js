@@ -596,7 +596,8 @@ const PostDetailPage = ({
             setReplyEditorOpen({});
             setEditEditorOpen({});
             setEditInputs({});
-            onCommentsCountChange?.(post.article_id, countTreeComments(tree));
+            // Counter relies on backend value, no need to recalculate tree
+            // onCommentsCountChange?.(post.article_id, countTreeComments(tree));
         } catch (error) {
             console.error(error);
             setCommentsError('Ошибка при загрузке комментариев');
@@ -684,6 +685,7 @@ const PostDetailPage = ({
         }
 
         await loadComments();
+        onCommentsCountChange?.(post.article_id, (post.commentsCount || 0) + 1);
     };
 
     const handleCreateRootComment = async () => {
@@ -802,6 +804,9 @@ const PostDetailPage = ({
             }
 
             await loadComments();
+            if (!comment.hasReplies) {
+                onCommentsCountChange?.(post.article_id, Math.max((post.commentsCount || 0) - 1, 0));
+            }
         } catch (error) {
             setCommentsError(error.message);
         }
