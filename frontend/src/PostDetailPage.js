@@ -395,7 +395,7 @@ const PostDetailPage = ({
     const theme = useTheme();
     const isDesktopComments = useMediaQuery(theme.breakpoints.up(768));
     const contentRef = useRef(null);
-    const renderedArticleContent = formatContentForRender(post?.article_content || '');
+    const renderedArticleContent = useMemo(() => formatContentForRender(post?.article_content || ''), [post?.article_content]);
 
     const articleBody = useMemo(() => (
         <Box

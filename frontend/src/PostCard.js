@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, useMemo } from 'react';
 
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
@@ -203,7 +203,7 @@ const PostCard = ({
     };
 
     const contentRef = useRef(null);
-    const renderedPreviewContent = formatContentForRender(article_preview || '');
+    const renderedPreviewContent = useMemo(() => formatContentForRender(article_preview || ''), [article_preview]);
 
             useEffect(() => {
         if (contentRef.current) {
