@@ -19,7 +19,7 @@ const ConfirmationDialog = ({
     isLoading = false
 }) => {
     return (
-        <Dialog
+        <Dialog disableRestoreFocus
             open={open}
             onClose={onCancel}
             maxWidth="xs"

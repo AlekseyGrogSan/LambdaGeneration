@@ -123,7 +123,7 @@ const ForgotPasswordModal = ({ open, handleClose }) => {
     // --- РЕНДЕРИНГ СООБЩЕНИЯ ОБ УСПЕХЕ ---
     if (isSent) {
         return (
-            <Modal open={open} onClose={handleClose} aria-labelledby="forgot-password-modal-title">
+            <Modal disableRestoreFocus open={open} onClose={handleClose} aria-labelledby="forgot-password-modal-title">
                 <Box sx={modalStyle}>
                     <Typography variant="h5" component="h2" sx={{ color: '#ffffff', fontWeight: 300, textAlign: 'center', marginBottom: 2 }}>
                         Забыли пароль?
@@ -166,7 +166,7 @@ const ForgotPasswordModal = ({ open, handleClose }) => {
 
     // --- РЕНДЕРИНГ ФОРМЫ ВВОДА (Если isSent === false) ---
     return (
-        <Modal open={open} onClose={handleClose} aria-labelledby="forgot-password-modal-title">
+        <Modal disableRestoreFocus open={open} onClose={handleClose} aria-labelledby="forgot-password-modal-title">
             <Box sx={modalStyle} component="form" onSubmit={handleSubmit}>
                 <Typography id="forgot-password-modal-title" variant="h5" component="h2" sx={{ color: '#ffffff', fontWeight: 300, textAlign: 'center', marginBottom: 2 }}>
                     Восстановление пароля

@@ -99,7 +99,7 @@ const ResetPasswordModal = ({ open, handleClose }) => {
     };
 
     return (
-        <Modal
+        <Modal disableRestoreFocus
             open={open}
             onClose={handleClose}
             aria-labelledby="reset-password-modal-title"

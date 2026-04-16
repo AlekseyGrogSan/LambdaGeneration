@@ -77,7 +77,7 @@ const EmailVerificationModal = ({ open, handleClose, email, onVerificationSucces
     };
 
     return (
-        <Modal open={open} onClose={handleClose}>
+        <Modal disableRestoreFocus open={open} onClose={handleClose}>
             <Box sx={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', width: 350, bgcolor: '#363636', p: 4, borderRadius: 4, color: '#fff' }}>
                 <Typography variant="h5" textAlign="center" gutterBottom>Подтверждение</Typography>
                 <Typography variant="body2" textAlign="center" sx={{ color: '#bdbdbd', mb: 2 }}>Код отправлен на {email}</Typography>

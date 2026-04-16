@@ -145,7 +145,7 @@ const resources = [
 
 const ResourcesModal = ({ open, handleClose }) => {
     return (
-        <Modal
+        <Modal disableRestoreFocus
             open={open}
             onClose={handleClose}
             aria-labelledby="resources-modal-title"

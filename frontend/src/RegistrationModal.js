@@ -230,7 +230,7 @@ const RegistrationModal = ({ open, handleClose, onForgotPassword, onAuthSuccess,
 
     return (
         <>
-            <Modal open={open && !showVerification} onClose={handleClose}>
+            <Modal disableRestoreFocus open={open && !showVerification} onClose={handleClose}>
                 <Box sx={modalStyle} component="form" onSubmit={handleSubmit}>
                     <Typography variant="h5" sx={{ textAlign: 'center', fontWeight: 300 }}>
                         {isRegisterMode ? 'Регистрация' : 'Вход'}

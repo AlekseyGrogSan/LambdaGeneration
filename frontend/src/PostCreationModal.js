@@ -774,7 +774,7 @@ const PostCreationModal = ({ open, handleClose, onUnauthorized, onPostSuccess, o
     // --- ОСНОВНОЙ РЕНДЕРИНГ МОДАЛЬНОГО ОКНА ---
     return (
         <>
-            <Modal
+            <Modal disableRestoreFocus
                 open={open}
                 onClose={handleClose}
                 aria-labelledby="post-creation-modal-title"

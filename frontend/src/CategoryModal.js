@@ -93,7 +93,7 @@ const CategoryModal = ({ open, handleClose, selectedTags = [], onApply }) => {
     };
 
     return (
-        <Modal
+        <Modal disableRestoreFocus
             open={open}
             onClose={handleClose}
             aria-labelledby="category-modal-title"

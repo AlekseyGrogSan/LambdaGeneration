@@ -796,7 +796,7 @@ const ProfileModal = ({ open, handleClose, userId, onUnauthorized, onLogout, onP
 
     return (
         <>
-            <Modal open={open} onClose={handleProfileModalClose}>
+            <Modal disableRestoreFocus open={open} onClose={handleProfileModalClose}>
                 <Box sx={modalStyle} ref={profileModalRef}>
                     {/* Left Actions */}
                     {isMyProfile && !isEditingProfile && (
@@ -1243,7 +1243,7 @@ const ProfileModal = ({ open, handleClose, userId, onUnauthorized, onLogout, onP
                 disablePortal
             />
 
-            <Modal open={isEmailModalOpen} onClose={handleCloseEmailModal}>
+            <Modal disableRestoreFocus open={isEmailModalOpen} onClose={handleCloseEmailModal}>
                 <Box
                     sx={{
                         position: 'absolute',

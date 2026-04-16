@@ -97,7 +97,7 @@ const faqItems = [
 
 const FaqModal = ({ open, handleClose }) => {
     return (
-        <Modal
+        <Modal disableRestoreFocus
             open={open}
             onClose={handleClose}
             aria-labelledby="faq-modal-title"

@@ -360,7 +360,7 @@ const AdminPanelModal = ({ open, handleClose }) => {
 
     return (
         <>
-        <Modal open={open} onClose={handleCloseModal}>
+        <Modal disableRestoreFocus open={open} onClose={handleCloseModal}>
             <Box sx={modalStyle}>
                 <Typography variant="h5" sx={{ mb: 2, color: '#00bfa5' }}>
                     Админ-панель

@@ -804,7 +804,7 @@ const EditArticleModal = ({ open, handleClose, post, onUpdateSuccess, onDeleteSu
 
     return (
         <>
-        <Modal
+        <Modal disableRestoreFocus
             open={open}
             onClose={handleClose}
             container={container}
