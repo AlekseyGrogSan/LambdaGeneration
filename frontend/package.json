@@ -16,6 +16,7 @@
     "isomorphic-dompurify": "^3.9.0",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
+    "react-easy-crop": "^5.5.7",
     "react-router-dom": "^7.9.6",
     "react-scripts": "5.0.1",
     "react-syntax-highlighter": "^16.1.1",

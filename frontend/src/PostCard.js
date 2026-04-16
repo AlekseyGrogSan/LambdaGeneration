@@ -104,7 +104,7 @@ const getTagColor = (tag, index) => {
  * PostCard - Компонент для отображения краткой информации о посте в ленте.
  * Принимает props.sx для кастомизации стилей (например, фиксированная высота)
  */
-const PostCard = ({ 
+const PostCard = React.memo(({ 
     id, 
     nickname, 
     authorAvatar,
@@ -330,6 +330,25 @@ const PostCard = ({
         };
     }); 
 
+    const handleLikeClick = (e) => {
+        if (e) e.stopPropagation();
+        if (onLike) onLike(id, isLiked); // id instead of articleId, as PostCard receives id prop
+    };
+
+    const handleCommentClick = (e) => {
+        if (e) e.stopPropagation();
+        if (onCommentClick) onCommentClick();
+    };
+
+    const handleAuthorClickWrapper = (e) => {
+        if (e) e.stopPropagation();
+        if (onAuthorClick) onAuthorClick(authorId);
+    };
+
+    const handleCardClick = (e) => {
+        if (onClick) onClick();
+    };
+
     return (
         <Card 
             sx={{
@@ -349,7 +368,7 @@ const PostCard = ({
                 boxSizing: 'border-box',
                 ...sx,
             }}
-            onClick={onClick}
+            onClick={handleCardClick}
         >
             {shareNoticeOpen && (
                 <Box
@@ -389,12 +408,7 @@ const PostCard = ({
                         
                         {/* КЛИКАБЕЛЬНЫЙ БЛОК АВТОРА */}
                         <Box
-                            onClick={(e) => { 
-                                e.stopPropagation(); 
-                                if (onAuthorClick && authorId) {
-                                    onAuthorClick(authorId);
-                                }
-                            }}
+                            onClick={handleAuthorClickWrapper}
                             sx={{ cursor: onAuthorClick && authorId ? 'pointer' : 'default', minWidth: 0, flex: { md: '0 1 auto' } }}
                         >
                             <Typography variant="body2" sx={{ ...labelStyle, display: { xs: 'none', md: 'block' } }}>
@@ -557,7 +571,7 @@ const PostCard = ({
                                 minHeight: 44,
                                 transition: 'color 0.2s ease, transform 0.15s ease',
                             }}
-                            onClick={onLike ? (e) => { e.stopPropagation(); onLike(id); } : (e) => { e.stopPropagation(); }}
+                            onClick={handleLikeClick}
                             disabled={!onLike}
                             aria-label="Лайк"
                         >
@@ -577,12 +591,7 @@ const PostCard = ({
                                     minHeight: 44,
                                     transition: 'color 0.2s ease',
                                 }}
-                                onClick={(e) => {
-                                    e.stopPropagation();
-                                    if (onCommentClick) {
-                                        onCommentClick();
-                                    }
-                                }}
+                                onClick={handleCommentClick}
                                 aria-label="Комментарии"
                             >
                                 <ChatBubbleOutlineIcon sx={{ fontSize: { xs: 26, md: 30 } }} />
@@ -613,6 +622,6 @@ const PostCard = ({
             </Box>
         </Card>
     );
-};
+});
 
 export default PostCard;

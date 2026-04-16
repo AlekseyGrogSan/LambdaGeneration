@@ -365,7 +365,7 @@ const CommentItem = ({
     );
 };
 
-const PostDetailPage = ({
+const PostDetailPage = React.memo(({
     post,
     onBack,
     onLike,
@@ -984,7 +984,7 @@ const PostDetailPage = ({
                  }
              });
         };
-    }); 
+    }, [renderedArticleContent]);
 
     return (
         <Box
@@ -1398,6 +1398,6 @@ const PostDetailPage = ({
             </Snackbar>
         </Box>
     );
-};
+});
 
 export default PostDetailPage;

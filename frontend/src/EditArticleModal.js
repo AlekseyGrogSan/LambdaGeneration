@@ -565,7 +565,7 @@ const extractApiErrorMessage = async (response, fallback = 'Ошибка зап�
 };
 
 // ✅ ДОБАВЛЕН onDeleteSuccess
-const EditArticleModal = ({ open, handleClose, post, onUpdateSuccess, onDeleteSuccess, container, disablePortal }) => {
+        const EditArticleModal = ({ open, handleClose, post, onUpdateSuccess, onDeleteSuccess, container, disablePortal, isAdmin = false }) => {
     const [confirmDialog, setConfirmDialog] = useState({ open: false, title: '', message: '', onConfirm: null });
     const [inputDialog, setInputDialog] = useState({ open: false, title: '', label: '', initialValue: '', onConfirm: null });
     // Режим: 'content' или 'tags'
@@ -685,8 +685,9 @@ const EditArticleModal = ({ open, handleClose, post, onUpdateSuccess, onDeleteSu
                 setSuccessMsg(''); 
 
                 try {
-                    // Используется ваш маршрут DELETE /Articles/delete/{id}
-                    const response = await fetch(`${API_BASE_URL}/Articles/delete/${post.id}`, { 
+                    const deleteUrl = isAdmin ? `${API_BASE_URL}/admin/articles/${post.id}` : `${API_BASE_URL}/Articles/delete/${post.id}`;
+                    // Используется ваш маршрут DELETE /Articles/delete/{id} или admin delete
+                    const response = await fetch(deleteUrl, { 
                         method: 'DELETE', 
                         credentials: 'include' // Важно для куки-авторизации
                     });
@@ -734,11 +735,12 @@ const EditArticleModal = ({ open, handleClose, post, onUpdateSuccess, onDeleteSu
                 formData.append('picture', imageFile);
             }
 
-            const response = await fetch(`${API_BASE_URL}/Articles/update`, {
-                method: 'PUT',
-                credentials: 'include',
-                body: formData
-            });
+        const updateUrl = `${API_BASE_URL}/Articles/update`;
+        const response = await fetch(updateUrl, {
+            method: 'PUT',
+            body: formData,
+            credentials: 'include'
+        });
 
             if (!response.ok) {
                 const errorMessage = await extractApiErrorMessage(response, 'Ошибка обновления контента');
@@ -760,7 +762,8 @@ const EditArticleModal = ({ open, handleClose, post, onUpdateSuccess, onDeleteSu
     const handleSaveTags = async () => {
         setIsLoading(true); setError(null); setSuccessMsg('');
         try {
-            const response = await fetch(`${API_BASE_URL}/Articles/updatetags`, {
+            const updateTagsUrl = `${API_BASE_URL}/Articles/updatetags`;
+            const response = await fetch(updateTagsUrl, {
                 method: 'PUT',
                 headers: getAuthHeaders(),
                 credentials: 'include',

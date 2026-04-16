@@ -42,7 +42,7 @@ import { useFeedTabSwipe } from './useFeedTabSwipe';
 import RegistrationModal from './RegistrationModal';
 import ForgotPasswordModal from './ForgotPasswordModal';
 import PostCreationModal from './PostCreationModal';
-import CategoryModal from './CategoryModal'; 
+import CategoryModal, { TAG_CATEGORIES } from './CategoryModal'; 
 import ResourcesModal from './ResourcesModal';
 import FaqModal from './FaqModal';
 import AdminPanelModal from './AdminPanelModal';
@@ -2468,6 +2468,60 @@ const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
                                             )
                                         }}
                                     />
+                                </>
+                            ) : paginationType === 'tags' ? (
+                                <>
+                                    <IconButton
+                                        onClick={() => {
+                                            handlePaginationTypeChange('random');
+                                            setSelectedTagIds([]);
+                                        }}
+                                        sx={{
+                                            borderRadius: '50%',
+                                            color: '#00bfa5',
+                                            border: '1px solid rgba(0, 191, 165, 0.5)',
+                                            '&:hover': { backgroundColor: 'rgba(0, 191, 165, 0.12)' }
+                                        }}
+                                    >
+                                        <ArrowBackIcon />
+                                    </IconButton>
+                                    <Box sx={{ 
+                                        display: 'flex', 
+                                        alignItems: 'center', 
+                                        px: 1,
+                                        gap: 1,
+                                        maxWidth: { sm: '300px', md: '450px', lg: '600px' },
+                                        overflowX: 'auto',
+                                        whiteSpace: 'nowrap',
+                                        pb: 0.5,
+                                        '&::-webkit-scrollbar': { height: '4px' },
+                                        '&::-webkit-scrollbar-thumb': { backgroundColor: 'rgba(0, 191, 165, 0.5)', borderRadius: '4px' },
+                                        '&::-webkit-scrollbar-track': { backgroundColor: 'transparent' }
+                                    }}>
+                                        {selectedTagIds && selectedTagIds.length > 0 ? (
+                                            selectedTagIds.map(id => {
+                                                const tag = TAG_CATEGORIES.flatMap(c => c.tags).find(t => t.id === id);
+                                                return tag ? (
+                                                    <Box key={id} sx={{
+                                                        padding: '4px 12px',
+                                                        borderRadius: '16px',
+                                                        backgroundColor: 'rgba(0, 191, 165, 0.1)',
+                                                        border: '1px solid rgba(0, 191, 165, 0.4)',
+                                                        color: '#00e5c9',
+                                                        fontWeight: 600,
+                                                        fontSize: '0.85rem',
+                                                        flexShrink: 0
+                                                    }}>
+                                                        # {tag.label}
+                                                    </Box>
+                                                ) : null;
+                                            })
+                                        ) : (
+                                            <Typography sx={{ color: 'white', fontWeight: 'bold', fontSize: '0.95rem' }}>
+                                                Выбранные категории
+                                            </Typography>
+                                        )}
+                                    </Box>
                                 </>
                             ) : (
                                 <>

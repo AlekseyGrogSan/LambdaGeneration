@@ -106,7 +106,6 @@ namespace LambdaGeneration.API.Controllers
                 var moderation = _regexModeration.ModerationComment(request.content).Result.IsApproved;
 
                 var commentUpdate = await _commentsService.UpdateCommentByIdAsync(request.CommentId, GetUserID(), request.content, moderation);
-
                 if (commentUpdate == null)
                     return BadRequest("Ошибка на стороне сервера при редактировании комментария");
 

@@ -21,7 +21,7 @@ const style = {
     '&::-webkit-scrollbar-thumb': { background: '#00bfa5', borderRadius: '8px' },
 };
 
-const TAG_CATEGORIES = [
+export const TAG_CATEGORIES = [
     {
         title: 'Языки',
         tags: [

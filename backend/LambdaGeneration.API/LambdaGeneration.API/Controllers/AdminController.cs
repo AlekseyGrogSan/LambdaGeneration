@@ -218,6 +218,42 @@ namespace LambdaGeneration.API.Controllers
 
             return Ok(new { message = $"Удалено {deletedCount} комментариев" });
         }
+
+        [HttpPut("articles/update")]
+        public async Task<IActionResult> UpdateArticle([FromForm] LambdaGeneration.API.DTO.Request.UpdateArticlesRequest request)
+        {
+            var article = await _articlesRepository.Update(request.article_id, request.article_title, request.article_content, request.article_preview, null);
+            if (article == null)
+                return NotFound(new { message = "Статья не найдена" });
+            return Ok(new { message = "Статья обновлена" });
+        }
+
+        [HttpPut("articles/updatetags")]
+        public async Task<IActionResult> UpdateTags([FromBody] LambdaGeneration.API.DTO.Request.UpdateTagsArticlesRequest request)
+        {
+            var ArticleIntTags = new List<int>();
+            for (var i = 0; i < request.article_tags.Count; i++)
+            {
+                ArticleIntTags.Add(LambdaGeneration.API.Midleware.ApiExtensions.ToTags(request.article_tags[i]));
+            }
+
+            var article = await _articlesRepository.UpdateTags(request.article_id, ArticleIntTags);
+            if (article == null)
+                return NotFound(new { message = "Статья не найдена" });
+            return Ok(new { message = "Теги обновлены" });
+        }
+
+        [HttpPut("comments/update-comment")]
+        public async Task<IActionResult> UpdateComment([FromBody] LambdaGeneration.API.DTO.Request.UpdateCommentRequest request)
+        {
+            if (string.IsNullOrEmpty(request.content))
+                return BadRequest();
+
+            var comment = await _commentsRepository.UpdateCommentAsync(request.CommentId, request.content);
+            if (comment == null)
+                return NotFound(new { message = "Комментарий не найден" });
+            return Ok(new { message = "Комментарий обновлен" });
+        }
     }
 }
 

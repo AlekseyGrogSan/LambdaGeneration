@@ -36,6 +36,7 @@ import MoreVertIcon from '@mui/icons-material/MoreVert';
 import PostCard from './PostCard'; 
 import EditArticleModal from './EditArticleModal';
 import EmailVerificationModal from './EmailVerificationModal'; 
+import AvatarCropDialog from './AvatarCropDialog';
 import { buildArticleImageUrl, buildAvatarUrl, DEFAULT_AVATAR_SRC, formatBytes, isAvatarTooLarge, MAX_AVATAR_BYTES } from './avatarUtils';
 
 const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || '/api';
@@ -223,6 +224,9 @@ const ProfileModal = ({ open, handleClose, userId, onUnauthorized, onLogout, onP
     const [avatarFile, setAvatarFile] = useState(null);
     const [avatarPreview, setAvatarPreview] = useState('');
     const [avatarError, setAvatarError] = useState(null);
+    const [cropImageSrc, setCropImageSrc] = useState(null);
+    const [isCropDialogOpen, setIsCropDialogOpen] = useState(false);
+    const [isAvatarViewerOpen, setIsAvatarViewerOpen] = useState(false);
     const authorProfileCache = useRef(new Map());
     
     const [error, setError] = useState(null);
@@ -381,14 +385,35 @@ const ProfileModal = ({ open, handleClose, userId, onUnauthorized, onLogout, onP
         }
 
         setAvatarError(null);
-        setAvatarFile(file);
         const nextPreview = URL.createObjectURL(file);
+        setCropImageSrc(nextPreview);
+        setIsCropDialogOpen(true);
+        // Clear input value to allow selecting the same file again
+        event.target.value = '';
+    };
+
+    const handleCropComplete = (croppedFile) => {
+        setIsCropDialogOpen(false);
+        setAvatarFile(croppedFile);
+        const nextPreview = URL.createObjectURL(croppedFile);
         setAvatarPreview((prev) => {
             if (prev && prev.startsWith('blob:')) {
                 URL.revokeObjectURL(prev);
             }
             return nextPreview;
         });
+        if (cropImageSrc && cropImageSrc.startsWith('blob:')) {
+            URL.revokeObjectURL(cropImageSrc);
+        }
+        setCropImageSrc(null);
+    };
+
+    const handleCropCancel = () => {
+        setIsCropDialogOpen(false);
+        if (cropImageSrc && cropImageSrc.startsWith('blob:')) {
+            URL.revokeObjectURL(cropImageSrc);
+        }
+        setCropImageSrc(null);
     };
 
     const handleSaveProfile = async () => {
@@ -404,7 +429,7 @@ const ProfileModal = ({ open, handleClose, userId, onUnauthorized, onLogout, onP
             formData.append('email', profileData?.email || emailEdit || '');
             formData.append('aboutUser', editData.aboutUser ?? '');
             if (avatarFile) {
-                formData.append('avatar', avatarFile);
+                formData.append('avatar', avatarFile, avatarFile.name || 'avatar.jpg');
             }
             const response = await fetch(`${API_BASE_URL}/Users`, {
                 method: 'PUT', 
@@ -871,7 +896,18 @@ const ProfileModal = ({ open, handleClose, userId, onUnauthorized, onLogout, onP
                                 <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} alignItems="center">
                                     <Avatar
                                         src={buildAvatarUrl(API_BASE_URL, avatarPreview || profileData?.pathAvatar || profileData?.PathAvatar)}
-                                        sx={{ width: 96, height: 96, border: '2px solid #00bfa5' }}
+                                        onClick={() => setIsAvatarViewerOpen(true)}
+                                        sx={{ 
+                                            width: 96, 
+                                            height: 96, 
+                                            border: '2px solid #00bfa5', 
+                                            cursor: 'pointer',
+                                            transition: 'transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.3s ease',
+                                            '&:hover': {
+                                                transform: 'scale(1.05)',
+                                                boxShadow: '0 8px 24px rgba(0, 191, 165, 0.4)'
+                                            }
+                                        }}
                                         imgProps={{
                                             onError: (e) => {
                                                 e.currentTarget.src = DEFAULT_AVATAR_SRC;
@@ -935,7 +971,19 @@ const ProfileModal = ({ open, handleClose, userId, onUnauthorized, onLogout, onP
                         
                         <Avatar
                             src={buildAvatarUrl(API_BASE_URL, profileData?.pathAvatar ?? profileData?.PathAvatar)}
-                            sx={{ width: 110, height: 110, border: '3px solid #00bfa5', mb: 2 }}
+                            onClick={() => setIsAvatarViewerOpen(true)}
+                            sx={{ 
+                                width: 110, 
+                                height: 110, 
+                                border: '3px solid #00bfa5', 
+                                mb: 2, 
+                                cursor: 'pointer',
+                                transition: 'transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.3s ease',
+                                '&:hover': {
+                                    transform: 'scale(1.08)',
+                                    boxShadow: '0 12px 32px rgba(0, 191, 165, 0.4)'
+                                }
+                            }}
                             imgProps={{
                                 onError: (e) => {
                                     e.currentTarget.src = DEFAULT_AVATAR_SRC;
@@ -1500,6 +1548,38 @@ const ProfileModal = ({ open, handleClose, userId, onUnauthorized, onLogout, onP
                     </Button>
                 </DialogActions>
             </Dialog>
+
+            <Dialog
+                open={isAvatarViewerOpen}
+                onClose={() => setIsAvatarViewerOpen(false)}
+                maxWidth="md"
+                PaperProps={{
+                    sx: {
+                        bgcolor: 'transparent',
+                        boxShadow: 'none',
+                        m: 0,
+                    }
+                }}
+            >
+                <img
+                    src={buildAvatarUrl(API_BASE_URL, avatarPreview || profileData?.pathAvatar || profileData?.PathAvatar)}
+                    alt="Аватар"
+                    style={{
+                        maxWidth: '90vw',
+                        maxHeight: '90vh',
+                        objectFit: 'contain',
+                        borderRadius: '8px'
+                    }}
+                    onError={(e) => { e.currentTarget.src = DEFAULT_AVATAR_SRC; }}
+                />
+            </Dialog>
+
+            <AvatarCropDialog
+                open={isCropDialogOpen}
+                imageSrc={cropImageSrc}
+                onClose={handleCropCancel}
+                onCropComplete={handleCropComplete}
+            />
         </>
     );
 };

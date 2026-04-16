@@ -176,7 +176,11 @@ namespace LambdaGeneration.API.Controllers
 
 
 
-                var article = await _articlesService.Update(request.article_id, GetUserID(), request.article_title, request.article_content, request.article_preview, file_path);
+var targetForUpdate = await _articlesService.GetArticleByIdAsync(request.article_id);
+                  bool isAdmin = User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value == "Admin" || User.FindFirst("Role")?.Value == "Admin";
+                  var effectiveAuthorId = (isAdmin && targetForUpdate != null) ? targetForUpdate.AuthorID : GetUserID();
+
+                  var article = await _articlesService.Update(request.article_id, effectiveAuthorId, request.article_title, request.article_content, request.article_preview, file_path);
 
                 var ArticleTagsResponse = new List<string>();
 
@@ -209,7 +213,11 @@ namespace LambdaGeneration.API.Controllers
                 ArticleIntTags.Add(ApiExtensions.ToTags(request.article_tags[i]));
             }
 
-            var articles = await _articlesService.UpdateTags(request.article_id, GetUserID(), ArticleIntTags);
+                  var targetForTags = await _articlesService.GetArticleByIdAsync(request.article_id);
+                  bool isAdminTags = User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value == "Admin" || User.FindFirst("Role")?.Value == "Admin";
+                  var effectiveAuthorToPass = (isAdminTags && targetForTags != null) ? targetForTags.AuthorID : GetUserID();
+
+            var articles = await _articlesService.UpdateTags(request.article_id, effectiveAuthorToPass, ArticleIntTags);
 
             return Ok(new UpdateArticlesResponse(articles.ArticleID, articles.ArticleTitle, articles.ArticlePreview, articles.ArticleContent,
                 articles.ArticleTags.Select(t => ApiExtensions.FromTags(t)).ToList(), articles.CreatedDate, articles.CountLikes, articles.CountComments, articles.FilePath));
