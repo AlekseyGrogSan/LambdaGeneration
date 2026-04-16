@@ -1,4 +1,60 @@
 import React, { useEffect, useRef, useState } from 'react';
+
+import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
+import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
+import ContentCopyIcon from '@mui/icons-material/ContentCopy';
+import CheckIcon from '@mui/icons-material/Check';
+import { createRoot } from 'react-dom/client';
+
+const CodeBlock = ({ language, value }) => {
+    const [isCopied, setIsCopied] = React.useState(false);
+
+    const handleCopy = () => {
+        navigator.clipboard.writeText(value);
+        setIsCopied(true);
+        setTimeout(() => setIsCopied(false), 2000);
+    };
+
+    return (
+        <Box sx={{ my: 2, borderRadius: '8px', overflow: 'hidden', border: '1px solid #3a3a3a' }}>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', bgcolor: '#1e1e1e', py: 0.5, px: 2, borderBottom: '1px solid #2d2d2d' }}>
+                <Typography variant='caption' sx={{ color: '#888', fontWeight: 'bold' }}>
+                    {language || 'text'}
+                </Typography>
+                <IconButton size='small' onClick={handleCopy} sx={{ color: '#888', '&:hover': { color: '#fff' } }}>
+                    {isCopied ? <CheckIcon fontSize='small' sx={{ color: '#00e676' }} /> : <ContentCopyIcon fontSize='small' />}
+                </IconButton>
+            </Box>
+            <SyntaxHighlighter
+                language={language && language !== 'text' ? language : 'javascript'}
+                style={vscDarkPlus}
+                customStyle={{ margin: 0, padding: '16px', fontSize: '0.9rem', backgroundColor: '#1e1e1e' }}
+            >
+                {value}
+            </SyntaxHighlighter>
+        </Box>
+    );
+};
+
+
+const normalizeCodeBlockText = (block) => {
+    let html = block.innerHTML || '';
+    html = html.replace(/<br\s*[\/]?>/gi, '\n');
+    html = html.replace(/<div[^>]*>/gi, '\n');
+    html = html.replace(/<\/div>/gi, '');
+    html = html.replace(/<p[^>]*>/gi, '\n');
+    html = html.replace(/<\/p>/gi, '');
+    html = html.replace(/<[^>]+>/g, '');
+
+    const temp = document.createElement('textarea');
+    temp.innerHTML = html;
+
+    return (temp.value || '')
+        .replace(/\r\n?/g, '\n')
+        .replace(/\u200b/g, '')
+        .trim();
+};
+
 import {
     Box,
     Card,
@@ -42,23 +98,6 @@ const labelStyle = {
 const getTagColor = (tag, index) => {
     const hash = tag.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
     return TAG_COLORS[(hash + index) % TAG_COLORS.length];
-};
-
-const normalizeCodeBlockText = (block) => {
-    let html = block.innerHTML || '';
-    html = html.replace(/<br\s*[\/]?>/gi, '\n');
-    html = html.replace(/<div[^>]*>/gi, '\n');
-    html = html.replace(/<\/div>/gi, '');
-    html = html.replace(/<p[^>]*>/gi, '\n');
-    html = html.replace(/<\/p>/gi, '');
-
-    const temp = document.createElement('textarea');
-    temp.innerHTML = html;
-
-    return (temp.value || '')
-        .replace(/\r\n?/g, '\n')
-        .replace(/\u200b/g, '')
-        .trim();
 };
 
 /**
@@ -166,7 +205,7 @@ const PostCard = ({
     const contentRef = useRef(null);
     const renderedPreviewContent = formatContentForRender(article_preview || '');
 
-        useEffect(() => {
+            useEffect(() => {
         if (contentRef.current) {
             contentRef.current.querySelectorAll('pre code').forEach((block) => {
                 if (!block.dataset.highlighted) {
@@ -201,12 +240,14 @@ const PostCard = ({
                     newWrapper.innerHTML = `<table class="tg-code-block code-block-table" style="width: 100%; background: #282c34; border-radius: 8px; border: 1px solid rgba(255,255,255,0.12); border-collapse: separate; border-spacing: 0; margin: 14px 0; overflow: hidden; table-layout: fixed;">
     <thead>
         <tr>
-            <th style="padding: 2px 6px; background: #21252b; color: rgba(255,255,255,0.6); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 11px; text-align: left; font-weight: bold; border-bottom: 1px solid rgba(255,255,255,0.12); user-select: none;">${language.charAt(0).toUpperCase() + language.slice(1)}</th>
+            <th style="padding: 6px 12px; background: #21252b; color: rgba(255,255,255,0.6); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 12px; text-align: left; font-weight: bold; border-bottom: 1px solid rgba(255,255,255,0.12); user-select: none;">
+                ${language}
+            </th>
         </tr>
     </thead>
     <tbody>
         <tr>
-            <td style="padding: 10px; overflow-x: auto;">
+            <td style="padding: 12px; overflow-x: auto;">
                 <pre style="margin: 0; white-space: pre-wrap !important; word-wrap: break-word; background: transparent;"><code class="language-${language}" style="font-family: Consolas, monospace; font-size: 14px; background: transparent !important; padding: 0 !important; border: none !important;"></code></pre>
             </td>
         </tr>
@@ -230,6 +271,64 @@ const PostCard = ({
             });
         }
     }, [renderedPreviewContent]);
+
+    
+    React.useEffect(() => {
+        const roots = [];
+        if (contentRef.current) {
+            contentRef.current.querySelectorAll('.code-block-table').forEach((table) => {
+                if (table.dataset.replaced) return;
+                table.dataset.replaced = 'true';
+
+                const th = table.querySelector('th');
+                const languageClass = th ? th.textContent.trim() : 'text';      
+
+                const codeBlock = table.querySelector('pre code') || table.querySelector('pre');
+                const codeText = codeBlock ? normalizeCodeBlockText(codeBlock) : normalizeCodeBlockText(table);
+
+                const parent = table.parentNode;
+                const wrapper = document.createElement('div');
+                wrapper.className = 'custom-code-block-wrapper';
+                parent.insertBefore(wrapper, table);
+                table.style.display = 'none';
+
+                const root = createRoot(wrapper);
+                roots.push({ root, wrapper, original: table });
+                root.render(<CodeBlock language={languageClass} value={codeText} />);
+            });
+
+            contentRef.current.querySelectorAll('pre code').forEach((block) => {
+                if (block.closest('.code-block-table') || block.closest('.custom-code-block-wrapper') || block.dataset.replaced) return;
+                block.dataset.replaced = 'true';
+                const codeText = normalizeCodeBlockText(block);
+
+                const languageCls = Array.from(block.classList).find((cls) => cls.startsWith('language-'));
+                const language = languageCls ? languageCls.replace('language-', '') : '';
+
+                const pre = block.parentNode;
+                const wrapper = document.createElement('div');
+                wrapper.className = 'custom-code-block-wrapper';
+                pre.parentNode.insertBefore(wrapper, pre);
+                pre.style.display = 'none';
+
+                const root = createRoot(wrapper);
+                roots.push({ root, wrapper, original: pre });
+                root.render(<CodeBlock language={language} value={codeText} />);
+            });
+        }
+
+        return () => {
+             roots.forEach(({ root, wrapper, original }) => {
+                 setTimeout(() => root.unmount(), 0);
+                 if (wrapper && wrapper.parentNode) {
+                     wrapper.parentNode.removeChild(wrapper);
+                 }
+                 if (original) {
+                     delete original.dataset.replaced;
+                 }
+             });
+        };
+    }); 
 
     return (
         <Card 
