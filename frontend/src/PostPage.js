@@ -722,10 +722,8 @@ const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
     const [isLoading, setIsLoading] = useState(false); 
     const [error, setError] = useState(null);
     const [emptyStateMessage, setEmptyStateMessage] = useState('');
-    const [pullDistance, setPullDistance] = useState(0);
-    const [isPulling, setIsPulling] = useState(false);
-    const pullStartYRef = useRef(null);
-    const [isRefreshingFeed, setIsRefreshingFeed] = useState(false);
+    const [mouseWheelNudge, setMouseWheelNudge] = useState(0);
+    const mouseWheelNudgeTimerRef = useRef(null);
     const [selectedPost, setSelectedPost] = useState(null); 
     const [isViewingDetailPage, setIsViewingDetailPage] = useState(false);
     const [lastViewedArticleId, setLastViewedArticleId] = useState(null); 
@@ -1145,54 +1143,6 @@ const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
         setReturnProfileUserId(null);
     };
 
-    const handleRefreshFeed = async () => {
-        setIsRefreshingFeed(true);
-        setPageNumber(1);
-        setHasMore(true);
-        setArticles([]);
-        setEmptyStateMessage('');
-        feedCacheRef.current[paginationType] = null;
-        
-        try {
-            await fetchArticlesPage(1, paginationType, { force: true, searchQuery: searchQueryRef.current });
-        } finally {
-            setIsRefreshingFeed(false);
-            setPullDistance(0);
-        }
-    };
-
-    const handlePullStart = (clientY) => {
-        const container = articlesContainerRef.current;
-        if (!container) return;
-        if (container.scrollTop === 0) {
-            pullStartYRef.current = clientY;
-            setIsPulling(true);
-        }
-    };
-
-    const handlePullMove = (clientY) => {
-        if (!isPulling || isRefreshingFeed || pullStartYRef.current === null) return;
-        const delta = clientY - pullStartYRef.current;
-        const container = articlesContainerRef.current;
-        if (delta > 0 && container && container.scrollTop === 0) {
-            const distance = Math.min(delta * 0.4, 120);
-            setPullDistance(distance);
-        } else {
-            setPullDistance(0);
-        }
-    };
-
-    const handlePullEnd = () => {
-        if (!isPulling) return;
-        setIsPulling(false);
-        pullStartYRef.current = null;
-        if (pullDistance > 80 && !isRefreshingFeed) {
-            handleRefreshFeed();
-        } else {
-            setPullDistance(0);
-        }
-    };
-
     const handleSearchOpen = () => {
         setIsSearchMode(true);
     };
@@ -1304,16 +1254,119 @@ const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
         const container = articlesContainerRef.current;
         if (container) {
             container.addEventListener('scroll', handleScroll);
+
+            let isMouseSnapScrolling = false;
+            const onWheel = (e) => {
+                if (window.innerWidth < 768) return;
+                if (isViewingDetailPage) return;
+                if (paginationType !== 'random' && paginationType !== 'recommend') return;
+                if (isLoading) return;
+
+                if (e.ctrlKey || e.metaKey || e.altKey) return;
+
+                const target = e.target;
+                if (!target || !target.closest) return;
+                if (
+                    target.closest('.MuiDrawer-root') ||
+                    target.closest('.MuiModal-root') ||
+                    target.closest('[role="dialog"]') ||
+                    target.closest('textarea') ||
+                    target.closest('input') ||
+                    target.closest('select') ||
+                    target.closest('[contenteditable="true"]')
+                ) {
+                    return;
+                }
+
+                // Intercept only classic mouse-wheel ticks; keep trackpad scrolling native.
+                const normalizedDeltaY = e.deltaMode === 1
+                    ? e.deltaY * 18
+                    : e.deltaMode === 2
+                        ? e.deltaY * window.innerHeight
+                        : e.deltaY;
+                const likelyMouseWheel = e.deltaMode === 1 || Math.abs(normalizedDeltaY) >= 85;
+                if (!likelyMouseWheel) return;
+                if (Math.abs(normalizedDeltaY) < 12) return;
+
+                // Always block native wheel scroll for mouse-mode navigation.
+                e.preventDefault();
+                if (isMouseSnapScrolling) return;
+
+                const dir = normalizedDeltaY > 0 ? 1 : -1;
+
+                try {
+                    const containerRect = container.getBoundingClientRect();
+                    const containerCenterY = containerRect.top + containerRect.height / 2;
+
+                    const postsList = Object.entries(postRefs.current)
+                        .map(([id, el]) => {
+                            if (!el) return null;
+                            const rect = el.getBoundingClientRect();
+                            const center = rect.top + rect.height / 2;
+                            return { id, el, center };
+                        })
+                        .filter(Boolean)
+                        .sort((a, b) => a.center - b.center);
+
+                    if (postsList.length === 0) return;
+
+                    const closestPost = [...postsList].sort(
+                        (a, b) => Math.abs(a.center - containerCenterY) - Math.abs(b.center - containerCenterY),
+                    )[0];
+                    const currentIndex = postsList.findIndex((p) => p.id === closestPost.id);
+
+                    let targetIndex = currentIndex + dir;
+                    targetIndex = Math.max(0, Math.min(targetIndex, postsList.length - 1));
+                    const targetPost = postsList[targetIndex];
+
+                    if (!targetPost || targetPost.id === closestPost.id) return;
+
+                    isMouseSnapScrolling = true;
+                    if (mouseWheelNudgeTimerRef.current) {
+                        clearTimeout(mouseWheelNudgeTimerRef.current);
+                    }
+                    setMouseWheelNudge(dir > 0 ? -14 : 14);
+                    mouseWheelNudgeTimerRef.current = setTimeout(() => {
+                        setMouseWheelNudge(0);
+                        mouseWheelNudgeTimerRef.current = null;
+                    }, 170);
+
+                    container.style.scrollSnapType = 'none';
+                    targetPost.el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+                    setTimeout(() => {
+                        container.style.scrollSnapType = 'y mandatory';
+                        isMouseSnapScrolling = false;
+                    }, 360);
+                } catch (err) {
+                    container.style.scrollSnapType = 'y mandatory';
+                    isMouseSnapScrolling = false;
+                    console.error('Ошибка wheel-навигации ленты', err);
+                }
+            };
+
+            container.addEventListener('wheel', onWheel, { passive: false });
+            container._onWheelRef = onWheel;
         }
-        
+
         return () => {
             if (container) {
                 container.removeEventListener('scroll', handleScroll);
+                if (container._onWheelRef) {
+                    container.removeEventListener('wheel', container._onWheelRef);
+                }
             }
         };
-    }, [handleScroll]);
+    }, [handleScroll, isViewingDetailPage, paginationType, isLoading]);
 
-    
+    useEffect(() => {
+        return () => {
+            if (mouseWheelNudgeTimerRef.current) {
+                clearTimeout(mouseWheelNudgeTimerRef.current);
+            }
+        };
+    }, []);
+
     const enrichArticleData = async (article) => {
         const rawId = article.article_id ?? article.articleId ?? article.ArticleID;
         const rawAuthorId = article.author_id ?? article.authorId ?? article.AuthorID;
@@ -2184,47 +2237,25 @@ const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
                     '@media (min-width: 768px)': {
                         scrollSnapType: 'y mandatory',
                     },
-                    '&::-webkit-scrollbar': { display: 'none' }, 
-                    msOverflowStyle: 'none', 
-                    scrollbarWidth: 'none', 
-                    display: 'flex', 
-                    flexDirection: 'column', 
+                    ...(isViewingDetailPage
+                        ? {
+                            scrollSnapType: 'none',
+                            scrollBehavior: 'auto',
+                        }
+                        : {}),
+                    '&::-webkit-scrollbar': { display: 'none' },
+                    msOverflowStyle: 'none',
+                    scrollbarWidth: 'none',
+                    display: 'flex',
+                    flexDirection: 'column',
                     alignItems: 'center',
-                    scrollBehavior: 'smooth',
+                    scrollBehavior: isViewingDetailPage ? 'auto' : 'smooth',
                     position: 'relative',
                     width: '100%',
                     maxWidth: '100vw',
                 }}
                 ref={articlesContainerRef}
-                onTouchStart={(e) => handlePullStart(e.touches[0].clientY)}
-                onTouchMove={(e) => handlePullMove(e.touches[0].clientY)}
-                onTouchEnd={handlePullEnd}
-                onMouseDown={(e) => handlePullStart(e.clientY)}
-                onMouseMove={(e) => handlePullMove(e.clientY)}
-                onMouseUp={handlePullEnd}
-                onMouseLeave={handlePullEnd}
             >
-                <div 
-                    style={{
-                        width: '100%',
-                        height: pullDistance > 0 ? pullDistance : isRefreshingFeed ? 60 : 0,
-                        transition: isPulling ? 'none' : 'height 0.3s cubic-bezier(0.25, 0.8, 0.25, 1)',
-                        display: 'flex',
-                        justifyContent: 'center',
-                        alignItems: 'center',
-                        overflow: 'hidden',
-                        opacity: pullDistance > 10 || isRefreshingFeed ? 1 : 0
-                    }}
-                >
-                    <CircularProgress 
-                        size={28} 
-                        thickness={4} 
-                        variant={isRefreshingFeed ? 'indeterminate' : 'determinate'}
-                        value={isRefreshingFeed ? undefined : Math.min((pullDistance / 80) * 100, 100)}
-                        sx={{ color: '#00bfa5' }}
-                    />
-                </div>
-
                 {publishNotice && (
                     <Box
                         sx={{
@@ -2647,12 +2678,11 @@ const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
                         '@media (min-width: 768px)': {
                             px: 0,
                             pb: 5,
-                            mt: '20px',
                         },
-                            transform: `translateX(${dragOffset}px)`,
+                            transform: `translate3d(${dragOffset}px, ${isDesktopLayout ? mouseWheelNudge : 0}px, 0)`,
                             transition: Math.abs(dragOffset) > 0.5
                                 ? 'none'
-                                : 'transform 0.28s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.22s ease',
+                                : 'transform 0.34s cubic-bezier(0.22, 0.9, 0.25, 1), opacity 0.22s ease',
                             touchAction: feedSwipeEnabled ? 'pan-y' : 'auto',
                         }}
                         {...(feedSwipeEnabled ? swipeHandlers : {})}
@@ -2873,4 +2903,3 @@ const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
 };
 
 export default PostPage;
-
