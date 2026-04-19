@@ -726,6 +726,7 @@ const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
     const mouseWheelNudgeTimerRef = useRef(null);
     const [selectedPost, setSelectedPost] = useState(null); 
     const [isViewingDetailPage, setIsViewingDetailPage] = useState(false);
+    const [tagFilterReturnContext, setTagFilterReturnContext] = useState(null);
     const [lastViewedArticleId, setLastViewedArticleId] = useState(null); 
     const [shouldOpenComments, setShouldOpenComments] = useState(false);
     const [activeCommentsPost, setActiveCommentsPost] = useState(null);
@@ -895,6 +896,7 @@ const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
     const articlesContainerRef = useRef(null); 
     const postRefs = useRef({}); 
     const setPostRef = (id) => (el) => { postRefs.current[id] = el; };
+    const pendingFeedRestoreArticleIdRef = useRef(null);
     const lastCenteredIdRef = useRef(null);
 
     const showFeedPublishNotice = useCallback((message) => {
@@ -1132,6 +1134,9 @@ const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
     };
     
     const handleBackToFeed = () => { 
+        if (!returnToProfile) {
+            pendingFeedRestoreArticleIdRef.current = selectedPost?.article_id ?? lastViewedArticleId ?? null;
+        }
         setSelectedPost(null); 
         setIsViewingDetailPage(false); 
         setShouldOpenComments(false);
@@ -1156,13 +1161,90 @@ const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
         fetchArticlesPage(1, 'search', { force: true, searchQuery: query });
     };
 
-    const handleApplyTagFilter = (tagIds) => {
+    const handleApplyTagFilter = (tagIds, options = {}) => {
+        const { keepReturnContext = false } = options;
+        if (!keepReturnContext) {
+            setTagFilterReturnContext(null);
+        }
         setSelectedTagIds(tagIds);
         setPaginationType('tags');
         setArticles([]);
         setPageNumber(1);
         setHasMore(true);
         fetchArticlesPage(1, 'tags', { force: true, tagIds });
+    };
+
+    const handleExitTagFilter = () => {
+        const context = tagFilterReturnContext;
+        if (context?.post) {
+            const feedState = context.feedState || null;
+            if (feedState) {
+                setPaginationType(feedState.paginationType || 'random');
+                setIsSearchMode(Boolean(feedState.isSearchMode));
+                const restoredQuery = feedState.searchQuery || '';
+                setSearchQuery(restoredQuery);
+                searchQueryRef.current = restoredQuery;
+                setSelectedTagIds(Array.isArray(feedState.selectedTagIds) ? feedState.selectedTagIds : []);
+                setArticles(Array.isArray(feedState.articles) ? feedState.articles : []);
+                setPageNumber(feedState.pageNumber || 1);
+                setHasMore(Boolean(feedState.hasMore));
+                setEmptyStateMessage(feedState.emptyStateMessage || '');
+                setLastViewedArticleId(feedState.lastViewedArticleId ?? null);
+            } else {
+                setSelectedTagIds([]);
+                const targetFeedType = lastFeedTypeRef.current || 'random';
+                handlePaginationTypeChange(targetFeedType);
+            }
+
+            setSelectedPost(context.post);
+            setIsViewingDetailPage(true);
+            setShouldOpenComments(false);
+            setReturnToProfile(!!context.returnToProfile);
+            setReturnProfileUserId(context.returnProfileUserId ?? null);
+            setTagFilterReturnContext(null);
+            return;
+        }
+
+        setTagFilterReturnContext(null);
+        setSelectedTagIds([]);
+        const targetFeedType = lastFeedTypeRef.current || 'random';
+        handlePaginationTypeChange(targetFeedType);
+    };
+
+    const handleTagClickFromDetail = (tagLabel) => {
+        const normalizedLabel = String(tagLabel || '').trim().toLowerCase();
+        if (!normalizedLabel) return;
+
+        const matchedTag = TAG_CATEGORIES
+            .flatMap((category) => category.tags)
+            .find((tag) => String(tag.label || '').trim().toLowerCase() === normalizedLabel);
+
+        if (!matchedTag) return;
+
+        setTagFilterReturnContext({
+            post: selectedPost,
+            returnToProfile,
+            returnProfileUserId,
+            feedState: {
+                paginationType,
+                isSearchMode,
+                searchQuery: searchQueryRef.current,
+                selectedTagIds: Array.isArray(selectedTagIds) ? [...selectedTagIds] : [],
+                articles: Array.isArray(articlesRef.current) ? [...articlesRef.current] : [],
+                pageNumber,
+                hasMore,
+                emptyStateMessage,
+                lastViewedArticleId,
+            },
+        });
+
+        setSelectedPost(null);
+        setIsViewingDetailPage(false);
+        setShouldOpenComments(false);
+        setReturnToProfile(false);
+        setReturnProfileUserId(null);
+
+        handleApplyTagFilter([matchedTag.id], { keepReturnContext: true });
     };
 
     const handleRemoveTagFromFilter = (tagIdToRemove) => {
@@ -1204,13 +1286,17 @@ const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
     };
 
     useEffect(() => {
-        if (!isViewingDetailPage && lastViewedArticleId) {
-            const targetElement = postRefs.current[lastViewedArticleId];
-            if (targetElement) {
-                targetElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            }
-        }
-    }, [isViewingDetailPage, lastViewedArticleId]);
+        if (isViewingDetailPage) return;
+
+        const restoreId = pendingFeedRestoreArticleIdRef.current;
+        if (!restoreId) return;
+
+        const targetElement = postRefs.current[restoreId];
+        if (!targetElement) return;
+
+        targetElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        pendingFeedRestoreArticleIdRef.current = null;
+    }, [isViewingDetailPage, articles]);
 
     const handleScroll = useCallback(() => {
         if (isProfileModalOpen) return;
@@ -1634,8 +1720,7 @@ const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
         } else if (isSearchMode) {
             handleSearchClose();
         } else if (paginationType === 'tags') {
-            const targetFeedType = lastFeedTypeRef.current || 'random';
-            handlePaginationTypeChange(targetFeedType);
+            handleExitTagFilter();
         }
         setIsCategoryModalOpen(false);
     };
@@ -2195,6 +2280,7 @@ const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
     const mobileSearchActive = isSearchMode || paginationType === 'search';
     const mobileCategoriesActive = isCategoryModalOpen || paginationType === 'tags';
     const mobileProfileActive = isProfileModalOpen;
+    const isTagFilterFromDetail = Boolean(tagFilterReturnContext?.post);
 
     return (
         <Box sx={{ display: 'flex', minHeight: '100vh', backgroundColor: '#121212', overflow: 'hidden' }}>
@@ -2514,10 +2600,7 @@ const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
                             ) : paginationType === 'tags' ? (
                                 <>
                                     <IconButton
-                                        onClick={() => {
-                                            handlePaginationTypeChange('random');
-                                            setSelectedTagIds([]);
-                                        }}
+                                        onClick={handleExitTagFilter}
                                         sx={{
                                             borderRadius: '50%',
                                             color: '#00bfa5',
@@ -2560,19 +2643,21 @@ const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
                                                         <Typography component="span" sx={{ fontWeight: 600, fontSize: '0.85rem', color: 'inherit' }}>
                                                             # {tag.label}
                                                         </Typography>
-                                                        <IconButton
-                                                            size="small"
-                                                            aria-label={`Убрать тег ${tag.label}`}
-                                                            onClick={() => handleRemoveTagFromFilter(id)}
-                                                            sx={{
-                                                                width: 18,
-                                                                height: 18,
-                                                                color: '#8ef7ea',
-                                                                '&:hover': { backgroundColor: 'rgba(0, 229, 201, 0.16)', color: '#cffff8' }
-                                                            }}
-                                                        >
-                                                            <CloseIcon sx={{ fontSize: 12 }} />
-                                                        </IconButton>
+                                                        {!isTagFilterFromDetail && (
+                                                            <IconButton
+                                                                size="small"
+                                                                aria-label={`Убрать тег ${tag.label}`}
+                                                                onClick={() => handleRemoveTagFromFilter(id)}
+                                                                sx={{
+                                                                    width: 18,
+                                                                    height: 18,
+                                                                    color: '#8ef7ea',
+                                                                    '&:hover': { backgroundColor: 'rgba(0, 229, 201, 0.16)', color: '#cffff8' }
+                                                                }}
+                                                            >
+                                                                <CloseIcon sx={{ fontSize: 12 }} />
+                                                            </IconButton>
+                                                        )}
                                                     </Box>
                                                 ) : null;
                                             })
@@ -2684,6 +2769,7 @@ const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
                             nickname={selectedPost.nickname}
                             authorId={selectedPost.author_id} 
                             authorAvatar={selectedPost.authorAvatar}
+                            onTagClick={handleTagClickFromDetail}
                             onAuthorClick={handleOtherAuthorProfileOpen} 
                             onUnauthorized={handleOpen}
                             currentUserId={currentUser?.id}

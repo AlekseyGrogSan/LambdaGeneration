@@ -436,6 +436,7 @@ const PostDetailPage = React.memo(({
     post,
     onBack,
     onLike,
+    onTagClick,
     onAuthorClick,
     onUnauthorized,
     currentUserId,
@@ -1157,12 +1158,18 @@ const PostDetailPage = React.memo(({
                         <Chip
                             key={index}
                             label={tag}
+                            onClick={() => onTagClick?.(tag)}
                             sx={{
                                 backgroundColor: getTagColor(tag, index),
                                 color: 'white',
                                 fontWeight: 'bold',
                                 borderRadius: '10px',
                                 flexShrink: 0,
+                                cursor: 'pointer',
+                                '&:hover': {
+                                    filter: 'brightness(1.08)',
+                                    transform: 'translateY(-1px)'
+                                }
                             }}
                         />
                     ))}

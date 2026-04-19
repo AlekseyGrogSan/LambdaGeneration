@@ -273,7 +273,7 @@ const PostCard = React.memo(({
     const contentRef = useRef(null);
     const renderedPreviewContent = useMemo(() => formatContentForRender(article_preview || ''), [article_preview]);
 
-            useEffect(() => {
+    useEffect(() => {
         if (contentRef.current) {
             contentRef.current.querySelectorAll('pre code').forEach((block) => {
                 if (!block.dataset.highlighted) {
@@ -324,14 +324,14 @@ const PostCard = React.memo(({
                     const newTable = newWrapper.firstElementChild;
                     const newCode = newTable.querySelector('code');
                     newCode.textContent = codeText;
-                    
+
                     if (language && language !== 'code' && hljs.getLanguage(language)) {
                         hljs.highlightElement(newCode);
                     } else {
                         newCode.innerHTML = hljs.highlightAuto(codeText).value;
                     }
                     newCode.dataset.highlighted = 'true';
-                    
+
                     if (container && container.parentNode) {
                         container.parentNode.replaceChild(newTable, container);
                     }
@@ -599,29 +599,44 @@ const PostCard = React.memo(({
             {showImage && resolvedImageUrl && !imageBroken && (
                 <Box sx={{ px: { xs: 1.25, md: 2 }, pb: { xs: 1, md: 1.5 }, width: '100%', boxSizing: 'border-box' }}>
                     <Box
-                        component="img"
-                        src={resolvedImageUrl}
-                        alt="Фото статьи"
-                        onError={(e) => {
-                            if (!e.currentTarget.dataset.retried && resolvedImageUrl) {
-                                e.currentTarget.dataset.retried = '1';
-                                e.currentTarget.src = withCacheBust(resolvedImageUrl);
-                                return;
-                            }
-                            setImageBroken(true);
-                        }}
                         sx={{
                             width: '100%',
                             maxWidth: '100%',
-                            height: { xs: 'auto', md: 200 },
-                            maxHeight: { xs: 280, sm: 320, md: 200 },
-                            aspectRatio: { xs: '16 / 10', md: 'auto' },
-                            objectFit: 'cover',
+                            height: { xs: 180, sm: 220, md: 200 },
+                            position: 'relative',
                             borderRadius: '12px',
                             border: '1px solid #333',
-                            display: 'block',
+                            backgroundColor: 'transparent',
+                            overflow: 'hidden',
                         }}
-                    />
+                    >
+                        <Box
+                            component="img"
+                            src={resolvedImageUrl}
+                            alt="Фото статьи"
+                            onError={(e) => {
+                                if (!e.currentTarget.dataset.retried && resolvedImageUrl) {
+                                    e.currentTarget.dataset.retried = '1';
+                                    e.currentTarget.src = withCacheBust(resolvedImageUrl);
+                                    return;
+                                }
+                                setImageBroken(true);
+                            }}
+                            sx={{
+                                position: 'absolute',
+                                inset: 0,
+                                margin: 'auto',
+                                width: 'auto',
+                                height: 'auto',
+                                maxWidth: '100%',
+                                maxHeight: '100%',
+                                objectFit: 'contain',
+                                objectPosition: 'center',
+                                borderRadius: '11px',
+                                display: 'block',
+                            }}
+                        />
+                    </Box>
                 </Box>
             )}
 
