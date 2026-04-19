@@ -1165,6 +1165,23 @@ const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
         fetchArticlesPage(1, 'tags', { force: true, tagIds });
     };
 
+    const handleRemoveTagFromFilter = (tagIdToRemove) => {
+        const nextTagIds = selectedTagIds.filter((id) => id !== tagIdToRemove);
+
+        if (nextTagIds.length === 0) {
+            setSelectedTagIds([]);
+            handlePaginationTypeChange('random');
+            return;
+        }
+
+        setSelectedTagIds(nextTagIds);
+        setPaginationType('tags');
+        setArticles([]);
+        setPageNumber(1);
+        setHasMore(true);
+        fetchArticlesPage(1, 'tags', { force: true, tagIds: nextTagIds });
+    };
+
     const handleLogout = async () => {
         try {
             await fetch(`${API_BASE_URL}/Users/logout`, { 
@@ -2529,7 +2546,10 @@ const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
                                                 const tag = TAG_CATEGORIES.flatMap(c => c.tags).find(t => t.id === id);
                                                 return tag ? (
                                                     <Box key={id} sx={{
-                                                        padding: '4px 12px',
+                                                        display: 'flex',
+                                                        alignItems: 'center',
+                                                        gap: 0.5,
+                                                        padding: '4px 8px 4px 12px',
                                                         borderRadius: '16px',
                                                         backgroundColor: 'rgba(0, 191, 165, 0.1)',
                                                         border: '1px solid rgba(0, 191, 165, 0.4)',
@@ -2538,7 +2558,22 @@ const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
                                                         fontSize: '0.85rem',
                                                         flexShrink: 0
                                                     }}>
-                                                        # {tag.label}
+                                                        <Typography component="span" sx={{ fontWeight: 600, fontSize: '0.85rem', color: 'inherit' }}>
+                                                            # {tag.label}
+                                                        </Typography>
+                                                        <IconButton
+                                                            size="small"
+                                                            aria-label={`Убрать тег ${tag.label}`}
+                                                            onClick={() => handleRemoveTagFromFilter(id)}
+                                                            sx={{
+                                                                width: 18,
+                                                                height: 18,
+                                                                color: '#8ef7ea',
+                                                                '&:hover': { backgroundColor: 'rgba(0, 229, 201, 0.16)', color: '#cffff8' }
+                                                            }}
+                                                        >
+                                                            <CloseIcon sx={{ fontSize: 12 }} />
+                                                        </IconButton>
                                                     </Box>
                                                 ) : null;
                                             })
