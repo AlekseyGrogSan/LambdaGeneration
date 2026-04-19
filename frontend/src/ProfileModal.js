@@ -24,7 +24,8 @@ import {
     Stack,
     Menu,
     MenuItem,
-    ListItemIcon
+    ListItemIcon,
+    Zoom
 } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
 import LogoutIcon from '@mui/icons-material/Logout';
@@ -124,6 +125,41 @@ const glassButtonStyle = {
     textTransform: 'none',
     whiteSpace: 'nowrap'
 };
+
+const createAvatarFlipStyle = (size, borderWidth) => ({
+    width: size,
+    height: size,
+    border: `${borderWidth}px solid #00bfa5`,
+    cursor: 'pointer',
+    position: 'relative',
+    overflow: 'hidden',
+    boxShadow: '0 10px 28px rgba(0, 191, 165, 0.24)',
+    transformStyle: 'preserve-3d',
+    backfaceVisibility: 'hidden',
+    transition: 'transform 0.9s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.45s ease, filter 0.45s ease',
+    animation: 'avatarAmbientFloat 3.6s ease-in-out infinite',
+    '@keyframes avatarAmbientFloat': {
+        '0%, 100%': {
+            transform: 'perspective(1000px) rotateY(0deg) translateY(0px)',
+            filter: 'saturate(1) brightness(1)'
+        },
+        '50%': {
+            transform: 'perspective(1000px) rotateY(-5deg) translateY(-2px)',
+            filter: 'saturate(1.08) brightness(1.03)'
+        }
+    },
+    '@media (hover: hover) and (pointer: fine)': {
+        '&:hover': {
+            transform: 'perspective(1000px) rotateY(180deg) scale(1.04)',
+            boxShadow: '0 16px 36px rgba(0, 191, 165, 0.48)',
+            filter: 'saturate(1.15)'
+        }
+    },
+    '&:active': {
+        transform: 'perspective(1000px) rotateY(180deg) scale(1.02)',
+        boxShadow: '0 12px 30px rgba(0, 191, 165, 0.42)'
+    }
+});
 
 const getAuthHeaders = () => {
     return { 
@@ -897,17 +933,7 @@ const ProfileModal = ({ open, handleClose, userId, onUnauthorized, onLogout, onP
                                     <Avatar
                                         src={buildAvatarUrl(API_BASE_URL, avatarPreview || profileData?.pathAvatar || profileData?.PathAvatar)}
                                         onClick={() => setIsAvatarViewerOpen(true)}
-                                        sx={{ 
-                                            width: 96, 
-                                            height: 96, 
-                                            border: '2px solid #00bfa5', 
-                                            cursor: 'pointer',
-                                            transition: 'transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.3s ease',
-                                            '&:hover': {
-                                                transform: 'scale(1.05)',
-                                                boxShadow: '0 8px 24px rgba(0, 191, 165, 0.4)'
-                                            }
-                                        }}
+                                        sx={createAvatarFlipStyle(96, 2)}
                                         imgProps={{
                                             onError: (e) => {
                                                 e.currentTarget.src = DEFAULT_AVATAR_SRC;
@@ -972,18 +998,7 @@ const ProfileModal = ({ open, handleClose, userId, onUnauthorized, onLogout, onP
                         <Avatar
                             src={buildAvatarUrl(API_BASE_URL, profileData?.pathAvatar ?? profileData?.PathAvatar)}
                             onClick={() => setIsAvatarViewerOpen(true)}
-                            sx={{ 
-                                width: 110, 
-                                height: 110, 
-                                border: '3px solid #00bfa5', 
-                                mb: 2, 
-                                cursor: 'pointer',
-                                transition: 'transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.3s ease',
-                                '&:hover': {
-                                    transform: 'scale(1.08)',
-                                    boxShadow: '0 12px 32px rgba(0, 191, 165, 0.4)'
-                                }
-                            }}
+                            sx={{ mb: 2, ...createAvatarFlipStyle(110, 3) }}
                             imgProps={{
                                 onError: (e) => {
                                     e.currentTarget.src = DEFAULT_AVATAR_SRC;
@@ -1553,11 +1568,30 @@ const ProfileModal = ({ open, handleClose, userId, onUnauthorized, onLogout, onP
                 open={isAvatarViewerOpen}
                 onClose={() => setIsAvatarViewerOpen(false)}
                 maxWidth="md"
+                TransitionComponent={Zoom}
+                transitionDuration={260}
+                keepMounted
                 PaperProps={{
                     sx: {
                         bgcolor: 'transparent',
                         boxShadow: 'none',
                         m: 0,
+                        '@keyframes avatarViewerZoomIn': {
+                            '0%': {
+                                transform: 'scale(0.84)',
+                                opacity: 0
+                            },
+                            '100%': {
+                                transform: 'scale(1)',
+                                opacity: 1
+                            }
+                        }
+                    }
+                }}
+                BackdropProps={{
+                    sx: {
+                        backgroundColor: 'rgba(0, 0, 0, 0.76)',
+                        backdropFilter: 'blur(2px)'
                     }
                 }}
             >
@@ -1568,7 +1602,9 @@ const ProfileModal = ({ open, handleClose, userId, onUnauthorized, onLogout, onP
                         maxWidth: '90vw',
                         maxHeight: '90vh',
                         objectFit: 'contain',
-                        borderRadius: '8px'
+                        borderRadius: '10px',
+                        transformOrigin: 'center center',
+                        animation: 'avatarViewerZoomIn 260ms cubic-bezier(0.22, 1, 0.36, 1)'
                     }}
                     onError={(e) => { e.currentTarget.src = DEFAULT_AVATAR_SRC; }}
                 />

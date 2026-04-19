@@ -114,6 +114,7 @@ namespace LambdaGeneration.API.Date.Repositories
         {
             return await _context.Articles
                 .Where(a => a.AuthorID == author_id)
+                .OrderByDescending(a => a.CreatedDate)
                 .Select(a => Map(a)).
                 ToListAsync();
         }
