@@ -37,7 +37,7 @@ import FormatSizeIcon from '@mui/icons-material/FormatSize';
 import FormatColorTextIcon from '@mui/icons-material/FormatColorText';
 import PriorityHighIcon from '@mui/icons-material/PriorityHigh';
 import { buildArticleImageUrl, formatBytes, isArticleImageTooLarge, MAX_ARTICLE_IMAGE_BYTES } from './avatarUtils';
-import { normalizeContentForSubmit, formatContentForRender } from './contentFormatting';
+import { normalizeContentForSubmit, formatContentForRender, normalizeCodeLanguage, formatCodeLanguageLabel } from './contentFormatting';
 import hljs from 'highlight.js';
 import 'highlight.js/styles/atom-one-dark.css';
 
@@ -122,6 +122,28 @@ const EditorToolbar = ({ editorRef, setInputDialog }) => {
     const [textColorAnchor, setTextColorAnchor] = useState(null);
     const [helpAnchor, setHelpAnchor] = useState(null);
     const [currentTextColor, setCurrentTextColor] = useState('#ffffff');
+
+    const highlightEditorCodeBlocks = useCallback(() => {
+        const editor = editorRef.current;
+        if (!editor) return;
+
+        editor.querySelectorAll('table.code-block-table pre code').forEach((block) => {
+            const languageCls = Array.from(block.classList).find((cls) => cls.startsWith('language-'));
+            const normalizedLang = normalizeCodeLanguage(languageCls ? languageCls.replace('language-', '') : 'text');
+            const plainText = block.textContent || '';
+
+            block.className = `language-${normalizedLang}`;
+            block.textContent = plainText;
+
+            try {
+                if (normalizedLang !== 'text' && hljs.getLanguage(normalizedLang)) {
+                    hljs.highlightElement(block);
+                }
+            } catch {
+                // Ignore highlight errors for unsupported languages.
+            }
+        });
+    }, [editorRef]);
 
     const basicTextColors = [
         { name: 'Черный', value: '#000000' },
@@ -286,12 +308,17 @@ const EditorToolbar = ({ editorRef, setInputDialog }) => {
             initialValue: 'text',
             onConfirm: (lang) => {
                 setInputDialog(prev => ({ ...prev, open: false }));
-                // We use a table because contenteditable handles cursor placement around tables much better than nested divs
-                const codeHTML = `<br><table class="tg-code-block code-block-table" style="width: 100%; background: #282c34; border-radius: 8px; border: 1px solid rgba(255,255,255,0.12); border-collapse: separate; border-spacing: 0; margin: 14px 0; overflow: hidden; table-layout: fixed;"><thead><tr><th style="padding: 2px 6px; background: #21252b; color: rgba(255,255,255,0.6); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 11px; text-align: left; font-weight: bold; border-bottom: 1px solid rgba(255,255,255,0.12); user-select: none;">${lang ? lang.charAt(0).toUpperCase() + lang.slice(1) : 'Code'}</th></tr></thead><tbody><tr><td style="padding: 10px; overflow-x: auto;"><pre style="margin: 0; white-space: pre-wrap !important; word-wrap: break-word; background: transparent;"><code class="${lang ? 'language-' + lang : 'language-text'}" style="font-family: Consolas, monospace; font-size: 14px; background: transparent !important; padding: 0 !important; border: none !important;">// Ваш код...</code></pre></td></tr></tbody></table><br><div style="min-height: 20px;"></div>`;
+                const normalizedLang = normalizeCodeLanguage(lang || 'text');
+                const languageLabel = formatCodeLanguageLabel(normalizedLang);
+                const codeHTML = `<br><table class="tg-code-block code-block-table" data-language="${normalizedLang}" style="width: 100%; background: linear-gradient(180deg, #121820, #0d1117); border-radius: 12px; border: 1px solid rgba(0,229,201,0.25); border-collapse: separate; border-spacing: 0; margin: 14px 0; overflow: hidden; table-layout: fixed;"><thead><tr><th style="padding: 8px 12px; background: linear-gradient(90deg, #18202a, #141a22); color: rgba(206,231,255,0.9); font-family: 'JetBrains Mono', Consolas, monospace; font-size: 12px; text-align: left; font-weight: 700; letter-spacing: 0.4px; border-bottom: 1px solid rgba(255,255,255,0.08); user-select: none;">${languageLabel}</th></tr></thead><tbody><tr><td style="padding: 14px; overflow-x: auto;"><pre style="margin: 0; white-space: pre-wrap !important; word-wrap: break-word; background: transparent;"><code class="language-${normalizedLang}" style="font-family: 'JetBrains Mono', Consolas, monospace; font-size: 14px; line-height: 1.55; background: transparent !important; padding: 0 !important; border: none !important; color: #e6edf3;">// Ваш код...</code></pre></td></tr></tbody></table><br><div style="min-height: 20px;"></div>`;
                 applyCommand('insertHTML', codeHTML);
+
+                setTimeout(() => {
+                    highlightEditorCodeBlocks();
+                }, 0);
             }
         });
-    }, [applyCommand]);
+    }, [applyCommand, highlightEditorCodeBlocks, setInputDialog]);
 
     const getButtonStyle = (isActive, activeColor = '#00bfa5') => ({
         color: isActive ? activeColor : '#ffffff',

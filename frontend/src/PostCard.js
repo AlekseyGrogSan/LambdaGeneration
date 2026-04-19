@@ -8,6 +8,7 @@ import { createRoot } from 'react-dom/client';
 
 import {
     Box,
+    Button,
     Card,
     Typography,
     IconButton,
@@ -20,10 +21,16 @@ import ShortcutRoundedIcon from '@mui/icons-material/ShortcutRounded';
 import { buildArticleImageUrl, buildAvatarUrl, DEFAULT_AVATAR_SRC } from './avatarUtils';
 import hljs from 'highlight.js';
 import 'highlight.js/styles/atom-one-dark.css';
-import { formatContentForRender } from './contentFormatting';
+import { formatContentForRender, normalizeCodeLanguage } from './contentFormatting';
 
 const CodeBlock = ({ language, value }) => {
     const [isCopied, setIsCopied] = React.useState(false);
+    const [isExpanded, setIsExpanded] = React.useState(false);
+    const codeLines = String(value || '').split('\n');
+    const isLongCode = codeLines.length > 14;
+    const previewValue = isLongCode && !isExpanded
+        ? codeLines.slice(0, 14).join('\n')
+        : value;
 
     const handleCopy = () => {
         navigator.clipboard.writeText(value);
@@ -32,22 +39,83 @@ const CodeBlock = ({ language, value }) => {
     };
 
     return (
-        <Box sx={{ my: 2, borderRadius: '8px', overflow: 'hidden', border: '1px solid #3a3a3a' }}>
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', bgcolor: '#1e1e1e', py: 0.5, px: 2, borderBottom: '1px solid #2d2d2d' }}>
-                <Typography variant='caption' sx={{ color: '#888', fontWeight: 'bold' }}>
-                    {language || 'text'}
-                </Typography>
-                <IconButton size='small' onClick={handleCopy} sx={{ color: '#888', '&:hover': { color: '#fff' } }}>
-                    {isCopied ? <CheckIcon fontSize='small' sx={{ color: '#00e676' }} /> : <ContentCopyIcon fontSize='small' />}
+        <Box
+            sx={{
+                my: 2,
+                borderRadius: '14px',
+                overflow: 'hidden',
+                border: '1px solid rgba(0, 229, 201, 0.32)',
+                boxShadow: '0 16px 36px rgba(0, 0, 0, 0.45)',
+                background: 'linear-gradient(180deg, rgba(15, 19, 24, 0.98), rgba(10, 12, 16, 0.98))',
+            }}
+        >
+            <Box
+                sx={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    px: 1.5,
+                    py: 1,
+                    background: 'linear-gradient(90deg, rgba(21, 25, 31, 0.98), rgba(15, 18, 24, 0.98))',
+                    borderBottom: '1px solid rgba(255,255,255,0.08)'
+                }}
+            >
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.2 }}>
+                    <Typography variant='caption' sx={{ color: '#9fd8ff', fontWeight: 700, letterSpacing: 0.4 }}>
+                        {(language || 'text').toUpperCase()}
+                    </Typography>
+                </Box>
+                <IconButton size='small' onClick={handleCopy} sx={{ color: '#8fb3d8', '&:hover': { color: '#e8f5ff' } }}>
+                    {isCopied ? <CheckIcon fontSize='small' sx={{ color: '#2ee59d' }} /> : <ContentCopyIcon fontSize='small' />}
                 </IconButton>
             </Box>
             <SyntaxHighlighter
-                language={language && language !== 'text' ? language : 'javascript'}
+                language={normalizeCodeLanguage(language) !== 'text' ? normalizeCodeLanguage(language) : undefined}
                 style={vscDarkPlus}
-                customStyle={{ margin: 0, padding: '16px', fontSize: '0.9rem', backgroundColor: '#1e1e1e' }}
+                showLineNumbers
+                lineNumberStyle={{ color: 'rgba(180, 210, 255, 0.45)', minWidth: '2.2em', paddingRight: '1em' }}
+                customStyle={{
+                    margin: 0,
+                    padding: '18px 20px',
+                    fontSize: '0.92rem',
+                    lineHeight: 1.58,
+                    backgroundColor: 'transparent',
+                    fontFamily: 'JetBrains Mono, Fira Code, Consolas, Menlo, monospace'
+                }}
             >
-                {value}
+                {previewValue}
             </SyntaxHighlighter>
+            {isLongCode && (
+                <Box
+                    sx={{
+                        px: 1.5,
+                        py: 1,
+                        borderTop: '1px solid rgba(255,255,255,0.08)',
+                        background: 'linear-gradient(180deg, rgba(12,14,18,0.86), rgba(9,11,14,0.98))',
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center'
+                    }}
+                >
+                    <Typography variant='caption' sx={{ color: '#86a6c5' }}>
+                        {codeLines.length} строк кода
+                    </Typography>
+                    <Button
+                        size='small'
+                        onClick={() => setIsExpanded((prev) => !prev)}
+                        sx={{
+                            color: '#9fd8ff',
+                            textTransform: 'none',
+                            fontWeight: 700,
+                            minWidth: 'auto',
+                            px: 1,
+                            '&:hover': { backgroundColor: 'rgba(159,216,255,0.1)' }
+                        }}
+                    >
+                        {isExpanded ? 'Свернуть' : 'Показать полностью'}
+                    </Button>
+                </Box>
+            )}
         </Box>
     );
 };
@@ -212,12 +280,12 @@ const PostCard = React.memo(({
                     const codeText = normalizeCodeBlockText(block);
 
                     const languageClass = Array.from(block.classList).find((cls) => cls.startsWith('language-'));
-                    let language = languageClass ? languageClass.replace('language-', '') : '';
+                    let language = languageClass ? normalizeCodeLanguage(languageClass.replace('language-', '')) : '';
                     if (!language || language === 'text') {
                         // try to find it from an older th element if it was an old table
                         const possibleTh = block.closest('table')?.querySelector('th');
                         if (possibleTh && possibleTh.textContent && possibleTh.textContent.trim() !== 'code') {
-                            language = possibleTh.textContent.trim();
+                            language = normalizeCodeLanguage(possibleTh.textContent.trim());
                         } else {
                             language = 'code';
                         }
@@ -280,11 +348,15 @@ const PostCard = React.memo(({
                 if (table.dataset.replaced) return;
                 table.dataset.replaced = 'true';
 
-                const th = table.querySelector('th');
-                const languageClass = th ? th.textContent.trim() : 'text';      
-
                 const codeBlock = table.querySelector('pre code') || table.querySelector('pre');
                 const codeText = codeBlock ? normalizeCodeBlockText(codeBlock) : normalizeCodeBlockText(table);
+                const classLanguage = codeBlock
+                    ? Array.from(codeBlock.classList).find((cls) => cls.startsWith('language-'))
+                    : null;
+                const th = table.querySelector('th');
+                const languageClass = normalizeCodeLanguage(
+                    classLanguage ? classLanguage.replace('language-', '') : (th ? th.textContent.trim() : 'text')
+                );
 
                 const parent = table.parentNode;
                 const wrapper = document.createElement('div');
@@ -303,7 +375,7 @@ const PostCard = React.memo(({
                 const codeText = normalizeCodeBlockText(block);
 
                 const languageCls = Array.from(block.classList).find((cls) => cls.startsWith('language-'));
-                const language = languageCls ? languageCls.replace('language-', '') : '';
+                const language = normalizeCodeLanguage(languageCls ? languageCls.replace('language-', '') : 'text');
 
                 const pre = block.parentNode;
                 const wrapper = document.createElement('div');

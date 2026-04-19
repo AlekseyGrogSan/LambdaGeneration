@@ -1276,7 +1276,6 @@ const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
             const onWheel = (e) => {
                 if (window.innerWidth < 768) return;
                 if (isViewingDetailPage) return;
-                if (paginationType !== 'random' && paginationType !== 'recommend') return;
                 if (isLoading) return;
 
                 if (e.ctrlKey || e.metaKey || e.altKey) return;
