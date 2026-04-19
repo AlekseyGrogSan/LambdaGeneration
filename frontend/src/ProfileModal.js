@@ -1586,6 +1586,7 @@ const ProfileModal = ({ open, handleClose, userId, onUnauthorized, onLogout, onP
                 open={isAvatarViewerOpen}
                 onClose={() => setIsAvatarViewerOpen(false)}
                 maxWidth="md"
+                sx={{ zIndex: 1800 }}
                 TransitionComponent={Zoom}
                 transitionDuration={260}
                 keepMounted
@@ -1608,6 +1609,7 @@ const ProfileModal = ({ open, handleClose, userId, onUnauthorized, onLogout, onP
                 }}
                 BackdropProps={{
                     sx: {
+                        zIndex: -1,
                         backgroundColor: 'rgba(0, 0, 0, 0.76)',
                         backdropFilter: 'blur(2px)'
                     }
