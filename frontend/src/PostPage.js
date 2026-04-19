@@ -1468,6 +1468,29 @@ const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
             const fetchOptions = { credentials: 'include' };
             const response = await fetch(url, fetchOptions);
             if (!response.ok) {
+                const isUnauthorizedRecommendations = type === 'recommend' && (response.status === 401 || response.status === 403);
+                if (isUnauthorizedRecommendations) {
+                    setArticles([]);
+                    setHasMore(false);
+                    setPageNumber(1);
+                    setError(null);
+                    setEmptyStateMessage('У неавторизованных пользователей этот раздел недоступен.');
+                    return;
+                }
+
+                if (type === 'recommend' && response.status === 400) {
+                    const responseText = (await response.text()).trim();
+                    const isUnauthorized = /incorrect user|unauthorized/i.test(responseText);
+                    if (isUnauthorized) {
+                        setArticles([]);
+                        setHasMore(false);
+                        setPageNumber(1);
+                        setError(null);
+                        setEmptyStateMessage('У неавторизованных пользователей этот раздел недоступен.');
+                        return;
+                    }
+                }
+
                 const isEmptyResponse = (type === 'search' || type === 'tags') && (response.status === 404 || response.status === 204);
                 if (isEmptyResponse) {
                     setArticles([]);
@@ -1523,41 +1546,11 @@ const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
 
     const switchRandomRecommendTab = (type) => {
         if (type !== 'random' && type !== 'recommend') return;
-        if (type === paginationType) return;
         if (isLoading) return;
 
         setPaginationType(type);
         setIsSearchMode(false);
         setSelectedTagIds([]);
-
-        const cached = feedCacheRef.current[type];
-        if (cached && cached.articles && cached.articles.length > 0) {
-            setArticles(cached.articles);
-            setPageNumber(cached.pageNumber);
-            setHasMore(cached.hasMore);
-            setEmptyStateMessage(cached.emptyStateMessage || '');
-            setError(null);
-            setIsLoading(false);
-            queueMicrotask(() => {
-                const el = articlesContainerRef.current;
-                if (el) el.scrollTop = 0;
-            });
-            return;
-        }
-
-        if (cached && Array.isArray(cached.articles) && cached.articles.length === 0) {
-            setArticles([]);
-            setPageNumber(1);
-            setHasMore(false);
-            setEmptyStateMessage(cached.emptyStateMessage || '');
-            setError(null);
-            setIsLoading(false);
-            queueMicrotask(() => {
-                const el = articlesContainerRef.current;
-                if (el) el.scrollTop = 0;
-            });
-            return;
-        }
 
         setArticles([]);
         setPageNumber(1);
@@ -1570,7 +1563,7 @@ const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
     switchRandomRecommendTabRef.current = switchRandomRecommendTab;
 
     const handlePaginationTypeChange = (type) => {
-        if (type === paginationType || isLoading) return;
+        if (isLoading) return;
 
         if (type === 'random' || type === 'recommend') {
             switchRandomRecommendTab(type);
@@ -1582,6 +1575,8 @@ const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
             setReturnProfileUserId(null);
             return;
         }
+
+        if (type === paginationType) return;
 
         setPaginationType(type);
         if (type !== 'search') {

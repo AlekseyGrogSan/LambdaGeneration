@@ -97,7 +97,7 @@ namespace LambdaGeneration.API
             string adminEmail = "admin@lambda-gen.ru";
             string seedFilePath = "wwwroot/articles_seed.txt";
 
-           await app.SeedArticlesFromTxt(adminEmail, seedFilePath);
+            //await app.SeedArticlesFromTxt(adminEmail, seedFilePath);
 
             // Configure the HTTP request pipeline.
             if (app.Environment.IsDevelopment())

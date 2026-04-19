@@ -742,6 +742,24 @@ const ProfileModal = ({ open, handleClose, userId, onUnauthorized, onLogout, onP
                 if (onUnauthorized) onUnauthorized();
                 throw new Error('Необходимо войти в аккаунт.');
             }
+            if (response.status === 400) {
+                const responseText = (await response.text()).trim();
+                const isUnauthorized = /incorrect user|unauthorized/i.test(responseText);
+                if (isUnauthorized) {
+                    if (onUnauthorized) onUnauthorized();
+                    throw new Error('Необходимо войти в аккаунт.');
+                }
+
+                // В этом API пустой список лайков возвращается как 400 без полезного тела.
+                setLikesList([]);
+                setLikedArticlesCount(0);
+                return;
+            }
+            if (response.status === 404 || response.status === 204) {
+                setLikesList([]);
+                setLikedArticlesCount(0);
+                return;
+            }
             if (!response.ok) throw new Error('Не удалось загрузить понравившиеся статьи.');
             const data = await response.json();
             const likedArticlesRaw = data.articles || data || [];
@@ -1514,7 +1532,7 @@ const ProfileModal = ({ open, handleClose, userId, onUnauthorized, onLogout, onP
                     {likesListError && <Alert severity="error" sx={{ mb: 2 }}>{likesListError}</Alert>}
                     {!isLikesListLoading && likesList.length === 0 && !likesListError && (
                         <Typography sx={{ color: '#bdbdbd', textAlign: 'center', py: 2 }}>
-                            У вас пока нет понравившихся статей.
+                            Пока нет статей, которые вы лайкнули.
                         </Typography>
                     )}
                     {!isLikesListLoading && likesList.length > 0 && (
