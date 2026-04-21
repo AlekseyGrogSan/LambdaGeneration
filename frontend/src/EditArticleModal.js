@@ -992,6 +992,7 @@ const extractApiErrorMessage = async (response, fallback = 'Ошибка зап�
                                         maxHeight: 220,
                                         borderRadius: '12px',
                                         objectFit: 'cover',
+                                        objectPosition: 'left center',
                                         border: '1px solid #444',
                                     }}
                                 />
