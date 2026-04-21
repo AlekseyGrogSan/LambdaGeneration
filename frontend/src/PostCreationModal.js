@@ -31,6 +31,7 @@ import FormatColorTextIcon from '@mui/icons-material/FormatColorText';
 import PriorityHighIcon from '@mui/icons-material/PriorityHigh';
 import { formatBytes, isArticleImageTooLarge, MAX_ARTICLE_IMAGE_BYTES } from './avatarUtils';
 import { normalizeContentForSubmit, formatContentForRender, normalizeCodeLanguage, formatCodeLanguageLabel } from './contentFormatting';
+import { buildModerationErrorMessage } from './moderationFlags';
 import hljs from 'highlight.js';
 import 'highlight.js/styles/atom-one-dark.css';
 
@@ -742,6 +743,13 @@ const PostCreationModal = ({ open, handleClose, onUnauthorized, onPostSuccess, o
                 } catch (e) {
                     console.warn('Не удалось прочитать JSON ошибки. Возможно, ошибка сервера 500 без тела.', e);
                 }
+
+                const moderationMessage = buildModerationErrorMessage(errorDetails);
+                if (moderationMessage) {
+                    showNotification(moderationMessage, 'error');
+                    console.error('Ошибка модерации:', errorDetails);
+                    return;
+                }
                 
                 const fieldErrors = errorDetails?.errors
                     ? Object.entries(errorDetails.errors)
@@ -752,12 +760,9 @@ const PostCreationModal = ({ open, handleClose, onUnauthorized, onPostSuccess, o
                         .join(' | ')
                     : '';
                 const errorMessage = errorDetails.error
-                    || errorDetails.reason
                     || (fieldErrors ? `Ошибка валидации: ${fieldErrors}` : `Ошибка публикации: ${response.status} ${response.statusText}`);
-                const detailedReason = errorDetails.reason ? ` Причина: ${errorDetails.reason}` : '';
-                const suggestion = errorDetails.suggestion ? ` Предложение: ${errorDetails.suggestion}` : '';
                 
-                showNotification(`Ошибка публикации: ${errorMessage}${detailedReason}${suggestion}`, 'error');
+                showNotification(`Ошибка публикации: ${errorMessage}`, 'error');
                 console.error('Ошибка публикации:', errorDetails);
                 return;
             }

@@ -395,23 +395,6 @@ namespace LambdaGeneration.API.Application.Services
             return lower.Replace('ё', 'е');
         }
 
-        private ModerationResult AnalyzeTextResponse(string response)
-        {
-            var negativeKeywords = new[] { "отклонен", "заблокирован", "нарушение", "небезопасен", "запрещен" };
-
-            var positiveKeywords = new[] { "одобрен", "безопасен", "разрешен", "соответствует" };
-
-            var isApproved = positiveKeywords.Any(k => response.ToLower().Contains(k)) &&
-                            !negativeKeywords.Any(k => response.ToLower().Contains(k));
-
-            return new ModerationResult
-            {
-                IsApproved = isApproved,
-                Reason = "Автоматический анализ ответа",
-                Confidence = isApproved ? 0.8 : 0.6
-            };
-        }
-
         public async Task<bool> IsContentSafeAsync(string content)
         {
             var result = await ModerationContent(content); // Использует основной метод

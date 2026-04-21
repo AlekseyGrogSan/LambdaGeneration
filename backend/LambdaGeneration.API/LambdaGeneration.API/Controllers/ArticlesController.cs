@@ -22,18 +22,21 @@ namespace LambdaGeneration.API.Controllers
         private readonly IArticlesService _articlesService;
         private readonly IGigaChatModerationService _gaChatModerationService;
         private readonly IRegexModerationService _regexModerationService;
+        private readonly IImageModerationService _imageModerationService;
         private readonly IRecommendationService _recommendationService;
         private readonly IWebHostEnvironment _env;
 
         public ArticlesController(IArticlesService articles_service,
             IGigaChatModerationService gigaChatModerationService,
             IRegexModerationService regexModerationService,
+            IImageModerationService imageModerationService,
             IRecommendationService recommendationService,
             IWebHostEnvironment env)
         {
             _articlesService = articles_service;
             _gaChatModerationService = gigaChatModerationService;
             _regexModerationService = regexModerationService;
+            _imageModerationService = imageModerationService;
             _recommendationService = recommendationService;
             _env = env;
         }
@@ -50,8 +53,8 @@ namespace LambdaGeneration.API.Controllers
                     return BadRequest(new
                     {
                         error = "Статья не прошла проверку",
-                        reason = allow_article_moderation.Reason,
-                        suggestion = allow_article_moderation.Suggestions
+                        flags = allow_article_moderation.Reason,
+                        field = "post"
                     });
                 }
                 //Переделать модерацию на бэке
@@ -80,6 +83,25 @@ namespace LambdaGeneration.API.Controllers
                 string? file_path = null;
                 if (request.picture != null)
                 {
+                    await using var imageStream = request.picture.OpenReadStream();
+                    using var imageBuffer = new MemoryStream();
+                    await imageStream.CopyToAsync(imageBuffer);
+
+                    var isSafeImage = await _imageModerationService.IsImageSafeAsync(
+                        imageBuffer.ToArray(),
+                        request.picture.ContentType,
+                        HttpContext.RequestAborted);
+
+                    if (!isSafeImage)
+                    {
+                        return BadRequest(new
+                        {
+                            error = "Изображение не прошло проверку",
+                            flags = new[] { "unsafe_image" },
+                            field = "post"
+                        });
+                    }
+
                     file_path = $"{Guid.NewGuid()}{Path.GetExtension(request.picture.FileName)}";
                     var path = Path.Combine(_env.WebRootPath, "articles_uploads", file_path);
 
@@ -142,8 +164,8 @@ namespace LambdaGeneration.API.Controllers
                     return BadRequest(new
                     {
                         error = "Статья не прошла проверку",
-                        reason = allow_article_moderation.Reason,
-                        suggestion = allow_article_moderation.Suggestions
+                        flags = allow_article_moderation.Reason,
+                        field = "post"
                     });
                 }
 
@@ -155,7 +177,6 @@ namespace LambdaGeneration.API.Controllers
                     return BadRequest(new
                     {
                         error = "Статья не прошла проверку",
-                        reason = resultModeration.Reason,
                         flags = resultModeration.Flags,
                         field = "post"
                     });
@@ -165,6 +186,25 @@ namespace LambdaGeneration.API.Controllers
 
                 if (request.picture != null)
                 {
+                    await using var imageStream = request.picture.OpenReadStream();
+                    using var imageBuffer = new MemoryStream();
+                    await imageStream.CopyToAsync(imageBuffer);
+
+                    var isSafeImage = await _imageModerationService.IsImageSafeAsync(
+                        imageBuffer.ToArray(),
+                        request.picture.ContentType,
+                        HttpContext.RequestAborted);
+
+                    if (!isSafeImage)
+                    {
+                        return BadRequest(new
+                        {
+                            error = "Изображение не прошло проверку",
+                            flags = new[] { "unsafe_image" },
+                            field = "post"
+                        });
+                    }
+
                     file_path = $"{Guid.NewGuid()}{Path.GetExtension(request.picture.FileName)}";
                     var path = Path.Combine(_env.WebRootPath, "articles_uploads", file_path);
 
@@ -176,11 +216,11 @@ namespace LambdaGeneration.API.Controllers
 
 
 
-var targetForUpdate = await _articlesService.GetArticleByIdAsync(request.article_id);
-                  bool isAdmin = User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value == "Admin" || User.FindFirst("Role")?.Value == "Admin";
-                  var effectiveAuthorId = (isAdmin && targetForUpdate != null) ? targetForUpdate.AuthorID : GetUserID();
+                var targetForUpdate = await _articlesService.GetArticleByIdAsync(request.article_id);
+                bool isAdmin = User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value == "Admin" || User.FindFirst("Role")?.Value == "Admin";
+                var effectiveAuthorId = (isAdmin && targetForUpdate != null) ? targetForUpdate.AuthorID : GetUserID();
 
-                  var article = await _articlesService.Update(request.article_id, effectiveAuthorId, request.article_title, request.article_content, request.article_preview, file_path);
+                var article = await _articlesService.Update(request.article_id, effectiveAuthorId, request.article_title, request.article_content, request.article_preview, file_path);
 
                 var ArticleTagsResponse = new List<string>();
 

@@ -100,6 +100,18 @@ namespace LambdaGeneration.API.Midleware
                     config["GigaChat:Scope"] ?? "GigaChat"
                 );
             });
+
+            services.AddSingleton<IImageModerationService>(provider =>
+            {
+                var config = provider.GetRequiredService<IConfiguration>();
+                var logger = provider.GetRequiredService<ILogger<ImageModerator>>();
+
+                var apiKey = config["ImageModeration:ApiKey"] ?? string.Empty;
+                var baseUrl = config["ImageModeration:BaseUrl"] ?? "https://api.openai.com/v1";
+                var modelId = config["ImageModeration:Model"] ?? "gemma-3-27b";
+
+                return new ImageModerator(apiKey, baseUrl, logger, modelId);
+            });
             
             services.AddHttpClient();
             return services;

@@ -39,6 +39,7 @@ import EditArticleModal from './EditArticleModal';
 import EmailVerificationModal from './EmailVerificationModal'; 
 import AvatarCropDialog from './AvatarCropDialog';
 import { buildArticleImageUrl, buildAvatarUrl, DEFAULT_AVATAR_SRC, formatBytes, isAvatarTooLarge, MAX_AVATAR_BYTES } from './avatarUtils';
+import { buildModerationErrorMessage } from './moderationFlags';
 
 const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || '/api';
 
@@ -199,6 +200,9 @@ const extractApiErrorMessage = async (response) => {
     try {
         const payload = await response.json();
         if (payload) {
+            const moderationMessage = buildModerationErrorMessage(payload);
+            if (moderationMessage) return moderationMessage;
+
             if (payload.message) return payload.message;
             if (payload.detail) return payload.detail;
             if (payload.error) return payload.error;

@@ -38,6 +38,7 @@ import FormatColorTextIcon from '@mui/icons-material/FormatColorText';
 import PriorityHighIcon from '@mui/icons-material/PriorityHigh';
 import { buildArticleImageUrl, formatBytes, isArticleImageTooLarge, MAX_ARTICLE_IMAGE_BYTES } from './avatarUtils';
 import { normalizeContentForSubmit, formatContentForRender, normalizeCodeLanguage, formatCodeLanguageLabel } from './contentFormatting';
+import { buildModerationErrorMessage } from './moderationFlags';
 import hljs from 'highlight.js';
 import 'highlight.js/styles/atom-one-dark.css';
 
@@ -565,12 +566,13 @@ const extractApiErrorMessage = async (response, fallback = 'Ошибка зап�
     try {
         const payload = await response.json();
         if (payload) {
+            const moderationMessage = buildModerationErrorMessage(payload);
+            if (moderationMessage) return moderationMessage;
+
             if (payload.message) return payload.message;
             if (payload.detail) return payload.detail;
             if (payload.error) {
-                const reason = payload.reason ? ` Причина: ${payload.reason}` : '';
-                const suggestion = payload.suggestion ? ` Рекомендация: ${payload.suggestion}` : '';
-                return `${payload.error}${reason}${suggestion}`.trim();
+                return payload.error;
             }
             const flattened = flattenErrorMessages(
                 payload.errors ?? payload.Errors ?? payload.modelState ?? payload.response ?? payload

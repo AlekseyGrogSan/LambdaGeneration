@@ -28,14 +28,16 @@ namespace LambdaGeneration.API.Controllers
         private readonly ISendEmail _sendEmail;
         private readonly IVerifyCodeService _verifiCode;
         private readonly IRegexModerationService _regexModeration;
+        private readonly IImageModerationService _imageModerationService;
         private readonly IWebHostEnvironment _env;
-        public UsersController(IUsersService usersService, IVerifyCodeService verifyCode, ISendEmail sendEmail, IWebHostEnvironment env, IRegexModerationService regexModeration)
+        public UsersController(IUsersService usersService, IVerifyCodeService verifyCode, ISendEmail sendEmail, IWebHostEnvironment env, IRegexModerationService regexModeration, IImageModerationService imageModerationService)
         {
             _usersService = usersService;
             _sendEmail = sendEmail;
             _verifiCode = verifyCode;
             _env = env;
             _regexModeration = regexModeration;
+            _imageModerationService = imageModerationService;
         }
 
         [HttpPost("register")]
@@ -71,6 +73,25 @@ namespace LambdaGeneration.API.Controllers
 
                 if (request.Avatar != null)
                 {
+                    await using var avatarInputStream = request.Avatar.OpenReadStream();
+                    using var avatarBuffer = new MemoryStream();
+                    await avatarInputStream.CopyToAsync(avatarBuffer);
+
+                    var isSafeAvatar = await _imageModerationService.IsImageSafeAsync(
+                        avatarBuffer.ToArray(),
+                        request.Avatar.ContentType,
+                        HttpContext.RequestAborted);
+
+                    if (!isSafeAvatar)
+                    {
+                        return BadRequest(new
+                        {
+                            error = "Аватар не прошел проверку",
+                            flags = new[] { "unsafe_image" },
+                            field = "avatar"
+                        });
+                    }
+
                     fileName = $"{Guid.NewGuid()}{Path.GetExtension(request.Avatar.FileName)}";
                     var filePath = Path.Combine(_env.WebRootPath, "temp", fileName);
 
@@ -293,6 +314,25 @@ namespace LambdaGeneration.API.Controllers
 
                 if (request.avatar != null)
                 {
+                    await using var avatarInputStream = request.avatar.OpenReadStream();
+                    using var avatarBuffer = new MemoryStream();
+                    await avatarInputStream.CopyToAsync(avatarBuffer);
+
+                    var isSafeAvatar = await _imageModerationService.IsImageSafeAsync(
+                        avatarBuffer.ToArray(),
+                        request.avatar.ContentType,
+                        HttpContext.RequestAborted);
+
+                    if (!isSafeAvatar)
+                    {
+                        return BadRequest(new
+                        {
+                            error = "Аватар не прошел проверку",
+                            flags = new[] { "unsafe_image" },
+                            field = "avatar"
+                        });
+                    }
+
                     fileName = $"{Guid.NewGuid()}{Path.GetExtension(request.avatar.FileName)}";
                     var filePath = Path.Combine(_env.WebRootPath, "uploads", fileName);
 
