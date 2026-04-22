@@ -23,6 +23,9 @@ import DoneIcon from '@mui/icons-material/Done';
 import EditNoteIcon from '@mui/icons-material/EditNote';
 import LabelIcon from '@mui/icons-material/Label';
 import DeleteIcon from '@mui/icons-material/Delete'; // ✅ ИМПОРТ: Иконка для удаления
+import AutoFixHighIcon from '@mui/icons-material/AutoFixHigh';
+import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
+import HighlightOffIcon from '@mui/icons-material/HighlightOff';
 
 // Иконки редактора
 import FormatBoldIcon from '@mui/icons-material/FormatBold';
@@ -51,6 +54,13 @@ const AVAILABLE_TAGS = [
     '.NET', 'ASP.NET', 'Entity Framework', 'Spring', 'React', 'Angular', 'Vue',
     'Node.js', 'Django', 'Flask', 'Unity',
     'Math', 'Data Structures', 'LLM', 'ML'
+];
+
+const AI_EDIT_MODES = [
+    { value: 'official_style', label: 'Официальный стиль' },
+    { value: 'add_information', label: 'Добавить информацию' },
+    { value: 'add_emotions', label: 'Добавить эмоции' },
+    { value: 'fix_errors', label: 'Исправить ошибки' }
 ];
 
 const modalStyle = {
@@ -109,7 +119,7 @@ const inputStyle = {
     }
 };
 
-const EditorToolbar = ({ editorRef, setInputDialog }) => {
+const EditorToolbar = ({ editorRef, setInputDialog, onOpenAiPanel, aiBusy, aiHasSuggestion }) => {
     const selectionRangeRef = useRef(null);
     const [activeStyles, setActiveStyles] = useState({
         bold: false,
@@ -465,6 +475,22 @@ const EditorToolbar = ({ editorRef, setInputDialog }) => {
 
             <IconButton
                 size="small"
+                onClick={(e) => onOpenAiPanel?.(e.currentTarget)}
+                sx={{
+                    color: aiHasSuggestion ? '#00e5c9' : '#cde9e4',
+                    border: '1px solid rgba(0,229,201,0.35)',
+                    width: 26,
+                    height: 26,
+                    flex: '0 0 auto',
+                    '&:hover': { backgroundColor: 'rgba(0,229,201,0.12)' }
+                }}
+                title="AI-редактор"
+            >
+                {aiBusy ? <CircularProgress size={14} color="inherit" /> : <AutoFixHighIcon sx={{ fontSize: 16 }} />}
+            </IconButton>
+
+            <IconButton
+                size="small"
                 onClick={(e) => setHelpAnchor(e.currentTarget)}
                 sx={{
                     color: '#ffffff',
@@ -611,18 +637,28 @@ const extractApiErrorMessage = async (response, fallback = 'Ошибка зап�
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState(null);
     const [successMsg, setSuccessMsg] = useState('');
+
+    const [aiEditMode, setAiEditMode] = useState('official_style');
+    const [aiLoading, setAiLoading] = useState(false);
+    const [aiSuggestion, setAiSuggestion] = useState(null);
+    const [aiOriginalContent, setAiOriginalContent] = useState('');
+    const [isAiTyping, setIsAiTyping] = useState(false);
+    const [aiPanelAnchorEl, setAiPanelAnchorEl] = useState(null);
+    const aiTypingTimerRef = useRef(null);
     
     const editorRef = useRef(null);
     const fileInputRef = useRef(null);
     useEffect(() => {
         if (post && open) {
             setEditMode('content'); // Сброс режима при открытии
+            setAiEditMode('official_style');
             setTitle(post.title || '');
             setPreview(post.article_preview || '');
             setContent(post.article_content || '');
             setSelectedTags(post.tags || []);
             setError(null);
             setSuccessMsg('');
+            resetAiSuggestion();
             setImageFile(null);
             setImageError(null);
             setImagePreview('');
@@ -640,6 +676,10 @@ const extractApiErrorMessage = async (response, fallback = 'Ошибка зап�
 
     useEffect(() => {
         return () => {
+            if (aiTypingTimerRef.current) {
+                clearInterval(aiTypingTimerRef.current);
+                aiTypingTimerRef.current = null;
+            }
             if (imagePreview && imagePreview.startsWith('blob:')) {
                 URL.revokeObjectURL(imagePreview);
             }
@@ -650,6 +690,305 @@ const extractApiErrorMessage = async (response, fallback = 'Ошибка зап�
         if (editorRef.current) {
             setContent(editorRef.current.innerHTML);
         }
+    };
+
+    const setEditorHtml = useCallback((html) => {
+        setContent(html);
+        if (editorRef.current) {
+            editorRef.current.innerHTML = html;
+        }
+    }, []);
+
+    const stopAiTypingAnimation = useCallback(() => {
+        if (aiTypingTimerRef.current) {
+            clearInterval(aiTypingTimerRef.current);
+            aiTypingTimerRef.current = null;
+        }
+        setIsAiTyping(false);
+    }, []);
+
+    const tokenizeHtmlForTyping = useCallback((html) => {
+        const chunks = (html || '').split(/(<[^>]+>)/g).filter(Boolean);
+        const tokens = [];
+
+        chunks.forEach((chunk) => {
+            if (chunk.startsWith('<') && chunk.endsWith('>')) {
+                tokens.push({ isTag: true, value: chunk });
+            } else {
+                for (const char of chunk) {
+                    tokens.push({ isTag: false, value: char });
+                }
+            }
+        });
+
+        return tokens;
+    }, []);
+
+    const splitWordsPreserveSpaces = useCallback((text) => {
+        return (text || '').split(/(\s+)/);
+    }, []);
+
+    const buildWordSwapFrames = useCallback((oldHtml, newHtml) => {
+        const oldTokens = tokenizeHtmlForTyping(oldHtml || '');
+        const newTokens = tokenizeHtmlForTyping(newHtml || '');
+
+        if (oldTokens.length !== newTokens.length) {
+            return null;
+        }
+
+        for (let i = 0; i < oldTokens.length; i += 1) {
+            if (oldTokens[i].isTag !== newTokens[i].isTag) {
+                return null;
+            }
+            if (oldTokens[i].isTag && oldTokens[i].value !== newTokens[i].value) {
+                return null;
+            }
+        }
+
+        const partsByToken = {};
+        const changes = [];
+
+        for (let i = 0; i < oldTokens.length; i += 1) {
+            if (oldTokens[i].isTag) continue;
+
+            const oldParts = splitWordsPreserveSpaces(oldTokens[i].value);
+            const newParts = splitWordsPreserveSpaces(newTokens[i].value);
+
+            if (oldParts.length !== newParts.length) {
+                return null;
+            }
+
+            partsByToken[i] = [...oldParts];
+
+            for (let j = 0; j < oldParts.length; j += 1) {
+                if (oldParts[j] !== newParts[j]) {
+                    changes.push({ tokenIdx: i, partIdx: j, next: newParts[j] });
+                }
+            }
+        }
+
+        if (!changes.length) {
+            return [newHtml];
+        }
+
+        const maxChanges = 90;
+        const effectiveChanges = changes.slice(0, maxChanges);
+        const frames = [];
+        const changesPerFrame = 2;
+
+        const buildHtmlFromState = () => {
+            return oldTokens
+                .map((token, idx) => (token.isTag ? token.value : (partsByToken[idx] || []).join('')))
+                .join('');
+        };
+
+        for (let i = 0; i < effectiveChanges.length; i += changesPerFrame) {
+            for (let j = i; j < Math.min(i + changesPerFrame, effectiveChanges.length); j += 1) {
+                const change = effectiveChanges[j];
+                partsByToken[change.tokenIdx][change.partIdx] = change.next;
+            }
+            frames.push(buildHtmlFromState());
+        }
+
+        frames.push(newHtml);
+        return frames;
+    }, [splitWordsPreserveSpaces, tokenizeHtmlForTyping]);
+
+    const startAiTypingAnimation = useCallback((fullHtml) => {
+        stopAiTypingAnimation();
+        const tokens = tokenizeHtmlForTyping(fullHtml);
+
+        if (!tokens.length) {
+            setEditorHtml('');
+            return;
+        }
+
+        setEditorHtml('');
+        setIsAiTyping(true);
+
+        let index = 0;
+        let currentHtml = '';
+        aiTypingTimerRef.current = setInterval(() => {
+            if (index >= tokens.length) {
+                setEditorHtml(fullHtml);
+                stopAiTypingAnimation();
+                return;
+            }
+
+            let appendChunk = '';
+            let steps = 0;
+
+            while (index < tokens.length && steps < 5) {
+                const token = tokens[index];
+                appendChunk += token.value;
+                index += 1;
+                steps += token.isTag ? 2 : 1;
+
+                if (!token.isTag) {
+                    break;
+                }
+            }
+
+            currentHtml += appendChunk;
+            setEditorHtml(currentHtml);
+
+            if (index >= tokens.length) {
+                setEditorHtml(fullHtml);
+                stopAiTypingAnimation();
+            }
+        }, 14);
+    }, [setEditorHtml, stopAiTypingAnimation, tokenizeHtmlForTyping]);
+
+    const startAiWordSwapAnimation = useCallback((oldHtml, newHtml) => {
+        stopAiTypingAnimation();
+        const frames = buildWordSwapFrames(oldHtml, newHtml);
+
+        if (!frames || !frames.length) {
+            return false;
+        }
+
+        setIsAiTyping(true);
+        let frameIdx = 0;
+
+        aiTypingTimerRef.current = setInterval(() => {
+            if (frameIdx >= frames.length) {
+                setEditorHtml(newHtml);
+                stopAiTypingAnimation();
+                return;
+            }
+
+            setEditorHtml(frames[frameIdx]);
+            frameIdx += 1;
+
+            if (frameIdx >= frames.length) {
+                setEditorHtml(newHtml);
+                stopAiTypingAnimation();
+            }
+        }, 85);
+
+        return true;
+    }, [buildWordSwapFrames, setEditorHtml, stopAiTypingAnimation]);
+
+    const getSelectedHtmlFromEditor = useCallback(() => {
+        const editor = editorRef.current;
+        const selection = window.getSelection();
+
+        if (!editor || !selection || selection.rangeCount === 0 || selection.isCollapsed) {
+            return '';
+        }
+
+        const range = selection.getRangeAt(0);
+        if (!editor.contains(range.commonAncestorContainer)) {
+            return '';
+        }
+
+        const fragmentContainer = document.createElement('div');
+        fragmentContainer.appendChild(range.cloneContents());
+        return fragmentContainer.innerHTML.trim();
+    }, []);
+
+    const resetAiSuggestion = useCallback(() => {
+        stopAiTypingAnimation();
+        setAiSuggestion(null);
+        setAiOriginalContent('');
+    }, [stopAiTypingAnimation]);
+
+    const handleOpenAiPanel = useCallback((anchorEl) => {
+        setAiPanelAnchorEl(anchorEl);
+    }, []);
+
+    const handleCloseAiPanel = useCallback(() => {
+        setAiPanelAnchorEl(null);
+    }, []);
+
+    const handleAiEditRequest = async () => {
+        const baselineContent = editorRef.current?.innerHTML ?? content;
+
+        if (!baselineContent.trim()) {
+            setError('Добавьте текст статьи перед AI-редактированием.');
+            return;
+        }
+
+        setAiLoading(true);
+        setError(null);
+        setSuccessMsg('');
+
+        try {
+            setAiOriginalContent(baselineContent);
+
+            const selectedHtml = getSelectedHtmlFromEditor();
+            const normalizedContent = normalizeContentForSubmit(baselineContent);
+
+            const response = await fetch(`${API_BASE_URL}/Articles/ai-edit`, {
+                method: 'POST',
+                headers: getAuthHeaders(),
+                credentials: 'include',
+                body: JSON.stringify({
+                    article_content: normalizedContent,
+                    mode: aiEditMode,
+                    selected_html: selectedHtml || null
+                })
+            });
+
+            if (!response.ok) {
+                const errorMessage = await extractApiErrorMessage(response, 'Ошибка AI-редактирования');
+                throw new Error(errorMessage);
+            }
+
+            const payload = await response.json();
+            const rawEditedHtml = payload?.edited_content || '';
+            const editedHtml = normalizeContentForSubmit(rawEditedHtml);
+
+            if (payload?.no_changes) {
+                setAiSuggestion(null);
+                setSuccessMsg('ИИ не предложил изменений для текущего текста.');
+                return;
+            }
+
+            if (!editedHtml.trim()) {
+                throw new Error('ИИ вернул пустой результат.');
+            }
+
+            setAiSuggestion({
+                editedContent: editedHtml,
+                sourceWasSelection: Boolean(payload?.applied_to_selection),
+                totalTokens: Number(payload?.total_tokens || 0)
+            });
+
+            const useSoftWordChanges = aiEditMode === 'add_emotions' || aiEditMode === 'fix_errors';
+            if (useSoftWordChanges) {
+                const startedSoftAnimation = startAiWordSwapAnimation(baselineContent, editedHtml);
+                if (!startedSoftAnimation) {
+                    startAiTypingAnimation(editedHtml);
+                }
+            } else {
+                startAiTypingAnimation(editedHtml);
+            }
+        } catch (err) {
+            setError(err.message || 'Ошибка AI-редактирования');
+        } finally {
+            setAiLoading(false);
+        }
+    };
+
+    const handleApproveAiChanges = () => {
+        if (!aiSuggestion?.editedContent) return;
+
+        stopAiTypingAnimation();
+        const nextContent = aiSuggestion.editedContent;
+        setEditorHtml(nextContent);
+
+        setSuccessMsg('AI-изменения применены. Проверьте результат и сохраните статью.');
+        resetAiSuggestion();
+    };
+
+    const handleRejectAiChanges = () => {
+        stopAiTypingAnimation();
+        if (aiOriginalContent) {
+            setEditorHtml(aiOriginalContent);
+        }
+        resetAiSuggestion();
+        setSuccessMsg('AI-изменения отклонены.');
     };
 
     const handleTagToggle = (tag) => {
@@ -823,6 +1162,8 @@ const extractApiErrorMessage = async (response, fallback = 'Ошибка зап�
             setEditMode(newMode);
             setError(null);
             setSuccessMsg('');
+            resetAiSuggestion();
+            setAiPanelAnchorEl(null);
             // Если переключаемся на контент, нужно снова инициализировать редактор (DOM мог очиститься)
             if (newMode === 'content') {
                  setTimeout(() => {
@@ -919,7 +1260,13 @@ const extractApiErrorMessage = async (response, fallback = 'Ошибка зап�
                             <Typography variant="caption" sx={{ color: '#bdbdbd', mb: 0.5, display: 'block' }}>
                                 Полный текст
                             </Typography>
-                            <EditorToolbar editorRef={editorRef} setInputDialog={setInputDialog} />
+                            <EditorToolbar
+                                editorRef={editorRef}
+                                setInputDialog={setInputDialog}
+                                onOpenAiPanel={handleOpenAiPanel}
+                                aiBusy={aiLoading}
+                                aiHasSuggestion={Boolean(aiSuggestion)}
+                            />
                             <Box
                                 ref={editorRef}
                                 contentEditable={true}
@@ -942,6 +1289,116 @@ const extractApiErrorMessage = async (response, fallback = 'Ошибка зап�
                                     '&::-webkit-scrollbar-thumb': { background: '#00bfa5', borderRadius: '4px' }
                                 }}
                             />
+
+                            <Menu
+                                anchorEl={aiPanelAnchorEl}
+                                open={Boolean(aiPanelAnchorEl)}
+                                onClose={handleCloseAiPanel}
+                                sx={{ zIndex: 1700 }}
+                                PaperProps={{
+                                    sx: {
+                                        width: { xs: '92vw', sm: 520 },
+                                        maxWidth: '92vw',
+                                        backgroundColor: '#1d2a2a',
+                                        border: '1px solid rgba(0,191,165,0.35)',
+                                        color: '#d6fff8',
+                                        p: 1.4
+                                    }
+                                }}
+                            >
+                                <Typography sx={{ color: '#9ff5e8', fontWeight: 700, display: 'flex', alignItems: 'center', gap: 1, mb: 0.8 }}>
+                                    <AutoFixHighIcon fontSize="small" /> AI-редактор
+                                </Typography>
+
+                                <Typography variant="caption" sx={{ color: '#b9e9e2' }}>
+                                    Если выделить часть текста в редакторе, ИИ изменит только этот фрагмент. Это снижает расход токенов.
+                                </Typography>
+
+                                <ToggleButtonGroup
+                                    value={aiEditMode}
+                                    exclusive
+                                    onChange={(e, newMode) => {
+                                        if (newMode) setAiEditMode(newMode);
+                                    }}
+                                    sx={{
+                                        mt: 1,
+                                        flexWrap: 'wrap',
+                                        gap: 0.6,
+                                        '& .MuiToggleButton-root': {
+                                            color: '#cde9e4',
+                                            border: '1px solid rgba(255,255,255,0.2)',
+                                            borderRadius: '8px !important',
+                                            textTransform: 'none',
+                                            px: 1.2,
+                                            py: 0.5,
+                                            fontSize: '0.78rem'
+                                        },
+                                        '& .Mui-selected': {
+                                            color: '#ffffff !important',
+                                            bgcolor: '#00bfa5 !important',
+                                            borderColor: '#00bfa5 !important'
+                                        }
+                                    }}
+                                >
+                                    {AI_EDIT_MODES.map((mode) => (
+                                        <ToggleButton key={mode.value} value={mode.value}>
+                                            {mode.label}
+                                        </ToggleButton>
+                                    ))}
+                                </ToggleButtonGroup>
+
+                                <Button
+                                    variant="outlined"
+                                    onClick={handleAiEditRequest}
+                                    disabled={aiLoading || isLoading}
+                                    startIcon={aiLoading ? <CircularProgress size={18} color="inherit" /> : <AutoFixHighIcon />}
+                                    sx={{
+                                        mt: 1,
+                                        color: '#00d8bf',
+                                        borderColor: '#00bfa5',
+                                        fontWeight: 700,
+                                        '&:hover': {
+                                            borderColor: '#00d8bf',
+                                            bgcolor: 'rgba(0,191,165,0.1)'
+                                        }
+                                    }}
+                                >
+                                    {aiLoading ? 'ИИ редактирует...' : 'Запустить AI-редактирование'}
+                                </Button>
+
+                                {aiSuggestion && (
+                                    <Box sx={{ mt: 1, display: 'flex', flexDirection: 'column', gap: 1.1 }}>
+                                        <Typography variant="caption" sx={{ color: '#bde8e2' }}>
+                                            {aiSuggestion.sourceWasSelection ? 'Изменен выделенный фрагмент.' : 'Изменена вся статья.'}
+                                        </Typography>
+
+                                        {isAiTyping && (
+                                            <Typography variant="caption" sx={{ color: '#9ee9de' }}>
+                                                ИИ печатает изменения прямо в основном поле...
+                                            </Typography>
+                                        )}
+
+                                        <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+                                            <Button
+                                                variant="contained"
+                                                onClick={handleApproveAiChanges}
+                                                startIcon={<CheckCircleOutlineIcon />}
+                                                sx={{ bgcolor: '#00bfa5', '&:hover': { bgcolor: '#00897b' } }}
+                                            >
+                                                Принять изменения
+                                            </Button>
+                                            <Button
+                                                variant="outlined"
+                                                onClick={handleRejectAiChanges}
+                                                startIcon={<HighlightOffIcon />}
+                                                sx={{ color: '#ff9e9e', borderColor: '#ff9e9e' }}
+                                            >
+                                                Отклонить
+                                            </Button>
+                                        </Box>
+                                    </Box>
+                                )}
+                            </Menu>
                         </Box>
 
                         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
@@ -998,7 +1455,8 @@ const extractApiErrorMessage = async (response, fallback = 'Ошибка зап�
                                 />
                             )}
                         </Box>
-                        
+
+
                         <Button 
                             variant="contained" 
                             onClick={handleSaveContent}

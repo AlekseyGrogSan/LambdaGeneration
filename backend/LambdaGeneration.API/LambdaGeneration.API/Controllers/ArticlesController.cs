@@ -20,21 +20,21 @@ namespace LambdaGeneration.API.Controllers
     public class ArticlesController : ControllerBase
     {
         private readonly IArticlesService _articlesService;
-        private readonly IGigaChatModerationService _gaChatModerationService;
+        private readonly IGigaChatContentService _gigaChatContentService;
         private readonly IRegexModerationService _regexModerationService;
         private readonly IImageModerationService _imageModerationService;
         private readonly IRecommendationService _recommendationService;
         private readonly IWebHostEnvironment _env;
 
         public ArticlesController(IArticlesService articles_service,
-            IGigaChatModerationService gigaChatModerationService,
+            IGigaChatContentService gigaChatContentService,
             IRegexModerationService regexModerationService,
             IImageModerationService imageModerationService,
             IRecommendationService recommendationService,
             IWebHostEnvironment env)
         {
             _articlesService = articles_service;
-            _gaChatModerationService = gigaChatModerationService;
+            _gigaChatContentService = gigaChatContentService;
             _regexModerationService = regexModerationService;
             _imageModerationService = imageModerationService;
             _recommendationService = recommendationService;
@@ -59,7 +59,7 @@ namespace LambdaGeneration.API.Controllers
                 }
                 //Переделать модерацию на бэке
                 var moderationContext = $"{request.article_title} \n {request.article_preview} \n {request.article_content}";
-                var resultModeration = await _gaChatModerationService.ModerationContent(moderationContext);
+                var resultModeration = await _gigaChatContentService.ModerationContent(moderationContext);
 
                 if (!resultModeration.IsApproved) 
                 {
@@ -151,6 +151,74 @@ namespace LambdaGeneration.API.Controllers
             } 
         }
 
+        [HttpPost("ai-edit")]
+        [Authorize]
+        public async Task<IActionResult> AiEdit([FromBody] AiEditArticleRequest request)
+        {
+            try
+            {
+                if (request is null || string.IsNullOrWhiteSpace(request.article_content))
+                {
+                    return BadRequest(new { error = "Пустой контент для редактирования" });
+                }
+
+                var hasSelection = !string.IsNullOrWhiteSpace(request.selected_html);
+                var sourceToEdit = hasSelection ? request.selected_html! : request.article_content;
+
+                if (sourceToEdit.Length > 120_000)
+                {
+                    return BadRequest(new { error = "Слишком большой текст для AI-редактирования" });
+                }
+
+                var editResult = await _gigaChatContentService.EditArticleContentAsync(
+                    sourceToEdit,
+                    request.mode,
+                    HttpContext.RequestAborted);
+
+                var editedContent = request.article_content;
+
+                if (hasSelection)
+                {
+                    var idx = request.article_content.IndexOf(request.selected_html!, StringComparison.Ordinal);
+                    if (idx < 0)
+                    {
+                        return BadRequest(new { error = "Выделенный фрагмент не найден в тексте" });
+                    }
+
+                    editedContent = string.Concat(
+                        request.article_content.AsSpan(0, idx),
+                        editResult.EditedContent,
+                        request.article_content.AsSpan(idx + request.selected_html!.Length));
+                }
+                else
+                {
+                    editedContent = editResult.EditedContent;
+                }
+
+                var noChanges = string.Equals(editedContent, request.article_content, StringComparison.Ordinal);
+
+                return Ok(new
+                {
+                    edited_content = editedContent,
+                    applied_to_selection = hasSelection,
+                    no_changes = noChanges,
+                    total_tokens = editResult.TotalTokens
+                });
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(new { error = ex.Message });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new
+                {
+                    error = "Не удалось выполнить AI-редактирование",
+                    detail = ex.Message
+                });
+            }
+        }
+
         [HttpPut("update")]
         [Authorize]
         public async Task<ActionResult<UpdateArticlesResponse>> Update([FromForm] UpdateArticlesRequest request)
@@ -170,7 +238,7 @@ namespace LambdaGeneration.API.Controllers
                 }
 
                 var moderationContext = $"{request.article_title} \n {request.article_preview} \n {request.article_content}";
-                var resultModeration = await _gaChatModerationService.ModerationContent(moderationContext);
+                var resultModeration = await _gigaChatContentService.ModerationContent(moderationContext);
 
                 if (!resultModeration.IsApproved)
                 {

@@ -91,10 +91,10 @@ namespace LambdaGeneration.API.Midleware
             services.AddScoped<ILikeCommentService, LikeCommentService>();
             services.AddScoped<IRecommendationService, RecommendationService>();
 
-            services.AddSingleton<IGigaChatModerationService>(provider =>
+            services.AddSingleton<IGigaChatContentService>(provider =>
             {
                 var config = provider.GetRequiredService<IConfiguration>();
-                return new GigaChatModerationService(
+                return new GigaChatContentService(
                     config["GigaChat:ClientId"],
                     config["GigaChat:ClientSecret"],
                     config["GigaChat:Scope"] ?? "GigaChat"
