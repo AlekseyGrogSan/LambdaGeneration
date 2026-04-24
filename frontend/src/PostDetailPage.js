@@ -31,6 +31,7 @@ import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import ExpandLessIcon from '@mui/icons-material/ExpandLess';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import { buildArticleImageUrl, buildAvatarUrl, DEFAULT_AVATAR_SRC } from './avatarUtils';
+import { ProfileIcon, resolveProfileIconValue, extractNameAndIcon } from './profileIcons';
 import hljs from 'highlight.js';
 import 'highlight.js/styles/atom-one-dark.css';
 import { formatContentForRender, normalizeCodeLanguage } from './contentFormatting';
@@ -248,9 +249,12 @@ const CommentItem = ({
                         },
                     }}
                 />
-                <Typography variant="body2" sx={{ color: '#00bfa5', fontWeight: 700 }}>
-                    @{comment.authorName}
-                </Typography>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, minWidth: 0 }}>
+                    <Typography variant="body2" sx={{ color: '#00bfa5', fontWeight: 700 }}>
+                        @{comment.authorName}
+                    </Typography>
+                    <ProfileIcon icon={comment.authorProfileIcon} size={18} />
+                </Box>
             </Box>
             <Typography variant="body1" sx={{ color: 'white', mt: 0.5, whiteSpace: 'pre-wrap' }}>
                 {comment.content}
@@ -443,6 +447,7 @@ const PostDetailPage = React.memo(({
     nickname,
     authorId,
     authorAvatar,
+    authorProfileIcon,
     containerRef,
     onCommentsCountChange,
     initialOpenComments = false,
@@ -594,20 +599,22 @@ const PostDetailPage = React.memo(({
             });
 
             if (!response.ok) {
-                const fallback = { name: 'Автор', avatar: null };
+                const fallback = { name: 'Автор', avatar: null, profileIcon: '' };
                 authorCacheRef.current[userId] = fallback;
                 return fallback;
             }
 
             const data = await response.json();
+            const parsedAuthor = extractNameAndIcon(data.name || 'Автор');
             const info = {
-                name: data.name || 'Автор',
+                name: parsedAuthor.name,
                 avatar: data.pathAvatar ?? data.PathAvatar ?? null,
+                profileIcon: parsedAuthor.icon || resolveProfileIconValue(data),
             };
             authorCacheRef.current[userId] = info;
             return info;
         } catch {
-            const fallback = { name: 'Автор', avatar: null };
+            const fallback = { name: 'Автор', avatar: null, profileIcon: '' };
             authorCacheRef.current[userId] = fallback;
             return fallback;
         }
@@ -635,6 +642,7 @@ const PostDetailPage = React.memo(({
             repliesCount,
             authorName: authorInfo.name,
             authorAvatar: authorInfo.avatar,
+            authorProfileIcon: authorInfo.profileIcon,
             isLiked,
             replies: [],
             repliesOpen: false,
@@ -1135,9 +1143,12 @@ const PostDetailPage = React.memo(({
                                 },
                             }}
                         />
-                        <Typography variant="h6" sx={{ color: '#00bfa5', fontWeight: 'bold' }}>
-                            {nickname}
-                        </Typography>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                            <Typography variant="h6" sx={{ color: '#00bfa5', fontWeight: 'bold' }}>
+                                {nickname}
+                            </Typography>
+                            <ProfileIcon icon={authorProfileIcon} size={20} />
+                        </Box>
                     </Box>
                 </Box>
 

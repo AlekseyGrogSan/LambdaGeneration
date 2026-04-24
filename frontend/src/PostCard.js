@@ -19,6 +19,7 @@ import FavoriteIcon from '@mui/icons-material/Favorite';
 import ChatBubbleOutlineIcon from '@mui/icons-material/ChatBubbleOutline';
 import ShortcutRoundedIcon from '@mui/icons-material/ShortcutRounded';
 import { buildArticleImageUrl, buildAvatarUrl, DEFAULT_AVATAR_SRC } from './avatarUtils';
+import { ProfileIcon } from './profileIcons';
 import hljs from 'highlight.js';
 import 'highlight.js/styles/atom-one-dark.css';
 import { formatContentForRender, normalizeCodeLanguage } from './contentFormatting';
@@ -176,6 +177,7 @@ const PostCard = React.memo(({
     id, 
     nickname, 
     authorAvatar,
+    authorProfileIcon,
     authorId,
     onAuthorClick,
     title, 
@@ -501,19 +503,26 @@ const PostCard = React.memo(({
                                         },
                                     }}
                                 />
-                                <Typography 
-                                    variant="h6" 
-                                    sx={{
-                                        color: '#00e5c9',
-                                        fontWeight: 'bold',
-                                        fontSize: { xs: '0.95rem', md: '1.25rem' },
-                                        overflow: 'hidden',
-                                        textOverflow: 'ellipsis',
-                                        whiteSpace: 'nowrap',
-                                    }}
-                                >
-                                    @{nickname}
-                                </Typography>
+                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, minWidth: 0 }}>
+                                    <Typography 
+                                        variant="h6" 
+                                        sx={{
+                                            color: '#00e5c9',
+                                            fontWeight: 'bold',
+                                            fontSize: { xs: '0.95rem', md: '1.25rem' },
+                                            overflow: 'hidden',
+                                            textOverflow: 'ellipsis',
+                                            whiteSpace: 'nowrap',
+                                        }}
+                                    >
+                                        @{nickname}
+                                    </Typography>
+                                    <ProfileIcon
+                                        icon={authorProfileIcon}
+                                        size={20}
+                                        sx={{ filter: 'drop-shadow(0 0 4px rgba(0, 229, 201, 0.25))' }}
+                                    />
+                                </Box>
                             </Box>
                         </Box>
                         
