@@ -7,8 +7,6 @@ import {
     Button,
     Chip,
     MobileStepper,
-    useMediaQuery,
-    useTheme,
 } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
 import ArrowBackIosNewIcon from '@mui/icons-material/ArrowBackIosNew';
@@ -96,17 +94,6 @@ const getSlides = () => [
         ],
     },
     {
-        key: 'neuro-recommendations',
-        icon: <PsychologyAltIcon sx={{ fontSize: 24 }} />,
-        title: 'Нейрофункционал: умная выдача',
-        subtitle: 'Персонализация и интеллектуальный отбор контента',
-        points: [
-            'Режим Рекомендации формирует персональную ленту на основе профильного интереса и активности.',
-            'Если профиль пользователя не готов для рекомендаций, система корректно сообщает об этом и предлагает другие режимы ленты.',
-            'Режим Случайные остаётся альтернативой для расширения кругозора и открытия новых тем.',
-        ],
-    },
-    {
         key: 'neuro-moderation',
         icon: <VerifiedUserIcon sx={{ fontSize: 24 }} />,
         title: 'Нейрофункционал: модерация контента',
@@ -133,8 +120,6 @@ const getSlides = () => [
 const SiteGuideSlidesModal = ({ open, onClose }) => {
     const [activeStep, setActiveStep] = useState(0);
     const slides = useMemo(() => getSlides(), []);
-    const theme = useTheme();
-    const isMobile = useMediaQuery(theme.breakpoints.down(768));
 
     useEffect(() => {
         if (!open) {
@@ -222,22 +207,13 @@ const SiteGuideSlidesModal = ({ open, onClose }) => {
 
                 <Box sx={{ borderTop: '1px solid rgba(0, 229, 201, 0.18)' }}>
                     <MobileStepper
-                        variant={isMobile ? 'dots' : 'progress'}
+                        variant="dots"
                         steps={maxSteps}
                         position="static"
                         activeStep={activeStep}
                         sx={{
                             background: 'transparent',
                             px: { xs: 1, sm: 1.6 },
-                            '& .MuiLinearProgress-root': {
-                                width: '100%',
-                                mr: 1.2,
-                                borderRadius: '8px',
-                                backgroundColor: 'rgba(255,255,255,0.12)',
-                            },
-                            '& .MuiLinearProgress-bar': {
-                                backgroundColor: '#00e5c9',
-                            },
                             '& .MuiMobileStepper-dot': {
                                 backgroundColor: 'rgba(255,255,255,0.28)',
                             },
