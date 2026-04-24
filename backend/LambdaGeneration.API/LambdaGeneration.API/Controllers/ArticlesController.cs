@@ -19,6 +19,7 @@ namespace LambdaGeneration.API.Controllers
     [ApiController]
     public class ArticlesController : ControllerBase
     {
+        private const int MaxArticleTagsCount = 5;
         private readonly IArticlesService _articlesService;
         private readonly IGigaChatModerationService _gaChatModerationService;
         private readonly IRegexModerationService _regexModerationService;
@@ -68,6 +69,11 @@ namespace LambdaGeneration.API.Controllers
                 }
 
                 var ArticleIntTags = new List<int>();
+
+                if (request.article_tags != null && request.article_tags.Count > MaxArticleTagsCount)
+                {
+                    return BadRequest($"Нельзя выбрать больше {MaxArticleTagsCount} тегов за один раз.");
+                }
 
                 if (request.article_tags != null)
                     for (var i = 0;  i < request.article_tags.Count; i++)
@@ -206,6 +212,11 @@ var targetForUpdate = await _articlesService.GetArticleByIdAsync(request.article
         [Authorize]
         public async Task<ActionResult<UpdateArticlesResponse>> UpdateTags(UpdateTagsArticlesRequest request)
         {
+            if (request.article_tags != null && request.article_tags.Count > MaxArticleTagsCount)
+            {
+                return BadRequest($"Нельзя выбрать больше {MaxArticleTagsCount} тегов за один раз.");
+            }
+
             var ArticleIntTags = new List<int>();
 
             for (var i = 0; i < request.article_tags.Count; i++)
