@@ -17,6 +17,7 @@ export function useFeedTabSwipe({
     const startY = useRef(0);
     const mode = useRef(null);
     const activePointerId = useRef(null);
+    const pointerCaptured = useRef(false);
     const lastX = useRef(0);
     const lastT = useRef(0);
     const velocityRef = useRef(0);
@@ -65,11 +66,7 @@ export function useFeedTabSwipe({
             lastX.current = e.clientX;
             lastT.current = typeof performance !== 'undefined' ? performance.now() : Date.now();
             velocityRef.current = 0;
-            try {
-                e.currentTarget.setPointerCapture(e.pointerId);
-            } catch (_) {
-                /* ignore */
-            }
+            pointerCaptured.current = false;
         },
         [enabled],
     );
@@ -86,6 +83,14 @@ export function useFeedTabSwipe({
                 if (ax > 14 || ay > 14) {
                     if (ax > ay * 1.18) {
                         mode.current = 'h';
+                        if (!pointerCaptured.current) {
+                            try {
+                                e.currentTarget.setPointerCapture(e.pointerId);
+                                pointerCaptured.current = true;
+                            } catch (_) {
+                                /* ignore */
+                            }
+                        }
                         lockScroll();
                     } else {
                         mode.current = 'v';
@@ -129,11 +134,14 @@ export function useFeedTabSwipe({
 
             mode.current = null;
             setOffset(0);
-            try {
-                e.currentTarget.releasePointerCapture(e.pointerId);
-            } catch (_) {
-                /* ignore */
+            if (pointerCaptured.current) {
+                try {
+                    e.currentTarget.releasePointerCapture(e.pointerId);
+                } catch (_) {
+                    /* ignore */
+                }
             }
+            pointerCaptured.current = false;
         },
         [activeTab, onSwipeLeft, onSwipeRight, threshold, unlockScroll, setOffset],
     );
