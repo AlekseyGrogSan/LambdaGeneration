@@ -31,6 +31,7 @@ import MenuBookIcon from '@mui/icons-material/MenuBook';
 import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
 import AdminPanelSettingsIcon from '@mui/icons-material/AdminPanelSettings';
 import RefreshIcon from '@mui/icons-material/Refresh';
+import SlideshowIcon from '@mui/icons-material/Slideshow';
 
 import PostCard from './PostCard';
 import PostDetailPage from './PostDetailPage';
@@ -46,6 +47,7 @@ import CategoryModal, { TAG_CATEGORIES } from './CategoryModal';
 import ResourcesModal from './ResourcesModal';
 import FaqModal from './FaqModal';
 import AdminPanelModal from './AdminPanelModal';
+import SiteGuideSlidesModal from './SiteGuideSlidesModal';
 import { buildArticleImageUrl, buildAvatarUrl, DEFAULT_AVATAR_SRC } from './avatarUtils';
 
 const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || '/api';
@@ -198,7 +200,7 @@ const scrollbarStyle = {
     scrollbarColor: '#00bfa5 #1a1a1a',
 };
 
-const Sidebar = ({ handleOpen, handleProfileOpen, handlePostOpen, handleCategoryOpen, handleResourcesOpen, handleFaqOpen, handleAdminOpen, isAdmin, currentUser }) => (
+const Sidebar = ({ handleOpen, handleProfileOpen, handlePostOpen, handleCategoryOpen, handleResourcesOpen, handleFaqOpen, handleGuideOpen, handleAdminOpen, isAdmin, currentUser }) => (
     <Box sx={sidebarStyle}>
         <Typography variant="h5" sx={{ color: '#00bfa5', fontWeight: 'bold', textAlign: 'center', mb: 4, letterSpacing: 1 }}>
             Lambda
@@ -234,6 +236,7 @@ const Sidebar = ({ handleOpen, handleProfileOpen, handlePostOpen, handleCategory
             <Button variant="contained" sx={sidebarButtonStyle} onClick={handleCategoryOpen}>Категории</Button>
             <Button variant="contained" sx={sidebarButtonStyle} onClick={handleResourcesOpen}>Полезные материалы</Button>
             <Button variant="contained" sx={sidebarButtonStyle} onClick={handleFaqOpen}>FAQ</Button>
+            <Button variant="contained" sx={sidebarButtonStyle} onClick={handleGuideOpen}>Инструкция по сайту</Button>
         </Box>
 
         <Box sx={{ mt: 'auto', display: 'flex', flexDirection: 'column', gap: 1 }}>
@@ -696,6 +699,7 @@ const PostPage = () => {
     const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
 const [isResourcesModalOpen, setIsResourcesModalOpen] = useState(false);
 const [isFaqModalOpen, setIsFaqModalOpen] = useState(false);
+const [isGuideModalOpen, setIsGuideModalOpen] = useState(false);
 const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
     const [moreMenuAnchor, setMoreMenuAnchor] = useState(null);
     const moreMenuLockRef = useRef(null);
@@ -766,7 +770,7 @@ const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
         const container = articlesContainerRef.current;
         if (!container) return;
 
-        const shouldLockFeedScroll = Boolean(moreMenuAnchor || isResourcesModalOpen || isFaqModalOpen);
+        const shouldLockFeedScroll = Boolean(moreMenuAnchor || isResourcesModalOpen || isFaqModalOpen || isGuideModalOpen);
         if (shouldLockFeedScroll) {
             if (!moreMenuLockRef.current) {
                 moreMenuScrollTopRef.current = container.scrollTop;
@@ -807,7 +811,7 @@ const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
                 container.style.scrollSnapType = scrollSnapType;
             });
         }
-    }, [moreMenuAnchor, isResourcesModalOpen, isFaqModalOpen]);
+    }, [moreMenuAnchor, isResourcesModalOpen, isFaqModalOpen, isGuideModalOpen]);
     const [returnToProfile, setReturnToProfile] = useState(false);
     const [returnProfileUserId, setReturnProfileUserId] = useState(null);
     const [profileReturnEnabled, setProfileReturnEnabled] = useState(false);
@@ -1072,6 +1076,8 @@ const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
     
     const handleFaqOpen = () => setIsFaqModalOpen(true);
     const handleFaqClose = () => setIsFaqModalOpen(false);
+    const handleGuideOpen = () => setIsGuideModalOpen(true);
+    const handleGuideClose = () => setIsGuideModalOpen(false);
     const handleAdminOpen = () => setIsAdminPanelOpen(true);
     const handleAdminClose = () => setIsAdminPanelOpen(false);
 
@@ -2874,6 +2880,7 @@ const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
                 handleCategoryOpen={handleCategoryOpen} 
                 handleResourcesOpen={handleResourcesOpen} 
                 handleFaqOpen={handleFaqOpen}
+                handleGuideOpen={handleGuideOpen}
                 handleAdminOpen={handleAdminOpen}
                 isAdmin={currentUser?.role === 'Admin'}
                 currentUser={currentUser}
@@ -2922,6 +2929,18 @@ const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
                     </ListItemIcon>
                     <ListItemText primaryTypographyProps={{ fontSize: '0.95rem' }} primary="FAQ" />
                 </MenuItem>
+                <MenuItem
+                    onClick={() => {
+                        setMoreMenuAnchor(null);
+                        handleGuideOpen();
+                    }}
+                    sx={{ minHeight: 48 }}
+                >
+                    <ListItemIcon sx={{ color: '#00e5c9' }}>
+                        <SlideshowIcon fontSize="small" />
+                    </ListItemIcon>
+                    <ListItemText primaryTypographyProps={{ fontSize: '0.95rem' }} primary="Инструкция по сайту" />
+                </MenuItem>
                 {currentUser?.role === 'Admin' && (
                     <MenuItem
                         onClick={() => {
@@ -2967,6 +2986,11 @@ const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
                     }
                     handleProfileOpen();
                 }}
+            />
+
+            <SiteGuideSlidesModal
+                open={isGuideModalOpen}
+                onClose={handleGuideClose}
             />
             
             <RegistrationModal 
