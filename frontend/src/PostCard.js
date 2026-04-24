@@ -201,6 +201,7 @@ const PostCard = React.memo(({
     const [shareNoticeOpen, setShareNoticeOpen] = useState(false);
     const shareTimerRef = useRef(null);
     const [imageBroken, setImageBroken] = useState(false);
+    const suppressNextClickRef = useRef(false);
 
     const withCacheBust = (url) => {
         if (!url) return url;
@@ -420,7 +421,21 @@ const PostCard = React.memo(({
     };
 
     const handleCardClick = (e) => {
+        if (suppressNextClickRef.current) {
+            suppressNextClickRef.current = false;
+            return;
+        }
         if (onClick) onClick();
+    };
+
+    const handleCardPointerUp = (e) => {
+        if (!onClick || e.pointerType !== 'touch') return;
+
+        const interactiveTarget = e.target?.closest?.('button, a, input, textarea, [role="button"]');
+        if (interactiveTarget) return;
+
+        suppressNextClickRef.current = true;
+        onClick();
     };
 
     return (
@@ -433,6 +448,7 @@ const PostCard = React.memo(({
                 height: { xs: 'auto', md: '85vh' },
                 minHeight: { xs: 0, md: 'unset' },
                 cursor: onClick ? 'pointer' : 'default',
+                touchAction: 'manipulation',
                 transition: 'box-shadow 0.25s ease, transform 0.2s ease',
                 '&:hover': {
                     boxShadow: { xs: 'none', md: '0 8px 16px rgba(0, 0, 0, 0.4)' },
@@ -443,6 +459,7 @@ const PostCard = React.memo(({
                 ...sx,
             }}
             onClick={handleCardClick}
+            onPointerUp={handleCardPointerUp}
         >
             {shareNoticeOpen && (
                 <Box
