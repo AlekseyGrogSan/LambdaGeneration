@@ -476,12 +476,12 @@ const PostDetailPage = React.memo(({
             dangerouslySetInnerHTML={{ __html: renderedArticleContent }}
             sx={{
                 color: 'white',
-                lineHeight: 1.6,
+                lineHeight: { xs: 1.5, md: 1.6 },
                 whiteSpace: 'pre-wrap',
-                '& h1': { fontSize: '2.4rem', mt: 3, mb: 1, color: '#00bfa5' },
-                '& h2': { fontSize: '2rem', mt: 2, mb: 1, color: 'white' },
-                '& h3': { fontSize: '1.7rem', mt: 1.5, mb: 0.5, color: 'white' },
-                '& p': { marginBottom: 1, marginTop: 1, fontSize: '1.15rem' },
+                '& h1': { fontSize: { xs: '1.55rem', md: '2.4rem' }, mt: { xs: 2, md: 3 }, mb: 1, color: '#00bfa5', lineHeight: { xs: 1.25, md: 1.3 } },
+                '& h2': { fontSize: { xs: '1.35rem', md: '2rem' }, mt: { xs: 1.5, md: 2 }, mb: 1, color: 'white', lineHeight: { xs: 1.3, md: 1.35 } },
+                '& h3': { fontSize: { xs: '1.15rem', md: '1.7rem' }, mt: { xs: 1.25, md: 1.5 }, mb: 0.5, color: 'white', lineHeight: { xs: 1.35, md: 1.4 } },
+                '& p': { marginBottom: 1, marginTop: 1, fontSize: { xs: '0.98rem', md: '1.15rem' } },
                 '& strong': { fontWeight: 'bold', color: 'white' }
             }}
         />
@@ -1114,7 +1114,7 @@ const PostDetailPage = React.memo(({
                     sx={{
                         fontWeight: 'bold',
                         mb: 2,
-                        fontSize: { xs: '1.1rem', sm: '1.35rem', md: '2.125rem' },
+                        fontSize: { xs: '1rem', sm: '1.28rem', md: '2.125rem' },
                         lineHeight: { xs: 1.25, md: 1.35 },
                         overflowWrap: 'anywhere',
                         wordBreak: 'break-word',
