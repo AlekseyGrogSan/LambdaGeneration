@@ -47,6 +47,7 @@ import ResourcesModal from './ResourcesModal';
 import FaqModal from './FaqModal';
 import AdminPanelModal from './AdminPanelModal';
 import { buildArticleImageUrl, buildAvatarUrl, DEFAULT_AVATAR_SRC } from './avatarUtils';
+import { ProfileIcon, resolveProfileIconValue, extractNameAndIcon } from './profileIcons';
 
 const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || '/api';
 const POST_PAGE_NAV_STATE_KEY = 'lambda.postPage.navState.v1';
@@ -198,76 +199,84 @@ const scrollbarStyle = {
     scrollbarColor: '#00bfa5 #1a1a1a',
 };
 
-const Sidebar = ({ handleOpen, handleProfileOpen, handlePostOpen, handleCategoryOpen, handleResourcesOpen, handleFaqOpen, handleAdminOpen, isAdmin, currentUser }) => (
-    <Box sx={sidebarStyle}>
-        <Typography variant="h5" sx={{ color: '#00bfa5', fontWeight: 'bold', textAlign: 'center', mb: 4, letterSpacing: 1 }}>
-            Lambda
-        </Typography>
+const Sidebar = ({ handleOpen, handleProfileOpen, handlePostOpen, handleCategoryOpen, handleResourcesOpen, handleFaqOpen, handleAdminOpen, isAdmin, currentUser }) => {
+    const currentUserName = extractNameAndIcon(currentUser?.name || '').name;
+    const currentUserIcon = resolveProfileIconValue(currentUser);
 
-        {currentUser ? (
-            <Box sx={{ mb: 3, p: 2, bgcolor: '#2c2c2c', borderRadius: '12px', display: 'flex', alignItems: 'center', gap: 1 }}>
-                <Avatar
-                    src={buildAvatarUrl(API_BASE_URL, currentUser.pathAvatar ?? currentUser.PathAvatar)}
-                    sx={{ bgcolor: '#00bfa5' }}
-                    imgProps={{
-                        onError: (e) => {
-                            e.currentTarget.src = DEFAULT_AVATAR_SRC;
-                        },
-                    }}
-                >
-                    {currentUser.name[0]?.toUpperCase()}
-                </Avatar>
-                <Box sx={{ overflow: 'hidden' }}>
-                    <Typography variant="subtitle2" sx={{ color: '#bdbdbd', fontSize: '0.75rem' }}>Вы вошли как:</Typography>
-                    <Typography variant="body1" sx={{ color: 'white', fontWeight: 'bold', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                        {currentUser.name}
-                    </Typography>
+    return (
+        <Box sx={sidebarStyle}>
+            <Typography variant="h5" sx={{ color: '#00bfa5', fontWeight: 'bold', textAlign: 'center', mb: 4, letterSpacing: 1 }}>
+                Lambda
+            </Typography>
+
+            {currentUser ? (
+                <Box sx={{ mb: 3, p: 2, bgcolor: '#2c2c2c', borderRadius: '12px', display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <Avatar
+                        src={buildAvatarUrl(API_BASE_URL, currentUser.pathAvatar ?? currentUser.PathAvatar)}
+                        sx={{ bgcolor: '#00bfa5' }}
+                        imgProps={{
+                            onError: (e) => {
+                                e.currentTarget.src = DEFAULT_AVATAR_SRC;
+                            },
+                        }}
+                    >
+                        {currentUserName[0]?.toUpperCase()}
+                    </Avatar>
+                    <Box sx={{ overflow: 'hidden' }}>
+                        <Typography variant="subtitle2" sx={{ color: '#bdbdbd', fontSize: '0.75rem' }}>Вы вошли как:</Typography>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                            <Typography variant="body1" sx={{ color: 'white', fontWeight: 'bold', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                {currentUserName}
+                            </Typography>
+                            <ProfileIcon icon={currentUserIcon} size={18} />
+                        </Box>
+                    </Box>
                 </Box>
-            </Box>
-        ) : (
-            <Box sx={{ mb: 3, textAlign: 'center' }}>
-                <Typography variant="body2" sx={{ color: '#757575', mb: 1 }}>Вы гость</Typography>
-            </Box>
-        )}
-
-        <Box sx={{ display: 'flex', flexDirection: 'column', flexGrow: 1 }}>
-            <Button variant="contained" sx={sidebarButtonStyle} onClick={handleCategoryOpen}>Категории</Button>
-            <Button variant="contained" sx={sidebarButtonStyle} onClick={handleResourcesOpen}>Полезные материалы</Button>
-            <Button variant="contained" sx={sidebarButtonStyle} onClick={handleFaqOpen}>FAQ</Button>
-        </Box>
-
-        <Box sx={{ mt: 'auto', display: 'flex', flexDirection: 'column', gap: 1 }}>
-            {isAdmin && (
-                <Button
-                    sx={adminButtonStyle}
-                    startIcon={<DeleteOutlineIcon />}
-                    onClick={handleAdminOpen}
-                >
-                    Админ-панель
-                </Button>
+            ) : (
+                <Box sx={{ mb: 3, textAlign: 'center' }}>
+                    <Typography variant="body2" sx={{ color: '#757575', mb: 1 }}>Вы гость</Typography>
+                </Box>
             )}
-            <Button
-                sx={profileButtonStyle}
-                startIcon={<PersonIcon />}
-                onClick={handleProfileOpen}
-            >
-                {currentUser ? 'Мой профиль' : 'Войти / Профиль'}
-            </Button>
-            <Button sx={profileButtonStyle} startIcon={<CloudUploadIcon />} onClick={handlePostOpen}>
-                Опубликовать
-            </Button>
-        </Box>
 
-        {!currentUser && (
-            <Box sx={{ paddingTop: 2, textAlign: 'center' }}>
-                <Typography variant="body2" sx={{ color: '#757575', marginBottom: 0.5 }}>Нет аккаунта?</Typography>
-                <MuiLink component="span" onClick={() => handleOpen('register')} sx={{ color: '#757575', cursor: 'pointer', textDecoration: 'none', '&:hover': { color: '#00bfa5' } }}>
-                    Зарегистрироваться?
-                </MuiLink>
+            <Box sx={{ display: 'flex', flexDirection: 'column', flexGrow: 1 }}>
+                <Button variant="contained" sx={sidebarButtonStyle} onClick={handleCategoryOpen}>Категории</Button>
+                <Button variant="contained" sx={sidebarButtonStyle} onClick={handleResourcesOpen}>Полезные материалы</Button>
+                <Button variant="contained" sx={sidebarButtonStyle} onClick={handleFaqOpen}>FAQ</Button>
             </Box>
-        )}
-    </Box>
-);
+
+            <Box sx={{ mt: 'auto', display: 'flex', flexDirection: 'column', gap: 1 }}>
+                {isAdmin && (
+                    <Button
+                        sx={adminButtonStyle}
+                        startIcon={<DeleteOutlineIcon />}
+                        onClick={handleAdminOpen}
+                    >
+                        Админ-панель
+                    </Button>
+                )}
+                <Button
+                    sx={profileButtonStyle}
+                    startIcon={<PersonIcon />}
+                    onClick={handleProfileOpen}
+                >
+                    Мой профиль
+                </Button>
+                <Button sx={profileButtonStyle} startIcon={<CloudUploadIcon />} onClick={handlePostOpen}>
+                    Опубликовать
+                </Button>
+            </Box>
+
+            {!currentUser && (
+                <Box sx={{ paddingTop: 2, textAlign: 'center' }}>
+                    <Typography variant="body2" sx={{ color: '#757575', marginBottom: 0.5 }}>Нет аккаунта?</Typography>
+                    <MuiLink component="span" onClick={() => handleOpen('register')} sx={{ color: '#757575', cursor: 'pointer', textDecoration: 'none', '&:hover': { color: '#00bfa5' } }}>
+                        Зарегистрироваться?
+                    </MuiLink>
+                </Box>
+            )}
+        </Box>
+    );
+};
 
 const FeedCommentItem = ({
     comment,
@@ -318,9 +327,12 @@ const FeedCommentItem = ({
                         },
                     }}
                 />
-                <Typography variant="body2" sx={{ color: '#00bfa5', fontWeight: 700 }}>
-                    @{comment.authorName}
-                </Typography>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, minWidth: 0 }}>
+                    <Typography variant="body2" sx={{ color: '#00bfa5', fontWeight: 700 }}>
+                        @{comment.authorName}
+                    </Typography>
+                    <ProfileIcon icon={comment.authorProfileIcon} size={18} />
+                </Box>
             </Box>
 
             <Typography variant="body2" sx={{ color: 'white', mt: 0.5, whiteSpace: 'pre-wrap' }}>
@@ -1264,6 +1276,15 @@ const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
         fetchArticlesPage(1, 'tags', { force: true, tagIds: nextTagIds });
     };
 
+    const handleProfileUpdate = () => {
+        // Clear code to force refresh of feed
+        feedCacheRef.current = {};
+        setArticles([]);
+        setPageNumber(1);
+        setHasMore(true);
+        fetchArticlesPage(1, paginationType, { force: true });
+    };
+
     const handleLogout = async () => {
         try {
             await fetch(`${API_BASE_URL}/Users/logout`, { 
@@ -1491,12 +1512,16 @@ const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
         
         const [authorData, likeCountData, isLikedStatus] = await Promise.all([authorReq, likeCountReq, isLikedReq]);
         
+        const rawNickname = authorData.name || 'Автор';
+        const iconInfo = extractNameAndIcon(rawNickname);
+
         return {
             ...article,
             article_id: rawId, 
             author_id: rawAuthorId, 
-            nickname: authorData.name || 'Автор',
+            nickname: iconInfo.name,
             authorAvatar: authorData.pathAvatar ?? authorData.PathAvatar ?? null,
+            authorProfileIcon: iconInfo.icon || resolveProfileIconValue(authorData),
             authorBio: authorData.aboutUser || 'Описание недоступно.',
             title: article.articleTitle || article.article_title || article.ArticleTitle || 'Нет названия', 
             article_preview: article.articlePreview || article.article_preview || article.ArticlePreview || 'Нет описания',
@@ -1833,7 +1858,7 @@ const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
                 credentials: 'include',
             });
             if (!response.ok) {
-                const fallback = { name: 'Автор', avatar: null };
+                const fallback = { name: 'Автор', avatar: null, profileIcon: '' };
                 feedCommentAuthorCacheRef.current[userId] = fallback;
                 return fallback;
             }
@@ -1842,11 +1867,12 @@ const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
             const info = {
                 name: data.name || 'Автор',
                 avatar: data.pathAvatar ?? data.PathAvatar ?? null,
+                profileIcon: resolveProfileIconValue(data),
             };
             feedCommentAuthorCacheRef.current[userId] = info;
             return info;
         } catch {
-            const fallback = { name: 'Автор', avatar: null };
+            const fallback = { name: 'Автор', avatar: null, profileIcon: '' };
             feedCommentAuthorCacheRef.current[userId] = fallback;
             return fallback;
         }
@@ -1886,6 +1912,7 @@ const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
             repliesCount,
             authorName: authorInfo.name,
             authorAvatar: authorInfo.avatar,
+            authorProfileIcon: authorInfo.profileIcon,
             isLiked,
             replies: [],
             repliesOpen: false,
@@ -2769,6 +2796,7 @@ const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
                             nickname={selectedPost.nickname}
                             authorId={selectedPost.author_id} 
                             authorAvatar={selectedPost.authorAvatar}
+                            authorProfileIcon={selectedPost.authorProfileIcon}
                             onTagClick={handleTagClickFromDetail}
                             onAuthorClick={handleOtherAuthorProfileOpen} 
                             onUnauthorized={handleOpen}
@@ -2998,6 +3026,7 @@ const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
                 userId={viewedProfileId} 
                 onUnauthorized={handleOpen}
                 onLogout={handleLogout} 
+                onProfileUpdate={handleProfileUpdate}
                 onPostClick={handlePostClick}
                 onLikes={handleLikeToggle}
                 openProfile={handleOtherAuthorProfileOpen}
