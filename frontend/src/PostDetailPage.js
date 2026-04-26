@@ -31,6 +31,7 @@ import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import ExpandLessIcon from '@mui/icons-material/ExpandLess';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import { buildArticleImageUrl, buildAvatarUrl, DEFAULT_AVATAR_SRC } from './avatarUtils';
+import { ProfileIcon, resolveProfileIconValue, extractNameAndIcon } from './profileIcons';
 import hljs from 'highlight.js';
 import 'highlight.js/styles/atom-one-dark.css';
 import { formatContentForRender, normalizeCodeLanguage } from './contentFormatting';
@@ -248,9 +249,12 @@ const CommentItem = ({
                         },
                     }}
                 />
-                <Typography variant="body2" sx={{ color: '#00bfa5', fontWeight: 700 }}>
-                    @{comment.authorName}
-                </Typography>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, minWidth: 0 }}>
+                    <Typography variant="body2" sx={{ color: '#00bfa5', fontWeight: 700 }}>
+                        @{comment.authorName}
+                    </Typography>
+                    <ProfileIcon icon={comment.authorProfileIcon} size={18} />
+                </Box>
             </Box>
             <Typography variant="body1" sx={{ color: 'white', mt: 0.5, whiteSpace: 'pre-wrap' }}>
                 {comment.content}
@@ -443,6 +447,7 @@ const PostDetailPage = React.memo(({
     nickname,
     authorId,
     authorAvatar,
+    authorProfileIcon,
     containerRef,
     onCommentsCountChange,
     initialOpenComments = false,
@@ -471,12 +476,12 @@ const PostDetailPage = React.memo(({
             dangerouslySetInnerHTML={{ __html: renderedArticleContent }}
             sx={{
                 color: 'white',
-                lineHeight: 1.6,
+                lineHeight: { xs: 1.5, md: 1.6 },
                 whiteSpace: 'pre-wrap',
-                '& h1': { fontSize: '2.4rem', mt: 3, mb: 1, color: '#00bfa5' },
-                '& h2': { fontSize: '2rem', mt: 2, mb: 1, color: 'white' },
-                '& h3': { fontSize: '1.7rem', mt: 1.5, mb: 0.5, color: 'white' },
-                '& p': { marginBottom: 1, marginTop: 1, fontSize: '1.15rem' },
+                '& h1': { fontSize: { xs: '1.55rem', md: '2.4rem' }, mt: { xs: 2, md: 3 }, mb: 1, color: '#00bfa5', lineHeight: { xs: 1.25, md: 1.3 } },
+                '& h2': { fontSize: { xs: '1.35rem', md: '2rem' }, mt: { xs: 1.5, md: 2 }, mb: 1, color: 'white', lineHeight: { xs: 1.3, md: 1.35 } },
+                '& h3': { fontSize: { xs: '1.15rem', md: '1.7rem' }, mt: { xs: 1.25, md: 1.5 }, mb: 0.5, color: 'white', lineHeight: { xs: 1.35, md: 1.4 } },
+                '& p': { marginBottom: 1, marginTop: 1, fontSize: { xs: '0.98rem', md: '1.15rem' } },
                 '& strong': { fontWeight: 'bold', color: 'white' }
             }}
         />
@@ -594,20 +599,22 @@ const PostDetailPage = React.memo(({
             });
 
             if (!response.ok) {
-                const fallback = { name: 'Автор', avatar: null };
+                const fallback = { name: 'Автор', avatar: null, profileIcon: '' };
                 authorCacheRef.current[userId] = fallback;
                 return fallback;
             }
 
             const data = await response.json();
+            const parsedAuthor = extractNameAndIcon(data.name || 'Автор');
             const info = {
-                name: data.name || 'Автор',
+                name: parsedAuthor.name,
                 avatar: data.pathAvatar ?? data.PathAvatar ?? null,
+                profileIcon: parsedAuthor.icon || resolveProfileIconValue(data),
             };
             authorCacheRef.current[userId] = info;
             return info;
         } catch {
-            const fallback = { name: 'Автор', avatar: null };
+            const fallback = { name: 'Автор', avatar: null, profileIcon: '' };
             authorCacheRef.current[userId] = fallback;
             return fallback;
         }
@@ -635,6 +642,7 @@ const PostDetailPage = React.memo(({
             repliesCount,
             authorName: authorInfo.name,
             authorAvatar: authorInfo.avatar,
+            authorProfileIcon: authorInfo.profileIcon,
             isLiked,
             replies: [],
             repliesOpen: false,
@@ -1106,7 +1114,7 @@ const PostDetailPage = React.memo(({
                     sx={{
                         fontWeight: 'bold',
                         mb: 2,
-                        fontSize: { xs: '1.1rem', sm: '1.35rem', md: '2.125rem' },
+                        fontSize: { xs: '1rem', sm: '1.28rem', md: '2.125rem' },
                         lineHeight: { xs: 1.25, md: 1.35 },
                         overflowWrap: 'anywhere',
                         wordBreak: 'break-word',
@@ -1135,9 +1143,12 @@ const PostDetailPage = React.memo(({
                                 },
                             }}
                         />
-                        <Typography variant="h6" sx={{ color: '#00bfa5', fontWeight: 'bold' }}>
-                            {nickname}
-                        </Typography>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                            <Typography variant="h6" sx={{ color: '#00bfa5', fontWeight: 'bold' }}>
+                                {nickname}
+                            </Typography>
+                            <ProfileIcon icon={authorProfileIcon} size={20} />
+                        </Box>
                     </Box>
                 </Box>
 

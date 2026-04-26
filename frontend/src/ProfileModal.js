@@ -25,6 +25,7 @@ import {
     Menu,
     MenuItem,
     ListItemIcon,
+    Tooltip,
     Zoom
 } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
@@ -34,11 +35,13 @@ import SaveIcon from '@mui/icons-material/Save';
 import DeleteIcon from '@mui/icons-material/Delete'; 
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
+import AddIcon from '@mui/icons-material/Add';
 import PostCard from './PostCard'; 
 import EditArticleModal from './EditArticleModal';
 import EmailVerificationModal from './EmailVerificationModal'; 
 import AvatarCropDialog from './AvatarCropDialog';
 import { buildArticleImageUrl, buildAvatarUrl, DEFAULT_AVATAR_SRC, formatBytes, isAvatarTooLarge, MAX_AVATAR_BYTES } from './avatarUtils';
+import { ProfileIcon, PROFILE_ICON_PRESETS, normalizeProfileIconValue, resolveProfileIconValue, extractNameAndIcon } from './profileIcons';
 
 const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || '/api';
 
@@ -220,7 +223,7 @@ const extractApiErrorMessage = async (response) => {
 
     return response.statusText || 'Ошибка';
 };
-const ProfileModal = ({ open, handleClose, userId, onUnauthorized, onLogout, onPostClick, onLikes, openProfile }) => {
+const ProfileModal = ({ open, handleClose, userId, onUnauthorized, onLogout, onProfileUpdate, onPostClick, onLikes, openProfile }) => {
     const profileModalRef = useRef(null);
     const isMyProfile = userId === null; 
     const [profileData, setProfileData] = useState(null);
@@ -229,7 +232,7 @@ const ProfileModal = ({ open, handleClose, userId, onUnauthorized, onLogout, onP
     const [isLoading, setIsLoading] = useState(false);
     
     const [isEditingProfile, setIsEditingProfile] = useState(false);
-    const [editData, setEditData] = useState({ name: '', aboutUser: '' });
+    const [editData, setEditData] = useState({ name: '', aboutUser: '', profileIcon: '' });
     const [emailEdit, setEmailEdit] = useState('');
     const [emailError, setEmailError] = useState(null);
     const [emailSuccess, setEmailSuccess] = useState(null);
@@ -271,6 +274,72 @@ const ProfileModal = ({ open, handleClose, userId, onUnauthorized, onLogout, onP
     const handleMenuOpen = (event) => setMenuAnchorEl(event.currentTarget);
     const handleMenuClose = () => setMenuAnchorEl(null);
 
+    const [anchorElIcon, setAnchorElIcon] = useState(null);
+    const [isUpdatingIcon, setIsUpdatingIcon] = useState(false);
+    const handleOpenIconMenu = (event) => setAnchorElIcon(event.currentTarget);
+    const handleCloseIconMenu = () => setAnchorElIcon(null);
+
+    const handleUpdateIcon = async (iconId) => {
+        setIsUpdatingIcon(true);
+        try {
+            const formData = new FormData();
+            formData.append('icon', iconId);
+
+            const iconPreset = PROFILE_ICON_PRESETS.find(p => p.id === iconId);
+            const iconEmoji = iconPreset ? iconPreset.emoji : '';
+
+            const response = await fetch(`${API_BASE_URL}/Users/update-icon`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ icon: iconEmoji })
+            });
+
+            if (!response.ok) {
+                const errorText = await extractApiErrorMessage(response);
+                throw new Error(errorText || 'Failed to update icon');
+            }
+
+            const updatedProfile = await response.json();
+            setProfileData(updatedProfile);
+            setEditData({ ...editData, profileIcon: normalizeProfileIconValue(resolveProfileIconValue(updatedProfile)) });
+            authorProfileCache.current.clear();
+
+            if (onProfileUpdate) {
+                onProfileUpdate();
+            }
+
+            if (isMyProfile) {
+                try {
+                    const likesResponse = await fetch(`${API_BASE_URL}/Articles/likesArticles`, { credentials: 'include' });
+                    if (likesResponse.ok) {
+                        const likesJson = await likesResponse.json();
+                        const likedArticlesRaw = likesJson.articles || likesJson || [];
+                        const mappedArticles = likedArticlesRaw.map(article => ({ ...mapArticleFromApi(article), isLiked: true }));
+                        const enrichedArticles = await Promise.all(mappedArticles.map(enrichArticleWithAuthorProfile));
+                        setLikesList(enrichedArticles);
+                        setLikedArticlesCount(enrichedArticles.length);
+                    }
+                } catch {
+                    // Ignore refresh errors here; the next explicit open will refetch again.
+                }
+            }
+            
+            // Также обновляем локальные посты в профиле
+            if (userPosts.length > 0) {
+                setUserPosts(prevPosts => prevPosts.map(post => ({
+                    ...post,
+                    authorProfileIcon: normalizeProfileIconValue(resolveProfileIconValue(updatedProfile))
+                })));
+            }
+
+        } catch (err) {
+            console.error('Error updating icon:', err);
+        } finally {
+            setIsUpdatingIcon(false);
+            handleCloseIconMenu();
+        }
+    };
+
     // --- FETCHING LOGIC ---
 
     const fetchProfileData = async () => {
@@ -306,8 +375,9 @@ const ProfileModal = ({ open, handleClose, userId, onUnauthorized, onLogout, onP
             setProfileData(profileJson);
             
             setEditData({ 
-                name: profileJson.name, 
-                aboutUser: profileJson.aboutUser || '' 
+                name: extractNameAndIcon(profileJson.name).name, 
+                aboutUser: profileJson.aboutUser || '',
+                profileIcon: normalizeProfileIconValue(resolveProfileIconValue(profileJson))
             });
             if (isMyProfile) {
                 setEmailEdit(profileJson.email || '');
@@ -464,6 +534,7 @@ const ProfileModal = ({ open, handleClose, userId, onUnauthorized, onLogout, onP
             formData.append('name', editData.name || '');
             formData.append('email', profileData?.email || emailEdit || '');
             formData.append('aboutUser', editData.aboutUser ?? '');
+            formData.append('profileIcon', editData.profileIcon || '');
             if (avatarFile) {
                 formData.append('avatar', avatarFile, avatarFile.name || 'avatar.jpg');
             }
@@ -487,11 +558,15 @@ const ProfileModal = ({ open, handleClose, userId, onUnauthorized, onLogout, onP
             const updatedProfile = await response.json(); 
             setProfileData(updatedProfile);
             setEditData({ 
-                name: updatedProfile.name, 
-                aboutUser: updatedProfile.aboutUser || '' 
+                name: extractNameAndIcon(updatedProfile.name).name, 
+                aboutUser: updatedProfile.aboutUser || '',
+                profileIcon: normalizeProfileIconValue(resolveProfileIconValue(updatedProfile))
             });
             if (isMyProfile) {
                 setEmailEdit(updatedProfile.email || '');
+            }
+            if (onProfileUpdate) {
+                onProfileUpdate();
             }
             setAvatarFile(null);
             setAvatarPreview('');
@@ -580,6 +655,7 @@ const ProfileModal = ({ open, handleClose, userId, onUnauthorized, onLogout, onP
             formData.append('name', profileData?.name || editData.name || '');
             formData.append('email', pendingEmail || '');
             formData.append('aboutUser', editData.aboutUser ?? profileData?.aboutUser ?? '');
+            formData.append('profileIcon', editData.profileIcon || normalizeProfileIconValue(resolveProfileIconValue(profileData)) || '');
             const response = await fetch(`${API_BASE_URL}/Users`, {
                 method: 'PUT',
                 credentials: 'include',
@@ -644,32 +720,41 @@ const ProfileModal = ({ open, handleClose, userId, onUnauthorized, onLogout, onP
         return Number.isFinite(parsed) ? parsed : 0;
     };
 
-    const mapArticleFromApi = (article, fallbackNickname = 'Автор') => ({
-        id: article.article_id ?? article.articleId ?? article.ArticleID,
-        article_id: article.article_id ?? article.articleId ?? article.ArticleID,
-        author_id: article.author_id ?? article.authorId ?? article.AuthorID,
-        authorId: article.author_id ?? article.authorId ?? article.AuthorID,
-        nickname: article.nickname || article.authorName || fallbackNickname,
-        authorAvatar: article.pathAvatar ?? article.PathAvatar ?? article.authorAvatar ?? article.author_avatar ?? null,
-        title: article.article_title ?? article.articleTitle ?? article.ArticleTitle,
-        article_preview: article.article_preview ?? article.articlePreview ?? article.ArticlePreview,
-        article_content: article.article_content ?? article.articleContent ?? article.ArticleContent,
-        file_path: article.file_path ?? article.filePath ?? article.FilePath,
-        articleImageUrl: buildArticleImageUrl(API_BASE_URL, article.file_path ?? article.filePath ?? article.FilePath),
-        likesCount: article.countLikes ?? article.likesCount ?? article.likes_count ?? 0,
-        commentsCount: article.countComments ?? article.commentsCount ?? article.comments_count ?? 0,
-        isLiked: article.is_liked ?? article.isLiked ?? false,
-        tags: article.article_tags ?? article.articleTags ?? [],
-    });
+    const mapArticleFromApi = (article, fallbackNickname = 'Автор') => {
+        const rawNickname = article.nickname || article.authorName || fallbackNickname;
+        const iconInfo = extractNameAndIcon(rawNickname);
+        return {
+            id: article.article_id ?? article.articleId ?? article.ArticleID,
+            article_id: article.article_id ?? article.articleId ?? article.ArticleID,
+            author_id: article.author_id ?? article.authorId ?? article.AuthorID,
+            authorId: article.author_id ?? article.authorId ?? article.AuthorID,
+            nickname: iconInfo.name,
+            authorAvatar: article.pathAvatar ?? article.PathAvatar ?? article.authorAvatar ?? article.author_avatar ?? null,
+            authorProfileIcon: iconInfo.icon || normalizeProfileIconValue(resolveProfileIconValue(article)),
+            title: article.article_title ?? article.articleTitle ?? article.ArticleTitle,
+            article_preview: article.article_preview ?? article.articlePreview ?? article.ArticlePreview,
+            article_content: article.article_content ?? article.articleContent ?? article.ArticleContent,
+            file_path: article.file_path ?? article.filePath ?? article.FilePath,
+            articleImageUrl: buildArticleImageUrl(API_BASE_URL, article.file_path ?? article.filePath ?? article.FilePath),
+            likesCount: article.countLikes ?? article.likesCount ?? article.likes_count ?? 0,
+            commentsCount: article.countComments ?? article.commentsCount ?? article.comments_count ?? 0,
+            isLiked: article.is_liked ?? article.isLiked ?? false,
+            tags: article.article_tags ?? article.articleTags ?? [],
+        };
+    };
 
     const applyAuthorProfileToArticle = (article, profile) => {
         if (!profile) return article;
         const authorAvatar = profile.pathAvatar ?? profile.PathAvatar ?? profile.Pathavatar ?? profile.avatar ?? article.authorAvatar;
-        const nickname = profile.name || profile.UserName || profile.userName || article.nickname || 'Автор';
+        const profileNameInfo = extractNameAndIcon(profile.name || profile.UserName || profile.userName || '');
+        const articleNameInfo = extractNameAndIcon(article.nickname || '');
+        const nickname = profileNameInfo.name || articleNameInfo.name || 'Автор';
+        const authorProfileIcon = normalizeProfileIconValue(resolveProfileIconValue(profile)) || profileNameInfo.icon || article.authorProfileIcon;
         return {
             ...article,
             nickname,
             authorAvatar,
+            authorProfileIcon,
         };
     };
 
@@ -696,47 +781,12 @@ const ProfileModal = ({ open, handleClose, userId, onUnauthorized, onLogout, onP
         return applyAuthorProfileToArticle(article, profile);
     };
 
-    const visiblePosts = userPosts.slice(0, visiblePostsCount);
-    const canLoadMorePosts = visiblePostsCount < userPosts.length;
-    const handleLoadMorePosts = () => {
-        setVisiblePostsCount(prev => Math.min(prev + 10, userPosts.length));
-    };
-
-    const subscribersCount = normalizeCount(profileData?.subscribersCount ?? profileData?.followersCount ?? profileData?.countSubscribers ?? profileData?.followers);
-    const followingCount = normalizeCount(profileData?.followingCount ?? profileData?.countFollowing ?? profileData?.following);
-    const articlesCount = normalizeCount(profileData?.articlesCount ?? profileData?.countArticles ?? userPosts.length);
-
-    const handleOpenFollowingList = async () => {
+    const loadLikesList = async () => {
         if (!isMyProfile) return;
-        setIsFollowingListOpen(true);
-        if (followingList.length > 0) return;
-        setIsFollowingListLoading(true);
-        setFollowingListError(null);
-        try {
-            const response = await fetch(`${API_BASE_URL}/Users/following`, { credentials: 'include' });
-            if (response.status === 401 || response.status === 403) {
-                if (onUnauthorized) onUnauthorized();
-                throw new Error('Необходимо войти в аккаунт.');
-            }
-            if (!response.ok) throw new Error('Не удалось загрузить подписки.');
-            const data = await response.json();
-            setFollowingList(Array.isArray(data) ? data : []);
-        } catch (err) {
-            setFollowingListError(err.message || 'Ошибка загрузки подписок.');
-        } finally {
-            setIsFollowingListLoading(false);
-        }
-    };
-
-    const handleCloseFollowingList = () => setIsFollowingListOpen(false);
-
-    const handleOpenLikesList = async () => {
-        if (!isMyProfile) return;
-        setIsLikesListOpen(true);
-        if (likesList.length > 0) return;
         setIsLikesListLoading(true);
         setLikesListError(null);
         try {
+            authorProfileCache.current.clear();
             const response = await fetch(`${API_BASE_URL}/Articles/likesArticles`, { credentials: 'include' });
             if (response.status === 401 || response.status === 403) {
                 if (onUnauthorized) onUnauthorized();
@@ -750,7 +800,6 @@ const ProfileModal = ({ open, handleClose, userId, onUnauthorized, onLogout, onP
                     throw new Error('Необходимо войти в аккаунт.');
                 }
 
-                // В этом API пустой список лайков возвращается как 400 без полезного тела.
                 setLikesList([]);
                 setLikedArticlesCount(0);
                 return;
@@ -774,7 +823,53 @@ const ProfileModal = ({ open, handleClose, userId, onUnauthorized, onLogout, onP
         }
     };
 
+    const visiblePosts = userPosts.slice(0, visiblePostsCount);
+    const canLoadMorePosts = visiblePostsCount < userPosts.length;
+    const handleLoadMorePosts = () => {
+        setVisiblePostsCount(prev => Math.min(prev + 10, userPosts.length));
+    };
+
+    const subscribersCount = normalizeCount(profileData?.subscribersCount ?? profileData?.followersCount ?? profileData?.countSubscribers ?? profileData?.followers);
+    const followingCount = normalizeCount(profileData?.followingCount ?? profileData?.countFollowing ?? profileData?.following);
+    const articlesCount = normalizeCount(profileData?.articlesCount ?? profileData?.countArticles ?? userPosts.length);
+
+    const handleOpenFollowingList = async () => {
+        if (!isMyProfile) return;
+        setIsFollowingListOpen(true);
+        setIsFollowingListLoading(true);
+        setFollowingListError(null);
+        try {
+            const response = await fetch(`${API_BASE_URL}/Users/following`, { credentials: 'include' });
+            if (response.status === 401 || response.status === 403) {
+                if (onUnauthorized) onUnauthorized();
+                throw new Error('Необходимо войти в аккаунт.');
+            }
+            if (!response.ok) throw new Error('Не удалось загрузить подписки.');
+            const data = await response.json();
+            setFollowingList(Array.isArray(data) ? data : []);
+        } catch (err) {
+            setFollowingListError(err.message || 'Ошибка загрузки подписок.');
+        } finally {
+            setIsFollowingListLoading(false);
+        }
+    };
+
+    const handleCloseFollowingList = () => setIsFollowingListOpen(false);
+
+    const handleOpenLikesList = async () => {
+        if (!isMyProfile) return;
+        setIsLikesListOpen(true);
+    };
+
     const handleCloseLikesList = () => setIsLikesListOpen(false);
+
+    // Intentionally reload the list every time it opens.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    useEffect(() => {
+        if (isLikesListOpen && isMyProfile) {
+            void loadLikesList();
+        }
+    }, [isLikesListOpen, isMyProfile]);
 
     const handleToggleFollow = async () => {
         if (isMyProfile || !userId) return;
@@ -1024,9 +1119,101 @@ const ProfileModal = ({ open, handleClose, userId, onUnauthorized, onLogout, onP
                             }}
                         />
 
-                        <Typography variant="h4" sx={{ color: 'white', fontWeight: 'bold', mb: 0.5, textAlign: 'center', fontSize: { xs: '1.65rem', sm: '2.125rem' } }}>
-                            {profileData.name}
-                        </Typography>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
+                            <Typography variant="h4" sx={{ color: 'white', fontWeight: 'bold', textAlign: 'center', fontSize: { xs: '1.65rem', sm: '2.125rem' } }}>
+                                {extractNameAndIcon(profileData.name).name}
+                            </Typography>
+                            <ProfileIcon
+                                icon={normalizeProfileIconValue(resolveProfileIconValue(profileData))}
+                                size={28}
+                                sx={{ filter: 'drop-shadow(0 0 6px rgba(0, 229, 201, 0.35))' }}
+                            />
+                            {isMyProfile && (
+                                <>
+                                    <IconButton size="small" onClick={handleOpenIconMenu} sx={{ color: '#00bfa5', padding: '4px', '&:hover': { background: 'rgba(0, 191, 165, 0.15)' } }}>
+                                        <AddIcon fontSize="small" />
+                                    </IconButton>
+                                    <Menu
+                                        anchorEl={anchorElIcon}
+                                        open={Boolean(anchorElIcon)}
+                                        onClose={handleCloseIconMenu}
+                                        PaperProps={{
+                                            sx: { 
+                                                bgcolor: 'rgba(20, 20, 20, 0.95)',
+                                                backdropFilter: 'blur(10px)',
+                                                border: '1px solid rgba(255, 255, 255, 0.1)',
+                                                color: 'white',
+                                                mt: 1,
+                                                width: 320,
+                                                maxHeight: 400
+                                            }
+                                        }}
+                                    >
+                                        <Box sx={{ p: 2, display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 1 }}>
+                                            {PROFILE_ICON_PRESETS.map((preset) => (
+                                                <Tooltip
+                                                    key={preset.id}
+                                                    title={preset.description}
+                                                    arrow
+                                                    placement="top"
+                                                    enterTouchDelay={0}
+                                                    PopperProps={{
+                                                        modifiers: [
+                                                            { name: 'offset', options: { offset: [0, 10] } }
+                                                        ]
+                                                    }}
+                                                    componentsProps={{
+                                                        tooltip: {
+                                                            sx: {
+                                                                bgcolor: 'rgba(18, 18, 18, 0.88)',
+                                                                color: '#fff',
+                                                                border: '1px solid rgba(255,255,255,0.12)',
+                                                                boxShadow: '0 12px 30px rgba(0,0,0,0.35)',
+                                                                backdropFilter: 'blur(8px)',
+                                                                fontSize: '0.72rem',
+                                                                lineHeight: 1.35,
+                                                                px: 1.25,
+                                                                py: 0.75,
+                                                                maxWidth: 220,
+                                                                textAlign: 'center',
+                                                            }
+                                                        },
+                                                        arrow: {
+                                                            sx: {
+                                                                color: 'rgba(18, 18, 18, 0.88)'
+                                                            }
+                                                        }
+                                                    }}
+                                                >
+                                                    <ButtonBase
+                                                        onClick={() => handleUpdateIcon(preset.id)}
+                                                        disabled={isUpdatingIcon}
+                                                        sx={{
+                                                            borderRadius: '12px',
+                                                            border: '1px solid rgba(255,255,255,0.1)',
+                                                            backgroundColor: 'rgba(255,255,255,0.05)',
+                                                            minHeight: 54,
+                                                            display: 'flex',
+                                                            flexDirection: 'column',
+                                                            alignItems: 'center',
+                                                            justifyContent: 'center',
+                                                            transition: 'all 0.2s ease',
+                                                            '&:hover': {
+                                                                borderColor: '#00bfa5',
+                                                                backgroundColor: 'rgba(0, 191, 165, 0.15)'
+                                                            }
+                                                        }}
+                                                        title={preset.label}
+                                                    >
+                                                        <Box component="span" sx={{ fontSize: '1.5rem', lineHeight: 1 }}>{preset.emoji}</Box>
+                                                    </ButtonBase>
+                                                </Tooltip>
+                                            ))}
+                                        </Box>
+                                    </Menu>
+                                </>
+                            )}
+                        </Box>
                         {isMyProfile && (
                             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
                                 <Typography variant="h6" sx={{ color: '#00bfa5' }}>
@@ -1538,6 +1725,10 @@ const ProfileModal = ({ open, handleClose, userId, onUnauthorized, onLogout, onP
                     {!isLikesListLoading && likesList.length > 0 && (
                         <List sx={{ width: '100%' }}>
                             {likesList.map((article) => (
+                                (() => {
+                                    const likedAuthorName = extractNameAndIcon(article.nickname || 'Автор').name;
+                                    const likedAuthorInitial = likedAuthorName?.[0]?.toUpperCase() || 'A';
+                                    return (
                                 <ListItem key={article.article_id || article.id} disablePadding>
                                     <ListItemButton
                                         onClick={() => {
@@ -1558,19 +1749,21 @@ const ProfileModal = ({ open, handleClose, userId, onUnauthorized, onLogout, onP
                                                     },
                                                 }}
                                             >
-                                                {article.nickname?.[0]?.toUpperCase() || 'A'}
+                                                {likedAuthorInitial}
                                             </Avatar>
                                         </ListItemAvatar>
                                         <ListItemText
                                             primary={article.title || 'Статья'}
                                             secondary={
                                                 <span style={{ color: '#9e9e9e' }}>
-                                                    @{article.nickname || 'Автор'} · Лайки: {article.likesCount ?? 0} · Комментарии: {article.commentsCount ?? 0}
+                                                    @{likedAuthorName} · Лайки: {article.likesCount ?? 0} · Комментарии: {article.commentsCount ?? 0}
                                                 </span>
                                             }
                                         />
                                     </ListItemButton>
                                 </ListItem>
+                                    );
+                                })()
                             ))}
                         </List>
                     )}

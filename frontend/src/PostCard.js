@@ -19,6 +19,7 @@ import FavoriteIcon from '@mui/icons-material/Favorite';
 import ChatBubbleOutlineIcon from '@mui/icons-material/ChatBubbleOutline';
 import ShortcutRoundedIcon from '@mui/icons-material/ShortcutRounded';
 import { buildArticleImageUrl, buildAvatarUrl, DEFAULT_AVATAR_SRC } from './avatarUtils';
+import { ProfileIcon } from './profileIcons';
 import hljs from 'highlight.js';
 import 'highlight.js/styles/atom-one-dark.css';
 import { formatContentForRender, normalizeCodeLanguage } from './contentFormatting';
@@ -176,6 +177,7 @@ const PostCard = React.memo(({
     id, 
     nickname, 
     authorAvatar,
+    authorProfileIcon,
     authorId,
     onAuthorClick,
     title, 
@@ -199,6 +201,7 @@ const PostCard = React.memo(({
     const [shareNoticeOpen, setShareNoticeOpen] = useState(false);
     const shareTimerRef = useRef(null);
     const [imageBroken, setImageBroken] = useState(false);
+    const suppressNextClickRef = useRef(false);
 
     const withCacheBust = (url) => {
         if (!url) return url;
@@ -418,7 +421,21 @@ const PostCard = React.memo(({
     };
 
     const handleCardClick = (e) => {
+        if (suppressNextClickRef.current) {
+            suppressNextClickRef.current = false;
+            return;
+        }
         if (onClick) onClick();
+    };
+
+    const handleCardPointerUp = (e) => {
+        if (!onClick || e.pointerType !== 'touch') return;
+
+        const interactiveTarget = e.target?.closest?.('button, a, input, textarea, [role="button"]');
+        if (interactiveTarget) return;
+
+        suppressNextClickRef.current = true;
+        onClick();
     };
 
     return (
@@ -431,6 +448,7 @@ const PostCard = React.memo(({
                 height: { xs: 'auto', md: '85vh' },
                 minHeight: { xs: 0, md: 'unset' },
                 cursor: onClick ? 'pointer' : 'default',
+                touchAction: 'manipulation',
                 transition: 'box-shadow 0.25s ease, transform 0.2s ease',
                 '&:hover': {
                     boxShadow: { xs: 'none', md: '0 8px 16px rgba(0, 0, 0, 0.4)' },
@@ -441,6 +459,7 @@ const PostCard = React.memo(({
                 ...sx,
             }}
             onClick={handleCardClick}
+            onPointerUp={handleCardPointerUp}
         >
             {shareNoticeOpen && (
                 <Box
@@ -501,19 +520,26 @@ const PostCard = React.memo(({
                                         },
                                     }}
                                 />
-                                <Typography 
-                                    variant="h6" 
-                                    sx={{
-                                        color: '#00e5c9',
-                                        fontWeight: 'bold',
-                                        fontSize: { xs: '0.95rem', md: '1.25rem' },
-                                        overflow: 'hidden',
-                                        textOverflow: 'ellipsis',
-                                        whiteSpace: 'nowrap',
-                                    }}
-                                >
-                                    @{nickname}
-                                </Typography>
+                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, minWidth: 0 }}>
+                                    <Typography 
+                                        variant="h6" 
+                                        sx={{
+                                            color: '#00e5c9',
+                                            fontWeight: 'bold',
+                                            fontSize: { xs: '0.95rem', md: '1.25rem' },
+                                            overflow: 'hidden',
+                                            textOverflow: 'ellipsis',
+                                            whiteSpace: 'nowrap',
+                                        }}
+                                    >
+                                        @{nickname}
+                                    </Typography>
+                                    <ProfileIcon
+                                        icon={authorProfileIcon}
+                                        size={20}
+                                        sx={{ filter: 'drop-shadow(0 0 4px rgba(0, 229, 201, 0.25))' }}
+                                    />
+                                </Box>
                             </Box>
                         </Box>
                         
