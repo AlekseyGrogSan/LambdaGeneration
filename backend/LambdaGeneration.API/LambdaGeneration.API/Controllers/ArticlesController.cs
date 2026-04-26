@@ -38,6 +38,40 @@ namespace LambdaGeneration.API.Controllers
             _env = env;
         }
 
+        private static GetArticleResponse ToResponse(Articles article)
+        {
+            return new GetArticleResponse(
+                article.ArticleID,
+                article.ArticleID,
+                article.ArticleTitle,
+                article.ArticlePreview,
+                article.ArticleContent,
+                article.ArticleTags.Select(t => ApiExtensions.FromTags(t)).ToList(),
+                article.CreatedDate,
+                article.CountViews,
+                article.CountLikes,
+                article.CountComments,
+                article.FilePath
+            );
+        }
+
+        private static GetArticlesResponse ToResponseList(List<Articles> articles)
+        {
+            return new GetArticlesResponse(articles.Select(a =>
+                new GetArticleResponse(a.ArticleID,
+                    a.AuthorID,
+                    a.ArticleTitle,
+                    a.ArticlePreview,
+                    a.ArticleContent,
+                    a.ArticleTags.Select(t => ApiExtensions.FromTags(t)).ToList(),
+                    a.CreatedDate,
+                    a.CountViews,
+                    a.CountLikes,
+                    a.CountComments,
+                    a.FilePath))
+                .ToList());
+        }
+
         [HttpPost("create")]
         [Authorize]
         public async Task<IActionResult> Create([FromForm] CreateArticleRequest request)
@@ -57,7 +91,7 @@ namespace LambdaGeneration.API.Controllers
                 //Переделать модерацию на бэке
                 var moderationContext = $"{request.article_title} \n {request.article_preview} \n {request.article_content}";
                 var resultModeration = await _gaChatModerationService.ModerationContent(moderationContext);
-
+                
                 if (!resultModeration.IsApproved) 
                 {
                     return BadRequest(new {
@@ -190,7 +224,7 @@ var targetForUpdate = await _articlesService.GetArticleByIdAsync(request.article
                 }
 
 
-                return Ok(new UpdateArticlesResponse(article.ArticleID, article.ArticleTitle, article.ArticlePreview, article.ArticleContent, ArticleTagsResponse, article.CreatedDate, article.CountLikes, article.CountComments, article.FilePath));
+                return Ok(new UpdateArticlesResponse(article.ArticleID, article.ArticleTitle, article.ArticlePreview, article.ArticleContent, ArticleTagsResponse, article.CreatedDate, article.CountViews, article.CountLikes, article.CountComments, article.FilePath));
             }   
             catch (Exception ex)
             {
@@ -220,7 +254,7 @@ var targetForUpdate = await _articlesService.GetArticleByIdAsync(request.article
             var articles = await _articlesService.UpdateTags(request.article_id, effectiveAuthorToPass, ArticleIntTags);
 
             return Ok(new UpdateArticlesResponse(articles.ArticleID, articles.ArticleTitle, articles.ArticlePreview, articles.ArticleContent,
-                articles.ArticleTags.Select(t => ApiExtensions.FromTags(t)).ToList(), articles.CreatedDate, articles.CountLikes, articles.CountComments, articles.FilePath));
+                articles.ArticleTags.Select(t => ApiExtensions.FromTags(t)).ToList(), articles.CreatedDate, articles.CountViews, articles.CountLikes, articles.CountComments, articles.FilePath));
         }
 
         [HttpGet("getArticleById/{id:guid}")]
@@ -230,8 +264,7 @@ var targetForUpdate = await _articlesService.GetArticleByIdAsync(request.article
             {
                 var articles = await _articlesService.GetArticleByIdAsync(id);
 
-                return Ok(new GetArticleResponse(articles.ArticleID,articles.AuthorID, articles.ArticleTitle, articles.ArticlePreview, articles.ArticleContent,
-                    articles.ArticleTags.Select(t => ApiExtensions.FromTags(t)).ToList(), articles.CreatedDate, articles.CountLikes, articles.CountComments, articles.FilePath));
+                return Ok(ToResponse(articles));
             }
             catch (Exception ex)
             {
@@ -244,15 +277,7 @@ var targetForUpdate = await _articlesService.GetArticleByIdAsync(request.article
         public async Task<ActionResult<GetArticlesResponse>> GetAllArticlesUser()
         {
             var articles = await _articlesService.GetAllArticlesUser(GetUserID());
-            return Ok(new GetArticlesResponse(articles.Select(a =>
-                new GetArticleResponse(a.ArticleID,
-                    a.AuthorID,
-                    a.ArticleTitle,
-                    a.ArticlePreview,
-                    a.ArticleContent,
-                    a.ArticleTags.Select(t => ApiExtensions.FromTags(t)).ToList(),
-                    a.CreatedDate,
-                    a.CountLikes, a.CountComments, a.FilePath)).ToList()));
+            return Ok(ToResponseList(articles));
         }
 
         [HttpGet("getAllOtherAuthor/{id:guid}")]
@@ -260,15 +285,7 @@ var targetForUpdate = await _articlesService.GetArticleByIdAsync(request.article
         public async Task<ActionResult<GetArticlesResponse>> GetAllArticlesOtherUser(Guid id)
         {
             var articles = await _articlesService.GetAllArticlesUser(id);
-            return Ok(new GetArticlesResponse(articles.Select(a =>
-                new GetArticleResponse(a.ArticleID,
-                    a.AuthorID,
-                    a.ArticleTitle,
-                    a.ArticlePreview,
-                    a.ArticleContent,
-                    a.ArticleTags.Select(t => ApiExtensions.FromTags(t)).ToList(),
-                    a.CreatedDate,
-                    a.CountLikes, a.CountComments, a.FilePath)).ToList()));
+            return Ok(ToResponseList(articles));
         }
 
         [HttpGet("getProfileArticles")]
@@ -280,15 +297,7 @@ var targetForUpdate = await _articlesService.GetArticleByIdAsync(request.article
                 var targetUserId = userId ?? GetUserID();
                 var articles = await _articlesService.GetArticlesByAuthorPaged(targetUserId, page, size);
 
-                return Ok(new GetArticlesResponse(articles.Select(a =>
-                    new GetArticleResponse(a.ArticleID,
-                        a.AuthorID,
-                        a.ArticleTitle,
-                        a.ArticlePreview,
-                        a.ArticleContent,
-                        a.ArticleTags.Select(t => ApiExtensions.FromTags(t)).ToList(),
-                        a.CreatedDate,
-                        a.CountLikes, a.CountComments, a.FilePath)).ToList()));
+                return Ok(ToResponseList(articles));
             }
             catch (Exception ex)
             {
@@ -311,15 +320,7 @@ var targetForUpdate = await _articlesService.GetArticleByIdAsync(request.article
                 if (articles == null || articles.Count == 0)
                     return BadRequest("Статьи скорее всего отсутсвуют :(((");
 
-                return Ok(new GetArticlesResponse(articles.Select(a =>
-                    new GetArticleResponse(a.ArticleID,
-                        a.AuthorID,
-                        a.ArticleTitle,
-                        a.ArticlePreview,
-                        a.ArticleContent,
-                        a.ArticleTags.Select(t => ApiExtensions.FromTags(t)).ToList(),
-                        a.CreatedDate,
-                        a.CountLikes, a.CountComments, a.FilePath)).ToList()));
+                return Ok(ToResponseList(articles));
             }
             catch (Exception ex)
             {
@@ -337,15 +338,7 @@ var targetForUpdate = await _articlesService.GetArticleByIdAsync(request.article
                 if (articles == null || !articles.Any())
                     return NotFound(new { message = $"Статьи по вашему запросу не найдены" });
 
-                return Ok(new GetArticlesResponse(articles.Select(a =>
-                    new GetArticleResponse(a.ArticleID,
-                        a.AuthorID,
-                        a.ArticleTitle,
-                        a.ArticlePreview,
-                        a.ArticleContent,
-                        a.ArticleTags.Select(t => ApiExtensions.FromTags(t)).ToList(),
-                        a.CreatedDate,
-                        a.CountLikes, a.CountComments, a.FilePath)).ToList()));
+                return Ok(ToResponseList(articles));
             }
             catch (ArgumentException ex)
             {
@@ -363,15 +356,7 @@ var targetForUpdate = await _articlesService.GetArticleByIdAsync(request.article
                 if (articles == null || !articles.Any())
                     return NotFound(new { message = $"Статьи по вашему запросу не найдены" });
 
-                return Ok(new GetArticlesResponse(articles.Select(a =>
-                    new GetArticleResponse(a.ArticleID,
-                        a.AuthorID,
-                        a.ArticleTitle,
-                        a.ArticlePreview,
-                        a.ArticleContent,
-                        a.ArticleTags.Select(t => ApiExtensions.FromTags(t)).ToList(),
-                        a.CreatedDate,
-                        a.CountLikes, a.CountComments, a.FilePath)).ToList()));
+                return Ok(ToResponseList(articles));
             }
             catch (ArgumentException ex)
             {
@@ -388,17 +373,17 @@ var targetForUpdate = await _articlesService.GetArticleByIdAsync(request.article
 
                 if (articles == null || !articles.Any()) return BadRequest();
 
-                return Ok(new GetArticlesResponse(articles.Select(a =>
-                    new GetArticleResponse(a.ArticleID,
-                        a.AuthorID,
-                        a.ArticleTitle,
-                        a.ArticlePreview,
-                        a.ArticleContent,
-                        a.ArticleTags.Select(t => ApiExtensions.FromTags(t)).ToList(),
-                        a.CreatedDate,
-                        a.CountLikes, a.CountComments, a.FilePath)).ToList()));
+                return Ok(ToResponseList(articles));
             }
             catch (ArgumentException ex) { return BadRequest(ex.Message); }
+        }
+
+        [HttpPost("view/{id:guid}")]
+        public async Task<IActionResult> AddView(Guid id)
+        {
+            await _articlesService.IncrementViews(id);
+
+            return Ok();
         }
     }
 }

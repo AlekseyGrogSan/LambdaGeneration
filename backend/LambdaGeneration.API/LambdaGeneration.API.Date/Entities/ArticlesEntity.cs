@@ -1,4 +1,4 @@
-﻿using LambdaGeneration.API.Core.Enums;
+using LambdaGeneration.API.Core.Enums;
 
 namespace LambdaGeneration.API.Date.Entities
 {
@@ -10,6 +10,7 @@ namespace LambdaGeneration.API.Date.Entities
         public string ArticlePreview { get; set; } = string.Empty;
         public Guid AuthorID { get; set; }
         public DateTime CreatedDate { get; set; }
+        public int CountViews { get; set; } = 0;
         public int CountLikes { get; set; } = 0;
         public int CountComments { get; set; } = 0;
         public List<int> ArticleTags { get; set; } = new List<int>();

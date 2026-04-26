@@ -116,5 +116,14 @@ namespace LambdaGeneration.API.Application.Services
         {
             return await _articlesRepository.GetLikesArticles(authorId);
         }
+
+        public async Task IncrementViews(Guid articleId)
+        {
+            var article = await _articlesRepository.GetById(articleId);
+            if (article == null)
+                throw new ArgumentException("Article not exist");
+
+            await _articlesRepository.IncrementViews(articleId);
+        }
     }
 }

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
@@ -37,7 +37,8 @@ namespace LambdaGeneration.API.Core.Models
             string article_preview,
             Guid author_id, 
             List<int> article_tags,
-            DateTime created_date, 
+            DateTime created_date,
+            int countViews,
             int countLikes,
             int countComments,
             string file_path) 
@@ -49,6 +50,7 @@ namespace LambdaGeneration.API.Core.Models
             ArticlePreview = article_preview;
             ArticleTags = article_tags;
             AuthorID = author_id;
+            CountViews = countViews;
             CountLikes = countLikes;
             CountComments = countComments;
             FilePath = file_path;
@@ -63,6 +65,7 @@ namespace LambdaGeneration.API.Core.Models
         public Guid AuthorID { get; }
         public DateTime CreatedDate { get; }
         public List<int> ArticleTags { get; } = new List<int>();
+        public int CountViews { get; } = 0;
         public int CountLikes { get; } = 0;
         public int CountComments { get; } = 0;
         public string? FilePath { get; } = string.Empty;
@@ -92,6 +95,7 @@ namespace LambdaGeneration.API.Core.Models
             Guid author_id,
             List<int> article_tags,
             DateTime date_time,
+            int countViews,
             int countLikes,
             int countComments, 
             string? file_path)
@@ -103,6 +107,7 @@ namespace LambdaGeneration.API.Core.Models
             author_id, 
             article_tags,
             date_time,
+            countViews,
             countLikes,
             countComments, 
             file_path);

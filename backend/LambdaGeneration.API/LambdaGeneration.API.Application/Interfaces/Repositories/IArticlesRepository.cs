@@ -18,5 +18,6 @@ namespace LambdaGeneration.API.Date.Repositories
         Task<List<Articles>> GetRandomArticles(int page, int countPages);
         Task<List<Articles>> GetLatestAsync(int page, int countPages);
         Task<List<Articles>> GetLikesArticles(Guid authorId);
+        Task IncrementViews(Guid articleId);
     }
 }

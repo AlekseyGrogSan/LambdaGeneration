@@ -451,6 +451,22 @@ namespace LambdaGeneration.API.Date.Repositories
                 .ToListAsync();
         }
 
+        public async Task IncrementViews(Guid articleId)
+        {
+            var article = await _context.Articles.FirstOrDefaultAsync(a => a.ArticleID == articleId);
+
+            article.CountViews++;
+
+            _context.Views
+                .Add(new ViewEntity
+                {
+                    ArticleID = articleId,
+                    ViewedDate = DateTime.UtcNow
+                });
+
+            await _context.SaveChangesAsync();
+        }
+
         private static Articles Map(ArticlesEntity a)
         {
             return Articles.Map(
@@ -461,6 +477,7 @@ namespace LambdaGeneration.API.Date.Repositories
                     a.AuthorID,
                     a.ArticleTags,
                     a.CreatedDate,
+                    a.CountViews,
                     a.CountLikes,
                     a.CountComments,
                     a.FilePath
