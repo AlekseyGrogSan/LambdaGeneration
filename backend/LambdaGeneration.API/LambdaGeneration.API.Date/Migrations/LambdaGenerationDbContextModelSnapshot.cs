@@ -233,10 +233,21 @@ namespace LambdaGeneration.API.Date.Migrations
                     b.Property<Guid>("ArticleID")
                         .HasColumnType("uuid");
 
+                    b.Property<Guid?>("UserID")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("VisitorKey")
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)");
+
                     b.Property<DateTime>("ViewedDate")
                         .HasColumnType("timestamp with time zone");
 
                     b.HasKey("ID");
+
+                    b.HasIndex("ArticleID", "UserID", "ViewedDate");
+
+                    b.HasIndex("ArticleID", "VisitorKey", "ViewedDate");
 
                     b.ToTable("Views");
                 });

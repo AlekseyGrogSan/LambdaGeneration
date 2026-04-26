@@ -2,6 +2,8 @@
 using LambdaGeneration.API.Core.Models;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using Polly;
+using Polly.RateLimiting;
 using System;
 using System.Buffers.Text;
 using System.Collections.Generic;
@@ -9,6 +11,7 @@ using System.Diagnostics.Eventing.Reader;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
+using System.Threading.RateLimiting;
 using System.Threading.Tasks;
 
 namespace LambdaGeneration.API.Application.Services
@@ -35,6 +38,7 @@ namespace LambdaGeneration.API.Application.Services
         private readonly string _clientId;
         private readonly string _clientSecret;
         private readonly string _scope;
+        private readonly ResiliencePipeline _rateLimiterPipeline;
         private string _accessToken;
         private DateTime _tokenExpires;
 
@@ -52,6 +56,7 @@ namespace LambdaGeneration.API.Application.Services
             _httpClient = new HttpClient(handler);
             _httpClient.Timeout = TimeSpan.FromSeconds(30);
             _httpClient.DefaultRequestHeaders.Add("Accept", "application/json");
+            _rateLimiterPipeline = BuildRateLimiterPipeline();
         }
         
         //Проверка не истек ли токен
@@ -210,6 +215,7 @@ namespace LambdaGeneration.API.Application.Services
 
                 httpRequest.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
                 //отправили запрос
+                await WaitForPermitAsync(CancellationToken.None);
                 var response = await _httpClient.SendAsync(httpRequest);
 
                 response.EnsureSuccessStatusCode();
@@ -482,6 +488,7 @@ namespace LambdaGeneration.API.Application.Services
             };
             httpRequest.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
 
+            await WaitForPermitAsync(cancellationToken);
             using var response = await _httpClient.SendAsync(httpRequest, cancellationToken);
             response.EnsureSuccessStatusCode();
 
@@ -594,6 +601,27 @@ namespace LambdaGeneration.API.Application.Services
 
             if (editedHtml.Length > 250000)
                 throw new InvalidOperationException("Ответ ИИ слишком большой");
+        }
+
+        private static ResiliencePipeline BuildRateLimiterPipeline()
+        {
+            return new ResiliencePipelineBuilder()
+                .AddRateLimiter(new SlidingWindowRateLimiter(new SlidingWindowRateLimiterOptions
+                {
+                    PermitLimit = 10,
+                    Window = TimeSpan.FromSeconds(1),
+                    SegmentsPerWindow = 1,
+                    QueueLimit = 100,
+                    QueueProcessingOrder = QueueProcessingOrder.OldestFirst
+                }))
+                .Build();
+        }
+
+        private ValueTask WaitForPermitAsync(CancellationToken cancellationToken)
+        {
+            return _rateLimiterPipeline.ExecuteAsync(
+                static _ => ValueTask.CompletedTask,
+                cancellationToken);
         }
     }
 }

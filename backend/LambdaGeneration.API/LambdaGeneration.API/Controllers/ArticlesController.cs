@@ -11,6 +11,8 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Conventions;
 using Microsoft.IdentityModel.Tokens;
 using Org.BouncyCastle.Pkcs;
+using System.Security.Cryptography;
+using System.Text;
 using System.Security.Cryptography.Xml;
 
 namespace LambdaGeneration.API.Controllers
@@ -174,6 +176,28 @@ namespace LambdaGeneration.API.Controllers
                 throw new UnauthorizedAccessException("Incorrect User!");
             }
             return userId;
+        }
+
+        private Guid? TryGetUserID()
+        {
+            var userClaims = User.FindFirst("UserId")?.Value;
+            return Guid.TryParse(userClaims, out var userId) ? userId : null;
+        }
+
+        private string GetVisitorKey()
+        {
+            var userId = TryGetUserID();
+            if (userId.HasValue)
+            {
+                return $"user:{userId.Value:N}";
+            }
+
+            var ipAddress = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown-ip";
+            var userAgent = Request.Headers.UserAgent.ToString();
+            var rawKey = $"{ipAddress}|{userAgent}";
+            var hash = SHA256.HashData(Encoding.UTF8.GetBytes(rawKey));
+
+            return Convert.ToHexString(hash);
         }
 
         [HttpDelete("delete/{id:guid}")]
@@ -498,11 +522,12 @@ namespace LambdaGeneration.API.Controllers
         }
 
         [HttpPost("view/{id:guid}")]
-        public async Task<IActionResult> AddView(Guid id)
+        public async Task<ActionResult<AddViewResponse>> AddView(Guid id, CancellationToken cancellationToken)
         {
-            await _articlesService.IncrementViews(id);
+            var userId = TryGetUserID();
+            var result = await _articlesService.IncrementViews(id, userId, GetVisitorKey(), cancellationToken);
 
-            return Ok();
+            return Ok(new AddViewResponse(result.ViewAdded, result.CountViews, result.NextAllowedViewAtUtc));
         }
     }
 }

@@ -92,12 +92,12 @@ namespace LambdaGeneration.API
 
             app.UseRouting();
 
-            await app.InitialAdmin();
+            //await app.InitialAdmin();
 
             string adminEmail = "admin@lambda-gen.ru";
             string seedFilePath = "wwwroot/articles_seed.txt";
 
-            await app.SeedArticlesFromTxt(adminEmail, seedFilePath);
+            //await app.SeedArticlesFromTxt(adminEmail, seedFilePath);
 
             // Configure the HTTP request pipeline.
             if (app.Environment.IsDevelopment())

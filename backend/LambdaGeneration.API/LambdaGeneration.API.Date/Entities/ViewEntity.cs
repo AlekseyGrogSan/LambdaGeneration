@@ -10,6 +10,8 @@ namespace LambdaGeneration.API.Date.Entities
     {
         public Guid ID { get; set; }
         public Guid ArticleID { get; set; }
+        public Guid? UserID { get; set; }
+        public string? VisitorKey { get; set; }
         public DateTime ViewedDate { get; set; }
     }
 }

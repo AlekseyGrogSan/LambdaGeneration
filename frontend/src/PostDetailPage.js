@@ -25,6 +25,7 @@ import {
 import FavoriteIcon from '@mui/icons-material/Favorite';
 import ChatBubbleOutlineIcon from '@mui/icons-material/ChatBubbleOutline';
 import ShortcutRoundedIcon from '@mui/icons-material/ShortcutRounded';
+import VisibilityOutlinedIcon from '@mui/icons-material/VisibilityOutlined';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import CloseIcon from '@mui/icons-material/Close';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
@@ -1242,6 +1243,20 @@ const PostDetailPage = React.memo(({
                     </IconButton>
                     <Typography variant="subtitle1" sx={{ color: '#f5f5f5', fontWeight: 'bold', ml: 0.25 }}>
                         {post.commentsCount}
+                    </Typography>
+                </Box>
+
+                <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                    <IconButton
+                        disableRipple
+                        disableFocusRipple
+                        aria-label="Просмотры"
+                        sx={{ color: '#00e5c9', minWidth: 44, minHeight: 44 }}
+                    >
+                        <VisibilityOutlinedIcon sx={{ fontSize: 24 }} />
+                    </IconButton>
+                    <Typography variant="subtitle1" sx={{ color: '#f5f5f5', fontWeight: 'bold', ml: 0.25 }}>
+                        {post.viewsCount ?? 0}
                     </Typography>
                 </Box>
 

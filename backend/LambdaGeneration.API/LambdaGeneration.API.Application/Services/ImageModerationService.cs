@@ -2,8 +2,11 @@ using LambdaGeneration.API.Application.Interfaces.Services;
 using Microsoft.Extensions.Logging;
 using OpenAI;
 using OpenAI.Chat;
+using Polly;
+using Polly.RateLimiting;
 using System.ClientModel;
 using System.Text.RegularExpressions;
+using System.Threading.RateLimiting;
 
 namespace LambdaGeneration.API.Application.Services
 {
@@ -12,6 +15,7 @@ namespace LambdaGeneration.API.Application.Services
         private readonly ChatClient _chatClient;
         private readonly ILogger<ImageModerator> _logger;
         private readonly string _modelId;
+        private readonly ResiliencePipeline _rateLimiterPipeline;
 
         public ImageModerator(
             string apiKey,
@@ -29,6 +33,7 @@ namespace LambdaGeneration.API.Application.Services
 
             var apiClient = new OpenAIClient(new ApiKeyCredential(apiKey), options);
             _chatClient = apiClient.GetChatClient(_modelId);
+            _rateLimiterPipeline = BuildRateLimiterPipeline();
         }
 
         public async Task<bool> IsImageSafeAsync(byte[] imageBytes, string? contentType = null, CancellationToken cancellationToken = default)
@@ -52,6 +57,7 @@ namespace LambdaGeneration.API.Application.Services
                     )
                 };
 
+                await WaitForPermitAsync(cancellationToken);
                 ChatCompletion completion = await _chatClient.CompleteChatAsync(messages, cancellationToken: cancellationToken);
                 var verdict = completion.Content.FirstOrDefault()?.Text?.Trim();
 
@@ -93,6 +99,27 @@ namespace LambdaGeneration.API.Application.Services
                 return "image/webp";
 
             return "image/png";
+        }
+
+        private static ResiliencePipeline BuildRateLimiterPipeline()
+        {
+            return new ResiliencePipelineBuilder()
+                .AddRateLimiter(new SlidingWindowRateLimiter(new SlidingWindowRateLimiterOptions
+                {
+                    PermitLimit = 10,
+                    Window = TimeSpan.FromSeconds(1),
+                    SegmentsPerWindow = 1,
+                    QueueLimit = 100,
+                    QueueProcessingOrder = QueueProcessingOrder.OldestFirst
+                }))
+                .Build();
+        }
+
+        private ValueTask WaitForPermitAsync(CancellationToken cancellationToken)
+        {
+            return _rateLimiterPipeline.ExecuteAsync(
+                static _ => ValueTask.CompletedTask,
+                cancellationToken);
         }
     }
 }

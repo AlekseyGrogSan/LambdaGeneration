@@ -232,7 +232,7 @@ const MobileBottomNav = ({
                     <PersonOutlineIcon sx={{ fontSize: 26 }} />
                 )}
                 <Typography component="span" sx={labelSx(profileActive)}>
-                    Профиль
+                    {isAuthenticated ? 'Профиль' : 'Вход/Профиль'}
                 </Typography>
             </Box>
         </Box>

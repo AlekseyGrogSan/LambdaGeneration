@@ -2,6 +2,7 @@ using LambdaGeneration.API.Application.Interfaces.Services;
 using LambdaGeneration.API.Core.Enums;
 using LambdaGeneration.API.Core.Models;
 using LambdaGeneration.API.Date.Repositories;
+using Microsoft.Extensions.Caching.Memory;
 using System.Runtime.CompilerServices;
 
 namespace LambdaGeneration.API.Application.Services
@@ -9,10 +10,12 @@ namespace LambdaGeneration.API.Application.Services
     public class ArticlesService :  IArticlesService
     {
         private readonly IArticlesRepository _articlesRepository;
+        private readonly IMemoryCache _memoryCache;
 
-        public ArticlesService(IArticlesRepository articlesRepository)
+        public ArticlesService(IArticlesRepository articlesRepository, IMemoryCache memoryCache)
         {
             _articlesRepository = articlesRepository;
+            _memoryCache = memoryCache;
         }
 
         public async Task Create(string article_title,
@@ -117,13 +120,29 @@ namespace LambdaGeneration.API.Application.Services
             return await _articlesRepository.GetLikesArticles(authorId);
         }
 
-        public async Task IncrementViews(Guid articleId)
+        public async Task<ViewTrackingResult> IncrementViews(Guid articleId, Guid? userId, string visitorKey, CancellationToken cancellationToken = default)
         {
             var article = await _articlesRepository.GetById(articleId);
             if (article == null)
                 throw new ArgumentException("Article not exist");
 
-            await _articlesRepository.IncrementViews(articleId);
+            var trackingKey = userId.HasValue
+                ? $"article-view:{articleId:N}:user:{userId.Value:N}"
+                : $"article-view:{articleId:N}:guest:{visitorKey}";
+
+            if (_memoryCache.TryGetValue<DateTime>(trackingKey, out var nextAllowedViewAtUtc))
+            {
+                return new ViewTrackingResult(false, article.CountViews, nextAllowedViewAtUtc);
+            }
+
+            var result = await _articlesRepository.IncrementViews(articleId, userId, visitorKey, cancellationToken);
+
+            _memoryCache.Set(
+                trackingKey,
+                result.NextAllowedViewAtUtc,
+                result.NextAllowedViewAtUtc);
+
+            return result;
         }
     }
 }
