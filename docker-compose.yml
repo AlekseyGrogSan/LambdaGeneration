@@ -49,6 +49,10 @@
       GigaChat__ClientSecret: ${GIGACHAT__CLIENTSECRET}
       GigaChat__Scope: ${GIGACHAT__SCOPE}
 
+      ImageModeration__ApiKey: ${IMAGEMODERATION__APIKEY}
+      ImageModeration__BaseUrl: ${IMAGEMODERATION__BASEURL}
+      ImageModeration__Model: ${IMAGEMODERATION__MODEL}
+
       EmailSettings__Host: ${EMAILSETTINGS__HOST}
       EmailSettings__Port: ${EMAILSETTINGS__PORT}
       EmailSettings__Username: ${EMAILSETTINGS__USERNAME}
