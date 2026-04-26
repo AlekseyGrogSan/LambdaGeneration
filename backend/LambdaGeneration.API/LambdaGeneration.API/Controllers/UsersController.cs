@@ -266,6 +266,21 @@ namespace LambdaGeneration.API.Controllers
                 return BadRequest(ex.Message);
             }
         }
+        private static readonly string[] ProfileIcons = new[] { "🐶", "📝", "🚀", "💡", "👍", "💬", "⚗️", "🔎", "🔔", "👤", "🔗", "❤️", "⭐", "🔀", "📰", "🌐" };
+
+        private static (string name, string icon) SplitNameAndIcon(string fullName)
+        {
+            if (string.IsNullOrEmpty(fullName)) return ("", "");
+            foreach (var icon in ProfileIcons)
+            {
+                if (fullName.EndsWith(icon))
+                {
+                    return (fullName.Substring(0, fullName.Length - icon.Length).TrimEnd(), icon);
+                }
+            }
+            return (fullName, "");
+        }
+
         [HttpPut]
         [Authorize]
         public async Task<ActionResult<MyProfileResponse>> Update([FromForm] UpdateUserRequest request)
@@ -305,10 +320,14 @@ namespace LambdaGeneration.API.Controllers
                     avatarPathForDb = $"/uploads/{fileName}";
                 }
 
+                var existingProfile = await _usersService.GetProfile(id);
+                var (_, existingIcon) = SplitNameAndIcon(existingProfile.UserName);
+                string newNameWithIcon = string.IsNullOrEmpty(existingIcon) ? request.name : $"{request.name} {existingIcon}";
+
                 // Передаем в Update именно путь (avatarPathForDb), а не просто имя файла
                 (Users user, string token) = await _usersService.Update(
                     id,
-                    request.name,
+                    newNameWithIcon,
                     request.email,
                     request.aboutUser ?? "",
                     avatarPathForDb
@@ -334,6 +353,54 @@ namespace LambdaGeneration.API.Controllers
                         SameSite = SameSiteMode.Lax
                     }
                     );
+
+                return Ok(userProfile);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+
+        [HttpPut("update-icon")]
+        [Authorize]
+        public async Task<ActionResult<MyProfileResponse>> UpdateIcon([FromBody] UpdateIconRequest request)
+        {
+            try
+            {
+                var id = GetUserID();
+                var existingProfile = await _usersService.GetProfile(id);
+                var (baseName, _) = SplitNameAndIcon(existingProfile.UserName);
+                string newNameWithIcon = string.IsNullOrEmpty(request.icon) ? baseName : $"{baseName} {request.icon}";
+
+                // We need to keep other values unchanged
+                (Users user, string token) = await _usersService.Update(
+                    id,
+                    newNameWithIcon,
+                    existingProfile.Email,
+                    existingProfile.AboutUser ?? "",
+                    existingProfile.PathAvatar
+                );
+
+                var userProfile = new MyProfileResponse(
+                    user.UserID,
+                    user.UserName,
+                    user.Email,
+                    user.AboutUser,
+                    user.CreatedDate,
+                    user.FollowersCount,
+                    user.FollowingCount,
+                    user.ArticlesCount,
+                    user.PathAvatar,
+                    user.Role.ToString()
+                );
+
+                HttpContext.Response.Cookies.Append("auth_cookies", token,
+                    new CookieOptions
+                    {
+                        HttpOnly = true,
+                        SameSite = SameSiteMode.Lax
+                    });
 
                 return Ok(userProfile);
             }

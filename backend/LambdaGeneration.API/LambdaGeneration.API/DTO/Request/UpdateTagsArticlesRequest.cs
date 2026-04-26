@@ -1,4 +1,6 @@
-﻿namespace LambdaGeneration.API.DTO.Request
+﻿using System.ComponentModel.DataAnnotations;
+
+namespace LambdaGeneration.API.DTO.Request
 {
-    public record UpdateTagsArticlesRequest(Guid article_id, List<string> article_tags);
+    public record UpdateTagsArticlesRequest(Guid article_id, [property: MaxLength(5)] List<string> article_tags);
 }

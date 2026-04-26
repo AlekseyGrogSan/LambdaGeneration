@@ -5,7 +5,6 @@ import ResetPasswordPage from './ResetPasswordPage'; // <--- НОВЫЙ КОМП
 
 function App() {
     return (
-        // Routes смотрит на текущий URL
         <Routes>
             {/* 1. Основной путь: Если URL = /, показываем PostPage */}
             <Route path="/" element={<PostPage />} />

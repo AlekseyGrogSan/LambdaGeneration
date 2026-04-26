@@ -9,7 +9,6 @@ const root = ReactDOM.createRoot(rootElement);
 
 root.render(
     <React.StrictMode>
-        {/* Это позволяет приложению слушать изменения URL */}
         <BrowserRouter> 
             <App />
         </BrowserRouter>
