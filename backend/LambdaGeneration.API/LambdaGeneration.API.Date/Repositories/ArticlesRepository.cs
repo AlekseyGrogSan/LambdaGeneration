@@ -451,20 +451,18 @@ namespace LambdaGeneration.API.Date.Repositories
                 .ToListAsync();
         }
 
-        public async Task IncrementViews(Guid articleId)
+        public async Task<ViewTrackingResult> IncrementViews(Guid articleId, Guid? userId, string visitorKey, CancellationToken cancellationToken = default)
         {
-            var article = await _context.Articles.FirstOrDefaultAsync(a => a.ArticleID == articleId);
+            var article = await _context.Articles.FirstOrDefaultAsync(a => a.ArticleID == articleId, cancellationToken);
+            if (article == null)
+                throw new ArgumentException("Article not exist");
 
+            var now = DateTime.UtcNow;
             article.CountViews++;
 
-            _context.Views
-                .Add(new ViewEntity
-                {
-                    ArticleID = articleId,
-                    ViewedDate = DateTime.UtcNow
-                });
+            await _context.SaveChangesAsync(cancellationToken);
 
-            await _context.SaveChangesAsync();
+            return new ViewTrackingResult(true, article.CountViews, now.AddMinutes(15));
         }
 
         private static Articles Map(ArticlesEntity a)

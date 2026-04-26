@@ -742,6 +742,7 @@ const ProfileModal = ({ open, handleClose, userId, onUnauthorized, onLogout, onP
             articleImageUrl: buildArticleImageUrl(API_BASE_URL, article.file_path ?? article.filePath ?? article.FilePath),
             likesCount: article.countLikes ?? article.likesCount ?? article.likes_count ?? 0,
             commentsCount: article.countComments ?? article.commentsCount ?? article.comments_count ?? 0,
+            viewsCount: article.countViews ?? article.viewsCount ?? article.views_count ?? article.CountViews ?? 0,
             isLiked: article.is_liked ?? article.isLiked ?? false,
             tags: article.article_tags ?? article.articleTags ?? [],
         };

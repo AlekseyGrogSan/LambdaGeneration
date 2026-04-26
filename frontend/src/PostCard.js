@@ -18,6 +18,7 @@ import {
 import FavoriteIcon from '@mui/icons-material/Favorite';
 import ChatBubbleOutlineIcon from '@mui/icons-material/ChatBubbleOutline';
 import ShortcutRoundedIcon from '@mui/icons-material/ShortcutRounded';
+import VisibilityOutlinedIcon from '@mui/icons-material/VisibilityOutlined';
 import { buildArticleImageUrl, buildAvatarUrl, DEFAULT_AVATAR_SRC } from './avatarUtils';
 import { ProfileIcon } from './profileIcons';
 import hljs from 'highlight.js';
@@ -182,6 +183,7 @@ const PostCard = React.memo(({
     onAuthorClick,
     title, 
     article_preview, 
+    viewsCount = 0,
     likesCount, 
     commentsCount, 
     isLiked, 
@@ -715,13 +717,32 @@ const PostCard = React.memo(({
                         </Box>
                     )}
 
+                    <Box sx={{ display: 'flex', alignItems: 'center', ml: 'auto' }}>
+                        <IconButton
+                            sx={{
+                                color: '#00e5c9',
+                                minWidth: 44,
+                                minHeight: 44,
+                                transition: 'color 0.2s ease',
+                            }}
+                            disableRipple
+                            disableFocusRipple
+                            aria-label="Просмотры"
+                        >
+                            <VisibilityOutlinedIcon sx={{ fontSize: { xs: 24, md: 28 } }} />
+                        </IconButton>
+                        <Typography variant="subtitle1" sx={{ color: '#f5f5f5', fontWeight: 'bold', fontSize: { xs: '0.9rem', md: '1rem' } }}>
+                            {viewsCount}
+                        </Typography>
+                    </Box>
+
                     {showRepost && (
                         <IconButton
                             sx={{
                                 color: '#00e5c9',
                                 minWidth: 44,
                                 minHeight: 44,
-                                ml: 'auto',
+                                ml: 0.5,
                                 transition: 'color 0.2s ease',
                             }}
                             onClick={handleShareClick}

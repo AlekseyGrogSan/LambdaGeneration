@@ -54,6 +54,9 @@ import { ProfileIcon, resolveProfileIconValue, extractNameAndIcon } from './prof
 const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || '/api';
 const POST_PAGE_NAV_STATE_KEY = 'lambda.postPage.navState.v1';
 
+const normalizeViewsCount = (article) =>
+    article?.countViews ?? article?.viewsCount ?? article?.views_count ?? article?.CountViews ?? 0;
+
 const readPostPageNavState = () => {
     try {
         const raw = sessionStorage.getItem(POST_PAGE_NAV_STATE_KEY);
@@ -262,7 +265,7 @@ const Sidebar = ({ handleOpen, handleProfileOpen, handlePostOpen, handleCategory
                     startIcon={<PersonIcon />}
                     onClick={handleProfileOpen}
                 >
-                    Мой профиль
+                    {currentUser ? 'Мой профиль' : 'Вход/Профиль'}
                 </Button>
                 <Button sx={profileButtonStyle} startIcon={<CloudUploadIcon />} onClick={handlePostOpen}>
                     Опубликовать
@@ -1149,6 +1152,7 @@ const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
         setReturnToProfile(!!options.returnToProfile);
         setReturnProfileUserId(options.profileUserId ?? null);
         setShouldOpenComments(openComments);
+        void registerArticleView(postData.article_id);
     };
     
     const handleBackToFeed = () => { 
@@ -1538,9 +1542,44 @@ const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
             imageUrl: buildArticleImageUrl(API_BASE_URL, rawFilePath),
             isLiked: isLikedStatus, 
             commentsCount: article.countComments ?? article.commentsCount ?? article.comments_count ?? article.CountComments ?? 0,
+            viewsCount: normalizeViewsCount(article),
             tags: article.article_tags || article.articleTags || article.ArticleTags || [], 
         };
     };
+
+    const syncArticleViews = useCallback((articleId, viewsCount) => {
+        setArticles((prevArticles) => prevArticles.map((article) =>
+            article.article_id === articleId ? { ...article, viewsCount } : article
+        ));
+
+        setSelectedPost((prevPost) =>
+            prevPost?.article_id === articleId ? { ...prevPost, viewsCount } : prevPost
+        );
+    }, []);
+
+    const registerArticleView = useCallback(async (articleId) => {
+        if (!articleId) return;
+
+        try {
+            const response = await fetch(`${API_BASE_URL}/Articles/view/${articleId}`, {
+                method: 'POST',
+                credentials: 'include',
+            });
+
+            if (!response.ok) {
+                return;
+            }
+
+            const data = await response.json().catch(() => null);
+            const nextViewsCount = data?.countViews ?? data?.CountViews;
+
+            if (typeof nextViewsCount === 'number') {
+                syncArticleViews(articleId, nextViewsCount);
+            }
+        } catch {
+            // Ignore non-critical view tracking errors on the client.
+        }
+    }, [syncArticleViews]);
 
     const buildEmptyStateMessage = (type, options = {}) => {
         const { searchQuery: providedQuery } = options;
