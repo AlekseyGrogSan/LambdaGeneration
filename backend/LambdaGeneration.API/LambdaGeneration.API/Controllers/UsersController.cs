@@ -1,6 +1,7 @@
 using LambdaGeneration.API.Application.Interfaces.Infrastructure;
 using LambdaGeneration.API.Application.Interfaces.Services;
 using LambdaGeneration.API.Application.Services;
+using LambdaGeneration.API.Core.Enums;
 using LambdaGeneration.API.Core.Models;
 using LambdaGeneration.API.DTO;
 using LambdaGeneration.API.DTO.Request;
@@ -250,7 +251,8 @@ namespace LambdaGeneration.API.Controllers
                     user.FollowingCount,
                     user.ArticlesCount,
                     user.PathAvatar,
-                    user.Role.ToString()
+                    user.Role.ToString(),
+                    user.Tag.ToApiValue()
                     );
 
                 return Ok(userResponse);
@@ -277,7 +279,8 @@ namespace LambdaGeneration.API.Controllers
                     user.FollowingCount,
                     user.ArticlesCount,
                     user.PathAvatar,
-                    user.Role.ToString()
+                    user.Role.ToString(),
+                    user.Tag.ToApiValue()
                     );
 
                 return Ok(userResponse);
@@ -383,7 +386,8 @@ namespace LambdaGeneration.API.Controllers
                     user.FollowingCount,
                     user.ArticlesCount,
                     user.PathAvatar,
-                    user.Role.ToString()
+                    user.Role.ToString(),
+                    user.Tag.ToApiValue()
                     );
 
                 HttpContext.Response.Cookies.Append("auth_cookies", token,
@@ -432,7 +436,8 @@ namespace LambdaGeneration.API.Controllers
                     user.FollowingCount,
                     user.ArticlesCount,
                     user.PathAvatar,
-                    user.Role.ToString()
+                    user.Role.ToString(),
+                    user.Tag.ToApiValue()
                 );
 
                 HttpContext.Response.Cookies.Append("auth_cookies", token,
@@ -499,7 +504,9 @@ namespace LambdaGeneration.API.Controllers
                         user.FollowersCount,
                         user.FollowingCount,
                         user.ArticlesCount,
-                        user.PathAvatar
+                        user.PathAvatar,
+                        user.Role.ToString(),
+                        user.Tag.ToApiValue()
                         ))
                     .ToList();
 

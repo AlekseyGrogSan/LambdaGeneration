@@ -465,6 +465,26 @@ namespace LambdaGeneration.API.Date.Repositories
             return new ViewTrackingResult(true, article.CountViews, now.AddMinutes(15));
         }
 
+        public async Task<List<Articles>> GetBestArticles()
+        {
+            var query = _context.Articles
+                .OrderByDescending(a => a.CountComments)
+                .ThenByDescending(a => a.CountLikes)
+                .ThenByDescending(a => a.CountViews)
+                .Select(a => new {
+                    Entity = a, 
+                    Weight = a.CountComments * 2.5 + a.CountLikes * 1.5 + a.CountViews*0.5
+                })
+                .OrderByDescending(pair => pair.Weight)
+                .Take(10)
+                .Select(pair => pair.Entity);
+
+            var rawArticles = await query.ToListAsync();
+
+            return rawArticles.Select(Map).ToList();
+        }
+
+
         private static Articles Map(ArticlesEntity a)
         {
             return Articles.Map(

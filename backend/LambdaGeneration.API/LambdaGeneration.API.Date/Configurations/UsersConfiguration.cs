@@ -16,6 +16,7 @@ namespace LambdaGeneration.API.Date.Configurations
             builder.Property(u => u.countSubscribers).IsRequired();
             builder.Property(u => u.countFollowing).IsRequired();
             builder.Property(u => u.AboutUser).IsRequired().HasMaxLength(150);
+            builder.Property(u => u.TagName).IsRequired().HasMaxLength(32);
         }
     }
 }

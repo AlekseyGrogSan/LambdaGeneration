@@ -205,6 +205,11 @@ namespace LambdaGeneration.API.Date.Migrations
                     b.Property<int>("Role")
                         .HasColumnType("integer");
 
+                    b.Property<string>("TagName")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)");
+
                     b.Property<string>("UserName")
                         .IsRequired()
                         .HasMaxLength(100)

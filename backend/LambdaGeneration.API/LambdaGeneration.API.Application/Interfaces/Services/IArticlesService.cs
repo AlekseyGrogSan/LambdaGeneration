@@ -14,6 +14,7 @@ namespace LambdaGeneration.API.Application.Interfaces.Services
         Task<List<Articles>> SearchArticlesByTagsAsync(List<int> tags, int page, int pageSize);
         Task<Articles> GetArticleByIdAsync(Guid articleId);
         Task<List<Articles>> GetLikesArticles(Guid authorId);
+        Task<List<Articles>> GetBestArticles();
         Task<ViewTrackingResult> IncrementViews(Guid articleId, Guid? userId, string visitorKey, CancellationToken cancellationToken = default);
     }
 }

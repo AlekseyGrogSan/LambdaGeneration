@@ -280,8 +280,10 @@ const ProfileModal = ({ open, handleClose, userId, onUnauthorized, onLogout, onP
 
     const [anchorElIcon, setAnchorElIcon] = useState(null);
     const [isUpdatingIcon, setIsUpdatingIcon] = useState(false);
+    const [isProfileIconInfoOpen, setIsProfileIconInfoOpen] = useState(false);
     const handleOpenIconMenu = (event) => setAnchorElIcon(event.currentTarget);
     const handleCloseIconMenu = () => setAnchorElIcon(null);
+    const handleCloseProfileIconInfo = () => setIsProfileIconInfoOpen(false);
 
     const handleUpdateIcon = async (iconId) => {
         setIsUpdatingIcon(true);
@@ -342,6 +344,14 @@ const ProfileModal = ({ open, handleClose, userId, onUnauthorized, onLogout, onP
             setIsUpdatingIcon(false);
             handleCloseIconMenu();
         }
+    };
+
+    const resolvedProfileIcon = normalizeProfileIconValue(resolveProfileIconValue(profileData));
+    const activeProfileIconPreset = PROFILE_ICON_PRESETS.find((preset) => preset.id === resolvedProfileIcon);
+
+    const handleOpenProfileIconInfo = () => {
+        if (!activeProfileIconPreset) return;
+        setIsProfileIconInfoOpen(true);
     };
 
     // --- FETCHING LOGIC ---
@@ -452,6 +462,7 @@ const ProfileModal = ({ open, handleClose, userId, onUnauthorized, onLogout, onP
             setAvatarFile(null);
             setAvatarPreview('');
             setAvatarError(null);
+            setIsProfileIconInfoOpen(false);
             setVisiblePostsCount(10);
             fetchProfileData();
         }
@@ -1128,11 +1139,26 @@ const ProfileModal = ({ open, handleClose, userId, onUnauthorized, onLogout, onP
                             <Typography variant="h4" sx={{ color: 'white', fontWeight: 'bold', textAlign: 'center', fontSize: { xs: '1.65rem', sm: '2.125rem' } }}>
                                 {extractNameAndIcon(profileData.name).name}
                             </Typography>
-                            <ProfileIcon
-                                icon={normalizeProfileIconValue(resolveProfileIconValue(profileData))}
-                                size={28}
-                                sx={{ filter: 'drop-shadow(0 0 6px rgba(0, 229, 201, 0.35))' }}
-                            />
+                            <ButtonBase
+                                onClick={handleOpenProfileIconInfo}
+                                disabled={!activeProfileIconPreset}
+                                sx={{
+                                    borderRadius: '999px',
+                                    p: 0.35,
+                                    minWidth: 'auto',
+                                    cursor: activeProfileIconPreset ? 'pointer' : 'default',
+                                    '&:hover': activeProfileIconPreset ? {
+                                        backgroundColor: 'rgba(0, 191, 165, 0.12)'
+                                    } : undefined
+                                }}
+                                title={activeProfileIconPreset ? 'Показать значение эмодзи' : undefined}
+                            >
+                                <ProfileIcon
+                                    icon={resolvedProfileIcon}
+                                    size={28}
+                                    sx={{ filter: 'drop-shadow(0 0 6px rgba(0, 229, 201, 0.35))' }}
+                                />
+                            </ButtonBase>
                             {isMyProfile && (
                                 <>
                                     <IconButton size="small" onClick={handleOpenIconMenu} sx={{ color: '#00bfa5', padding: '4px', '&:hover': { background: 'rgba(0, 191, 165, 0.15)' } }}>
@@ -1826,6 +1852,40 @@ const ProfileModal = ({ open, handleClose, userId, onUnauthorized, onLogout, onP
                     }}
                     onError={(e) => { e.currentTarget.src = DEFAULT_AVATAR_SRC; }}
                 />
+            </Dialog>
+
+            <Dialog
+                open={isProfileIconInfoOpen}
+                onClose={handleCloseProfileIconInfo}
+                PaperProps={{
+                    sx: {
+                        bgcolor: 'rgba(20, 20, 20, 0.96)',
+                        color: 'white',
+                        border: '1px solid rgba(255, 255, 255, 0.12)',
+                        borderRadius: '18px',
+                        backdropFilter: 'blur(10px)',
+                        minWidth: { xs: 'auto', sm: 360 },
+                    }
+                }}
+            >
+                <DialogTitle sx={{ display: 'flex', alignItems: 'center', gap: 1.25, pb: 1 }}>
+                    <Box component="span" sx={{ fontSize: '1.8rem', lineHeight: 1 }}>
+                        {activeProfileIconPreset?.emoji}
+                    </Box>
+                    <Typography variant="h6" sx={{ fontWeight: 700 }}>
+                        {activeProfileIconPreset?.label || 'Эмодзи профиля'}
+                    </Typography>
+                </DialogTitle>
+                <DialogContent sx={{ pt: 0.5 }}>
+                    <Typography variant="body1" sx={{ color: '#d7d7d7', lineHeight: 1.6 }}>
+                        {activeProfileIconPreset?.description || 'Описание для этого эмодзи пока недоступно.'}
+                    </Typography>
+                </DialogContent>
+                <DialogActions sx={{ px: 3, pb: 2.5 }}>
+                    <Button onClick={handleCloseProfileIconInfo} sx={{ color: '#00bfa5' }}>
+                        Закрыть
+                    </Button>
+                </DialogActions>
             </Dialog>
 
             <AvatarCropDialog

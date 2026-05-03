@@ -78,6 +78,20 @@ namespace LambdaGeneration.API.Controllers
                 .ToList());
         }
 
+        [HttpGet("best")]
+        public async Task<IActionResult> GetBestArticles()
+        {
+            try
+            {
+                var articles = await _articlesService.GetBestArticles();
+                return Ok(ToResponseList(articles));
+            }
+            catch(Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+
         [HttpPost("create")]
         [Authorize]
         public async Task<IActionResult> Create([FromForm] CreateArticleRequest request)

@@ -328,7 +328,21 @@ namespace LambdaGeneration.API.Midleware
                     var _context = services.GetRequiredService<LambdaGenerationDbContext>();
                     var adminService = services.GetRequiredService<IAdminService>();
 
-                    await adminService.Create();
+                    foreach (var adminSeed in new[]
+                    {
+                        new { ConfigSection = "AdminConfig", Tag = UserTag.Admin },
+                        new { ConfigSection = "DrossAdminConfig", Tag = UserTag.DrossBoss },
+                    })
+                    {
+                        try
+                        {
+                            await adminService.Create(adminSeed.ConfigSection, adminSeed.Tag);
+                        }
+                        catch (Exception ex)
+                        {
+                            logger.LogWarning(ex.Message);
+                        }
+                    }
                 }
                 catch (Exception ex)
                 {

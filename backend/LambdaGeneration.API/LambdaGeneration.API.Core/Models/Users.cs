@@ -38,6 +38,7 @@ namespace LambdaGeneration.API.Core.Models
         public string AboutUser { get; } = string.Empty;
         public string PasswordHash { get; } = string.Empty;
         public Role Role { get; private set; } = Role.User;
+        public UserTag Tag { get; private set; } = UserTag.User;
         public DateTime CreatedDate { get; }
         public bool IsBanned { get; private set; } = false;
         public int FollowersCount { get; }
@@ -45,15 +46,18 @@ namespace LambdaGeneration.API.Core.Models
         public int ArticlesCount { get; }
         public string PathAvatar { get; } = string.Empty;
 
-        public static Users Create(Guid id, string username, string hashpassword, string email, string aboutUser, string pathAvatar)
+        public static Users Create(Guid id, string username, string hashpassword, string email, string aboutUser, string pathAvatar, UserTag tag = UserTag.User)
         {
-            return new Users(id, username, hashpassword, email, aboutUser, pathAvatar);
+            var user = new Users(id, username, hashpassword, email, aboutUser, pathAvatar);
+            user.Tag = tag;
+            return user;
         }
 
-        public static Users Map(Guid id, string username, string hashpassword, string email, Role role, string aboutUser, DateTime createDate, int followersCount, int followingCount, int articlesCount, bool isBanned, string? pathAvatar)
+        public static Users Map(Guid id, string username, string hashpassword, string email, Role role, UserTag tag, string aboutUser, DateTime createDate, int followersCount, int followingCount, int articlesCount, bool isBanned, string? pathAvatar)
         {
             Users user = new Users(id, username, hashpassword, email, aboutUser, createDate, followersCount, followingCount, articlesCount, pathAvatar);
             user.Role = role;
+            user.Tag = tag;
             if (isBanned && !user.IsBanned)
             {
                 user.SetBanned();
@@ -63,6 +67,11 @@ namespace LambdaGeneration.API.Core.Models
         public void SetRole(Role role)
         {
             Role = role;
+        }
+
+        public void SetTag(UserTag tag)
+        {
+            Tag = tag;
         }
 
         public void SetBanned()
