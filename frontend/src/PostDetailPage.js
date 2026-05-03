@@ -36,6 +36,7 @@ import { ProfileIcon, resolveProfileIconValue, extractNameAndIcon } from './prof
 import hljs from 'highlight.js';
 import 'highlight.js/styles/atom-one-dark.css';
 import { formatContentForRender, normalizeCodeLanguage } from './contentFormatting';
+import { mapTagsToLabels } from './CategoryModal';
 
 const CodeBlock = ({ language, value }) => {
     const [isCopied, setIsCopied] = React.useState(false);
@@ -1166,13 +1167,15 @@ const PostDetailPage = React.memo(({
                         '&::-webkit-scrollbar': { height: 4 },
                     }}
                 >
-                    {post.tags.map((tag, index) => (
+                    {mapTagsToLabels(Array.isArray(post?.tags) ? post.tags : []).map((tag, index) => {
+                        const strTag = String(tag);
+                        return (
                         <Chip
                             key={index}
-                            label={tag}
-                            onClick={() => onTagClick?.(tag)}
+                            label={strTag}
+                            onClick={() => onTagClick?.(strTag)}
                             sx={{
-                                backgroundColor: getTagColor(tag, index),
+                                backgroundColor: getTagColor(strTag, index),
                                 color: 'white',
                                 fontWeight: 'bold',
                                 borderRadius: '10px',
@@ -1184,7 +1187,7 @@ const PostDetailPage = React.memo(({
                                 }
                             }}
                         />
-                    ))}
+                    )})}
                 </Box>
 
                 {articleImageUrl && !imageBroken && (

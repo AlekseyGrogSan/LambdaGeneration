@@ -144,5 +144,10 @@ namespace LambdaGeneration.API.Application.Services
 
             return result;
         }
+
+        public async Task<List<Articles>> GetBestArticles()
+        {
+            return await _articlesRepository.GetBestArticles();
+        }
     }
 }

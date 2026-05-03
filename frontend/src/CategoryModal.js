@@ -68,6 +68,18 @@ export const TAG_CATEGORIES = [
     },
 ];
 
+export const mapTagsToLabels = (tags) => {
+    if (!tags || !Array.isArray(tags)) return [];
+    const allTags = TAG_CATEGORIES.flatMap(c => c.tags);
+    return tags.map(t => {
+        if (typeof t === 'number') {
+            const found = allTags.find(tagObj => tagObj.id === t);
+            return found ? found.label : t.toString();
+        }
+        return t;
+    });
+};
+
 const CategoryModal = ({ open, handleClose, selectedTags = [], onApply }) => {
     const [localSelected, setLocalSelected] = useState([]);
 

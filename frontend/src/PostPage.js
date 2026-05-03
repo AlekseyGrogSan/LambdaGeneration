@@ -16,7 +16,9 @@ import {
     useMediaQuery,
     useTheme,
     SwipeableDrawer,
+    Collapse,
 } from '@mui/material';
+import LocalFireDepartmentIcon from '@mui/icons-material/LocalFireDepartment';
 import PersonIcon from '@mui/icons-material/Person';
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 import FavoriteIcon from '@mui/icons-material/Favorite';
@@ -48,6 +50,7 @@ import ResourcesModal from './ResourcesModal';
 import FaqModal from './FaqModal';
 import AdminPanelModal from './AdminPanelModal';
 import SiteGuideSlidesModal from './SiteGuideSlidesModal';
+import BestArticlesList from './BestArticlesList';
 import { buildArticleImageUrl, buildAvatarUrl, DEFAULT_AVATAR_SRC } from './avatarUtils';
 import { ProfileIcon, resolveProfileIconValue, extractNameAndIcon } from './profileIcons';
 
@@ -203,6 +206,8 @@ const scrollbarStyle = {
     scrollbarWidth: 'thin',
     scrollbarColor: '#00bfa5 #1a1a1a',
 };
+
+const desktopFeedCardTopOffset = '84px';
 
 const Sidebar = ({ handleOpen, handleProfileOpen, handlePostOpen, handleCategoryOpen, handleResourcesOpen, handleFaqOpen, handleGuideOpen,handleAdminOpen, isAdmin, currentUser }) => {
     const currentUserName = extractNameAndIcon(currentUser?.name || '').name;
@@ -706,6 +711,7 @@ const CommentsFeedSidebar = ({
 };
 
 const PostPage = () => {
+    const [isBestArticlesOpen, setIsBestArticlesOpen] = useState(false);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [openProfileAfterAuth, setOpenProfileAfterAuth] = useState(false);
     const [isPostModalOpen, setIsPostModalOpen] = useState(false);
@@ -761,6 +767,11 @@ const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
 
     useEffect(() => { articlesRef.current = articles; }, [articles]);
     useEffect(() => { hasMoreRef.current = hasMore; }, [hasMore]);
+    useEffect(() => {
+        if (activeCommentsPost) {
+            setIsBestArticlesOpen(false);
+        }
+    }, [activeCommentsPost]);
 
     useEffect(() => {
         if (paginationType !== 'random' && paginationType !== 'recommend') return;
@@ -1146,6 +1157,7 @@ const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
     };
 
     const handlePostClick = (postData, options = {}, openComments = false) => { 
+        setIsBestArticlesOpen(false);
         setLastViewedArticleId(postData.article_id); 
         setSelectedPost(postData); 
         setIsViewingDetailPage(true);
@@ -1543,7 +1555,7 @@ const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
             isLiked: isLikedStatus, 
             commentsCount: article.countComments ?? article.commentsCount ?? article.comments_count ?? article.CountComments ?? 0,
             viewsCount: normalizeViewsCount(article),
-            tags: article.article_tags || article.articleTags || article.ArticleTags || [], 
+            tags: (article.article_tags || article.articleTags || article.ArticleTags || []).map(tag => typeof tag === 'number' ? tag.toString() : tag),
         };
     };
 
@@ -2008,6 +2020,11 @@ const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
             return;
         }
 
+        if (isDesktopLayout && isBestArticlesOpen) {
+            setIsBestArticlesOpen(false);
+            await new Promise((resolve) => window.setTimeout(resolve, 220));
+        }
+
         setActiveCommentsPost(postData);
         setFeedNewCommentText('');
         setFeedReplyInputs({});
@@ -2227,6 +2244,19 @@ const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
         setFeedNewCommentText('');
     };
 
+    const handleBestArticlesToggle = async () => {
+        const nextOpen = !isBestArticlesOpen;
+
+        if (nextOpen && activeCommentsPost) {
+            handleFeedCloseComments();
+            if (isDesktopLayout) {
+                await new Promise((resolve) => window.setTimeout(resolve, 220));
+            }
+        }
+
+        setIsBestArticlesOpen(nextOpen);
+    };
+
     const fetchFeedRepliesTree = async (parentId) => {
         const response = await fetch(`${API_BASE_URL}/Comments/get-replies/${parentId}`, {
             credentials: 'include',
@@ -2356,8 +2386,32 @@ const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
 
     return (
         <Box sx={{ display: 'flex', minHeight: '100vh', backgroundColor: '#121212', overflow: 'hidden' }}>
-            {!isViewingDetailPage && activeCommentsPost && isDesktopLayout && (
-                <CommentsFeedSidebar variant="desktop" {...feedCommentsSidebarProps} />
+            {isDesktopLayout && <BestArticlesList isMobile={false} onArticleClick={handlePostClick} open={isBestArticlesOpen} onClose={() => setIsBestArticlesOpen(false)} />}
+
+            {isDesktopLayout && (
+                <Collapse
+                    in={!isViewingDetailPage && Boolean(activeCommentsPost)}
+                    orientation="horizontal"
+                    timeout={280}
+                    unmountOnExit
+                    sx={{ height: '100vh', flexShrink: 0 }}
+                >
+                    <Box
+                        sx={{
+                            width: 372,
+                            minWidth: 372,
+                            height: '100vh',
+                            pr: 2,
+                            py: 3,
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'flex-end',
+                            boxSizing: 'border-box',
+                        }}
+                    >
+                        <CommentsFeedSidebar variant="desktop" {...feedCommentsSidebarProps} />
+                    </Box>
+                </Collapse>
             )}
 
             {!isViewingDetailPage && activeCommentsPost && !isDesktopLayout && (
@@ -2557,6 +2611,21 @@ const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
                                         Lambda
                                     </Typography>
                                     <Box sx={{ flex: 1 }} />
+                                    {!isDesktopLayout && (
+                                        <>
+                                            <IconButton
+                                                onClick={handleBestArticlesToggle}
+                                                sx={{
+                                                    color: isBestArticlesOpen ? '#ff9800' : '#ff5722',
+                                                    transition: 'all 0.3s ease',
+                                                    '&:hover': { color: '#ff9800', transform: 'scale(1.1)' }
+                                                }}
+                                            >
+                                                <LocalFireDepartmentIcon />
+                                            </IconButton>
+                                            <BestArticlesList isMobile={true} onArticleClick={handlePostClick} open={isBestArticlesOpen} onClose={() => setIsBestArticlesOpen(false)} />
+                                        </>
+                                    )}
                                     <IconButton
                                         onClick={(e) => {
                                             e.preventDefault();
@@ -2742,6 +2811,17 @@ const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
                                 </>
                             ) : (
                                 <>
+                                    <IconButton
+                                        onClick={handleBestArticlesToggle}
+                                        sx={{
+                                            color: isBestArticlesOpen ? '#ff9800' : '#ff5722',
+                                            transition: 'all 0.3s ease',
+                                            marginRight: 1,
+                                            '&:hover': { color: '#ff9800', transform: 'scale(1.1)' }
+                                        }}
+                                    >
+                                        <LocalFireDepartmentIcon fontSize="large" />
+                                    </IconButton>
                                     <Button
                                         variant={paginationType === 'random' ? 'contained' : 'outlined'}
                                         onClick={() => handlePaginationTypeChange('random')}
@@ -2895,6 +2975,7 @@ const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
                                 ref={setPostRef(post.article_id)}
                                 sx={{ 
                                     minHeight: 'auto',
+                                    boxSizing: 'border-box',
                                     display: 'flex',
                                     justifyContent: 'center',
                                     alignItems: 'stretch',
@@ -2910,8 +2991,9 @@ const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
                                     },
                                     '@media (min-width: 768px)': {
                                         minHeight: '100vh',
-                                        alignItems: 'center',
-                                        py: '20px',
+                                        alignItems: 'flex-start',
+                                        pt: desktopFeedCardTopOffset,
+                                        pb: '20px',
                                         scrollSnapAlign: 'center',
                                     },
                                 }}

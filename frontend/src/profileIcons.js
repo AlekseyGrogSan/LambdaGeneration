@@ -48,13 +48,14 @@ export const resolveProfileIconValue = (source) => {
     if (!source || typeof source !== 'object') return '';
     
     // Extract from name fields if present
-    const nameField = source.name || source.nickname || source.UserName || source.UserName || source.authorName || '';
+    const nameField = source.name || source.nickname || source.UserName || source.userName || source.authorName || '';
     if (nameField) {
         const extracted = extractNameAndIcon(nameField);
         if (extracted.icon) return extracted.icon;
     }
 
-    return source.profileIcon
+    return source.tag
+        ?? source.profileIcon
         ?? source.profile_icon
         ?? source.userIcon
         ?? source.user_icon

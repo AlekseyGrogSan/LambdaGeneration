@@ -24,6 +24,7 @@ import { ProfileIcon } from './profileIcons';
 import hljs from 'highlight.js';
 import 'highlight.js/styles/atom-one-dark.css';
 import { formatContentForRender, normalizeCodeLanguage } from './contentFormatting';
+import { mapTagsToLabels } from './CategoryModal';
 
 const CodeBlock = ({ language, value }) => {
     const [isCopied, setIsCopied] = React.useState(false);
@@ -559,13 +560,15 @@ const PostCard = React.memo(({
                                 '&::-webkit-scrollbar-thumb': { background: '#00bfa5', borderRadius: 4 },
                             }}
                         >
-                            {tags.map((tag, index) => (
+                            {mapTagsToLabels(Array.isArray(tags) ? tags : []).map((tag, index) => {
+                                const strTag = String(tag);
+                                return (
                                 <Chip 
                                     key={index}
-                                    label={tag}
+                                    label={strTag}
                                     size="small"
                                     sx={{ 
-                                        backgroundColor: getTagColor(tag, index), 
+                                        backgroundColor: getTagColor(strTag, index), 
                                         color: 'white', 
                                         fontWeight: 'bold',
                                         height: { xs: 24, md: 22 },
@@ -573,7 +576,7 @@ const PostCard = React.memo(({
                                         fontSize: { xs: '0.7rem', md: '0.8125rem' },
                                     }}
                                 />
-                            ))}
+                            )})}
                         </Box>
                     </Box>
                 </Box>

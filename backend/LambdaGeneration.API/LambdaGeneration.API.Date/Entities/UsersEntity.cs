@@ -1,4 +1,4 @@
-﻿using LambdaGeneration.API.Core.Enums;
+using LambdaGeneration.API.Core.Enums;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations.Schema;
@@ -20,6 +20,7 @@ namespace LambdaGeneration.API.Date.Entities
         public int countSubscribers { get; set; }
         public int countFollowing { get; set; }
         public int Role { get; set; }
+        public string TagName { get; set; } = string.Empty;
         public bool IsBanned { get; set; } = false;
         public List<ArticlesEntity> Articles { get; set; } = new List<ArticlesEntity>();
         public List<SubscriptionEntity> Followers { get; set; } = new List<SubscriptionEntity>();

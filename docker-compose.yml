@@ -45,6 +45,10 @@
       AdminConfig__Email: ${ADMINCONFIG__EMAIL}
       AdminConfig__Password: ${ADMINCONFIG__PASSWORD}
 
+      DrossAdminConfig__Name: ${DROSSADMINCONFIG__NAME}
+      DrossAdminConfig__Email: ${DROSSADMINCONFIG__EMAIL}
+      DrossAdminConfig__Password: ${DROSSADMINCONFIG__PASSWORD}
+
       GigaChat__ClientId: ${GIGACHAT__CLIENTID}
       GigaChat__ClientSecret: ${GIGACHAT__CLIENTSECRET}
       GigaChat__Scope: ${GIGACHAT__SCOPE}
