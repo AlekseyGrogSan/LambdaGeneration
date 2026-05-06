@@ -2,6 +2,7 @@ import { createContext, useCallback, useEffect, useMemo, useState } from 'react'
 import { createTheme } from '@mui/material/styles';
 
 const THEME_STORAGE_KEY = 'lambda.ui.theme.v2';
+const AVAILABLE_MODES = ['dark', 'light', 'neutral-gray'];
 
 export const ColorModeContext = createContext({
     mode: 'dark',
@@ -11,7 +12,7 @@ export const ColorModeContext = createContext({
 const getInitialMode = () => {
     try {
         const saved = localStorage.getItem(THEME_STORAGE_KEY);
-        if (saved === 'light' || saved === 'dark') return saved;
+        if (AVAILABLE_MODES.includes(saved)) return saved;
     } catch (_) {
         // Ignore storage issues and fallback to media query.
     }
@@ -22,7 +23,7 @@ const getInitialMode = () => {
 };
 
 const getPaletteByMode = (mode) => ({
-    mode,
+    mode: mode === 'neutral-gray' ? 'light' : mode,
     primary: { main: '#1bcf9c' },
     secondary: { main: '#37d6ff' },
     error: { main: '#ff5d6c' },
@@ -32,12 +33,21 @@ const getPaletteByMode = (mode) => ({
     background:
         mode === 'dark'
             ? { default: '#060b14', paper: '#0d1523' }
-            : { default: '#f3f8fb', paper: '#ffffff' },
+            : mode === 'neutral-gray'
+              ? { default: '#ECECEC', paper: '#E2E2E2' }
+              : { default: '#f3f8fb', paper: '#ffffff' },
     text:
         mode === 'dark'
             ? { primary: '#eef6ff', secondary: '#a6bed8' }
-            : { primary: '#13253c', secondary: '#4c637e' },
-    divider: mode === 'dark' ? 'rgba(120, 159, 194, 0.28)' : 'rgba(44, 83, 125, 0.18)',
+            : mode === 'neutral-gray'
+              ? { primary: '#2F2F2F', secondary: '#6B6B6B' }
+              : { primary: '#13253c', secondary: '#4c637e' },
+    divider:
+        mode === 'dark'
+            ? 'rgba(120, 159, 194, 0.28)'
+            : mode === 'neutral-gray'
+              ? '#CFCFCF'
+              : 'rgba(44, 83, 125, 0.18)',
 });
 
 export const createAppTheme = (mode) =>
@@ -46,12 +56,12 @@ export const createAppTheme = (mode) =>
         shape: { borderRadius: 14 },
         typography: {
             fontFamily: '"Inter", "Segoe UI", "Roboto", "Arial", sans-serif',
-            h1: { fontWeight: 800 },
-            h2: { fontWeight: 800 },
-            h3: { fontWeight: 700 },
-            h4: { fontWeight: 700 },
-            h5: { fontWeight: 700 },
-            h6: { fontWeight: 700 },
+            h1: { fontWeight: 800, color: 'var(--text-strong)' },
+            h2: { fontWeight: 800, color: 'var(--text-strong)' },
+            h3: { fontWeight: 700, color: 'var(--text-strong)' },
+            h4: { fontWeight: 700, color: 'var(--text-strong)' },
+            h5: { fontWeight: 700, color: 'var(--text-strong)' },
+            h6: { fontWeight: 700, color: 'var(--text-strong)' },
             button: { textTransform: 'none', fontWeight: 700 },
         },
         components: {
@@ -130,7 +140,11 @@ export const useColorModeController = () => {
     }, [mode]);
 
     const toggleColorMode = useCallback(() => {
-        setMode((prev) => (prev === 'dark' ? 'light' : 'dark'));
+        setMode((prev) => {
+            const idx = AVAILABLE_MODES.indexOf(prev);
+            const nextIdx = idx === -1 ? 0 : (idx + 1) % AVAILABLE_MODES.length;
+            return AVAILABLE_MODES[nextIdx];
+        });
     }, []);
 
     const contextValue = useMemo(() => ({ mode, toggleColorMode }), [mode, toggleColorMode]);

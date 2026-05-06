@@ -43,8 +43,14 @@ body {
     --surface-input: #16263b;
     --text-primary: #eef6ff;
     --text-secondary: #a6bed8;
+    --text-strong: #eef6ff;
     --border-default: rgba(120, 159, 194, 0.28);
     --shadow-soft: 0 18px 34px rgba(2, 6, 12, 0.42);
+
+    --code-bg: var(--ui-c36);
+    --code-header-bg: var(--ui-c30);
+    --code-border: var(--ui-c192);
+    --code-header-text: var(--ui-c199);
 }
 
 :root[data-theme="light"] {
@@ -56,9 +62,76 @@ body {
     --surface-input: #f6f9fd;
     --text-primary: #13253c;
     --text-secondary: #4c637e;
+    --text-strong: #13253c;
     --border-default: rgba(44, 83, 125, 0.18);
     --shadow-soft: 0 12px 24px rgba(21, 42, 78, 0.12);
+
+    --code-bg: #eef4fb;
+    --code-header-bg: #e6edf3;
+    --code-border: rgba(44, 83, 125, 0.18);
+    --code-header-text: #13253c;
 }
+
+:root[data-theme="neutral-gray"] {
+    --bg-canvas: #ECECEC;
+    --bg-elevated: #E2E2E2;
+    --surface-panel: rgba(226, 226, 226, 0.9);
+    --surface-elevated: #E2E2E2;
+    --surface-soft: #E2E2E2;
+    --surface-input: #E8E8E8;
+    --text-primary: #2F2F2F;
+    --text-secondary: #6B6B6B;
+    --text-strong: #1A1A1A;
+    --border-default: #CFCFCF;
+    --shadow-soft: 0 12px 24px rgba(0, 0, 0, 0.10);
+
+    --code-bg: #E2E2E2;
+    --code-header-bg: #D8D8D8;
+    --code-border: #CFCFCF;
+    --code-header-text: #1A1A1A;
+
+    --syntax-keyword: #2D6A4F;
+    --syntax-string: #C16F4A;
+    --syntax-function: #4A6FA5;
+    --syntax-comment: #8F8F8F;
+    --syntax-number: #C28B3B;
+    --syntax-operator: #5A9E4E;
+}
+
+:root[data-theme="neutral-gray"] body {
+    background: var(--bg-canvas);
+}
+
+code[class*="language-"] .token.keyword,
+pre[class*="language-"] .token.keyword { color: var(--syntax-keyword, var(--accent-500)); }
+code[class*="language-"] .token.string,
+pre[class*="language-"] .token.string { color: var(--syntax-string, #C16F4A); }
+code[class*="language-"] .token.function,
+pre[class*="language-"] .token.function { color: var(--syntax-function, #4A6FA5); }
+code[class*="language-"] .token.comment,
+pre[class*="language-"] .token.comment { color: var(--syntax-comment, #8F8F8F); }
+code[class*="language-"] .token.number,
+pre[class*="language-"] .token.number { color: var(--syntax-number, #C28B3B); }
+code[class*="language-"] .token.operator,
+pre[class*="language-"] .token.operator { color: var(--syntax-operator, var(--accent-400)); }
+
+/* highlight.js token colors (applies when hljs is used) */
+.hljs-keyword,
+.hljs-selector-tag,
+.hljs-literal { color: var(--syntax-keyword, var(--accent-500)); }
+.hljs-string,
+.hljs-attr,
+.hljs-template-string { color: var(--syntax-string, #C16F4A); }
+.hljs-title,
+.hljs-function,
+.hljs-built_in { color: var(--syntax-function, #4A6FA5); }
+.hljs-comment,
+.hljs-quote { color: var(--syntax-comment, #8F8F8F); }
+.hljs-number,
+.hljs-symbol,
+.hljs-variable,
+.hljs-constant { color: var(--syntax-number, #C28B3B); }
+.hljs-operator { color: var(--syntax-operator, var(--accent-400)); }
 
 ::-webkit-scrollbar {
     width: 8px;

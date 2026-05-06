@@ -11,6 +11,7 @@ import PersonOutlineIcon from '@mui/icons-material/PersonOutline';
 import PersonIcon from '@mui/icons-material/Person';
 import DarkModeRoundedIcon from '@mui/icons-material/DarkModeRounded';
 import LightModeRoundedIcon from '@mui/icons-material/LightModeRounded';
+import TonalityRoundedIcon from '@mui/icons-material/TonalityRounded';
 
 const NAV_ITEM_SX = {
     flex: 1,
@@ -211,7 +212,13 @@ const MobileBottomNav = ({
                 }}
             >
                 {onThemeToggle ? (
-                    mode === 'dark' ? <LightModeRoundedIcon sx={{ fontSize: 26 }} /> : <DarkModeRoundedIcon sx={{ fontSize: 26 }} />
+                    mode === 'dark' ? (
+                        <LightModeRoundedIcon sx={{ fontSize: 26 }} />
+                    ) : mode === 'light' ? (
+                        <TonalityRoundedIcon sx={{ fontSize: 26 }} />
+                    ) : (
+                        <DarkModeRoundedIcon sx={{ fontSize: 26 }} />
+                    )
                 ) : isAuthenticated ? (
                     <Avatar
                         src={profileAvatarSrc || undefined}

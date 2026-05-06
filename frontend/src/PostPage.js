@@ -39,6 +39,7 @@ import RefreshIcon from '@mui/icons-material/Refresh';
 import SlideshowIcon from '@mui/icons-material/Slideshow';
 import DarkModeRoundedIcon from '@mui/icons-material/DarkModeRounded';
 import LightModeRoundedIcon from '@mui/icons-material/LightModeRounded';
+import TonalityRoundedIcon from '@mui/icons-material/TonalityRounded';
 
 import PostCard from './PostCard';
 import PostDetailPage from './PostDetailPage';
@@ -262,7 +263,13 @@ const Sidebar = ({ handleOpen, handleProfileOpen, handlePostOpen, handleCategory
                             '&:hover': { color: 'var(--accent-500)' },
                         }}
                     >
-                        {mode === 'dark' ? <LightModeRoundedIcon fontSize="small" /> : <DarkModeRoundedIcon fontSize="small" />}
+                        {mode === 'dark' ? (
+                            <LightModeRoundedIcon fontSize="small" />
+                        ) : mode === 'light' ? (
+                            <TonalityRoundedIcon fontSize="small" />
+                        ) : (
+                            <DarkModeRoundedIcon fontSize="small" />
+                        )}
                     </IconButton>
                 </Box>
 
