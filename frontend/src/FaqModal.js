@@ -18,10 +18,10 @@ const style = {
     left: '50%',
     transform: 'translate(-50%, -50%)',
     width: 'min(92vw, 620px)',
-    bgcolor: '#202020',
-    border: '1px solid rgba(255,255,255,0.08)',
+    bgcolor: 'var(--ui-c29)',
+    border: '1px solid color-mix(in oklab, var(--text-primary) 8%, transparent)',
     borderRadius: '16px',
-    boxShadow: '0 18px 48px rgba(0,0,0,0.55)',
+    boxShadow: '0 18px 48px var(--ui-c137)',
     p: 4,
     color: 'white',
     maxHeight: '80vh',
@@ -33,19 +33,19 @@ const scrollbarStyle = {
         width: '8px',
     },
     '&::-webkit-scrollbar-track': {
-        background: '#1a1a1a',
+        background: 'var(--ui-c25)',
         borderRadius: '10px',
     },
     '&::-webkit-scrollbar-thumb': {
-        background: '#00bfa5',
+        background: 'var(--accent-500)',
         borderRadius: '10px',
-        border: '2px solid #1a1a1a',
+        border: '2px solid var(--ui-c25)',
     },
     '&::-webkit-scrollbar-thumb:hover': {
-        background: '#009e8a',
+        background: 'var(--accent-600)',
     },
     scrollbarWidth: 'thin',
-    scrollbarColor: '#00bfa5 #1a1a1a',
+    scrollbarColor: 'var(--accent-500) var(--ui-c25)',
 };
 
 const faqItems = [
@@ -115,32 +115,32 @@ const FaqModal = ({ open, handleClose }) => {
                 >
                     <CloseIcon />
                 </IconButton>
-                <Typography id="faq-modal-title" variant="h6" component="h2" sx={{ color: '#00bfa5', fontWeight: 'bold', mb: 1 }}>
+                <Typography id="faq-modal-title" variant="h6" component="h2" sx={{ color: 'var(--accent-500)', fontWeight: 'bold', mb: 1 }}>
                     Часто задаваемые вопросы (FAQ)
                 </Typography>
-                <Typography sx={{ color: '#bdbdbd', mb: 2 }}>
+                <Typography sx={{ color: 'var(--text-secondary)', mb: 2 }}>
                     Ответы на базовые вопросы по работе с платформой и публикациями.
                 </Typography>
-                <Divider sx={{ borderColor: 'rgba(255,255,255,0.08)', mb: 2 }} />
+                <Divider sx={{ borderColor: 'color-mix(in oklab, var(--text-primary) 8%, transparent)', mb: 2 }} />
                 {faqItems.map((item) => (
                     <Accordion
                         key={item.question}
                         disableGutters
                         sx={{
-                            bgcolor: '#1f1f1f',
+                            bgcolor: 'var(--surface-panel)',
                             color: 'white',
-                            border: '1px solid rgba(255,255,255,0.06)',
+                            border: '1px solid color-mix(in oklab, var(--text-primary) 6%, transparent)',
                             '&::before': { display: 'none' },
                             mb: 1,
                         }}
                     >
                         <AccordionSummary
-                            expandIcon={<ExpandMoreIcon sx={{ color: '#00bfa5' }} />}
+                            expandIcon={<ExpandMoreIcon sx={{ color: 'var(--accent-500)' }} />}
                             sx={{ px: 2, py: 0.5 }}
                         >
                             <Typography sx={{ fontWeight: 600 }}>{item.question}</Typography>
                         </AccordionSummary>
-                        <AccordionDetails sx={{ px: 2, pb: 2, color: '#cfcfcf', whiteSpace: 'pre-line' }}>
+                        <AccordionDetails sx={{ px: 2, pb: 2, color: 'var(--ui-c78)', whiteSpace: 'pre-line' }}>
                             {item.answer}
                         </AccordionDetails>
                     </Accordion>

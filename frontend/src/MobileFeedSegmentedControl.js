@@ -1,4 +1,4 @@
-﻿import React from 'react';
+import React from 'react';
 import { Box, Typography } from '@mui/material';
 
 /**
@@ -37,7 +37,7 @@ const MobileFeedSegmentedControl = ({ value, onChange, disabled = false }) => {
                     borderRadius: '11px',
                     zIndex: 0,
                     backgroundColor: 'var(--accent-500)',
-                    boxShadow: '0 6px 14px rgba(0, 191, 165, 0.35)',
+                    boxShadow: '0 6px 14px color-mix(in oklab, var(--accent-500) 35%, transparent)',
                     transition: 'transform 0.35s cubic-bezier(0.34, 1.2, 0.64, 1), opacity 0.25s ease',
                     transform: isRandom ? 'translateX(0)' : 'translateX(100%)',
                     opacity: disabled ? 0.4 : 1,

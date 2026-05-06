@@ -31,6 +31,9 @@ import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import MenuBookIcon from '@mui/icons-material/MenuBook';
 import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
+import FolderOutlinedIcon from '@mui/icons-material/FolderOutlined';
+import BookmarkBorderRoundedIcon from '@mui/icons-material/BookmarkBorderRounded';
+import ChevronRightRoundedIcon from '@mui/icons-material/ChevronRightRounded';
 import AdminPanelSettingsIcon from '@mui/icons-material/AdminPanelSettings';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import SlideshowIcon from '@mui/icons-material/Slideshow';
@@ -85,20 +88,20 @@ const writePostPageNavState = (state) => {
 
 const commentInputStyle = {
     '& .MuiFilledInput-root': {
-        backgroundColor: '#2c2c2c',
+        backgroundColor: 'var(--surface-elevated)',
         color: 'white',
         borderRadius: '10px',
-        '&:hover': { backgroundColor: '#3a3a3a' },
-        '&.Mui-focused': { backgroundColor: '#3a3a3a' },
+        '&:hover': { backgroundColor: 'var(--ui-c42)' },
+        '&.Mui-focused': { backgroundColor: 'var(--ui-c42)' },
     },
-    '& .MuiInputLabel-root': { color: '#bdbdbd' },
+    '& .MuiInputLabel-root': { color: 'var(--text-secondary)' },
 };
 
 const commentsSidebarStyle = {
     width: 340,
     minWidth: 340,
-    backgroundColor: '#1f1f1f',
-    borderRight: '1px solid #333',
+    backgroundColor: 'var(--surface-panel)',
+    borderRight: '1px solid var(--border-default)',
     display: 'none',
     '@media (min-width: 768px)': {
         display: 'flex',
@@ -115,7 +118,7 @@ const commentsDrawerInnerSx = {
     height: '100%',
     display: 'flex',
     flexDirection: 'column',
-    backgroundColor: '#1f1f1f',
+    backgroundColor: 'var(--surface-panel)',
     overflow: 'hidden',
 };
 
@@ -139,10 +142,10 @@ const updateCommentInTree = (tree, commentId, updater) => tree.map((item) => {
 });
 
 const sidebarStyle = {
-    width: 250,
-    minWidth: 250,
-    backgroundColor: '#1f1f1f',
-    padding: 2,
+    width: 284,
+    minWidth: 284,
+    backgroundColor: 'transparent',
+    padding: '20px 18px 16px',
     display: 'none',
     '@media (min-width: 768px)': {
         display: 'flex',
@@ -150,7 +153,7 @@ const sidebarStyle = {
     flexDirection: 'column',
     justifyContent: 'flex-start',
     height: '100vh',
-    borderLeft: '1px solid #333',
+    borderLeft: '1px solid color-mix(in oklab, var(--accent-500) 22%, var(--border-default))',
     position: 'sticky',
     top: 0,
     right: 0,
@@ -170,25 +173,36 @@ const commonButtonStyle = {
 
 const sidebarButtonStyle = {
     ...commonButtonStyle,
-    backgroundColor: 'rgba(255, 255, 255, 0.05)',
-    color: '#ffffff',
-    '&:hover': { backgroundColor: 'rgba(255, 255, 255, 0.1)' },
+    backgroundColor: 'color-mix(in oklab, var(--surface-elevated) 72%, transparent)',
+    color: 'var(--text-primary)',
+    minHeight: 48,
+    borderRadius: '12px',
+    border: '1px solid color-mix(in oklab, var(--text-primary) 8%, var(--border-default))',
+    justifyContent: 'space-between',
+    '&:hover': {
+        backgroundColor: 'color-mix(in oklab, var(--surface-elevated) 82%, transparent)',
+        borderColor: 'color-mix(in oklab, var(--accent-500) 36%, var(--border-default))',
+    },
 };
 
 const profileButtonStyle = {
     ...commonButtonStyle,
-    color: '#00bfa5',
-    borderColor: '#00bfa5',
+    color: 'var(--accent-500)',
+    borderColor: 'var(--accent-500)',
     borderWidth: '1px',
     borderStyle: 'solid',
-    '&:hover': { borderColor: '#00897b', color: '#00897b', backgroundColor: 'rgba(0, 191, 165, 0.08)' },
+    backgroundColor: 'transparent',
+    minHeight: 46,
+    borderRadius: '12px',
+    justifyContent: 'center',
+    '&:hover': { borderColor: 'var(--accent-600)', color: 'var(--accent-600)', backgroundColor: 'color-mix(in oklab, var(--accent-500) 8%, transparent)' },
 };
 
 const adminButtonStyle = {
     ...commonButtonStyle,
-    backgroundColor: '#c62828',
-    color: '#fff',
-    '&:hover': { backgroundColor: '#ff1744' }
+    backgroundColor: 'var(--ui-c75)',
+    color: 'var(--text-primary)',
+    '&:hover': { backgroundColor: 'var(--ui-c94)' }
 };
 
 const scrollbarStyle = {
@@ -196,19 +210,19 @@ const scrollbarStyle = {
         width: '8px',
     },
     '&::-webkit-scrollbar-track': {
-        background: '#1a1a1a',
+        background: 'var(--ui-c25)',
         borderRadius: '10px',
     },
     '&::-webkit-scrollbar-thumb': {
-        background: '#00bfa5',
+        background: 'var(--accent-500)',
         borderRadius: '10px',
-        border: '2px solid #1a1a1a',
+        border: '2px solid var(--ui-c25)',
     },
     '&::-webkit-scrollbar-thumb:hover': {
-        background: '#009e8a',
+        background: 'var(--accent-600)',
     },
     scrollbarWidth: 'thin',
-    scrollbarColor: '#00bfa5 #1a1a1a',
+    scrollbarColor: 'var(--accent-500) var(--ui-c25)',
 };
 
 const desktopFeedCardTopOffset = '84px';
@@ -219,93 +233,135 @@ const Sidebar = ({ handleOpen, handleProfileOpen, handlePostOpen, handleCategory
 
     return (
         <Box sx={sidebarStyle}>
-            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 3 }}>
-                <Typography variant="h5" sx={{ color: 'var(--accent-500)', fontWeight: 800, textAlign: 'center', letterSpacing: 0.6 }}>
-                    Lambda
-                </Typography>
-                <IconButton
-                    onClick={onToggleTheme}
-                    aria-label="Переключить тему"
-                    sx={{
-                        color: 'var(--text-secondary)',
-                        border: '1px solid var(--border-default)',
-                        bgcolor: 'var(--surface-soft)',
-                        '&:hover': { color: 'var(--accent-500)' },
-                    }}
-                >
-                    {mode === 'dark' ? <LightModeRoundedIcon fontSize="small" /> : <DarkModeRoundedIcon fontSize="small" />}
-                </IconButton>
-            </Box>
-
-            {currentUser ? (
-                <Box sx={{ mb: 3, p: 2, bgcolor: '#2c2c2c', borderRadius: '12px', display: 'flex', alignItems: 'center', gap: 1 }}>
-                    <Avatar
-                        src={buildAvatarUrl(API_BASE_URL, currentUser.pathAvatar ?? currentUser.PathAvatar)}
-                        sx={{ bgcolor: '#00bfa5' }}
-                        imgProps={{
-                            onError: (e) => {
-                                e.currentTarget.src = DEFAULT_AVATAR_SRC;
-                            },
+            <Box
+                sx={{
+                    bgcolor: 'color-mix(in oklab, var(--bg-elevated) 78%, transparent)',
+                    border: '1px solid color-mix(in oklab, var(--accent-500) 28%, var(--border-default))',
+                    borderRadius: '18px',
+                    p: 2,
+                    boxShadow: '0 14px 32px color-mix(in oklab, var(--bg-canvas) 70%, transparent)',
+                    backdropFilter: 'blur(10px)',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    height: '100%',
+                }}
+            >
+                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2.2 }}>
+                    <Typography variant="h4" sx={{ color: 'var(--accent-500)', fontWeight: 800, letterSpacing: 0.2 }}>
+                        Lambda
+                    </Typography>
+                    <IconButton
+                        onClick={onToggleTheme}
+                        aria-label="Переключить тему"
+                        sx={{
+                            color: 'var(--text-secondary)',
+                            border: '1px solid color-mix(in oklab, var(--text-primary) 10%, var(--border-default))',
+                            bgcolor: 'color-mix(in oklab, var(--surface-soft) 76%, transparent)',
+                            width: 34,
+                            height: 34,
+                            '&:hover': { color: 'var(--accent-500)' },
                         }}
                     >
-                        {currentUserName[0]?.toUpperCase()}
-                    </Avatar>
-                    <Box sx={{ overflow: 'hidden' }}>
-                        <Typography variant="subtitle2" sx={{ color: '#bdbdbd', fontSize: '0.75rem' }}>Вы вошли как:</Typography>
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                            <Typography variant="body1" sx={{ color: 'white', fontWeight: 'bold', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                                {currentUserName}
+                        {mode === 'dark' ? <LightModeRoundedIcon fontSize="small" /> : <DarkModeRoundedIcon fontSize="small" />}
+                    </IconButton>
+                </Box>
+
+                {currentUser ? (
+                    <Box sx={{ mb: 2.2, display: 'flex', alignItems: 'center', gap: 1.1 }}>
+                        <Avatar
+                            src={buildAvatarUrl(API_BASE_URL, currentUser.pathAvatar ?? currentUser.PathAvatar)}
+                            sx={{ bgcolor: 'var(--accent-500)', width: 34, height: 34 }}
+                            imgProps={{
+                                onError: (e) => {
+                                    e.currentTarget.src = DEFAULT_AVATAR_SRC;
+                                },
+                            }}
+                        >
+                            {currentUserName[0]?.toUpperCase()}
+                        </Avatar>
+                        <Box sx={{ overflow: 'hidden', minWidth: 0 }}>
+                            <Typography variant="caption" sx={{ color: 'var(--text-secondary)', display: 'block', mb: 0.25 }}>
+                                Вы вошли как
                             </Typography>
-                            <ProfileIcon icon={currentUserIcon} size={18} />
-                        </Box>
-                        <Box sx={{ mt: 0.5 }}>
-                            <UserRoleBadge role={currentUser.tag ?? currentUser.Tag} size="sm" />
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, minWidth: 0 }}>
+                                <Typography variant="body2" sx={{ color: 'var(--text-primary)', fontWeight: 700, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                    {currentUserName}
+                                </Typography>
+                                <ProfileIcon icon={currentUserIcon} size={16} />
+                            </Box>
+                            <Box sx={{ mt: 0.35 }}>
+                                <UserRoleBadge role={currentUser.tag ?? currentUser.Tag} size="sm" />
+                            </Box>
                         </Box>
                     </Box>
-                </Box>
-            ) : (
-                <Box sx={{ mb: 3, textAlign: 'center' }}>
-                    <Typography variant="body2" sx={{ color: '#757575', mb: 1 }}>Вы гость</Typography>
-                </Box>
-            )}
-
-        <Box sx={{ display: 'flex', flexDirection: 'column', flexGrow: 1 }}>
-            <Button variant="contained" sx={sidebarButtonStyle} onClick={handleCategoryOpen}>Категории</Button>
-            <Button variant="contained" sx={sidebarButtonStyle} onClick={handleResourcesOpen}>Полезные материалы</Button>
-            <Button variant="contained" sx={sidebarButtonStyle} onClick={handleFaqOpen}>FAQ</Button>
-            <Button variant="contained" sx={sidebarButtonStyle} onClick={handleGuideOpen}>Инструкция по сайту</Button>
-        </Box>
-
-            <Box sx={{ mt: 'auto', display: 'flex', flexDirection: 'column', gap: 1 }}>
-                {isAdmin && (
-                    <Button
-                        sx={adminButtonStyle}
-                        startIcon={<DeleteOutlineIcon />}
-                        onClick={handleAdminOpen}
-                    >
-                        Админ-панель
-                    </Button>
+                ) : (
+                    <Typography variant="body2" sx={{ color: 'var(--text-secondary)', mb: 2.2 }}>
+                        Вы гость
+                    </Typography>
                 )}
-                <Button
-                    sx={profileButtonStyle}
-                    startIcon={<PersonIcon />}
-                    onClick={handleProfileOpen}
-                >
-                    {currentUser ? 'Мой профиль' : 'Вход/Профиль'}
-                </Button>
-                <Button sx={profileButtonStyle} startIcon={<CloudUploadIcon />} onClick={handlePostOpen}>
-                    Опубликовать
-                </Button>
-            </Box>
 
-            {!currentUser && (
-                <Box sx={{ paddingTop: 2, textAlign: 'center' }}>
-                    <Typography variant="body2" sx={{ color: '#757575', marginBottom: 0.5 }}>Нет аккаунта?</Typography>
-                    <MuiLink component="span" onClick={() => handleOpen('register')} sx={{ color: '#757575', cursor: 'pointer', textDecoration: 'none', '&:hover': { color: '#00bfa5' } }}>
-                        Зарегистрироваться?
-                    </MuiLink>
+                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.15 }}>
+                    <Button
+                        variant="contained"
+                        sx={sidebarButtonStyle}
+                        onClick={handleCategoryOpen}
+                        startIcon={<FolderOutlinedIcon fontSize="small" />}
+                        endIcon={<ChevronRightRoundedIcon fontSize="small" />}
+                    >
+                        Категории
+                    </Button>
+                    <Button
+                        variant="contained"
+                        sx={sidebarButtonStyle}
+                        onClick={handleResourcesOpen}
+                        startIcon={<BookmarkBorderRoundedIcon fontSize="small" />}
+                        endIcon={<ChevronRightRoundedIcon fontSize="small" />}
+                    >
+                        Полезные материалы
+                    </Button>
+                    <Button
+                        variant="contained"
+                        sx={sidebarButtonStyle}
+                        onClick={handleFaqOpen}
+                        startIcon={<HelpOutlineIcon fontSize="small" />}
+                        endIcon={<ChevronRightRoundedIcon fontSize="small" />}
+                    >
+                        FAQ
+                    </Button>
                 </Box>
-            )}
+
+                <Box sx={{ mt: 2.6, borderTop: '1px solid color-mix(in oklab, var(--text-primary) 8%, transparent)' }} />
+
+                <Box sx={{ mt: 'auto', display: 'flex', flexDirection: 'column', gap: 1.2 }}>
+                    <Button sx={profileButtonStyle} startIcon={<PersonIcon />} onClick={handleProfileOpen}>
+                        {currentUser ? 'Войти / Профиль' : 'Войти / Профиль'}
+                    </Button>
+                    <Button sx={profileButtonStyle} startIcon={<CloudUploadIcon />} onClick={handlePostOpen}>
+                        Опубликовать
+                    </Button>
+                    <Button
+                        variant="text"
+                        sx={{ color: 'var(--text-secondary)', fontSize: '0.79rem', alignSelf: 'center', mt: 0.2 }}
+                        onClick={handleGuideOpen}
+                    >
+                        Инструкция
+                    </Button>
+                    {isAdmin && (
+                        <Button sx={adminButtonStyle} startIcon={<DeleteOutlineIcon />} onClick={handleAdminOpen}>
+                            Админ-панель
+                        </Button>
+                    )}
+                </Box>
+
+                {!currentUser && (
+                    <Box sx={{ pt: 1.8, textAlign: 'center' }}>
+                        <Typography variant="body2" sx={{ color: 'var(--text-secondary)', mb: 0.4 }}>Нет аккаунта?</Typography>
+                        <MuiLink component="span" onClick={() => handleOpen('register')} sx={{ color: 'var(--accent-500)', cursor: 'pointer', textDecoration: 'none', '&:hover': { color: 'var(--accent-400)' } }}>
+                            Зарегистрироваться?
+                        </MuiLink>
+                    </Box>
+                )}
+            </Box>
         </Box>
     );
 };
@@ -336,15 +392,15 @@ const FeedCommentItem = ({
             ml: Math.min(depth, 3) * 1.2,
             mt: 1.5,
             pl: 1.2,
-            borderLeft: depth > 0 ? '2px solid #3f3f3f' : 'none',
+            borderLeft: depth > 0 ? '2px solid var(--ui-c43)' : 'none',
             width: '100%',
             boxSizing: 'border-box',
         }}
     >
         <Box
             sx={{
-                backgroundColor: depth === 0 ? '#222' : '#262626',
-                border: '1px solid #333',
+                backgroundColor: depth === 0 ? 'var(--ui-c32)' : 'var(--ui-c35)',
+                border: '1px solid var(--border-default)',
                 borderRadius: '12px',
                 p: 1.2,
             }}
@@ -352,7 +408,7 @@ const FeedCommentItem = ({
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                 <Avatar
                     src={buildAvatarUrl(API_BASE_URL, comment.authorAvatar)}
-                    sx={{ width: 28, height: 28, border: '1px solid #00bfa5' }}
+                    sx={{ width: 28, height: 28, border: '1px solid var(--accent-500)' }}
                     imgProps={{
                         onError: (e) => {
                             e.currentTarget.src = DEFAULT_AVATAR_SRC;
@@ -360,7 +416,7 @@ const FeedCommentItem = ({
                     }}
                 />
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, minWidth: 0 }}>
-                    <Typography variant="body2" sx={{ color: '#00bfa5', fontWeight: 700 }}>
+                    <Typography variant="body2" sx={{ color: 'var(--accent-500)', fontWeight: 700 }}>
                         @{comment.authorName}
                     </Typography>
                     <ProfileIcon icon={comment.authorProfileIcon} size={18} />
@@ -371,7 +427,7 @@ const FeedCommentItem = ({
                 {comment.content}
             </Typography>
 
-            <Typography variant="caption" sx={{ color: '#888', display: 'block', mt: 0.8 }}>
+            <Typography variant="caption" sx={{ color: 'var(--ui-c56)', display: 'block', mt: 0.8 }}>
                 {new Date(comment.publishDate).toLocaleString('ru-RU')}
             </Typography>
 
@@ -379,11 +435,11 @@ const FeedCommentItem = ({
                 <IconButton
                     size="small"
                     onClick={() => onLikeToggle(comment.commentId, comment.isLiked)}
-                    sx={{ color: comment.isLiked ? '#ff1744' : '#9e9e9e', p: 0.4 }}
+                    sx={{ color: comment.isLiked ? 'var(--ui-c94)' : 'var(--text-secondary)', p: 0.4 }}
                 >
                     <FavoriteIcon sx={{ fontSize: 17 }} />
                 </IconButton>
-                <Typography variant="caption" sx={{ color: '#bdbdbd', ml: 0.4, fontWeight: 700 }}>
+                <Typography variant="caption" sx={{ color: 'var(--text-secondary)', ml: 0.4, fontWeight: 700 }}>
                     {comment.countLikes || 0}
                 </Typography>
 
@@ -394,7 +450,7 @@ const FeedCommentItem = ({
                         onClick={() => onToggleReplies(comment.commentId)}
                         sx={{
                             ml: 1,
-                            color: '#00bfa5',
+                            color: 'var(--accent-500)',
                             textTransform: 'none',
                             borderRadius: '8px',
                             minWidth: 'auto',
@@ -417,7 +473,7 @@ const FeedCommentItem = ({
                         onClick={() => onToggleReplyEditor(comment.commentId)}
                         sx={{
                             ml: 1,
-                            color: '#00bfa5',
+                            color: 'var(--accent-500)',
                             textTransform: 'none',
                             borderRadius: '8px',
                             minWidth: 'auto',
@@ -434,7 +490,7 @@ const FeedCommentItem = ({
                         onClick={() => onToggleEditEditor(comment.commentId, comment.content)}
                         sx={{
                             ml: 1,
-                            color: '#80d8ff',
+                            color: 'var(--ui-c54)',
                             textTransform: 'none',
                             borderRadius: '8px',
                             minWidth: 'auto',
@@ -452,7 +508,7 @@ const FeedCommentItem = ({
                         onClick={() => onDeleteComment(comment)}
                         sx={{
                             ml: 1,
-                            color: '#ff8a80',
+                            color: 'var(--ui-c98)',
                             textTransform: 'none',
                             borderRadius: '8px',
                             minWidth: 'auto',
@@ -487,9 +543,9 @@ const FeedCommentItem = ({
                         sx={{
                             minWidth: 'auto',
                             borderRadius: '10px',
-                            backgroundColor: '#00bfa5',
+                            backgroundColor: 'var(--accent-500)',
                             px: 1.2,
-                            '&:hover': { backgroundColor: '#009e8a' },
+                            '&:hover': { backgroundColor: 'var(--accent-600)' },
                         }}
                     >
                         Отправить
@@ -514,9 +570,9 @@ const FeedCommentItem = ({
                         sx={{
                             minWidth: 'auto',
                             borderRadius: '10px',
-                            backgroundColor: '#00bfa5',
+                            backgroundColor: 'var(--accent-500)',
                             px: 1.2,
-                            '&:hover': { backgroundColor: '#009e8a' },
+                            '&:hover': { backgroundColor: 'var(--accent-600)' },
                         }}
                     >
                         Сохранить
@@ -581,8 +637,8 @@ const CommentsFeedSidebar = ({
     const isDrawer = variant === 'drawer';
 
     const header = (
-        <Box sx={{ px: 2, py: isDrawer ? 1.5 : 1.3, borderBottom: '1px solid #333', display: 'flex', alignItems: 'center', gap: 1, flexShrink: 0 }}>
-            <Typography variant="h6" sx={{ color: '#00e5c9', fontWeight: 700, fontSize: isDrawer ? '1.05rem' : undefined }}>
+        <Box sx={{ px: 2, py: isDrawer ? 1.5 : 1.3, borderBottom: '1px solid var(--border-default)', display: 'flex', alignItems: 'center', gap: 1, flexShrink: 0 }}>
+            <Typography variant="h6" sx={{ color: 'var(--accent-400)', fontWeight: 700, fontSize: isDrawer ? '1.05rem' : undefined }}>
                 Комментарии
             </Typography>
             <IconButton
@@ -590,11 +646,11 @@ const CommentsFeedSidebar = ({
                 aria-label="Закрыть комментарии"
                 sx={{
                     ml: 'auto',
-                    color: '#bdbdbd',
+                    color: 'var(--text-secondary)',
                     minWidth: 44,
                     minHeight: 44,
                     transition: 'background-color 0.2s ease',
-                    '&:hover': { backgroundColor: 'rgba(255,255,255,0.06)' },
+                    '&:hover': { backgroundColor: 'color-mix(in oklab, var(--text-primary) 6%, transparent)' },
                 }}
             >
                 <CloseIcon />
@@ -603,11 +659,11 @@ const CommentsFeedSidebar = ({
     );
 
     const titleBlock = (
-        <Box sx={{ px: 2, pt: 1, pb: 1.5, borderBottom: '1px solid #333', flexShrink: 0 }}>
+        <Box sx={{ px: 2, pt: 1, pb: 1.5, borderBottom: '1px solid var(--border-default)', flexShrink: 0 }}>
             <Typography
                 variant="body2"
                 sx={{
-                    color: '#f5f5f5',
+                    color: 'var(--text-primary)',
                     mt: 0.4,
                     whiteSpace: 'nowrap',
                     overflow: 'hidden',
@@ -623,10 +679,10 @@ const CommentsFeedSidebar = ({
         <Box
             sx={{
                 p: 1.5,
-                borderTop: isDrawer ? '1px solid #333' : undefined,
-                borderBottom: !isDrawer ? '1px solid #333' : undefined,
+                borderTop: isDrawer ? '1px solid var(--border-default)' : undefined,
+                borderBottom: !isDrawer ? '1px solid var(--border-default)' : undefined,
                 flexShrink: 0,
-                backgroundColor: isDrawer ? '#181818' : 'transparent',
+                backgroundColor: isDrawer ? 'var(--ui-c23)' : 'transparent',
                 pb: isDrawer ? 'calc(12px + env(safe-area-inset-bottom, 0px))' : 1.5,
             }}
         >
@@ -656,12 +712,12 @@ const CommentsFeedSidebar = ({
                     onClick={onCreateRootComment}
                     sx={{
                         borderRadius: '10px',
-                        backgroundColor: '#00bfa5',
+                        backgroundColor: 'var(--accent-500)',
                         minWidth: isDrawer ? 88 : undefined,
                         minHeight: 48,
                         alignSelf: 'stretch',
                         transition: 'background-color 0.2s ease',
-                        '&:hover': { backgroundColor: '#009e8a' },
+                        '&:hover': { backgroundColor: 'var(--accent-600)' },
                     }}
                 >
                     {isDrawer ? 'Отпр.' : 'Отпр.'}
@@ -669,7 +725,7 @@ const CommentsFeedSidebar = ({
             </Box>
 
             {commentsError && (
-                <Typography sx={{ color: '#ff8a80', mt: 1, fontSize: '0.85rem' }}>{commentsError}</Typography>
+                <Typography sx={{ color: 'var(--ui-c98)', mt: 1, fontSize: '0.85rem' }}>{commentsError}</Typography>
             )}
         </Box>
     );
@@ -678,10 +734,10 @@ const CommentsFeedSidebar = ({
         <Box sx={{ flex: 1, minHeight: 0, overflowY: 'auto', p: 1.5, ...scrollbarStyle }}>
             {commentsLoading ? (
                 <Box sx={{ py: 3, textAlign: 'center' }}>
-                    <CircularProgress size={26} sx={{ color: '#00bfa5' }} />
+                    <CircularProgress size={26} sx={{ color: 'var(--accent-500)' }} />
                 </Box>
             ) : commentsTree.length === 0 ? (
-                <Typography sx={{ color: '#bdbdbd', fontSize: '0.9rem' }}>
+                <Typography sx={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>
                     Пока нет комментариев. Будьте первым.
                 </Typography>
             ) : (
@@ -2408,7 +2464,7 @@ const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
     const isTagFilterFromDetail = Boolean(tagFilterReturnContext?.post);
 
     return (
-        <Box sx={{ display: 'flex', minHeight: '100vh', backgroundColor: '#121212', overflow: 'hidden' }}>
+        <Box sx={{ display: 'flex', minHeight: '100vh', backgroundColor: 'var(--bg-canvas)', overflow: 'hidden' }}>
             {isDesktopLayout && <BestArticlesList isMobile={false} onArticleClick={handlePostClick} open={isBestArticlesOpen} onClose={() => setIsBestArticlesOpen(false)} />}
 
             {isDesktopLayout && (
@@ -2453,7 +2509,7 @@ const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
                             width: '100%',
                             maxWidth: '100vw',
                             overflow: 'hidden',
-                            backgroundColor: '#1f1f1f',
+                            backgroundColor: 'var(--surface-panel)',
                             transition: 'transform 0.25s ease-out',
                         },
                     }}
@@ -2522,10 +2578,10 @@ const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
                                 px: 2,
                                 py: 1,
                                 borderRadius: '12px',
-                                backgroundColor: 'rgba(0, 191, 165, 0.92)',
-                                color: '#0f0f0f',
+                                backgroundColor: 'var(--ui-c124)',
+                                color: 'var(--ui-c17)',
                                 fontWeight: 700,
-                                boxShadow: '0 8px 24px rgba(0,0,0,0.35)',
+                                boxShadow: '0 8px 24px var(--ui-c134)',
                                 maxWidth: { xs: '92vw', sm: '560px' },
                                 textAlign: 'center',
                             }}
@@ -2552,8 +2608,8 @@ const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
                             pt: 'calc(10px + env(safe-area-inset-top, 0px))',
                             pb: 1,
                             gap: 1,
-                            background: 'linear-gradient(180deg, rgba(18,18,18,0.98) 0%, rgba(18,18,18,0.92) 92%, transparent 100%)',
-                            borderBottom: '1px solid rgba(0, 191, 165, 0.12)',
+                            background: 'linear-gradient(180deg, var(--ui-c159) 0%, var(--ui-c158) 92%, transparent 100%)',
+                            borderBottom: '1px solid var(--ui-c114)',
                             backdropFilter: 'blur(12px)',
                             transition: 'background 0.25s ease',
                         }}
@@ -2566,10 +2622,10 @@ const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
                                     sx={{
                                         minWidth: 44,
                                         minHeight: 44,
-                                        color: '#00e5c9',
-                                        border: '1px solid rgba(0, 191, 165, 0.45)',
+                                        color: 'var(--accent-400)',
+                                        border: '1px solid color-mix(in oklab, var(--accent-500) 45%, transparent)',
                                         transition: 'background-color 0.2s ease',
-                                        '&:hover': { backgroundColor: 'rgba(0, 191, 165, 0.1)' },
+                                        '&:hover': { backgroundColor: 'color-mix(in oklab, var(--accent-500) 10%, transparent)' },
                                     }}
                                 >
                                     <ArrowBackIcon />
@@ -2590,17 +2646,17 @@ const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
                                     sx={{
                                         flex: 1,
                                         '& .MuiOutlinedInput-root': {
-                                            color: '#f5f5f5',
+                                            color: 'var(--text-primary)',
                                             borderRadius: '12px',
                                             minHeight: 44,
-                                            backgroundColor: 'rgba(0, 0, 0, 0.25)',
+                                            backgroundColor: 'var(--ui-c105)',
                                             transition: 'border-color 0.2s ease',
-                                            '& fieldset': { borderColor: 'rgba(0, 191, 165, 0.4)' },
-                                            '&:hover fieldset': { borderColor: '#00d4b4' },
-                                            '&.Mui-focused fieldset': { borderColor: '#00e5c9' },
+                                            '& fieldset': { borderColor: 'var(--ui-c118)' },
+                                            '&:hover fieldset': { borderColor: 'var(--ui-c9)' },
+                                            '&.Mui-focused fieldset': { borderColor: 'var(--accent-400)' },
                                         },
                                         '& .MuiInputBase-input::placeholder': {
-                                            color: '#b0b0b0',
+                                            color: 'var(--ui-c67)',
                                             opacity: 1,
                                         },
                                     }}
@@ -2610,7 +2666,7 @@ const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
                                                 <IconButton
                                                     onClick={handleSearchSubmit}
                                                     aria-label="Искать"
-                                                    sx={{ color: '#00e5c9', minWidth: 44, minHeight: 44 }}
+                                                    sx={{ color: 'var(--accent-400)', minWidth: 44, minHeight: 44 }}
                                                 >
                                                     <SearchIcon />
                                                 </IconButton>
@@ -2627,7 +2683,7 @@ const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
                                         sx={{
                                             fontWeight: 800,
                                             letterSpacing: 0.5,
-                                            color: '#00e5c9',
+                                            color: 'var(--accent-400)',
                                             fontSize: '1.15rem',
                                         }}
                                     >
@@ -2639,9 +2695,9 @@ const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
                                             <IconButton
                                                 onClick={handleBestArticlesToggle}
                                                 sx={{
-                                                    color: isBestArticlesOpen ? '#ff9800' : '#ff5722',
+                                                    color: isBestArticlesOpen ? 'var(--ui-c99)' : 'var(--ui-c96)',
                                                     transition: 'all 0.3s ease',
-                                                    '&:hover': { color: '#ff9800', transform: 'scale(1.1)' }
+                                                    '&:hover': { color: 'var(--ui-c99)', transform: 'scale(1.1)' }
                                                 }}
                                             >
                                                 <LocalFireDepartmentIcon />
@@ -2656,7 +2712,7 @@ const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
                                             setMoreMenuAnchor(e.currentTarget);
                                         }}
                                         aria-label="Ещё"
-                                        sx={{ minWidth: 44, minHeight: 44, color: '#e0f7f4' }}
+                                        sx={{ minWidth: 44, minHeight: 44, color: 'var(--ui-c88)' }}
                                     >
                                         <MoreVertIcon />
                                     </IconButton>
@@ -2700,11 +2756,11 @@ const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
                             gap: 2,
                             alignItems: 'center',
                             backdropFilter: 'blur(10px)',
-                            backgroundColor: 'rgba(18, 18, 18, 0.7)',
+                            backgroundColor: 'var(--ui-c153)',
                             borderRadius: '30px',
                             padding: '8px 12px',
-                            border: '1px solid rgba(0, 191, 165, 0.2)',
-                            boxShadow: '0 8px 32px rgba(0, 191, 165, 0.1)',
+                            border: '1px solid color-mix(in oklab, var(--accent-500) 20%, transparent)',
+                            boxShadow: '0 8px 32px color-mix(in oklab, var(--accent-500) 10%, transparent)',
                             transition: 'all 0.3s ease',
                         }}>
                             {isSearchMode ? (
@@ -2713,9 +2769,9 @@ const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
                                         onClick={handleSearchClose}
                                         sx={{
                                             borderRadius: '50%',
-                                            color: '#00bfa5',
-                                            border: '1px solid rgba(0, 191, 165, 0.5)',
-                                            '&:hover': { backgroundColor: 'rgba(0, 191, 165, 0.12)' }
+                                            color: 'var(--accent-500)',
+                                            border: '1px solid var(--ui-c121)',
+                                            '&:hover': { backgroundColor: 'var(--ui-c114)' }
                                         }}
                                     >
                                         <ArrowBackIcon />
@@ -2737,13 +2793,13 @@ const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
                                             '& .MuiOutlinedInput-root': {
                                                 color: 'white',
                                                 borderRadius: '25px',
-                                                backgroundColor: 'rgba(0, 0, 0, 0.2)',
-                                                '& fieldset': { borderColor: 'rgba(0, 191, 165, 0.4)' },
-                                                '&:hover fieldset': { borderColor: '#00d4b4' },
-                                                '&.Mui-focused fieldset': { borderColor: '#00d4b4' },
+                                                backgroundColor: 'var(--ui-c104)',
+                                                '& fieldset': { borderColor: 'var(--ui-c118)' },
+                                                '&:hover fieldset': { borderColor: 'var(--ui-c9)' },
+                                                '&.Mui-focused fieldset': { borderColor: 'var(--ui-c9)' },
                                             },
                                             '& .MuiInputBase-input::placeholder': {
-                                                color: '#9e9e9e',
+                                                color: 'var(--text-secondary)',
                                                 opacity: 1,
                                             },
                                         }}
@@ -2752,7 +2808,7 @@ const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
                                                 <InputAdornment position="end">
                                                     <IconButton
                                                         onClick={handleSearchSubmit}
-                                                        sx={{ color: '#00bfa5' }}
+                                                        sx={{ color: 'var(--accent-500)' }}
                                                     >
                                                         <SearchIcon />
                                                     </IconButton>
@@ -2767,9 +2823,9 @@ const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
                                         onClick={handleExitTagFilter}
                                         sx={{
                                             borderRadius: '50%',
-                                            color: '#00bfa5',
-                                            border: '1px solid rgba(0, 191, 165, 0.5)',
-                                            '&:hover': { backgroundColor: 'rgba(0, 191, 165, 0.12)' }
+                                            color: 'var(--accent-500)',
+                                            border: '1px solid var(--ui-c121)',
+                                            '&:hover': { backgroundColor: 'var(--ui-c114)' }
                                         }}
                                     >
                                         <ArrowBackIcon />
@@ -2784,7 +2840,7 @@ const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
                                         whiteSpace: 'nowrap',
                                         pb: 0.5,
                                         '&::-webkit-scrollbar': { height: '4px' },
-                                        '&::-webkit-scrollbar-thumb': { backgroundColor: 'rgba(0, 191, 165, 0.5)', borderRadius: '4px' },
+                                        '&::-webkit-scrollbar-thumb': { backgroundColor: 'var(--ui-c121)', borderRadius: '4px' },
                                         '&::-webkit-scrollbar-track': { backgroundColor: 'transparent' }
                                     }}>
                                         {selectedTagIds && selectedTagIds.length > 0 ? (
@@ -2797,9 +2853,9 @@ const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
                                                         gap: 0.5,
                                                         padding: '4px 8px 4px 12px',
                                                         borderRadius: '16px',
-                                                        backgroundColor: 'rgba(0, 191, 165, 0.1)',
-                                                        border: '1px solid rgba(0, 191, 165, 0.4)',
-                                                        color: '#00e5c9',
+                                                        backgroundColor: 'color-mix(in oklab, var(--accent-500) 10%, transparent)',
+                                                        border: '1px solid var(--ui-c118)',
+                                                        color: 'var(--accent-400)',
                                                         fontWeight: 600,
                                                         fontSize: '0.85rem',
                                                         flexShrink: 0
@@ -2815,8 +2871,8 @@ const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
                                                                 sx={{
                                                                     width: 18,
                                                                     height: 18,
-                                                                    color: '#8ef7ea',
-                                                                    '&:hover': { backgroundColor: 'rgba(0, 229, 201, 0.16)', color: '#cffff8' }
+                                                                    color: 'var(--ui-c58)',
+                                                                    '&:hover': { backgroundColor: 'var(--ui-c126)', color: 'var(--ui-c79)' }
                                                                 }}
                                                             >
                                                                 <CloseIcon sx={{ fontSize: 12 }} />
@@ -2837,10 +2893,10 @@ const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
                                     <IconButton
                                         onClick={handleBestArticlesToggle}
                                         sx={{
-                                            color: isBestArticlesOpen ? '#ff9800' : '#ff5722',
+                                            color: isBestArticlesOpen ? 'var(--ui-c99)' : 'var(--ui-c96)',
                                             transition: 'all 0.3s ease',
                                             marginRight: 1,
-                                            '&:hover': { color: '#ff9800', transform: 'scale(1.1)' }
+                                            '&:hover': { color: 'var(--ui-c99)', transform: 'scale(1.1)' }
                                         }}
                                     >
                                         <LocalFireDepartmentIcon fontSize="large" />
@@ -2856,16 +2912,16 @@ const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
                                             fontWeight: 'bold',
                                             transition: 'all 0.3s ease',
                                             ...(paginationType === 'random' ? {
-                                                backgroundColor: '#00bfa5',
-                                                color: '#000',
-                                                '&:hover': { backgroundColor: '#00d4b4' }
+                                                backgroundColor: 'var(--accent-500)',
+                                                color: 'var(--ui-c1)',
+                                                '&:hover': { backgroundColor: 'var(--ui-c9)' }
                                             } : {
-                                                borderColor: '#00bfa5',
-                                                color: '#00bfa5',
+                                                borderColor: 'var(--accent-500)',
+                                                color: 'var(--accent-500)',
                                                 '&:hover': { 
-                                                    backgroundColor: 'rgba(0, 191, 165, 0.12)',
-                                                    borderColor: '#00d4b4',
-                                                    color: '#00d4b4'
+                                                    backgroundColor: 'var(--ui-c114)',
+                                                    borderColor: 'var(--ui-c9)',
+                                                    color: 'var(--ui-c9)'
                                                 }
                                             })
                                         }}
@@ -2883,16 +2939,16 @@ const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
                                             fontWeight: 'bold',
                                             transition: 'all 0.3s ease',
                                             ...(paginationType === 'recommend' ? {
-                                                backgroundColor: '#00bfa5',
-                                                color: '#000',
-                                                '&:hover': { backgroundColor: '#00d4b4' }
+                                                backgroundColor: 'var(--accent-500)',
+                                                color: 'var(--ui-c1)',
+                                                '&:hover': { backgroundColor: 'var(--ui-c9)' }
                                             } : {
-                                                borderColor: '#00bfa5',
-                                                color: '#00bfa5',
+                                                borderColor: 'var(--accent-500)',
+                                                color: 'var(--accent-500)',
                                                 '&:hover': { 
-                                                    backgroundColor: 'rgba(0, 191, 165, 0.12)',
-                                                    borderColor: '#00d4b4',
-                                                    color: '#00d4b4'
+                                                    backgroundColor: 'var(--ui-c114)',
+                                                    borderColor: 'var(--ui-c9)',
+                                                    color: 'var(--ui-c9)'
                                                 }
                                             })
                                         }}
@@ -2909,12 +2965,12 @@ const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
                                             p: 1,
                                             fontWeight: 'bold',
                                             transition: 'all 0.3s ease',
-                                            borderColor: '#00bfa5',
-                                            color: '#00bfa5',
+                                            borderColor: 'var(--accent-500)',
+                                            color: 'var(--accent-500)',
                                             '&:hover': { 
-                                                backgroundColor: 'rgba(0, 191, 165, 0.12)',
-                                                borderColor: '#00d4b4',
-                                                color: '#00d4b4'
+                                                backgroundColor: 'var(--ui-c114)',
+                                                borderColor: 'var(--ui-c9)',
+                                                color: 'var(--ui-c9)'
                                             }
                                         }}
                                     >
@@ -2980,15 +3036,15 @@ const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
                         {...(feedSwipeEnabled ? swipeHandlers : {})}
                     >
                         {articles.length === 0 && isLoading && (isDesktopLayout || (paginationType !== 'random' && paginationType !== 'recommend')) && (
-                            <Typography sx={{ color: '#f5f5f5', textAlign: 'center', pt: 4 }}>
-                                <CircularProgress sx={{ color: '#00bfa5' }} />
+                            <Typography sx={{ color: 'var(--text-primary)', textAlign: 'center', pt: 4 }}>
+                                <CircularProgress sx={{ color: 'var(--accent-500)' }} />
                             </Typography>
                         )}
                         {articles.length === 0 && isLoading && !isDesktopLayout && (paginationType === 'random' || paginationType === 'recommend') && (
                             <MobileFeedListSkeleton count={3} />
                         )}
                         {!isLoading && articles.length === 0 && !error && (
-                            <Typography sx={{ color: '#f5f5f5', textAlign: 'center', pt: 4 }}>
+                            <Typography sx={{ color: 'var(--text-primary)', textAlign: 'center', pt: 4 }}>
                                 {emptyStateMessage || (paginationType === 'search' ? 'Статьи не найдены.' : 'Статей пока нет.')}
                             </Typography>
                         )}
@@ -3036,11 +3092,11 @@ const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
                         
                         {isLoading && articles.length > 0 && (
                             <Box sx={{ display: 'flex', justifyContent: 'center', py: 2 }}>
-                                <CircularProgress size={30} sx={{ color: '#00bfa5' }} />
+                                <CircularProgress size={30} sx={{ color: 'var(--accent-500)' }} />
                             </Box>
                         )}
                         
-                        {!hasMore && articles.length > 0 && <Typography sx={{ color: '#f5f5f5', textAlign: 'center', py: 4 }}>Это все статьи!</Typography>}
+                        {!hasMore && articles.length > 0 && <Typography sx={{ color: 'var(--text-primary)', textAlign: 'center', py: 4 }}>Это все статьи!</Typography>}
                         {error && <Typography color="error" sx={{ textAlign: 'center', pt: 4 }}>{error}</Typography>}
                     </Box>
                 )}
@@ -3072,10 +3128,10 @@ const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
                         sx: {
                             mt: 1,
                             minWidth: 220,
-                            backgroundColor: '#1e1e1e',
-                            border: '1px solid rgba(0, 191, 165, 0.25)',
+                            backgroundColor: 'var(--surface-panel)',
+                            border: '1px solid color-mix(in oklab, var(--accent-500) 25%, transparent)',
                             borderRadius: 2,
-                            color: '#f5f5f5',
+                            color: 'var(--text-primary)',
                         },
                     },
                 }}
@@ -3087,7 +3143,7 @@ const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
                     }}
                     sx={{ minHeight: 48, transition: 'background-color 0.2s ease' }}
                 >
-                    <ListItemIcon sx={{ color: '#00e5c9' }}>
+                    <ListItemIcon sx={{ color: 'var(--accent-400)' }}>
                         <MenuBookIcon fontSize="small" />
                     </ListItemIcon>
                     <ListItemText primaryTypographyProps={{ fontSize: '0.95rem' }} primary="Полезные материалы" />
@@ -3099,7 +3155,7 @@ const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
                     }}
                     sx={{ minHeight: 48 }}
                 >
-                    <ListItemIcon sx={{ color: '#00e5c9' }}>
+                    <ListItemIcon sx={{ color: 'var(--accent-400)' }}>
                         <HelpOutlineIcon fontSize="small" />
                     </ListItemIcon>
                     <ListItemText primaryTypographyProps={{ fontSize: '0.95rem' }} primary="FAQ" />
@@ -3111,7 +3167,7 @@ const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
                     }}
                     sx={{ minHeight: 48 }}
                 >
-                    <ListItemIcon sx={{ color: '#00e5c9' }}>
+                    <ListItemIcon sx={{ color: 'var(--accent-400)' }}>
                         <SlideshowIcon fontSize="small" />
                     </ListItemIcon>
                     <ListItemText primaryTypographyProps={{ fontSize: '0.95rem' }} primary="Инструкция по сайту" />
@@ -3124,7 +3180,7 @@ const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
                         }}
                         sx={{ minHeight: 48 }}
                     >
-                        <ListItemIcon sx={{ color: '#ff8a80' }}>
+                        <ListItemIcon sx={{ color: 'var(--ui-c98)' }}>
                             <AdminPanelSettingsIcon fontSize="small" />
                         </ListItemIcon>
                         <ListItemText primaryTypographyProps={{ fontSize: '0.95rem' }} primary="Админ-панель" />

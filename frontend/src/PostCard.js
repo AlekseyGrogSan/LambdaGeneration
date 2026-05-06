@@ -48,9 +48,9 @@ const CodeBlock = ({ language, value }) => {
                 my: 2,
                 borderRadius: '14px',
                 overflow: 'hidden',
-                border: '1px solid rgba(0, 229, 201, 0.32)',
-                boxShadow: '0 16px 36px rgba(0, 0, 0, 0.45)',
-                background: 'linear-gradient(180deg, rgba(15, 19, 24, 0.98), rgba(10, 12, 16, 0.98))',
+                border: '1px solid var(--ui-c131)',
+                boxShadow: '0 16px 36px var(--ui-c108)',
+                background: 'linear-gradient(180deg, var(--ui-c150), var(--ui-c146))',
             }}
         >
             <Box
@@ -60,24 +60,24 @@ const CodeBlock = ({ language, value }) => {
                     alignItems: 'center',
                     px: 1.5,
                     py: 1,
-                    background: 'linear-gradient(90deg, rgba(21, 25, 31, 0.98), rgba(15, 18, 24, 0.98))',
-                    borderBottom: '1px solid rgba(255,255,255,0.08)'
+                    background: 'linear-gradient(90deg, var(--ui-c167), var(--ui-c149))',
+                    borderBottom: '1px solid color-mix(in oklab, var(--text-primary) 8%, transparent)'
                 }}
             >
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.2 }}>
-                    <Typography variant='caption' sx={{ color: '#9fd8ff', fontWeight: 700, letterSpacing: 0.4 }}>
+                    <Typography variant='caption' sx={{ color: 'var(--ui-c63)', fontWeight: 700, letterSpacing: 0.4 }}>
                         {(language || 'text').toUpperCase()}
                     </Typography>
                 </Box>
-                <IconButton size='small' onClick={handleCopy} sx={{ color: '#8fb3d8', '&:hover': { color: '#e8f5ff' } }}>
-                    {isCopied ? <CheckIcon fontSize='small' sx={{ color: '#2ee59d' }} /> : <ContentCopyIcon fontSize='small' />}
+                <IconButton size='small' onClick={handleCopy} sx={{ color: 'var(--ui-c60)', '&:hover': { color: 'var(--ui-c90)' } }}>
+                    {isCopied ? <CheckIcon fontSize='small' sx={{ color: 'var(--ui-c39)' }} /> : <ContentCopyIcon fontSize='small' />}
                 </IconButton>
             </Box>
             <SyntaxHighlighter
                 language={normalizeCodeLanguage(language) !== 'text' ? normalizeCodeLanguage(language) : undefined}
                 style={vscDarkPlus}
                 showLineNumbers
-                lineNumberStyle={{ color: 'rgba(180, 210, 255, 0.45)', minWidth: '2.2em', paddingRight: '1em' }}
+                lineNumberStyle={{ color: 'var(--ui-c160)', minWidth: '2.2em', paddingRight: '1em' }}
                 customStyle={{
                     margin: 0,
                     padding: '18px 20px',
@@ -94,26 +94,26 @@ const CodeBlock = ({ language, value }) => {
                     sx={{
                         px: 1.5,
                         py: 1,
-                        borderTop: '1px solid rgba(255,255,255,0.08)',
-                        background: 'linear-gradient(180deg, rgba(12,14,18,0.86), rgba(9,11,14,0.98))',
+                        borderTop: '1px solid color-mix(in oklab, var(--text-primary) 8%, transparent)',
+                        background: 'linear-gradient(180deg, var(--ui-c147), var(--ui-c210))',
                         display: 'flex',
                         justifyContent: 'space-between',
                         alignItems: 'center'
                     }}
                 >
-                    <Typography variant='caption' sx={{ color: '#86a6c5' }}>
+                    <Typography variant='caption' sx={{ color: 'var(--ui-c55)' }}>
                         {codeLines.length} строк кода
                     </Typography>
                     <Button
                         size='small'
                         onClick={() => setIsExpanded((prev) => !prev)}
                         sx={{
-                            color: '#9fd8ff',
+                            color: 'var(--ui-c63)',
                             textTransform: 'none',
                             fontWeight: 700,
                             minWidth: 'auto',
                             px: 1,
-                            '&:hover': { backgroundColor: 'rgba(159,216,255,0.1)' }
+                            '&:hover': { backgroundColor: 'var(--ui-c152)' }
                         }}
                     >
                         {isExpanded ? 'Свернуть' : 'Показать полностью'}
@@ -147,17 +147,17 @@ const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || '/api';
 
 // --- ОБЩИЙ МАССИВ ЦВЕТОВ ДЛЯ ТЕГОВ ---
 const TAG_COLORS = [
-    '#ff6f00', 
-    '#00e676', 
-    '#2979ff', 
-    '#ff1744', 
-    '#e040fb', 
-    '#00bcd4', 
+    'var(--ui-c97)', 
+    'var(--ui-c13)', 
+    'var(--ui-c37)', 
+    'var(--ui-c94)', 
+    'var(--ui-c86)', 
+    'var(--ui-c7)', 
 ];
 
 // ФИКС: ВЫНОСИМ СТИЛЬ МЕТКИ ЗА ПРЕДЕЛЫ КОМПОНЕНТА
 const labelStyle = {
-    color: '#00e5c9',
+    color: 'var(--accent-400)',
     display: 'block',
     mb: 0.5,
     textTransform: 'uppercase',
@@ -313,10 +313,10 @@ const PostCard = React.memo(({
 
                     // Build our standard unified block
                     const newWrapper = document.createElement('div');
-                    newWrapper.innerHTML = `<table class="tg-code-block code-block-table" style="width: 100%; background: #282c34; border-radius: 8px; border: 1px solid rgba(255,255,255,0.12); border-collapse: separate; border-spacing: 0; margin: 14px 0; overflow: hidden; table-layout: fixed;">
+                    newWrapper.innerHTML = `<table class="tg-code-block code-block-table" style="width: 100%; background: var(--ui-c36); border-radius: 8px; border: 1px solid var(--ui-c192); border-collapse: separate; border-spacing: 0; margin: 14px 0; overflow: hidden; table-layout: fixed;">
     <thead>
         <tr>
-            <th style="padding: 6px 12px; background: #21252b; color: rgba(255,255,255,0.6); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 12px; text-align: left; font-weight: bold; border-bottom: 1px solid rgba(255,255,255,0.12); user-select: none;">
+            <th style="padding: 6px 12px; background: var(--ui-c30); color: var(--ui-c199); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 12px; text-align: left; font-weight: bold; border-bottom: 1px solid var(--ui-c192); user-select: none;">
                 ${language}
             </th>
         </tr>
@@ -448,7 +448,7 @@ const PostCard = React.memo(({
             sx={{
                 width: '100%',
                 maxWidth: '100%',
-                backgroundColor: '#2c2c2c',
+                backgroundColor: 'var(--surface-elevated)',
                 borderRadius: '12px',
                 height: { xs: 'auto', md: '85vh' },
                 minHeight: { xs: 0, md: 'unset' },
@@ -456,7 +456,7 @@ const PostCard = React.memo(({
                 touchAction: 'manipulation',
                 transition: 'box-shadow 0.25s ease, transform 0.2s ease',
                 '&:hover': {
-                    boxShadow: { xs: 'none', md: '0 8px 16px rgba(0, 0, 0, 0.4)' },
+                    boxShadow: { xs: 'none', md: '0 8px 16px var(--ui-c107)' },
                 },
                 display: 'flex',
                 flexDirection: 'column',
@@ -474,10 +474,10 @@ const PostCard = React.memo(({
                         left: '50%',
                         transform: 'translate(-50%, -50%)',
                         zIndex: 2000,
-                        backgroundColor: 'rgba(18, 18, 18, 0.95)',
-                        border: '1px solid rgba(0, 191, 165, 0.6)',
+                        backgroundColor: 'var(--ui-c157)',
+                        border: '1px solid var(--ui-c122)',
                         borderRadius: '12px',
-                        boxShadow: '0 10px 30px rgba(0, 0, 0, 0.5)',
+                        boxShadow: '0 10px 30px var(--ui-c109)',
                         px: 3,
                         py: 1.5,
                         pointerEvents: 'none',
@@ -513,7 +513,7 @@ const PostCard = React.memo(({
                             <Box sx={{ display: 'flex', alignItems: 'center', gap: { xs: 0.75, md: 1 } }}>
                                 <Avatar
                                     src={resolvedAuthorAvatar}
-                                    sx={{ width: { xs: 28, md: 34 }, height: { xs: 28, md: 34 }, border: '2px solid #00bfa5' }}
+                                    sx={{ width: { xs: 28, md: 34 }, height: { xs: 28, md: 34 }, border: '2px solid var(--accent-500)' }}
                                     imgProps={{
                                         onError: (e) => {
                                             if (!e.currentTarget.dataset.retried && resolvedAuthorAvatar) {
@@ -530,7 +530,7 @@ const PostCard = React.memo(({
                                         <Typography 
                                             variant="h6" 
                                             sx={{
-                                                color: '#00e5c9',
+                                                color: 'var(--accent-400)',
                                                 fontWeight: 'bold',
                                                 fontSize: { xs: '0.95rem', md: '1.25rem' },
                                                 overflow: 'hidden',
@@ -543,7 +543,7 @@ const PostCard = React.memo(({
                                         <ProfileIcon
                                             icon={authorProfileIcon}
                                             size={20}
-                                            sx={{ filter: 'drop-shadow(0 0 4px rgba(0, 229, 201, 0.25))' }}
+                                            sx={{ filter: 'drop-shadow(0 0 4px var(--ui-c128))' }}
                                         />
                                     </Box>
                                     <UserRoleBadge role={authorRole} size="sm" />
@@ -560,9 +560,9 @@ const PostCard = React.memo(({
                                 maxWidth: '100%',
                                 pb: 0.25,
                                 scrollbarWidth: 'thin',
-                                scrollbarColor: '#00bfa5 #2c2c2c',
+                                scrollbarColor: 'var(--accent-500) var(--surface-elevated)',
                                 '&::-webkit-scrollbar': { height: 4 },
-                                '&::-webkit-scrollbar-thumb': { background: '#00bfa5', borderRadius: 4 },
+                                '&::-webkit-scrollbar-thumb': { background: 'var(--accent-500)', borderRadius: 4 },
                             }}
                         >
                             {mapTagsToLabels(Array.isArray(tags) ? tags : []).map((tag, index) => {
@@ -594,7 +594,7 @@ const PostCard = React.memo(({
                     <Typography 
                         variant="h5" 
                         sx={{ 
-                            color: '#f5f5f5',
+                            color: 'var(--text-primary)',
                             fontWeight: 'bold',
                             fontSize: { xs: '0.92rem', sm: '1.1rem', md: '1.5rem' },
                             overflow: 'hidden', 
@@ -611,7 +611,7 @@ const PostCard = React.memo(({
                     </Typography>
                 </Box>
 
-                <Box sx={{ flexGrow: { xs: 0, md: 1 }, mb: { xs: 1, md: 2 }, overflow: 'hidden', color: '#d0d0d0' }}>
+                <Box sx={{ flexGrow: { xs: 0, md: 1 }, mb: { xs: 1, md: 2 }, overflow: 'hidden', color: 'var(--ui-c80)' }}>
                     <Typography variant="body2" sx={{ ...labelStyle, display: { xs: 'none', md: 'block' } }}>
                         Описание
                     </Typography>
@@ -641,7 +641,7 @@ const PostCard = React.memo(({
                             height: { xs: 180, sm: 220, md: 200 },
                             position: 'relative',
                             borderRadius: '12px',
-                            border: '1px solid #333',
+                            border: '1px solid var(--border-default)',
                             backgroundColor: 'transparent',
                             overflow: 'hidden',
                         }}
@@ -677,7 +677,7 @@ const PostCard = React.memo(({
             )}
 
             <Box sx={{ 
-                borderTop: '1px solid #333', 
+                borderTop: '1px solid var(--border-default)', 
                 px: { xs: 0.5, md: 1.5 },
                 py: { xs: 0.75, md: 1.5 },
                 display: 'flex', 
@@ -689,7 +689,7 @@ const PostCard = React.memo(({
                     <Box sx={{ display: 'flex', alignItems: 'center' }}>
                         <IconButton
                             sx={{
-                                color: isLiked ? '#ff1744' : '#00e5c9',
+                                color: isLiked ? 'var(--ui-c94)' : 'var(--accent-400)',
                                 minWidth: 44,
                                 minHeight: 44,
                                 transition: 'color 0.2s ease, transform 0.15s ease',
@@ -700,7 +700,7 @@ const PostCard = React.memo(({
                         >
                             <FavoriteIcon sx={{ fontSize: { xs: 26, md: 30 } }} />
                         </IconButton>
-                        <Typography variant="subtitle1" sx={{ color: '#f5f5f5', fontWeight: 'bold', fontSize: { xs: '0.9rem', md: '1rem' } }}>
+                        <Typography variant="subtitle1" sx={{ color: 'var(--text-primary)', fontWeight: 'bold', fontSize: { xs: '0.9rem', md: '1rem' } }}>
                             {likesCount}
                         </Typography>
                     </Box>
@@ -709,7 +709,7 @@ const PostCard = React.memo(({
                         <Box sx={{ display: 'flex', alignItems: 'center' }}>
                             <IconButton
                                 sx={{
-                                    color: '#00e5c9',
+                                    color: 'var(--accent-400)',
                                     minWidth: 44,
                                     minHeight: 44,
                                     transition: 'color 0.2s ease',
@@ -719,7 +719,7 @@ const PostCard = React.memo(({
                             >
                                 <ChatBubbleOutlineIcon sx={{ fontSize: { xs: 26, md: 30 } }} />
                             </IconButton>
-                            <Typography variant="subtitle1" sx={{ color: '#f5f5f5', fontWeight: 'bold', fontSize: { xs: '0.9rem', md: '1rem' } }}>
+                            <Typography variant="subtitle1" sx={{ color: 'var(--text-primary)', fontWeight: 'bold', fontSize: { xs: '0.9rem', md: '1rem' } }}>
                                 {commentsCount}
                             </Typography>
                         </Box>
@@ -728,7 +728,7 @@ const PostCard = React.memo(({
                     <Box sx={{ display: 'flex', alignItems: 'center', ml: 'auto' }}>
                         <IconButton
                             sx={{
-                                color: '#00e5c9',
+                                color: 'var(--accent-400)',
                                 minWidth: 44,
                                 minHeight: 44,
                                 transition: 'color 0.2s ease',
@@ -739,7 +739,7 @@ const PostCard = React.memo(({
                         >
                             <VisibilityOutlinedIcon sx={{ fontSize: { xs: 24, md: 28 } }} />
                         </IconButton>
-                        <Typography variant="subtitle1" sx={{ color: '#f5f5f5', fontWeight: 'bold', fontSize: { xs: '0.9rem', md: '1rem' } }}>
+                        <Typography variant="subtitle1" sx={{ color: 'var(--text-primary)', fontWeight: 'bold', fontSize: { xs: '0.9rem', md: '1rem' } }}>
                             {viewsCount}
                         </Typography>
                     </Box>
@@ -747,7 +747,7 @@ const PostCard = React.memo(({
                     {showRepost && (
                         <IconButton
                             sx={{
-                                color: '#00e5c9',
+                                color: 'var(--accent-400)',
                                 minWidth: 44,
                                 minHeight: 44,
                                 ml: 0.5,
