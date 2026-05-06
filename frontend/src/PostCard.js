@@ -25,6 +25,7 @@ import hljs from 'highlight.js';
 import 'highlight.js/styles/atom-one-dark.css';
 import { formatContentForRender, normalizeCodeLanguage } from './contentFormatting';
 import { mapTagsToLabels } from './CategoryModal';
+import UserRoleBadge from './UserRoleBadge';
 
 const CodeBlock = ({ language, value }) => {
     const [isCopied, setIsCopied] = React.useState(false);
@@ -180,6 +181,7 @@ const PostCard = React.memo(({
     nickname, 
     authorAvatar,
     authorProfileIcon,
+    authorRole,
     authorId,
     onAuthorClick,
     title, 
@@ -523,25 +525,28 @@ const PostCard = React.memo(({
                                         },
                                     }}
                                 />
-                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, minWidth: 0 }}>
-                                    <Typography 
-                                        variant="h6" 
-                                        sx={{
-                                            color: '#00e5c9',
-                                            fontWeight: 'bold',
-                                            fontSize: { xs: '0.95rem', md: '1.25rem' },
-                                            overflow: 'hidden',
-                                            textOverflow: 'ellipsis',
-                                            whiteSpace: 'nowrap',
-                                        }}
-                                    >
-                                        @{nickname}
-                                    </Typography>
-                                    <ProfileIcon
-                                        icon={authorProfileIcon}
-                                        size={20}
-                                        sx={{ filter: 'drop-shadow(0 0 4px rgba(0, 229, 201, 0.25))' }}
-                                    />
+                                <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', minWidth: 0, gap: 0.25 }}>
+                                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, minWidth: 0, flexWrap: 'wrap' }}>
+                                        <Typography 
+                                            variant="h6" 
+                                            sx={{
+                                                color: '#00e5c9',
+                                                fontWeight: 'bold',
+                                                fontSize: { xs: '0.95rem', md: '1.25rem' },
+                                                overflow: 'hidden',
+                                                textOverflow: 'ellipsis',
+                                                whiteSpace: 'nowrap',
+                                            }}
+                                        >
+                                            {nickname}
+                                        </Typography>
+                                        <ProfileIcon
+                                            icon={authorProfileIcon}
+                                            size={20}
+                                            sx={{ filter: 'drop-shadow(0 0 4px rgba(0, 229, 201, 0.25))' }}
+                                        />
+                                    </Box>
+                                    <UserRoleBadge role={authorRole} size="sm" />
                                 </Box>
                             </Box>
                         </Box>

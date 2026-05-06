@@ -40,6 +40,7 @@ import PostCard from './PostCard';
 import EditArticleModal from './EditArticleModal';
 import EmailVerificationModal from './EmailVerificationModal'; 
 import AvatarCropDialog from './AvatarCropDialog';
+import UserRoleBadge from './UserRoleBadge';
 import { buildArticleImageUrl, buildAvatarUrl, DEFAULT_AVATAR_SRC, formatBytes, isAvatarTooLarge, MAX_AVATAR_BYTES } from './avatarUtils';
 import { buildModerationErrorMessage } from './moderationFlags';
 import { ProfileIcon, PROFILE_ICON_PRESETS, normalizeProfileIconValue, resolveProfileIconValue, extractNameAndIcon } from './profileIcons';
@@ -406,9 +407,11 @@ const ProfileModal = ({ open, handleClose, userId, onUnauthorized, onLogout, onP
             
             const postsJson = await postsResponse.json(); 
             const profileAvatar = profileJson.pathAvatar ?? profileJson.PathAvatar ?? null;
+            const profileRole = profileJson.tag ?? profileJson.Tag ?? 'user';
             const formattedPosts = (postsJson.articles || []).map(article => ({
                 ...mapArticleFromApi(article, profileJson.name || 'Автор'),
                 authorAvatar: profileAvatar,
+                authorRole: profileRole,
             }));
             setUserPosts(formattedPosts);
 
@@ -746,6 +749,7 @@ const ProfileModal = ({ open, handleClose, userId, onUnauthorized, onLogout, onP
             nickname: iconInfo.name,
             authorAvatar: article.pathAvatar ?? article.PathAvatar ?? article.authorAvatar ?? article.author_avatar ?? null,
             authorProfileIcon: iconInfo.icon || normalizeProfileIconValue(resolveProfileIconValue(article)),
+            authorRole: article.tag ?? article.Tag ?? article.authorRole ?? 'user',
             title: article.article_title ?? article.articleTitle ?? article.ArticleTitle,
             article_preview: article.article_preview ?? article.articlePreview ?? article.ArticlePreview,
             article_content: article.article_content ?? article.articleContent ?? article.ArticleContent,
@@ -771,6 +775,7 @@ const ProfileModal = ({ open, handleClose, userId, onUnauthorized, onLogout, onP
             nickname,
             authorAvatar,
             authorProfileIcon,
+            authorRole: profile.tag ?? profile.Tag ?? article.authorRole ?? 'user',
         };
     };
 
@@ -1245,6 +1250,7 @@ const ProfileModal = ({ open, handleClose, userId, onUnauthorized, onLogout, onP
                                 </>
                             )}
                         </Box>
+                        <UserRoleBadge role={profileData?.tag ?? profileData?.Tag ?? 'user'} size="md" />
                         {isMyProfile && (
                             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
                                 <Typography variant="h6" sx={{ color: '#00bfa5' }}>

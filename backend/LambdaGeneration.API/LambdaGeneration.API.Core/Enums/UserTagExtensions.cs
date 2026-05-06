@@ -8,7 +8,7 @@ namespace LambdaGeneration.API.Core.Enums
             {
                 UserTag.User => "user",
                 UserTag.Admin => "admin",
-                UserTag.DrossBoss => "dross-boss",
+                UserTag.DrossBoss => "drossboss",
                 _ => "user"
             };
         }
@@ -18,8 +18,8 @@ namespace LambdaGeneration.API.Core.Enums
             return tagValue?.Trim().ToLowerInvariant() switch
             {
                 "admin" => UserTag.Admin,
-                "dross-boss" => UserTag.DrossBoss,
-                "dross_boss" => UserTag.DrossBoss,
+                "drossboss" => UserTag.DrossBoss,
+                "user" => UserTag.User,
                 _ => UserTag.User
             };
         }

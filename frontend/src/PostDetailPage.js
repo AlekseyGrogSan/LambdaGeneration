@@ -37,6 +37,7 @@ import hljs from 'highlight.js';
 import 'highlight.js/styles/atom-one-dark.css';
 import { formatContentForRender, normalizeCodeLanguage } from './contentFormatting';
 import { mapTagsToLabels } from './CategoryModal';
+import UserRoleBadge from './UserRoleBadge';
 
 const CodeBlock = ({ language, value }) => {
     const [isCopied, setIsCopied] = React.useState(false);
@@ -449,6 +450,7 @@ const PostDetailPage = React.memo(({
     nickname,
     authorId,
     authorAvatar,
+    authorRole,
     authorProfileIcon,
     containerRef,
     onCommentsCountChange,
@@ -1135,7 +1137,7 @@ const PostDetailPage = React.memo(({
                     sx={{ cursor: onAuthorClick && authorId ? 'pointer' : 'default' }}
                 >
                     <Typography variant="body2" sx={labelStyle}>Автор</Typography>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
                         <Avatar
                             src={buildAvatarUrl(API_BASE_URL, authorAvatar)}
                             sx={{ width: 34, height: 34, border: '2px solid #00bfa5' }}
@@ -1145,7 +1147,8 @@ const PostDetailPage = React.memo(({
                                 },
                             }}
                         />
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, flexWrap: 'wrap' }}>
+                            <UserRoleBadge role={authorRole} size="sm" />
                             <Typography variant="h6" sx={{ color: '#00bfa5', fontWeight: 'bold' }}>
                                 {nickname}
                             </Typography>

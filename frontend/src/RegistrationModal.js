@@ -8,6 +8,7 @@ import {
     Link as MuiLink,
 } from '@mui/material';
 import EmailVerificationModal from './EmailVerificationModal';
+import AvatarCropDialog from './AvatarCropDialog';
 import { formatBytes, isAvatarTooLarge, MAX_AVATAR_BYTES } from './avatarUtils';
 import { buildModerationErrorMessage } from './moderationFlags';
 
@@ -102,6 +103,8 @@ const RegistrationModal = ({ open, handleClose, onForgotPassword, onAuthSuccess,
     const [pendingEmail, setPendingEmail] = useState('');
     const [avatarFile, setAvatarFile] = useState(null);
     const [avatarError, setAvatarError] = useState('');
+    const [cropImageSrc, setCropImageSrc] = useState(null);
+    const [isCropDialogOpen, setIsCropDialogOpen] = useState(false);
 
     useEffect(() => {
         if (open) {
@@ -119,6 +122,8 @@ const RegistrationModal = ({ open, handleClose, onForgotPassword, onAuthSuccess,
             setAvatarFile(null);
             setAvatarError('');
             setIsSubmitting(false);
+            setCropImageSrc(null);
+            setIsCropDialogOpen(false);
         }
     }, [open]);
 
@@ -148,10 +153,32 @@ const RegistrationModal = ({ open, handleClose, onForgotPassword, onAuthSuccess,
         if (isAvatarTooLarge(file)) {
             setAvatarError(`Размер аватара не должен превышать ${formatBytes(MAX_AVATAR_BYTES)}.`);
             setAvatarFile(null);
+            e.target.value = '';
             return;
         }
         setAvatarError('');
-        setAvatarFile(file);
+        const reader = new FileReader();
+        reader.onload = () => {
+            setCropImageSrc(reader.result);
+            setIsCropDialogOpen(true);
+        };
+        reader.readAsDataURL(file);
+        e.target.value = '';
+    };
+
+    const handleCropCancel = () => {
+        setIsCropDialogOpen(false);
+        setCropImageSrc(null);
+    };
+
+    const handleCropComplete = (croppedFile) => {
+        setIsCropDialogOpen(false);
+        if (!croppedFile) return;
+        const fileToUpload = croppedFile instanceof File
+            ? croppedFile
+            : new File([croppedFile], 'avatar.jpg', { type: croppedFile.type || 'image/jpeg' });
+        setAvatarFile(fileToUpload);
+        setCropImageSrc(null);
     };
 
     const handleSubmit = async (e) => {
@@ -316,6 +343,13 @@ const RegistrationModal = ({ open, handleClose, onForgotPassword, onAuthSuccess,
                     </Box>
                 </Box>
             </Modal>
+
+            <AvatarCropDialog
+                open={isCropDialogOpen}
+                imageSrc={cropImageSrc}
+                onClose={handleCropCancel}
+                onCropComplete={handleCropComplete}
+            />
 
             <EmailVerificationModal
                 open={showVerification}

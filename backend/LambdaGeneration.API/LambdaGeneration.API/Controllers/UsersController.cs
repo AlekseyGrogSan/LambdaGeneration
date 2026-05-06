@@ -93,8 +93,22 @@ namespace LambdaGeneration.API.Controllers
                         });
                     }
 
-                    fileName = $"{Guid.NewGuid()}{Path.GetExtension(request.Avatar.FileName)}";
-                    var filePath = Path.Combine(_env.WebRootPath, "temp", fileName);
+                    var fileExtension = Path.GetExtension(request.Avatar.FileName);
+                    if (string.IsNullOrWhiteSpace(fileExtension))
+                    {
+                        fileExtension = request.Avatar.ContentType?.ToLowerInvariant() switch
+                        {
+                            "image/png" => ".png",
+                            "image/webp" => ".webp",
+                            "image/gif" => ".gif",
+                            _ => ".jpg"
+                        };
+                    }
+
+                    fileName = $"{Guid.NewGuid()}{fileExtension}";
+                    var tempDir = Path.Combine(_env.WebRootPath, "temp");
+                    Directory.CreateDirectory(tempDir);
+                    var filePath = Path.Combine(tempDir, fileName);
 
                     using (var stream = new FileStream(filePath, FileMode.Create))
                     {
@@ -127,18 +141,17 @@ namespace LambdaGeneration.API.Controllers
                 if (string.IsNullOrEmpty(pendingData))
                     return BadRequest("Данные регистрации не найдены");
 
-                string avatarUrlForDb = !string.IsNullOrEmpty(pendingAvatar)
-                    ? $"/uploads/{pendingAvatar}"
-                    : null;
                 if (!string.IsNullOrEmpty(pendingAvatar))
                 {
                     var tempPath = Path.Combine(_env.WebRootPath, "temp", pendingAvatar);
-                    var finalPath = Path.Combine(_env.WebRootPath, "uploads", pendingAvatar);
+                    var uploadsDir = Path.Combine(_env.WebRootPath, "uploads");
+                    Directory.CreateDirectory(uploadsDir);
+                    var finalPath = Path.Combine(uploadsDir, pendingAvatar);
 
                     if (System.IO.File.Exists(tempPath))
                     {
                         // Перемещаем (физический перенос файла по адресу)
-                        System.IO.File.Move(tempPath, finalPath);
+                        System.IO.File.Move(tempPath, finalPath, true);
                     }
                 }
 
