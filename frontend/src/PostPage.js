@@ -53,6 +53,7 @@ import SiteGuideSlidesModal from './SiteGuideSlidesModal';
 import BestArticlesList from './BestArticlesList';
 import { buildArticleImageUrl, buildAvatarUrl, DEFAULT_AVATAR_SRC } from './avatarUtils';
 import { ProfileIcon, resolveProfileIconValue, extractNameAndIcon } from './profileIcons';
+import UserRoleBadge from './UserRoleBadge';
 
 const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || '/api';
 const POST_PAGE_NAV_STATE_KEY = 'lambda.postPage.navState.v1';
@@ -239,6 +240,9 @@ const Sidebar = ({ handleOpen, handleProfileOpen, handlePostOpen, handleCategory
                                 {currentUserName}
                             </Typography>
                             <ProfileIcon icon={currentUserIcon} size={18} />
+                        </Box>
+                        <Box sx={{ mt: 0.5 }}>
+                            <UserRoleBadge role={currentUser.tag ?? currentUser.Tag} size="sm" />
                         </Box>
                     </Box>
                 </Box>
@@ -1544,6 +1548,7 @@ const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
             nickname: iconInfo.name,
             authorAvatar: authorData.pathAvatar ?? authorData.PathAvatar ?? null,
             authorProfileIcon: iconInfo.icon || resolveProfileIconValue(authorData),
+            authorRole: authorData.tag ?? authorData.Tag ?? 'user',
             authorBio: authorData.aboutUser || 'Описание недоступно.',
             title: article.articleTitle || article.article_title || article.ArticleTitle || 'Нет названия', 
             article_preview: article.articlePreview || article.article_preview || article.ArticlePreview || 'Нет описания',
@@ -2922,6 +2927,7 @@ const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
                             authorId={selectedPost.author_id} 
                             authorAvatar={selectedPost.authorAvatar}
                             authorProfileIcon={selectedPost.authorProfileIcon}
+                            authorRole={selectedPost.authorRole}
                             onTagClick={handleTagClickFromDetail}
                             onAuthorClick={handleOtherAuthorProfileOpen} 
                             onUnauthorized={handleOpen}

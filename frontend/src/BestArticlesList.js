@@ -11,8 +11,21 @@ import ChatBubbleOutlineIcon from '@mui/icons-material/ChatBubbleOutline';
 import FavoriteBorderIcon from '@mui/icons-material/FavoriteBorder';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import { buildAvatarUrl, DEFAULT_AVATAR_SRC } from './avatarUtils';
+import { resolveProfileIconValue, extractNameAndIcon } from './profileIcons';
+import UserRoleBadge from './UserRoleBadge';
+import { Chip } from '@mui/material';
+import { mapTagsToLabels } from './CategoryModal';
 
 const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || '/api';
+
+const TAG_COLORS = [
+    '#ff6f00', '#00e676', '#2979ff', '#ff1744', '#e040fb', '#00bcd4'
+];
+
+const getTagColor = (tag, index) => {
+    const hash = tag.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+    return TAG_COLORS[(hash + index) % TAG_COLORS.length];
+};
 
 const BestArticlesList = ({ isMobile, onArticleClick, open, onClose }) => {
   const [articles, setArticles] = useState([]);
@@ -38,17 +51,20 @@ const BestArticlesList = ({ isMobile, onArticleClick, open, onClose }) => {
                         .then(r => r.json());
                 } catch(e) {}
             }
+            const rawNickname = authorData.userName || authorData.UserName || authorData.name || authorData.Name || 'Автор';
+            const iconInfo = extractNameAndIcon(rawNickname);
             return {
                 ...art,
-                author_name: authorData.userName || authorData.UserName || authorData.name || authorData.Name,
+                author_name: iconInfo.name,
                 author_avatar_path: authorData.pathAvatar || authorData.PathAvatar,
                 
                 id: art.article_id ?? art.articleId,
                 article_id: art.article_id ?? art.articleId,
                 author_id: rawAuthorId,
-                nickname: authorData.userName || authorData.UserName || authorData.name || authorData.Name || "РђРІС‚РѕСЂ",
+                nickname: iconInfo.name,
                 authorAvatar: authorData.pathAvatar || authorData.PathAvatar,
-                authorProfileIcon: authorData.profileIcon,
+                authorProfileIcon: iconInfo.icon || resolveProfileIconValue(authorData),
+                authorRole: authorData.tag ?? authorData.Tag ?? 'user',
                 title: art.article_title ?? art.articleTitle,
                 article_preview: art.article_preview ?? art.articlePreview,
                 article_content: art.article_content ?? art.articleContent,
@@ -166,11 +182,32 @@ const BestArticlesList = ({ isMobile, onArticleClick, open, onClose }) => {
                       fontSize: isFirst ? '1.1rem' : '0.95rem',
                       whiteSpace: 'nowrap',
                       overflow: 'hidden',
-                      textOverflow: 'ellipsis'
+                      textOverflow: 'ellipsis',
+                      flex: 1
                     }}
                   >
-                    {a.article_title}
+                    {a.article_title || a.title}
                   </Typography>
+                  {/* Tags */}
+                  <Box sx={{ display: { xs: 'none', md: 'flex' }, gap: 0.5, flexShrink: 0 }}>
+                    {mapTagsToLabels(Array.isArray(a.tags) ? a.tags : []).slice(0, 2).map((tag, i) => {
+                      const strTag = String(tag);
+                      return (
+                        <Chip
+                          key={i}
+                          label={strTag}
+                          size="small"
+                          sx={{
+                            backgroundColor: getTagColor(strTag, i),
+                            color: 'white',
+                            fontWeight: 'bold',
+                            height: 18,
+                            fontSize: '0.65rem'
+                          }}
+                        />
+                      );
+                    })}
+                  </Box>
                 </Box>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, color: '#bdbdbd', fontSize: '0.75rem' }}>
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, flex: 1, minWidth: 0 }}>
