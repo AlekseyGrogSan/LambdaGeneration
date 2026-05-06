@@ -9,6 +9,8 @@ import FolderOutlinedIcon from '@mui/icons-material/FolderOutlined';
 import FolderIcon from '@mui/icons-material/Folder';
 import PersonOutlineIcon from '@mui/icons-material/PersonOutline';
 import PersonIcon from '@mui/icons-material/Person';
+import DarkModeRoundedIcon from '@mui/icons-material/DarkModeRounded';
+import LightModeRoundedIcon from '@mui/icons-material/LightModeRounded';
 
 const NAV_ITEM_SX = {
     flex: 1,
@@ -61,6 +63,8 @@ const MobileBottomNav = ({
     onCreate,
     onCategories,
     onProfile,
+    onThemeToggle,
+    mode = 'dark',
 }) => {
     if (hidden) return null;
 
@@ -81,9 +85,9 @@ const MobileBottomNav = ({
                 px: 0.5,
                 pt: 0.5,
                 pb: 'calc(8px + env(safe-area-inset-bottom, 0px))',
-                background: 'linear-gradient(180deg, rgba(18,18,18,0) 0%, rgba(18,18,18,0.92) 18%, #141414 100%)',
-                borderTop: '1px solid rgba(0, 191, 165, 0.2)',
-                boxShadow: '0 -8px 32px rgba(0, 0, 0, 0.45)',
+                background: 'linear-gradient(180deg, transparent 0%, color-mix(in oklab, var(--bg-elevated) 82%, transparent) 18%, var(--bg-elevated) 100%)',
+                borderTop: '1px solid var(--border-default)',
+                boxShadow: 'var(--shadow-soft)',
                 backdropFilter: 'blur(12px)',
                 transition: 'transform 0.25s ease, opacity 0.25s ease',
             }}
@@ -200,13 +204,15 @@ const MobileBottomNav = ({
             <Box
                 component="button"
                 type="button"
-                onClick={onProfile}
+                onClick={onThemeToggle || onProfile}
                 sx={{
                     ...NAV_ITEM_SX,
                     color: profileActive ? '#00e5c9' : '#9e9e9e',
                 }}
             >
-                {isAuthenticated ? (
+                {onThemeToggle ? (
+                    mode === 'dark' ? <LightModeRoundedIcon sx={{ fontSize: 26 }} /> : <DarkModeRoundedIcon sx={{ fontSize: 26 }} />
+                ) : isAuthenticated ? (
                     <Avatar
                         src={profileAvatarSrc || undefined}
                         sx={{
@@ -232,7 +238,7 @@ const MobileBottomNav = ({
                     <PersonOutlineIcon sx={{ fontSize: 26 }} />
                 )}
                 <Typography component="span" sx={labelSx(profileActive)}>
-                    {isAuthenticated ? 'Профиль' : 'Вход/Профиль'}
+                    {onThemeToggle ? 'Тема' : (isAuthenticated ? 'Профиль' : 'Вход/Профиль')}
                 </Typography>
             </Box>
         </Box>
