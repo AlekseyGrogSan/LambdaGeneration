@@ -313,10 +313,10 @@ const PostCard = React.memo(({
 
                     // Build our standard unified block
                     const newWrapper = document.createElement('div');
-                    newWrapper.innerHTML = `<table class="tg-code-block code-block-table" style="width: 100%; background: var(--ui-c36); border-radius: 8px; border: 1px solid var(--ui-c192); border-collapse: separate; border-spacing: 0; margin: 14px 0; overflow: hidden; table-layout: fixed;">
+                    newWrapper.innerHTML = `<table class="tg-code-block code-block-table" style="width: 100%; background: var(--code-bg); border-radius: 8px; border: 1px solid var(--code-border); border-collapse: separate; border-spacing: 0; margin: 14px 0; overflow: hidden; table-layout: fixed;">
     <thead>
         <tr>
-            <th style="padding: 6px 12px; background: var(--ui-c30); color: var(--ui-c199); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 12px; text-align: left; font-weight: bold; border-bottom: 1px solid var(--ui-c192); user-select: none;">
+            <th style="padding: 6px 12px; background: var(--code-header-bg); color: var(--code-header-text); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 12px; text-align: left; font-weight: bold; border-bottom: 1px solid var(--code-border); user-select: none;">
                 ${language}
             </th>
         </tr>
@@ -324,7 +324,7 @@ const PostCard = React.memo(({
     <tbody>
         <tr>
             <td style="padding: 12px; overflow-x: auto;">
-                <pre style="margin: 0; white-space: pre-wrap !important; word-wrap: break-word; background: transparent;"><code class="language-${language}" style="font-family: Consolas, monospace; font-size: 14px; background: transparent !important; padding: 0 !important; border: none !important;"></code></pre>
+                <pre style="margin: 0; white-space: pre-wrap !important; word-wrap: break-word; background: transparent;"><code class="language-${language}" style="font-family: Consolas, monospace; font-size: 14px; background: transparent !important; padding: 0 !important; border: none !important; color: var(--text-primary);"></code></pre>
             </td>
         </tr>
     </tbody>
