@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react'; 
+import React, { useState, useEffect, useRef, useCallback, useContext } from 'react'; 
 import { 
     Box,
     Button,
@@ -34,6 +34,8 @@ import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
 import AdminPanelSettingsIcon from '@mui/icons-material/AdminPanelSettings';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import SlideshowIcon from '@mui/icons-material/Slideshow';
+import DarkModeRoundedIcon from '@mui/icons-material/DarkModeRounded';
+import LightModeRoundedIcon from '@mui/icons-material/LightModeRounded';
 
 import PostCard from './PostCard';
 import PostDetailPage from './PostDetailPage';
@@ -54,6 +56,7 @@ import BestArticlesList from './BestArticlesList';
 import { buildArticleImageUrl, buildAvatarUrl, DEFAULT_AVATAR_SRC } from './avatarUtils';
 import { ProfileIcon, resolveProfileIconValue, extractNameAndIcon } from './profileIcons';
 import UserRoleBadge from './UserRoleBadge';
+import { ColorModeContext } from './theme';
 
 const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || '/api';
 const POST_PAGE_NAV_STATE_KEY = 'lambda.postPage.navState.v1';
@@ -210,15 +213,29 @@ const scrollbarStyle = {
 
 const desktopFeedCardTopOffset = '84px';
 
-const Sidebar = ({ handleOpen, handleProfileOpen, handlePostOpen, handleCategoryOpen, handleResourcesOpen, handleFaqOpen, handleGuideOpen,handleAdminOpen, isAdmin, currentUser }) => {
+const Sidebar = ({ handleOpen, handleProfileOpen, handlePostOpen, handleCategoryOpen, handleResourcesOpen, handleFaqOpen, handleGuideOpen,handleAdminOpen, isAdmin, currentUser, mode, onToggleTheme }) => {
     const currentUserName = extractNameAndIcon(currentUser?.name || '').name;
     const currentUserIcon = resolveProfileIconValue(currentUser);
 
     return (
         <Box sx={sidebarStyle}>
-            <Typography variant="h5" sx={{ color: '#00bfa5', fontWeight: 'bold', textAlign: 'center', mb: 4, letterSpacing: 1 }}>
-                Lambda
-            </Typography>
+            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 3 }}>
+                <Typography variant="h5" sx={{ color: 'var(--accent-500)', fontWeight: 800, textAlign: 'center', letterSpacing: 0.6 }}>
+                    Lambda
+                </Typography>
+                <IconButton
+                    onClick={onToggleTheme}
+                    aria-label="Переключить тему"
+                    sx={{
+                        color: 'var(--text-secondary)',
+                        border: '1px solid var(--border-default)',
+                        bgcolor: 'var(--surface-soft)',
+                        '&:hover': { color: 'var(--accent-500)' },
+                    }}
+                >
+                    {mode === 'dark' ? <LightModeRoundedIcon fontSize="small" /> : <DarkModeRoundedIcon fontSize="small" />}
+                </IconButton>
+            </Box>
 
             {currentUser ? (
                 <Box sx={{ mb: 3, p: 2, bgcolor: '#2c2c2c', borderRadius: '12px', display: 'flex', alignItems: 'center', gap: 1 }}>
@@ -715,6 +732,7 @@ const CommentsFeedSidebar = ({
 };
 
 const PostPage = () => {
+    const { mode, toggleColorMode } = useContext(ColorModeContext);
     const [isBestArticlesOpen, setIsBestArticlesOpen] = useState(false);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [openProfileAfterAuth, setOpenProfileAfterAuth] = useState(false);
@@ -3039,6 +3057,8 @@ const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
                 handleAdminOpen={handleAdminOpen}
                 isAdmin={currentUser?.role === 'Admin'}
                 currentUser={currentUser}
+                mode={mode}
+                onToggleTheme={toggleColorMode}
             />
 
             <Menu
@@ -3141,6 +3161,8 @@ const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
                     }
                     handleProfileOpen();
                 }}
+                onThemeToggle={toggleColorMode}
+                mode={mode}
             />
 
             <SiteGuideSlidesModal

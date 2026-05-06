@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import { Box, Typography } from '@mui/material';
 
 /**
@@ -21,9 +21,9 @@ const MobileFeedSegmentedControl = ({ value, onChange, disabled = false }) => {
                 isolation: 'isolate',
                 boxSizing: 'border-box',
                 minHeight: 48,
-                backgroundColor: 'rgba(0, 191, 165, 0.08)',
-                border: '1px solid rgba(0, 191, 165, 0.6)',
-                boxShadow: '0 8px 20px rgba(0, 0, 0, 0.22), inset 0 1px 0 rgba(255, 255, 255, 0.06)',
+                backgroundColor: 'color-mix(in oklab, var(--surface-soft) 88%, transparent)',
+                border: '1px solid var(--border-default)',
+                boxShadow: 'var(--shadow-soft)',
             }}
         >
             <Box
@@ -36,7 +36,7 @@ const MobileFeedSegmentedControl = ({ value, onChange, disabled = false }) => {
                     width: 'calc((100% - 8px) / 2)',
                     borderRadius: '11px',
                     zIndex: 0,
-                    backgroundColor: '#00bfa5',
+                    backgroundColor: 'var(--accent-500)',
                     boxShadow: '0 6px 14px rgba(0, 191, 165, 0.35)',
                     transition: 'transform 0.35s cubic-bezier(0.34, 1.2, 0.64, 1), opacity 0.25s ease',
                     transform: isRandom ? 'translateX(0)' : 'translateX(100%)',
@@ -59,7 +59,7 @@ const MobileFeedSegmentedControl = ({ value, onChange, disabled = false }) => {
                     borderRadius: '12px',
                     background: 'transparent',
                     cursor: disabled ? 'default' : 'pointer',
-                    color: isRandom ? '#000000' : '#00bfa5',
+                    color: isRandom ? 'var(--accent-contrast)' : 'var(--accent-500)',
                     fontWeight: 800,
                     fontSize: '0.9rem',
                     textAlign: 'center',
@@ -87,7 +87,7 @@ const MobileFeedSegmentedControl = ({ value, onChange, disabled = false }) => {
                     borderRadius: '12px',
                     background: 'transparent',
                     cursor: disabled ? 'default' : 'pointer',
-                    color: !isRandom ? '#000000' : '#00bfa5',
+                    color: !isRandom ? 'var(--accent-contrast)' : 'var(--accent-500)',
                     fontWeight: 800,
                     fontSize: '0.9rem',
                     textAlign: 'center',

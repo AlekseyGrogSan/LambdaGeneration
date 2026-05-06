@@ -6,16 +6,18 @@
 
 html {
     -webkit-text-size-adjust: 100%;
+    scroll-behavior: smooth;
 }
 
 body {
     margin: 0;
     padding: 0;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
-    sans-serif;
-    background-color: #121212;
-    color: #f5f5f5;
+    font-family: "Inter", "Segoe UI", "Roboto", "Helvetica Neue", Arial, sans-serif;
+    background:
+        radial-gradient(circle at top left, rgba(55, 214, 255, 0.12), transparent 28%),
+        radial-gradient(circle at top right, rgba(27, 207, 156, 0.14), transparent 26%),
+        var(--bg-canvas);
+    color: var(--text-primary);
     overflow-x: hidden;
 }
 
@@ -25,25 +27,57 @@ body {
     }
 }
 
-/* custom scrollbar */
+:root {
+    --accent-400: #40deb0;
+    --accent-500: #1bcf9c;
+    --accent-600: #12af84;
+    --accent-contrast: #03150f;
+}
+
+:root[data-theme="dark"] {
+    --bg-canvas: #060b14;
+    --bg-elevated: #0b1321;
+    --surface-panel: rgba(12, 21, 34, 0.88);
+    --surface-elevated: #101b2c;
+    --surface-soft: #13253a;
+    --surface-input: #16263b;
+    --text-primary: #eef6ff;
+    --text-secondary: #a6bed8;
+    --border-default: rgba(120, 159, 194, 0.28);
+    --shadow-soft: 0 18px 34px rgba(2, 6, 12, 0.42);
+}
+
+:root[data-theme="light"] {
+    --bg-canvas: #f3f8fb;
+    --bg-elevated: #ffffff;
+    --surface-panel: rgba(255, 255, 255, 0.9);
+    --surface-elevated: #ffffff;
+    --surface-soft: #eef4fb;
+    --surface-input: #f6f9fd;
+    --text-primary: #13253c;
+    --text-secondary: #4c637e;
+    --border-default: rgba(44, 83, 125, 0.18);
+    --shadow-soft: 0 12px 24px rgba(21, 42, 78, 0.12);
+}
+
 ::-webkit-scrollbar {
     width: 8px;
     height: 8px;
 }
 ::-webkit-scrollbar-track {
-    background: rgba(255, 255, 255, 0.05);
+    background: color-mix(in oklab, var(--surface-soft) 72%, transparent);
     border-radius: 10px;
 }
 ::-webkit-scrollbar-thumb {
-    background: #00bfa5;
+    background: var(--accent-500);
     border-radius: 10px;
 }
 ::-webkit-scrollbar-thumb:hover {
-    background: #009688;
+    background: var(--accent-600);
 }
 * {
     scrollbar-width: thin;
-    scrollbar-color: #00bfa5 rgba(255, 255, 255, 0.05);
+    scrollbar-color: var(--accent-500) color-mix(in oklab, var(--surface-soft) 72%, transparent);
 }
 
 /* --- Գ�� ��� ���-����� --- */
