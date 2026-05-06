@@ -72,14 +72,14 @@ const AI_EDIT_MODES = [
 const inputStyle = {
     // Общие стили для полей ввода Material UI в стиле "filled"
     '& .MuiFilledInput-root': {
-        backgroundColor: 'rgba(255, 255, 255, 0.1)',
-        color: '#ffffff',
+        backgroundColor: 'var(--ui-c176)',
+        color: 'var(--text-primary)',
         borderRadius: '8px',
         '&:hover': {
-            backgroundColor: 'rgba(255, 255, 255, 0.15)',
+            backgroundColor: 'var(--ui-c178)',
         },
         '&.Mui-focused': {
-            backgroundColor: 'rgba(255, 255, 255, 0.2)',
+            backgroundColor: 'var(--ui-c181)',
         },
         // ✅ ДОБАВЛЕНО: Активируем прокрутку внутри инпута
         overflowY: 'auto', 
@@ -91,22 +91,22 @@ const inputStyle = {
             width: '8px', // Ширина полосы
         },
         '&::-webkit-scrollbar-track': {
-            background: 'rgba(255, 255, 255, 0.05)', // Цвет фона трека
+            background: 'color-mix(in oklab, var(--text-primary) 5%, transparent)', // Цвет фона трека
             borderRadius: '10px',
         },
         '&::-webkit-scrollbar-thumb': {
-            background: '#00bfa5', // Цвет самого ползунка (фирменный цвет)
+            background: 'var(--accent-500)', // Цвет самого ползунка (фирменный цвет)
             borderRadius: '10px',
         },
         '&::-webkit-scrollbar-thumb:hover': {
-            background: '#009688', // Цвет ползунка при наведении
+            background: 'var(--accent-600)', // Цвет ползунка при наведении
         },
     },
     // Стили для меток (label)
     '& .MuiInputLabel-root': {
-        color: '#bdbdbd',
+        color: 'var(--text-secondary)',
         '&.Mui-focused': {
-            color: '#00bfa5', // Фирменный цвет при фокусе
+            color: 'var(--accent-500)', // Фирменный цвет при фокусе
         },
     },
     // Убираем нижнюю линию у filled-инпутов
@@ -118,9 +118,9 @@ const inputStyle = {
         maxHeight: '4.5em',
         overflowY: 'auto',
         '&::-webkit-scrollbar': { width: '8px' },
-        '&::-webkit-scrollbar-track': { background: 'rgba(255, 255, 255, 0.05)', borderRadius: '10px' },
-        '&::-webkit-scrollbar-thumb': { background: '#00bfa5', borderRadius: '10px' },
-        '&::-webkit-scrollbar-thumb:hover': { background: '#009688' }
+        '&::-webkit-scrollbar-track': { background: 'color-mix(in oklab, var(--text-primary) 5%, transparent)', borderRadius: '10px' },
+        '&::-webkit-scrollbar-thumb': { background: 'var(--accent-500)', borderRadius: '10px' },
+        '&::-webkit-scrollbar-thumb:hover': { background: 'var(--accent-600)' }
     },
 };
 
@@ -138,7 +138,7 @@ const EditorToolbar = ({ editorRef, setInputDialog, onOpenAiPanel, aiBusy, aiHas
     const [fontSizeAnchor, setFontSizeAnchor] = useState(null);
     const [textColorAnchor, setTextColorAnchor] = useState(null);
     const [helpAnchor, setHelpAnchor] = useState(null);
-    const [currentTextColor, setCurrentTextColor] = useState('#ffffff');
+    const [currentTextColor, setCurrentTextColor] = useState('var(--text-primary)');
 
     const highlightEditorCodeBlocks = useCallback(() => {
         const editor = editorRef.current;
@@ -163,13 +163,13 @@ const EditorToolbar = ({ editorRef, setInputDialog, onOpenAiPanel, aiBusy, aiHas
     }, [editorRef]);
 
     const basicTextColors = [
-        { name: 'Черный', value: '#000000' },
-        { name: 'Белый', value: '#ffffff' },
-        { name: 'Красный', value: '#f44336' },
-        { name: 'Оранжевый', value: '#ff9800' },
-        { name: 'Желтый', value: '#ffeb3b' },
-        { name: 'Зеленый', value: '#4caf50' },
-        { name: 'Синий', value: '#2196f3' }
+        { name: 'Черный', value: 'var(--ui-c1)000' },
+        { name: 'Белый', value: 'var(--text-primary)' },
+        { name: 'Красный', value: 'var(--ui-c93)' },
+        { name: 'Оранжевый', value: 'var(--ui-c99)' },
+        { name: 'Желтый', value: 'var(--ui-c102)' },
+        { name: 'Зеленый', value: 'var(--ui-c47)' },
+        { name: 'Синий', value: 'var(--ui-c31)' }
     ];
 
     const textEditorShortcuts = [
@@ -311,7 +311,7 @@ const EditorToolbar = ({ editorRef, setInputDialog, onOpenAiPanel, aiBusy, aiHas
 
             if (event.shiftKey && key === '0') {
                 event.preventDefault();
-                applyTextColor('#ffffff');
+                applyTextColor('var(--text-primary)');
             }
         };
 
@@ -332,7 +332,7 @@ const EditorToolbar = ({ editorRef, setInputDialog, onOpenAiPanel, aiBusy, aiHas
                 setInputDialog(prev => ({ ...prev, open: false }));
                 const normalizedLang = normalizeCodeLanguage(lang || 'text');
                 const languageLabel = formatCodeLanguageLabel(normalizedLang);
-                const codeHTML = `<br><table class="tg-code-block code-block-table" data-language="${normalizedLang}" style="width: 100%; background: linear-gradient(180deg, #121820, #0d1117); border-radius: 12px; border: 1px solid rgba(0,229,201,0.25); border-collapse: separate; border-spacing: 0; margin: 14px 0; overflow: hidden; table-layout: fixed;"><thead><tr><th style="padding: 8px 12px; background: linear-gradient(90deg, #18202a, #141a22); color: rgba(206,231,255,0.9); font-family: 'JetBrains Mono', Consolas, monospace; font-size: 12px; text-align: left; font-weight: 700; letter-spacing: 0.4px; border-bottom: 1px solid rgba(255,255,255,0.08); user-select: none;">${languageLabel}</th></tr></thead><tbody><tr><td style="padding: 14px; overflow-x: auto;"><pre style="margin: 0; white-space: pre-wrap !important; word-wrap: break-word; background: transparent;"><code class="language-${normalizedLang}" style="font-family: 'JetBrains Mono', Consolas, monospace; font-size: 14px; line-height: 1.55; background: transparent !important; padding: 0 !important; border: none !important; color: #e6edf3;">// Ваш код...</code></pre></td></tr></tbody></table><br><div style="min-height: 20px;"></div>`;
+                const codeHTML = `<br><table class="tg-code-block code-block-table" data-language="${normalizedLang}" style="width: 100%; background: linear-gradient(180deg, var(--ui-c20), var(--ui-c16)); border-radius: 12px; border: 1px solid var(--ui-c144); border-collapse: separate; border-spacing: 0; margin: 14px 0; overflow: hidden; table-layout: fixed;"><thead><tr><th style="padding: 8px 12px; background: linear-gradient(90deg, var(--ui-c24), var(--ui-c21)); color: var(--ui-c166); font-family: 'JetBrains Mono', Consolas, monospace; font-size: 12px; text-align: left; font-weight: 700; letter-spacing: 0.4px; border-bottom: 1px solid color-mix(in oklab, var(--text-primary) 8%, transparent); user-select: none;">${languageLabel}</th></tr></thead><tbody><tr><td style="padding: 14px; overflow-x: auto;"><pre style="margin: 0; white-space: pre-wrap !important; word-wrap: break-word; background: transparent;"><code class="language-${normalizedLang}" style="font-family: 'JetBrains Mono', Consolas, monospace; font-size: 14px; line-height: 1.55; background: transparent !important; padding: 0 !important; border: none !important; color: var(--ui-c89);">// Ваш код...</code></pre></td></tr></tbody></table><br><div style="min-height: 20px;"></div>`;
                 applyCommand('insertHTML', codeHTML);
 
                 setTimeout(() => {
@@ -342,12 +342,12 @@ const EditorToolbar = ({ editorRef, setInputDialog, onOpenAiPanel, aiBusy, aiHas
         });
     }, [applyCommand, highlightEditorCodeBlocks, setInputDialog]);
 
-    const getButtonStyle = (isActive, activeColor = '#00bfa5') => ({
-        color: isActive ? activeColor : '#ffffff',
-        backgroundColor: isActive ? 'rgba(255, 255, 255, 0.15)' : 'transparent',
+    const getButtonStyle = (isActive, activeColor = 'var(--accent-500)') => ({
+        color: isActive ? activeColor : 'var(--text-primary)',
+        backgroundColor: isActive ? 'var(--ui-c178)' : 'transparent',
         borderRadius: '4px',
         transition: 'all 0.2s',
-        '&:hover': { backgroundColor: '#666666' }
+        '&:hover': { backgroundColor: 'var(--ui-c50)666' }
     });
 
     return (
@@ -356,30 +356,30 @@ const EditorToolbar = ({ editorRef, setInputDialog, onOpenAiPanel, aiBusy, aiHas
                 display: 'flex',
                 gap: 1,
                 padding: 1,
-                backgroundColor: '#555555',
+                backgroundColor: 'var(--ui-c48)555',
                 borderRadius: '8px 8px 0 0',
-                border: '1px solid #444444',
+                border: '1px solid var(--ui-c44)444',
                 flexWrap: 'nowrap',
                 overflowX: 'auto',
                 overflowY: 'hidden',
                 scrollbarWidth: 'thin',
-                scrollbarColor: '#00bfa5 rgba(255,255,255,0.08)',
+                scrollbarColor: 'var(--accent-500) color-mix(in oklab, var(--text-primary) 8%, transparent)',
                 paddingBottom: '6px',
                 '&::-webkit-scrollbar': {
                     height: '8px',
                 },
                 '&::-webkit-scrollbar-track': {
-                    background: 'linear-gradient(90deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02))',
+                    background: 'linear-gradient(90deg, color-mix(in oklab, var(--text-primary) 6%, transparent), var(--ui-c188))',
                     borderRadius: '999px',
                 },
                 '&::-webkit-scrollbar-thumb': {
-                    background: 'linear-gradient(90deg, #00d4b8, #00a58f)',
+                    background: 'linear-gradient(90deg, var(--ui-c10), var(--ui-c5))',
                     borderRadius: '999px',
-                    border: '1px solid rgba(255,255,255,0.28)',
-                    boxShadow: 'inset 0 0 0 1px rgba(0,0,0,0.16)',
+                    border: '1px solid var(--ui-c197)',
+                    boxShadow: 'inset 0 0 0 1px var(--ui-c133)',
                 },
                 '&::-webkit-scrollbar-thumb:hover': {
-                    background: 'linear-gradient(90deg, #00e0c2, #00b39b)',
+                    background: 'linear-gradient(90deg, var(--ui-c12), var(--ui-c6))',
                 },
                 '&::-webkit-scrollbar-corner': {
                     background: 'transparent',
@@ -401,11 +401,11 @@ const EditorToolbar = ({ editorRef, setInputDialog, onOpenAiPanel, aiBusy, aiHas
             <IconButton size="small" onClick={() => {
                 const url = prompt('Введите URL:');
                 if (url) applyCommand('createLink', url);
-            }} sx={{ color: '#00bfa5', flex: '0 0 auto' }}>
+            }} sx={{ color: 'var(--accent-500)', flex: '0 0 auto' }}>
                 <LinkIcon />
             </IconButton>
 
-            <IconButton size="small" onClick={() => applyCommand('formatBlock', '<h2>')} sx={{ ...getButtonStyle(activeStyles.h2, '#ffeb3b'), flex: '0 0 auto' }}>
+            <IconButton size="small" onClick={() => applyCommand('formatBlock', '<h2>')} sx={{ ...getButtonStyle(activeStyles.h2, 'var(--ui-c102)'), flex: '0 0 auto' }}>
                 <TitleIcon />
             </IconButton>
 
@@ -425,7 +425,7 @@ const EditorToolbar = ({ editorRef, setInputDialog, onOpenAiPanel, aiBusy, aiHas
                     flex: '0 0 auto',
                     borderBottom: `2px solid ${currentTextColor}`,
                     borderRadius: '4px',
-                    '&:hover': { backgroundColor: 'rgba(255,255,255,0.1)' }
+                    '&:hover': { backgroundColor: 'var(--ui-c191)' }
                 }}
                 title="Цвет текста"
             >
@@ -439,21 +439,21 @@ const EditorToolbar = ({ editorRef, setInputDialog, onOpenAiPanel, aiBusy, aiHas
                 sx={{ zIndex: 1600 }}
                 PaperProps={{
                     sx: {
-                        backgroundColor: '#333',
+                        backgroundColor: 'var(--border-default)',
                         color: 'white'
                     }
                 }}
             >
                 <MenuItem
                     onClick={() => {
-                        applyTextColor('#ffffff');
+                        applyTextColor('var(--text-primary)');
                         setTextColorAnchor(null);
                     }}
                 >
                     Сбросить цвет (по умолчанию)
                 </MenuItem>
 
-                <Divider sx={{ borderColor: 'rgba(255,255,255,0.12)' }} />
+                <Divider sx={{ borderColor: 'var(--ui-c192)' }} />
 
                 {basicTextColors.map((colorOption) => (
                     <MenuItem
@@ -470,7 +470,7 @@ const EditorToolbar = ({ editorRef, setInputDialog, onOpenAiPanel, aiBusy, aiHas
                                 height: 14,
                                 borderRadius: '50%',
                                 backgroundColor: colorOption.value,
-                                border: colorOption.value === '#ffffff' ? '1px solid #777' : 'none'
+                                border: colorOption.value === 'var(--text-primary)' ? '1px solid var(--ui-c52)' : 'none'
                             }}
                         />
                         {colorOption.name}
@@ -478,13 +478,13 @@ const EditorToolbar = ({ editorRef, setInputDialog, onOpenAiPanel, aiBusy, aiHas
                 ))}
             </Menu>
 
-            <Box sx={{ width: '1px', backgroundColor: '#666', marginX: 1, my: 0.5 }} />
+            <Box sx={{ width: '1px', backgroundColor: 'var(--ui-c50)', marginX: 1, my: 0.5 }} />
 
-            <IconButton size="small" onClick={insertCodeBlock} sx={{ color: '#00bfa5', flex: '0 0 auto' }} title="Вставить код">
+            <IconButton size="small" onClick={insertCodeBlock} sx={{ color: 'var(--accent-500)', flex: '0 0 auto' }} title="Вставить код">
                 <CodeIcon />
             </IconButton>
 
-            <IconButton size="small" onClick={(e) => setFontSizeAnchor(e.currentTarget)} sx={{ color: '#ffffff', flex: '0 0 auto' }} title="Размер текста">
+            <IconButton size="small" onClick={(e) => setFontSizeAnchor(e.currentTarget)} sx={{ color: 'var(--text-primary)', flex: '0 0 auto' }} title="Размер текста">
                 <FormatSizeIcon />
             </IconButton>
             <Menu
@@ -494,7 +494,7 @@ const EditorToolbar = ({ editorRef, setInputDialog, onOpenAiPanel, aiBusy, aiHas
                 sx={{ zIndex: 1600 }}
                 PaperProps={{
                     sx: {
-                        backgroundColor: '#333',
+                        backgroundColor: 'var(--border-default)',
                         color: 'white',
                     }
                 }}
@@ -511,12 +511,12 @@ const EditorToolbar = ({ editorRef, setInputDialog, onOpenAiPanel, aiBusy, aiHas
                 size="small"
                 onClick={(e) => onOpenAiPanel?.(e.currentTarget)}
                 sx={{
-                    color: aiHasSuggestion ? '#00e5c9' : '#cde9e4',
-                    border: '1px solid rgba(0,229,201,0.35)',
+                    color: aiHasSuggestion ? 'var(--accent-400)' : 'var(--ui-c77)',
+                    border: '1px solid var(--ui-c145)',
                     width: 26,
                     height: 26,
                     flex: '0 0 auto',
-                    '&:hover': { backgroundColor: 'rgba(0,229,201,0.12)' }
+                    '&:hover': { backgroundColor: 'var(--ui-c143)' }
                 }}
                 title="AI-редактор"
             >
@@ -527,12 +527,12 @@ const EditorToolbar = ({ editorRef, setInputDialog, onOpenAiPanel, aiBusy, aiHas
                 size="small"
                 onClick={(e) => setHelpAnchor(e.currentTarget)}
                 sx={{
-                    color: '#ffffff',
-                    border: '1px solid rgba(255,255,255,0.25)',
+                    color: 'var(--text-primary)',
+                    border: '1px solid var(--ui-c196)',
                     width: 24,
                     height: 24,
                     flex: '0 0 auto',
-                    '&:hover': { backgroundColor: 'rgba(255,255,255,0.12)' }
+                    '&:hover': { backgroundColor: 'var(--ui-c192)' }
                 }}
                 title="Горячие клавиши"
             >
@@ -546,10 +546,10 @@ const EditorToolbar = ({ editorRef, setInputDialog, onOpenAiPanel, aiBusy, aiHas
                 sx={{ zIndex: 1600 }}
                 PaperProps={{
                     sx: {
-                        backgroundColor: '#232323',
+                        backgroundColor: 'var(--ui-c33)',
                         color: 'white',
                         width: 340,
-                        border: '1px solid rgba(255,255,255,0.12)'
+                        border: '1px solid var(--ui-c192)'
                     }
                 }}
             >
@@ -562,27 +562,27 @@ const EditorToolbar = ({ editorRef, setInputDialog, onOpenAiPanel, aiBusy, aiHas
                             width: '8px'
                         },
                         '&::-webkit-scrollbar-track': {
-                            background: 'rgba(255, 255, 255, 0.06)',
+                            background: 'var(--ui-c174)',
                             borderRadius: '10px'
                         },
                         '&::-webkit-scrollbar-thumb': {
-                            background: 'linear-gradient(180deg, #00d4b8, #00a58f)',
+                            background: 'linear-gradient(180deg, var(--ui-c10), var(--ui-c5))',
                             borderRadius: '10px'
                         },
                         '&::-webkit-scrollbar-thumb:hover': {
-                            background: 'linear-gradient(180deg, #00e0c2, #00b39b)'
+                            background: 'linear-gradient(180deg, var(--ui-c12), var(--ui-c6))'
                         },
                         scrollbarWidth: 'thin',
-                        scrollbarColor: '#00bfa5 rgba(255,255,255,0.06)'
+                        scrollbarColor: 'var(--accent-500) color-mix(in oklab, var(--text-primary) 6%, transparent)'
                     }}
                 >
-                    <Typography sx={{ fontWeight: 700, color: '#00bfa5', mb: 1 }}>
+                    <Typography sx={{ fontWeight: 700, color: 'var(--accent-500)', mb: 1 }}>
                         Горячие клавиши редактора
                     </Typography>
                     {textEditorShortcuts.map((shortcut) => (
                         <Box key={shortcut.combo} sx={{ display: 'flex', justifyContent: 'space-between', gap: 1, mb: 0.7 }}>
-                            <Typography sx={{ color: '#e0e0e0', fontWeight: 600 }}>{shortcut.combo}</Typography>
-                            <Typography sx={{ color: '#bdbdbd', textAlign: 'right' }}>{shortcut.action}</Typography>
+                            <Typography sx={{ color: 'var(--ui-c87)', fontWeight: 600 }}>{shortcut.combo}</Typography>
+                            <Typography sx={{ color: 'var(--text-secondary)', textAlign: 'right' }}>{shortcut.action}</Typography>
                         </Box>
                     ))}
                 </Box>
@@ -652,11 +652,11 @@ const PostCreationModal = ({ open, handleClose, onUnauthorized, onPostSuccess, o
         transform: { xs: 'none', sm: 'translate(-50%, -50%)' },
         width: { xs: '100vw', sm: '90%', md: '800px' },
         height: { xs: '100dvh', sm: 'auto' },
-        bgcolor: '#383838',
+        bgcolor: 'var(--ui-c41)',
         borderRadius: { xs: 0, sm: '16px' },
         boxShadow: 24,
         p: { xs: 2, sm: 4 },
-        color: '#ffffff',
+        color: 'var(--text-primary)',
         display: 'flex',
         flexDirection: 'column',
         gap: 2,
@@ -670,15 +670,15 @@ const PostCreationModal = ({ open, handleClose, onUnauthorized, onPostSuccess, o
             width: '8px', // Ширина полосы
         },
         '&::-webkit-scrollbar-track': {
-            background: 'rgba(255, 255, 255, 0.05)', // Цвет фона трека
+            background: 'color-mix(in oklab, var(--text-primary) 5%, transparent)', // Цвет фона трека
             borderRadius: '10px',
         },
         '&::-webkit-scrollbar-thumb': {
-            background: '#00bfa5', // Цвет самого ползунка (фирменный цвет)
+            background: 'var(--accent-500)', // Цвет самого ползунка (фирменный цвет)
             borderRadius: '10px',
         },
         '&::-webkit-scrollbar-thumb:hover': {
-            background: '#009688', // Цвет ползунка при наведении
+            background: 'var(--accent-600)', // Цвет ползунка при наведении
         },
         // =========================================================
     };
@@ -1180,10 +1180,10 @@ const PostCreationModal = ({ open, handleClose, onUnauthorized, onPostSuccess, o
             >
                 <Box sx={modalStyle}>
                 <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1 }}>
-                    <Typography id="post-creation-modal-title" variant="h5" component="h2" sx={{ color: '#ffffff', fontWeight: 300 }}>
+                    <Typography id="post-creation-modal-title" variant="h5" component="h2" sx={{ color: 'var(--text-primary)', fontWeight: 300 }}>
                         Создать новый пост
                     </Typography>
-                    <IconButton aria-label="Закрыть" onClick={handleClose} sx={{ color: '#bdbdbd' }}>
+                    <IconButton aria-label="Закрыть" onClick={handleClose} sx={{ color: 'var(--text-secondary)' }}>
                         <CloseIcon />
                     </IconButton>
                 </Box>
@@ -1215,7 +1215,7 @@ const PostCreationModal = ({ open, handleClose, onUnauthorized, onPostSuccess, o
 
                 {/* --- Р”РћР‘РђР’Р›Р•РќРР• Р¤РћРўРћ --- */}
                 <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-                    <Typography variant="body2" sx={{ color: '#bdbdbd', fontWeight: 'bold' }}>
+                    <Typography variant="body2" sx={{ color: 'var(--text-secondary)', fontWeight: 'bold' }}>
                         Фото статьи (до {formatBytes(MAX_ARTICLE_IMAGE_BYTES)})
                     </Typography>
                     <input
@@ -1229,7 +1229,7 @@ const PostCreationModal = ({ open, handleClose, onUnauthorized, onPostSuccess, o
                         <Button
                             variant="outlined"
                             onClick={() => fileInputRef.current?.click()}
-                            sx={{ color: '#00bfa5', borderColor: '#00bfa5', '&:hover': { borderColor: '#009688', backgroundColor: 'rgba(0, 191, 165, 0.08)' } }}
+                            sx={{ color: 'var(--accent-500)', borderColor: 'var(--accent-500)', '&:hover': { borderColor: 'var(--accent-600)', backgroundColor: 'color-mix(in oklab, var(--accent-500) 8%, transparent)' } }}
                         >
                             Выбрать фото
                         </Button>
@@ -1237,17 +1237,17 @@ const PostCreationModal = ({ open, handleClose, onUnauthorized, onPostSuccess, o
                             <Button
                                 variant="text"
                                 onClick={clearSelectedImage}
-                                sx={{ color: '#ff8a80' }}
+                                sx={{ color: 'var(--ui-c98)' }}
                             >
                                 Убрать
                             </Button>
                         )}
-                        <Typography variant="body2" sx={{ color: '#9e9e9e' }}>
+                        <Typography variant="body2" sx={{ color: 'var(--text-secondary)' }}>
                             {file ? `${file.name} (${formatBytes(file.size)})` : 'Файл не выбран'}
                         </Typography>
                     </Box>
                     {imageError && (
-                        <Typography variant="body2" sx={{ color: '#ff8a80' }}>
+                        <Typography variant="body2" sx={{ color: 'var(--ui-c98)' }}>
                             {imageError}
                         </Typography>
                     )}
@@ -1261,7 +1261,7 @@ const PostCreationModal = ({ open, handleClose, onUnauthorized, onPostSuccess, o
                                 maxHeight: 220,
                                 borderRadius: '12px',
                                 objectFit: 'cover',
-                                border: '1px solid #444',
+                                border: '1px solid var(--ui-c44)',
                             }}
                         />
                     )}
@@ -1290,10 +1290,10 @@ const PostCreationModal = ({ open, handleClose, onUnauthorized, onPostSuccess, o
                             overflowY: 'auto', // Добавление вертикальной прокрутки
                             padding: 2,
                             // Стиль поля ввода для соответствия inputStyle
-                            backgroundColor: 'rgba(255, 255, 255, 0.1)',
-                            border: '1px solid #444444',
+                            backgroundColor: 'var(--ui-c176)',
+                            border: '1px solid var(--ui-c44)444',
                             borderRadius: '0 0 8px 8px',
-                            color: '#ffffff',
+                            color: 'var(--text-primary)',
                             outline: 'none', // Убрать стандартное синее выделение фокуса
                             cursor: 'text',
                             
@@ -1304,15 +1304,15 @@ const PostCreationModal = ({ open, handleClose, onUnauthorized, onPostSuccess, o
                                 width: '8px', // Ширина полосы
                             },
                             '&::-webkit-scrollbar-track': {
-                                background: 'rgba(255, 255, 255, 0.05)', // Цвет фона трека
+                                background: 'color-mix(in oklab, var(--text-primary) 5%, transparent)', // Цвет фона трека
                                 borderRadius: '10px',
                             },
                             '&::-webkit-scrollbar-thumb': {
-                                background: '#00bfa5', // Цвет самого ползунка (фирменный цвет)
+                                background: 'var(--accent-500)', // Цвет самого ползунка (фирменный цвет)
                                 borderRadius: '10px',
                             },
                             '&::-webkit-scrollbar-thumb:hover': {
-                                background: '#009688', // Цвет ползунка при наведении
+                                background: 'var(--accent-600)', // Цвет ползунка при наведении
                             },
                             // =========================================================
 
@@ -1321,13 +1321,13 @@ const PostCreationModal = ({ open, handleClose, onUnauthorized, onPostSuccess, o
                                 color: 'inherit', // Наследуем белый цвет
                             },
                             '& a': {
-                                color: '#00bfa5', // Ссылки выделяем цветом
+                                color: 'var(--accent-500)', // Ссылки выделяем цветом
                             },
                             '& h2': {
                                 fontSize: '1.5rem',
                                 fontWeight: 'bold',
                                 margin: '0.5em 0',
-                                color: '#ffeb3b', // Заголовок выделяем цветом
+                                color: 'var(--ui-c102)', // Заголовок выделяем цветом
                             },
                             '& ul, & ol': {
                                 marginLeft: '20px',
@@ -1345,18 +1345,18 @@ const PostCreationModal = ({ open, handleClose, onUnauthorized, onPostSuccess, o
                             sx: {
                                 width: { xs: '92vw', sm: 520 },
                                 maxWidth: '92vw',
-                                backgroundColor: '#1d2a2a',
-                                border: '1px solid rgba(0,191,165,0.35)',
-                                color: '#d6fff8',
+                                backgroundColor: 'var(--ui-c27)',
+                                border: '1px solid var(--ui-c142)',
+                                color: 'var(--ui-c83)',
                                 p: 1.4
                             }
                         }}
                     >
-                        <Typography sx={{ color: '#9ff5e8', fontWeight: 700, display: 'flex', alignItems: 'center', gap: 1, mb: 0.8 }}>
+                        <Typography sx={{ color: 'var(--ui-c65)', fontWeight: 700, display: 'flex', alignItems: 'center', gap: 1, mb: 0.8 }}>
                             <AutoFixHighIcon fontSize="small" /> AI-редактор
                         </Typography>
 
-                        <Typography variant="caption" sx={{ color: '#b9e9e2' }}>
+                        <Typography variant="caption" sx={{ color: 'var(--ui-c71)' }}>
                             Выделите фрагмент в поле текста для частичного редактирования и экономии токенов.
                         </Typography>
 
@@ -1371,8 +1371,8 @@ const PostCreationModal = ({ open, handleClose, onUnauthorized, onPostSuccess, o
                                 flexWrap: 'wrap',
                                 gap: 0.6,
                                 '& .MuiToggleButton-root': {
-                                    color: '#cde9e4',
-                                    border: '1px solid rgba(255,255,255,0.2)',
+                                    color: 'var(--ui-c77)',
+                                    border: '1px solid var(--ui-c195)',
                                     borderRadius: '8px !important',
                                     textTransform: 'none',
                                     px: 1.2,
@@ -1380,9 +1380,9 @@ const PostCreationModal = ({ open, handleClose, onUnauthorized, onPostSuccess, o
                                     fontSize: '0.78rem'
                                 },
                                 '& .Mui-selected': {
-                                    color: '#ffffff !important',
-                                    bgcolor: '#00bfa5 !important',
-                                    borderColor: '#00bfa5 !important'
+                                    color: 'var(--text-primary) !important',
+                                    bgcolor: 'var(--accent-500) !important',
+                                    borderColor: 'var(--accent-500) !important'
                                 }
                             }}
                         >
@@ -1400,12 +1400,12 @@ const PostCreationModal = ({ open, handleClose, onUnauthorized, onPostSuccess, o
                             startIcon={aiLoading ? <CircularProgress size={18} color="inherit" /> : <AutoFixHighIcon />}
                             sx={{
                                 mt: 1,
-                                color: '#00d8bf',
-                                borderColor: '#00bfa5',
+                                color: 'var(--ui-c11)',
+                                borderColor: 'var(--accent-500)',
                                 fontWeight: 700,
                                 '&:hover': {
-                                    borderColor: '#00d8bf',
-                                    bgcolor: 'rgba(0,191,165,0.1)'
+                                    borderColor: 'var(--ui-c11)',
+                                    bgcolor: 'var(--ui-c139)'
                                 }
                             }}
                         >
@@ -1414,12 +1414,12 @@ const PostCreationModal = ({ open, handleClose, onUnauthorized, onPostSuccess, o
 
                         {aiSuggestion && (
                             <Box sx={{ mt: 1, display: 'flex', flexDirection: 'column', gap: 1.1 }}>
-                                <Typography variant="caption" sx={{ color: '#bde8e2' }}>
+                                <Typography variant="caption" sx={{ color: 'var(--ui-c73)' }}>
                                     {aiSuggestion.sourceWasSelection ? 'Изменен выделенный фрагмент.' : 'Изменен весь текст.'}
                                 </Typography>
 
                                 {isAiTyping && (
-                                    <Typography variant="caption" sx={{ color: '#9ee9de' }}>
+                                    <Typography variant="caption" sx={{ color: 'var(--ui-c62)' }}>
                                         ИИ печатает изменения прямо в основном поле...
                                     </Typography>
                                 )}
@@ -1429,7 +1429,7 @@ const PostCreationModal = ({ open, handleClose, onUnauthorized, onPostSuccess, o
                                         variant="contained"
                                         onClick={handleApproveAiChanges}
                                         startIcon={<CheckCircleOutlineIcon />}
-                                        sx={{ bgcolor: '#00bfa5', '&:hover': { bgcolor: '#00897b' } }}
+                                        sx={{ bgcolor: 'var(--accent-500)', '&:hover': { bgcolor: 'var(--accent-600)' } }}
                                     >
                                         Принять изменения
                                     </Button>
@@ -1437,7 +1437,7 @@ const PostCreationModal = ({ open, handleClose, onUnauthorized, onPostSuccess, o
                                         variant="outlined"
                                         onClick={handleRejectAiChanges}
                                         startIcon={<HighlightOffIcon />}
-                                        sx={{ color: '#ff9e9e', borderColor: '#ff9e9e' }}
+                                        sx={{ color: 'var(--ui-c100)', borderColor: 'var(--ui-c100)' }}
                                     >
                                         Отклонить
                                     </Button>
@@ -1449,7 +1449,7 @@ const PostCreationModal = ({ open, handleClose, onUnauthorized, onPostSuccess, o
 
                 {/* --- СЕКЦИЯ ВЫБОРА ТЕГОВ (ИНТЕГРИРОВАННАЯ) --- */}
                 <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-                    <Typography variant="body1" sx={{ color: '#bdbdbd', fontWeight: 'bold' }}>
+                    <Typography variant="body1" sx={{ color: 'var(--text-secondary)', fontWeight: 'bold' }}>
                         Выберите теги (до 5)
                     </Typography>
 
@@ -1462,24 +1462,24 @@ const PostCreationModal = ({ open, handleClose, onUnauthorized, onPostSuccess, o
                         maxHeight: { xs: '120px', sm: '150px' },
                         overflowY: 'auto',
                         padding: '4px',
-                        border: '1px solid #444444',
+                        border: '1px solid var(--ui-c44)444',
                         borderRadius: '8px',
-                        backgroundColor: 'rgba(255, 255, 255, 0.05)',
+                        backgroundColor: 'color-mix(in oklab, var(--text-primary) 5%, transparent)',
                         
                         // Добавляем красивый скролл для списка тегов
                         '&::-webkit-scrollbar': {
                             width: '8px',
                         },
                         '&::-webkit-scrollbar-track': {
-                            background: 'rgba(255, 255, 255, 0.05)',
+                            background: 'color-mix(in oklab, var(--text-primary) 5%, transparent)',
                             borderRadius: '10px',
                         },
                         '&::-webkit-scrollbar-thumb': {
-                            background: '#00bfa5',
+                            background: 'var(--accent-500)',
                             borderRadius: '10px',
                         },
                         '&::-webkit-scrollbar-thumb:hover': {
-                            background: '#009688',
+                            background: 'var(--accent-600)',
                         },
                     }}>
                         {AVAILABLE_TAGS.map((tag) => {
@@ -1495,14 +1495,14 @@ const PostCreationModal = ({ open, handleClose, onUnauthorized, onPostSuccess, o
                                     disabled={selectedTags.length >= 5 && !isSelected} 
                                     sx={{
                                         cursor: 'pointer',
-                                        backgroundColor: isSelected ? '#00bfa5' : 'rgba(255, 255, 255, 0.1)',
-                                        color: '#ffffff',
-                                        border: isSelected ? 'none' : '1px solid rgba(255,255,255,0.2)',
+                                        backgroundColor: isSelected ? 'var(--accent-500)' : 'var(--ui-c176)',
+                                        color: 'var(--text-primary)',
+                                        border: isSelected ? 'none' : '1px solid var(--ui-c195)',
                                         fontSize: '0.9rem',
                                         padding: '8px 4px',
                                         opacity: (selectedTags.length >= 5 && !isSelected) ? 0.5 : 1, // Затемнение при отключении
                                         '&:hover': {
-                                            backgroundColor: isSelected ? '#009688' : 'rgba(255, 255, 255, 0.2)',
+                                            backgroundColor: isSelected ? 'var(--accent-600)' : 'var(--ui-c181)',
                                         },
                                     }}
                                 />
@@ -1511,7 +1511,7 @@ const PostCreationModal = ({ open, handleClose, onUnauthorized, onPostSuccess, o
                     </Box>
                     
                     {/* Индикатор выбранных тегов */}
-                    <Typography variant="body2" sx={{ color: '#bdbdbd' }}>
+                    <Typography variant="body2" sx={{ color: 'var(--text-secondary)' }}>
                         Выбрано тегов: {selectedTags.length}/5
                     </Typography>
                 </Box>
@@ -1523,7 +1523,7 @@ const PostCreationModal = ({ open, handleClose, onUnauthorized, onPostSuccess, o
                         bottom: 0,
                         pt: 1,
                         pb: { xs: 1, sm: 0 },
-                        background: { xs: 'linear-gradient(180deg, rgba(56,56,56,0) 0%, rgba(56,56,56,1) 24%)', sm: 'transparent' }
+                        background: { xs: 'linear-gradient(180deg, var(--ui-c205) 0%, var(--ui-c206) 24%)', sm: 'transparent' }
                     }}
                 >
                     <Button
@@ -1533,9 +1533,9 @@ const PostCreationModal = ({ open, handleClose, onUnauthorized, onPostSuccess, o
                         disabled={!title || !preview || !content || isLoading} // Теги и картинка опциональны
                         sx={{
                             marginTop: 1,
-                            backgroundColor: '#00bfa5',
-                            '&:hover': { backgroundColor: '#009688' },
-                            color: '#ffffff',
+                            backgroundColor: 'var(--accent-500)',
+                            '&:hover': { backgroundColor: 'var(--accent-600)' },
+                            color: 'var(--text-primary)',
                             padding: '12px 0',
                             fontWeight: 'bold',
                             fontSize: '1rem',

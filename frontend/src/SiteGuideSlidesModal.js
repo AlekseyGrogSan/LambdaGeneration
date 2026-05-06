@@ -26,11 +26,11 @@ const baseModalSx = {
     height: { xs: '100dvh', sm: 'auto' },
     maxHeight: { xs: '100dvh', sm: '90vh' },
     borderRadius: { xs: 0, sm: '20px' },
-    border: '1px solid rgba(0, 229, 201, 0.26)',
-    background: 'radial-gradient(circle at 20% 0%, #1d3a39 0%, #151515 55%, #0f0f0f 100%)',
-    color: '#f2f5f5',
+    border: '1px solid var(--ui-c129)',
+    background: 'radial-gradient(circle at 20% 0%, var(--ui-c28) 0%, var(--ui-c22) 55%, var(--ui-c17) 100%)',
+    color: 'var(--ui-c92)',
     overflow: 'hidden',
-    boxShadow: '0 30px 80px rgba(0, 0, 0, 0.55)',
+    boxShadow: '0 30px 80px var(--ui-c110)',
     display: 'flex',
     flexDirection: 'column',
 };
@@ -42,9 +42,9 @@ const slideIconSx = {
     display: 'inline-flex',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: 'rgba(0, 229, 201, 0.13)',
-    color: '#8df7ea',
-    border: '1px solid rgba(141, 247, 234, 0.3)',
+    backgroundColor: 'var(--ui-c125)',
+    color: 'var(--ui-c57)',
+    border: '1px solid var(--ui-c148)',
 };
 
 const getSlides = () => [
@@ -148,9 +148,9 @@ const SiteGuideSlidesModal = ({ open, onClose }) => {
                         gap: 1,
                         px: { xs: 1.5, sm: 2.25 },
                         py: { xs: 1.1, sm: 1.5 },
-                        borderBottom: '1px solid rgba(0, 229, 201, 0.18)',
+                        borderBottom: '1px solid var(--ui-c127)',
                         backdropFilter: 'blur(10px)',
-                        backgroundColor: 'rgba(0, 0, 0, 0.2)',
+                        backgroundColor: 'var(--ui-c104)',
                     }}
                 >
                     <Chip
@@ -158,15 +158,15 @@ const SiteGuideSlidesModal = ({ open, onClose }) => {
                         size="small"
                         sx={{
                             fontWeight: 700,
-                            bgcolor: 'rgba(0, 229, 201, 0.16)',
-                            color: '#98fff2',
-                            border: '1px solid rgba(0, 229, 201, 0.28)',
+                            bgcolor: 'var(--ui-c126)',
+                            color: 'var(--ui-c61)',
+                            border: '1px solid var(--ui-c130)',
                         }}
                     />
-                    <Typography sx={{ ml: 'auto', color: '#b9c4c3', fontSize: '0.8rem' }}>
+                    <Typography sx={{ ml: 'auto', color: 'var(--ui-c70)', fontSize: '0.8rem' }}>
                         {activeStep + 1} / {maxSteps}
                     </Typography>
-                    <IconButton onClick={onClose} aria-label="Закрыть инструкцию" sx={{ color: '#d6e8e6' }}>
+                    <IconButton onClick={onClose} aria-label="Закрыть инструкцию" sx={{ color: 'var(--ui-c82)' }}>
                         <CloseIcon />
                     </IconButton>
                 </Box>
@@ -177,14 +177,14 @@ const SiteGuideSlidesModal = ({ open, onClose }) => {
                         overflowY: 'auto',
                         flex: 1,
                         '&::-webkit-scrollbar': { width: '8px' },
-                        '&::-webkit-scrollbar-thumb': { backgroundColor: '#00bfa5', borderRadius: '10px' },
+                        '&::-webkit-scrollbar-thumb': { backgroundColor: 'var(--accent-500)', borderRadius: '10px' },
                     }}
                 >
                     <Box sx={slideIconSx}>{currentSlide.icon}</Box>
                     <Typography id="site-guide-title" variant="h5" sx={{ mt: 1.5, fontWeight: 800, letterSpacing: 0.2 }}>
                         {currentSlide.title}
                     </Typography>
-                    <Typography id="site-guide-content" sx={{ mt: 0.8, color: '#b7c4c2', lineHeight: 1.6 }}>
+                    <Typography id="site-guide-content" sx={{ mt: 0.8, color: 'var(--ui-c69)', lineHeight: 1.6 }}>
                         {currentSlide.subtitle}
                     </Typography>
 
@@ -195,8 +195,8 @@ const SiteGuideSlidesModal = ({ open, onClose }) => {
                                 sx={{
                                     p: 1.3,
                                     borderRadius: '12px',
-                                    border: '1px solid rgba(255,255,255,0.09)',
-                                    backgroundColor: 'rgba(255,255,255,0.02)',
+                                    border: '1px solid var(--ui-c190)',
+                                    backgroundColor: 'var(--ui-c188)',
                                 }}
                             >
                                 <Typography sx={{ fontSize: { xs: '0.92rem', sm: '0.96rem' }, lineHeight: 1.5 }}>{point}</Typography>
@@ -205,7 +205,7 @@ const SiteGuideSlidesModal = ({ open, onClose }) => {
                     </Box>
                 </Box>
 
-                <Box sx={{ borderTop: '1px solid rgba(0, 229, 201, 0.18)' }}>
+                <Box sx={{ borderTop: '1px solid var(--ui-c127)' }}>
                     <MobileStepper
                         variant="dots"
                         steps={maxSteps}
@@ -215,10 +215,10 @@ const SiteGuideSlidesModal = ({ open, onClose }) => {
                             background: 'transparent',
                             px: { xs: 1, sm: 1.6 },
                             '& .MuiMobileStepper-dot': {
-                                backgroundColor: 'rgba(255,255,255,0.28)',
+                                backgroundColor: 'var(--ui-c197)',
                             },
                             '& .MuiMobileStepper-dotActive': {
-                                backgroundColor: '#00e5c9',
+                                backgroundColor: 'var(--accent-400)',
                             },
                         }}
                         nextButton={
@@ -227,7 +227,7 @@ const SiteGuideSlidesModal = ({ open, onClose }) => {
                                 onClick={handleNext}
                                 disabled={activeStep === maxSteps - 1}
                                 endIcon={<ArrowForwardIosIcon sx={{ fontSize: 13 }} />}
-                                sx={{ color: '#8ef7ea' }}
+                                sx={{ color: 'var(--ui-c58)' }}
                             >
                                 Далее
                             </Button>
@@ -238,7 +238,7 @@ const SiteGuideSlidesModal = ({ open, onClose }) => {
                                 onClick={handleBack}
                                 disabled={activeStep === 0}
                                 startIcon={<ArrowBackIosNewIcon sx={{ fontSize: 13 }} />}
-                                sx={{ color: '#8ef7ea' }}
+                                sx={{ color: 'var(--ui-c58)' }}
                             >
                                 Назад
                             </Button>

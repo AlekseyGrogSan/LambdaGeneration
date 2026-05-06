@@ -14,21 +14,21 @@ const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || '/api';
 const inputStyle = {
     // Общие стили для полей ввода Material UI в стиле "filled"
     '& .MuiFilledInput-root': {
-        backgroundColor: 'rgba(255, 255, 255, 0.1)',
-        color: '#ffffff',
+        backgroundColor: 'var(--ui-c176)',
+        color: 'var(--text-primary)',
         borderRadius: '8px',
         '&:hover': {
-            backgroundColor: 'rgba(255, 255, 255, 0.15)',
+            backgroundColor: 'var(--ui-c178)',
         },
         '&.Mui-focused': {
-            backgroundColor: 'rgba(255, 255, 255, 0.2)',
+            backgroundColor: 'var(--ui-c181)',
         },
     },
     // Стили для меток (label)
     '& .MuiInputLabel-root': {
-        color: '#bdbdbd',
+        color: 'var(--text-secondary)',
         '&.Mui-focused': {
-            color: '#00bfa5', // Фирменный цвет при фокусе
+            color: 'var(--accent-500)', // Фирменный цвет при фокусе
         },
     },
     // Убираем нижнюю линию у filled-инпутов
@@ -53,11 +53,11 @@ const ResetPasswordModal = ({ open, handleClose }) => {
         left: '50%',
         transform: 'translate(-50%, -50%)',
         width: { xs: '90%', sm: '400px' },
-        bgcolor: '#383838',
+        bgcolor: 'var(--ui-c41)',
         borderRadius: '16px',
         boxShadow: 24,
         p: 4,
-        color: '#ffffff',
+        color: 'var(--text-primary)',
         display: 'flex',
         flexDirection: 'column',
         gap: 2,
@@ -105,13 +105,13 @@ const ResetPasswordModal = ({ open, handleClose }) => {
             aria-labelledby="reset-password-modal-title"
         >
             <Box sx={modalStyle} component="form" onSubmit={handleSubmit}>
-                <Typography id="reset-password-modal-title" variant="h5" component="h2" sx={{ color: '#ffffff', fontWeight: 300, textAlign: 'center', marginBottom: 2 }}>
+                <Typography id="reset-password-modal-title" variant="h5" component="h2" sx={{ color: 'var(--text-primary)', fontWeight: 300, textAlign: 'center', marginBottom: 2 }}>
                     Установите новый пароль
                 </Typography>
 
                 {/* Сообщения об ошибке/успехе */}
                 {error && <Typography color="error" sx={{ textAlign: 'center' }}>{error}</Typography>}
-                {message && <Typography sx={{ color: '#00bfa5', textAlign: 'center' }}>{message}</Typography>}
+                {message && <Typography sx={{ color: 'var(--accent-500)', textAlign: 'center' }}>{message}</Typography>}
 
                 {/* Поле для ввода нового пароля */}
                 <TextField
@@ -146,9 +146,9 @@ const ResetPasswordModal = ({ open, handleClose }) => {
                     disabled={!!message}
                     sx={{
                         marginTop: 1,
-                        backgroundColor: '#00bfa5',
-                        '&:hover': { backgroundColor: '#009688' },
-                        color: '#ffffff',
+                        backgroundColor: 'var(--accent-500)',
+                        '&:hover': { backgroundColor: 'var(--accent-600)' },
+                        color: 'var(--text-primary)',
                         padding: '12px 0',
                         fontWeight: 'bold',
                         fontSize: '1rem',

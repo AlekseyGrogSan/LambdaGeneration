@@ -18,10 +18,10 @@ const pageContainerStyle = {
     padding: '20px', 
     maxWidth: '450px', 
     margin: '100px auto', 
-    backgroundColor: '#1e1e1e', // Темный фон
-    border: '1px solid #333',
+    backgroundColor: 'var(--surface-panel)', // Темный фон
+    border: '1px solid var(--border-default)',
     borderRadius: '12px',
-    boxShadow: '0 4px 12px rgba(0, 0, 0, 0.4)',
+    boxShadow: '0 4px 12px var(--ui-c107)',
     color: 'white',
     textAlign: 'center',
 };
@@ -29,21 +29,21 @@ const pageContainerStyle = {
 const inputStyleFilled = {
     // Стиль, который вы используете для заполненных полей
     '& .MuiFilledInput-root': {
-        backgroundColor: 'rgba(255, 255, 255, 0.1)',
-        color: '#ffffff',
+        backgroundColor: 'var(--ui-c176)',
+        color: 'var(--text-primary)',
         borderRadius: '8px',
         '&:hover': {
-            backgroundColor: 'rgba(255, 255, 255, 0.15)',
+            backgroundColor: 'var(--ui-c178)',
         },
         '&.Mui-focused': {
-            backgroundColor: 'rgba(255, 255, 255, 0.2)',
+            backgroundColor: 'var(--ui-c181)',
         },
     },
     // Стили для меток (label)
     '& .MuiInputLabel-root': {
-        color: '#bdbdbd',
+        color: 'var(--text-secondary)',
         '&.Mui-focused': {
-            color: '#00bfa5', // Фирменный цвет при фокусе
+            color: 'var(--accent-500)', // Фирменный цвет при фокусе
         },
     },
     // Убираем нижнюю линию у filled-инпутов
@@ -197,8 +197,8 @@ function ResetPasswordPage() {
                 variant="contained" 
                 fullWidth
                 sx={{ 
-                    backgroundColor: '#00bfa5', 
-                    '&:hover': { backgroundColor: '#00a38f' },
+                    backgroundColor: 'var(--accent-500)', 
+                    '&:hover': { backgroundColor: 'var(--ui-c4)' },
                     color: 'white',
                     fontWeight: 'bold' 
                 }}
@@ -233,7 +233,7 @@ function ResetPasswordPage() {
 
     return (
     <Box sx={pageContainerStyle}>
-        <Typography variant="h4" sx={{ mb: 4, color: '#00bfa5', fontWeight: 'bold' }}>
+        <Typography variant="h4" sx={{ mb: 4, color: 'var(--accent-500)', fontWeight: 'bold' }}>
             Сброс пароля
         </Typography>
         {renderContent()}

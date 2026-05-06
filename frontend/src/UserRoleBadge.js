@@ -8,9 +8,9 @@ import PersonIcon from '@mui/icons-material/Person';
  * Конфигурация ролей в стиле Telegram-тегов.
  *
  * Ключи соответствуют значениям UserTagExtensions.ToApiValue() на бэкенде:
- *   "admin"      → красный  (#ef5350)
- *   "dross-boss" → оранжевый (#ff9800)
- *   "user"       → зелёный  (#4caf50)
+ *   "admin"      → красный  (var(--ui-c91))
+ *   "dross-boss" → оранжевый (var(--ui-c99))
+ *   "user"       → зелёный  (var(--ui-c47))
  *
  * resolveRoleConfig также понимает legacy-варианты:
  *   "Admin", "DrossBoss", "dross_boss", число 0/1/2
@@ -18,23 +18,23 @@ import PersonIcon from '@mui/icons-material/Person';
 export const ROLE_CONFIG = {
     admin: {
         label: 'Admin',
-        color: '#ef5350',
-        bg: 'rgba(239,83,80,0.12)',
-        border: 'rgba(239,83,80,0.35)',
+        color: 'var(--ui-c91)',
+        bg: 'var(--ui-c168)',
+        border: 'var(--ui-c169)',
         Icon: AdminPanelSettingsIcon,
     },
     'dross-boss': {
         label: 'Dross-Boss',
-        color: '#ff9800',
-        bg: 'rgba(255,152,0,0.12)',
-        border: 'rgba(255,152,0,0.35)',
+        color: 'var(--ui-c99)',
+        bg: 'var(--ui-c186)',
+        border: 'var(--ui-c187)',
         Icon: StarIcon,
     },
     user: {
         label: 'User',
-        color: '#4caf50',
-        bg: 'rgba(76,175,80,0.12)',
-        border: 'rgba(76,175,80,0.35)',
+        color: 'var(--ui-c47)',
+        bg: 'var(--ui-c208)',
+        border: 'var(--ui-c209)',
         Icon: PersonIcon,
     },
 };

@@ -25,7 +25,7 @@ const NAV_ITEM_SX = {
     border: 'none',
     background: 'transparent',
     cursor: 'pointer',
-    color: '#9e9e9e',
+    color: 'var(--text-secondary)',
     transition: 'color 0.2s ease, transform 0.2s ease',
     WebkitTapHighlightColor: 'transparent',
     '&:active': {
@@ -37,7 +37,7 @@ const labelSx = (active) => ({
     fontSize: '0.65rem',
     fontWeight: active ? 700 : 500,
     lineHeight: 1.1,
-    color: active ? '#00e5c9' : '#9e9e9e',
+    color: active ? 'var(--accent-400)' : 'var(--text-secondary)',
     transition: 'color 0.2s ease',
     textAlign: 'center',
     maxWidth: '100%',
@@ -98,7 +98,7 @@ const MobileBottomNav = ({
                 onClick={onHome}
                 sx={{
                     ...NAV_ITEM_SX,
-                    color: homeActive ? '#00e5c9' : '#9e9e9e',
+                    color: homeActive ? 'var(--accent-400)' : 'var(--text-secondary)',
                 }}
             >
                 {homeActive ? (
@@ -117,7 +117,7 @@ const MobileBottomNav = ({
                 onClick={onSearch}
                 sx={{
                     ...NAV_ITEM_SX,
-                    color: searchActive ? '#00e5c9' : '#9e9e9e',
+                    color: searchActive ? 'var(--accent-400)' : 'var(--text-secondary)',
                 }}
             >
                 {searchActive ? (
@@ -151,21 +151,21 @@ const MobileBottomNav = ({
                         width: 56,
                         height: 56,
                         borderRadius: '50%',
-                        border: '2px solid rgba(0, 191, 165, 0.85)',
-                        background: 'linear-gradient(145deg, #00e5c9 0%, #00bfa5 55%, #008c7a 100%)',
-                        color: '#0d0d0d',
+                        border: '2px solid var(--ui-c123)',
+                        background: 'linear-gradient(145deg, var(--accent-400) 0%, var(--accent-500) 55%, var(--accent-600) 100%)',
+                        color: 'var(--ui-c15)',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
                         cursor: 'pointer',
-                        boxShadow: '0 10px 28px rgba(0, 191, 165, 0.45)',
+                        boxShadow: '0 10px 28px color-mix(in oklab, var(--accent-500) 45%, transparent)',
                         transform: 'translateY(-12px)',
                         flexShrink: 0,
                         transition: 'transform 0.2s ease, box-shadow 0.2s ease',
                         WebkitTapHighlightColor: 'transparent',
                         '&:active': {
                             transform: 'translateY(-10px) scale(0.96)',
-                            boxShadow: '0 6px 18px rgba(0, 191, 165, 0.35)',
+                            boxShadow: '0 6px 18px color-mix(in oklab, var(--accent-500) 35%, transparent)',
                         },
                     }}
                 >
@@ -188,7 +188,7 @@ const MobileBottomNav = ({
                 onClick={onCategories}
                 sx={{
                     ...NAV_ITEM_SX,
-                    color: categoriesActive ? '#00e5c9' : '#9e9e9e',
+                    color: categoriesActive ? 'var(--accent-400)' : 'var(--text-secondary)',
                 }}
             >
                 {categoriesActive ? (
@@ -207,7 +207,7 @@ const MobileBottomNav = ({
                 onClick={onThemeToggle || onProfile}
                 sx={{
                     ...NAV_ITEM_SX,
-                    color: profileActive ? '#00e5c9' : '#9e9e9e',
+                    color: profileActive ? 'var(--accent-400)' : 'var(--text-secondary)',
                 }}
             >
                 {onThemeToggle ? (
@@ -220,9 +220,9 @@ const MobileBottomNav = ({
                             height: 26,
                             fontSize: '0.75rem',
                             fontWeight: 700,
-                            bgcolor: '#00bfa5',
-                            color: '#10211f',
-                            border: `1.5px solid ${profileActive ? '#00e5c9' : 'rgba(158, 158, 158, 0.65)'}`,
+                            bgcolor: 'var(--accent-500)',
+                            color: 'var(--ui-c19)',
+                            border: `1.5px solid ${profileActive ? 'var(--accent-400)' : 'var(--ui-c151)'}`,
                         }}
                         imgProps={{
                             onError: (e) => {

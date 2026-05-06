@@ -19,7 +19,7 @@ import { mapTagsToLabels } from './CategoryModal';
 const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || '/api';
 
 const TAG_COLORS = [
-    '#ff6f00', '#00e676', '#2979ff', '#ff1744', '#e040fb', '#00bcd4'
+    'var(--ui-c97)', 'var(--ui-c13)', 'var(--ui-c37)', 'var(--ui-c94)', 'var(--ui-c86)', 'var(--ui-c7)'
 ];
 
 const getTagColor = (tag, index) => {
@@ -97,22 +97,22 @@ const BestArticlesList = ({ isMobile, onArticleClick, open, onClose }) => {
   }, [open]);
 
   const getRankColor = (index) => {
-    if (index === 0) return '#FFD700'; // Gold
-    if (index === 1) return '#C0C0C0'; // Silver
-    if (index === 2) return '#CD7F32'; // Bronze
-    return '#FFFFFF'; // White
+    if (index === 0) return 'var(--ui-c101)'; // Gold
+    if (index === 1) return 'var(--ui-c74)'; // Silver
+    if (index === 2) return 'var(--ui-c76)'; // Bronze
+    return 'var(--ui-c103)'; // White
   };
 
   const getRankShadow = (index) => {
-    if (index === 0) return '0 0 10px rgba(255, 215, 0, 0.8)';
-    if (index === 1) return '0 0 8px rgba(192, 192, 192, 0.6)';
-    if (index === 2) return '0 0 6px rgba(205, 127, 50, 0.5)';
+    if (index === 0) return '0 0 10px var(--ui-c171)';
+    if (index === 1) return '0 0 8px var(--ui-c161)';
+    if (index === 2) return '0 0 6px var(--ui-c165)';
     return 'none';
   };
 
   const renderList = () => (
     <Box sx={{ p: 1, maxHeight: '70vh', overflowY: 'auto' }}>
-      <Typography variant="h6" sx={{ color: '#00bfa5', mb: 2, textAlign: 'center' }}>
+      <Typography variant="h6" sx={{ color: 'var(--accent-500)', mb: 2, textAlign: 'center' }}>
         Лучший статьи
       </Typography>
       {loading ? (
@@ -134,14 +134,14 @@ const BestArticlesList = ({ isMobile, onArticleClick, open, onClose }) => {
                 alignItems: 'center',
                 p: isFirst ? 2 : 1.5,
                 mb: 1,
-                bgcolor: '#1f1f1f',
+                bgcolor: 'var(--surface-panel)',
                 borderRadius: '12px',
                 cursor: 'pointer',
-                border: isFirst ? '2px solid rgba(255, 215, 0, 0.5)' : '1px solid #333',
+                border: isFirst ? '2px solid var(--ui-c170)' : '1px solid var(--border-default)',
                 transform: isFirst ? 'scale(1.02)' : 'none',
                 transition: 'background-color 0.2s',
                 '&:hover': {
-                  bgcolor: '#2c2c2c',
+                  bgcolor: 'var(--surface-elevated)',
                 }
               }}
             >
@@ -162,7 +162,7 @@ const BestArticlesList = ({ isMobile, onArticleClick, open, onClose }) => {
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
                   {isFirst && (
                     <Box sx={{ 
-                      bgcolor: '#ff5722', 
+                      bgcolor: 'var(--ui-c96)', 
                       color: 'white', 
                       px: 0.8, 
                       py: 0.2, 
@@ -177,7 +177,7 @@ const BestArticlesList = ({ isMobile, onArticleClick, open, onClose }) => {
                   <Typography
                     variant="body1"
                     sx={{
-                      color: '#ffffff',
+                      color: 'var(--text-primary)',
                       fontWeight: isFirst ? 'bold' : 'normal',
                       fontSize: isFirst ? '1.1rem' : '0.95rem',
                       whiteSpace: 'nowrap',
@@ -209,7 +209,7 @@ const BestArticlesList = ({ isMobile, onArticleClick, open, onClose }) => {
                     })}
                   </Box>
                 </Box>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, color: '#bdbdbd', fontSize: '0.75rem' }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, color: 'var(--text-secondary)', fontSize: '0.75rem' }}>
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, flex: 1, minWidth: 0 }}>
                     <Avatar
                       src={buildAvatarUrl(API_BASE_URL, a.author_avatar_path)}
@@ -240,7 +240,7 @@ const BestArticlesList = ({ isMobile, onArticleClick, open, onClose }) => {
           );
         })
       ) : (
-        <Typography sx={{ color: '#bdbdbd', p: 2, textAlign: 'center' }}>РќРµС‚ СЃС‚Р°С‚РµР№</Typography>
+        <Typography sx={{ color: 'var(--text-secondary)', p: 2, textAlign: 'center' }}>РќРµС‚ СЃС‚Р°С‚РµР№</Typography>
       )}
     </Box>
   );
@@ -255,8 +255,8 @@ const BestArticlesList = ({ isMobile, onArticleClick, open, onClose }) => {
           transform: 'translate(-50%, -50%)',
           width: '90%',
           maxWidth: 400,
-          bgcolor: '#121212',
-          border: '1px solid #333',
+          bgcolor: 'var(--bg-canvas)',
+          border: '1px solid var(--border-default)',
           boxShadow: 24,
           borderRadius: 3,
           p: 2,
@@ -286,10 +286,10 @@ const BestArticlesList = ({ isMobile, onArticleClick, open, onClose }) => {
         <Box sx={{
           width: '100%',
           maxHeight: 'calc(100vh - 48px)',
-          bgcolor: '#121212',
-          border: '1px solid #333',
+          bgcolor: 'var(--bg-canvas)',
+          border: '1px solid var(--border-default)',
           borderRadius: 3,
-          boxShadow: '0 8px 32px rgba(0,0,0,0.5)',
+          boxShadow: '0 8px 32px var(--ui-c136)',
           overflow: 'hidden'
         }}>
           {renderList()}

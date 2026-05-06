@@ -71,8 +71,8 @@ const modalStyle = {
     width: { xs: '100vw', sm: '95%', md: 800 },
     height: { xs: '100dvh', sm: 'auto' },
     maxHeight: { xs: '100dvh', sm: '90vh' },
-    bgcolor: '#2c2c2c',
-    border: '1px solid #444',
+    bgcolor: 'var(--surface-elevated)',
+    border: '1px solid var(--ui-c44)',
     borderRadius: { xs: 0, sm: '12px' },
     boxShadow: 24,
     p: { xs: 2, sm: 3 },
@@ -80,42 +80,42 @@ const modalStyle = {
     overflowY: 'auto',
     overscrollBehavior: 'contain',
     '&::-webkit-scrollbar': { width: '8px' },
-    '&::-webkit-scrollbar-track': { background: 'rgba(255, 255, 255, 0.05)', borderRadius: '10px' },
-    '&::-webkit-scrollbar-thumb': { background: '#00bfa5', borderRadius: '10px' },
-    '&::-webkit-scrollbar-thumb:hover': { background: '#009688' },
+    '&::-webkit-scrollbar-track': { background: 'color-mix(in oklab, var(--text-primary) 5%, transparent)', borderRadius: '10px' },
+    '&::-webkit-scrollbar-thumb': { background: 'var(--accent-500)', borderRadius: '10px' },
+    '&::-webkit-scrollbar-thumb:hover': { background: 'var(--accent-600)' },
 };
 
 const inputStyle = {
     '& .MuiFilledInput-root': {
-        backgroundColor: '#3a3a3a',
+        backgroundColor: 'var(--ui-c42)',
         color: 'white',
-        '&:hover': { backgroundColor: '#454545' },
-        '&.Mui-focused': { backgroundColor: '#454545' },
+        '&:hover': { backgroundColor: 'var(--ui-c46)' },
+        '&.Mui-focused': { backgroundColor: 'var(--ui-c46)' },
         overflowY: 'auto',
         '&::-webkit-scrollbar': {
             width: '8px',
         },
         '&::-webkit-scrollbar-track': {
-            background: 'rgba(255, 255, 255, 0.05)',
+            background: 'color-mix(in oklab, var(--text-primary) 5%, transparent)',
             borderRadius: '10px',
         },
         '&::-webkit-scrollbar-thumb': {
-            background: '#00bfa5',
+            background: 'var(--accent-500)',
             borderRadius: '10px',
         },
         '&::-webkit-scrollbar-thumb:hover': {
-            background: '#009688',
+            background: 'var(--accent-600)',
         },
     },
-    '& .MuiInputLabel-root': { color: '#bdbdbd' },
+    '& .MuiInputLabel-root': { color: 'var(--text-secondary)' },
     '& .MuiInputBase-input': {
         padding: '16px 12px 16px 12px',
         maxHeight: '4.5em',
         overflowY: 'auto',
         '&::-webkit-scrollbar': { width: '8px' },
-        '&::-webkit-scrollbar-track': { background: 'rgba(255, 255, 255, 0.05)', borderRadius: '10px' },
-        '&::-webkit-scrollbar-thumb': { background: '#00bfa5', borderRadius: '10px' },
-        '&::-webkit-scrollbar-thumb:hover': { background: '#009688' }
+        '&::-webkit-scrollbar-track': { background: 'color-mix(in oklab, var(--text-primary) 5%, transparent)', borderRadius: '10px' },
+        '&::-webkit-scrollbar-thumb': { background: 'var(--accent-500)', borderRadius: '10px' },
+        '&::-webkit-scrollbar-thumb:hover': { background: 'var(--accent-600)' }
     }
 };
 
@@ -132,7 +132,7 @@ const EditorToolbar = ({ editorRef, setInputDialog, onOpenAiPanel, aiBusy, aiHas
     const [fontSizeAnchor, setFontSizeAnchor] = useState(null);
     const [textColorAnchor, setTextColorAnchor] = useState(null);
     const [helpAnchor, setHelpAnchor] = useState(null);
-    const [currentTextColor, setCurrentTextColor] = useState('#ffffff');
+    const [currentTextColor, setCurrentTextColor] = useState('var(--text-primary)');
 
     const highlightEditorCodeBlocks = useCallback(() => {
         const editor = editorRef.current;
@@ -157,13 +157,13 @@ const EditorToolbar = ({ editorRef, setInputDialog, onOpenAiPanel, aiBusy, aiHas
     }, [editorRef]);
 
     const basicTextColors = [
-        { name: 'Черный', value: '#000000' },
-        { name: 'Белый', value: '#ffffff' },
-        { name: 'Красный', value: '#f44336' },
-        { name: 'Оранжевый', value: '#ff9800' },
-        { name: 'Желтый', value: '#ffeb3b' },
-        { name: 'Зеленый', value: '#4caf50' },
-        { name: 'Синий', value: '#2196f3' }
+        { name: 'Черный', value: 'var(--ui-c1)000' },
+        { name: 'Белый', value: 'var(--text-primary)' },
+        { name: 'Красный', value: 'var(--ui-c93)' },
+        { name: 'Оранжевый', value: 'var(--ui-c99)' },
+        { name: 'Желтый', value: 'var(--ui-c102)' },
+        { name: 'Зеленый', value: 'var(--ui-c47)' },
+        { name: 'Синий', value: 'var(--ui-c31)' }
     ];
 
     const textEditorShortcuts = [
@@ -300,7 +300,7 @@ const EditorToolbar = ({ editorRef, setInputDialog, onOpenAiPanel, aiBusy, aiHas
 
             if (event.shiftKey && key === '0') {
                 event.preventDefault();
-                applyTextColor('#ffffff');
+                applyTextColor('var(--text-primary)');
             }
         };
 
@@ -321,7 +321,7 @@ const EditorToolbar = ({ editorRef, setInputDialog, onOpenAiPanel, aiBusy, aiHas
                 setInputDialog(prev => ({ ...prev, open: false }));
                 const normalizedLang = normalizeCodeLanguage(lang || 'text');
                 const languageLabel = formatCodeLanguageLabel(normalizedLang);
-                const codeHTML = `<br><table class="tg-code-block code-block-table" data-language="${normalizedLang}" style="width: 100%; background: linear-gradient(180deg, #121820, #0d1117); border-radius: 12px; border: 1px solid rgba(0,229,201,0.25); border-collapse: separate; border-spacing: 0; margin: 14px 0; overflow: hidden; table-layout: fixed;"><thead><tr><th style="padding: 8px 12px; background: linear-gradient(90deg, #18202a, #141a22); color: rgba(206,231,255,0.9); font-family: 'JetBrains Mono', Consolas, monospace; font-size: 12px; text-align: left; font-weight: 700; letter-spacing: 0.4px; border-bottom: 1px solid rgba(255,255,255,0.08); user-select: none;">${languageLabel}</th></tr></thead><tbody><tr><td style="padding: 14px; overflow-x: auto;"><pre style="margin: 0; white-space: pre-wrap !important; word-wrap: break-word; background: transparent;"><code class="language-${normalizedLang}" style="font-family: 'JetBrains Mono', Consolas, monospace; font-size: 14px; line-height: 1.55; background: transparent !important; padding: 0 !important; border: none !important; color: #e6edf3;">// Ваш код...</code></pre></td></tr></tbody></table><br><div style="min-height: 20px;"></div>`;
+                const codeHTML = `<br><table class="tg-code-block code-block-table" data-language="${normalizedLang}" style="width: 100%; background: linear-gradient(180deg, var(--ui-c20), var(--ui-c16)); border-radius: 12px; border: 1px solid var(--ui-c144); border-collapse: separate; border-spacing: 0; margin: 14px 0; overflow: hidden; table-layout: fixed;"><thead><tr><th style="padding: 8px 12px; background: linear-gradient(90deg, var(--ui-c24), var(--ui-c21)); color: var(--ui-c166); font-family: 'JetBrains Mono', Consolas, monospace; font-size: 12px; text-align: left; font-weight: 700; letter-spacing: 0.4px; border-bottom: 1px solid color-mix(in oklab, var(--text-primary) 8%, transparent); user-select: none;">${languageLabel}</th></tr></thead><tbody><tr><td style="padding: 14px; overflow-x: auto;"><pre style="margin: 0; white-space: pre-wrap !important; word-wrap: break-word; background: transparent;"><code class="language-${normalizedLang}" style="font-family: 'JetBrains Mono', Consolas, monospace; font-size: 14px; line-height: 1.55; background: transparent !important; padding: 0 !important; border: none !important; color: var(--ui-c89);">// Ваш код...</code></pre></td></tr></tbody></table><br><div style="min-height: 20px;"></div>`;
                 applyCommand('insertHTML', codeHTML);
 
                 setTimeout(() => {
@@ -331,12 +331,12 @@ const EditorToolbar = ({ editorRef, setInputDialog, onOpenAiPanel, aiBusy, aiHas
         });
     }, [applyCommand, highlightEditorCodeBlocks, setInputDialog]);
 
-    const getButtonStyle = (isActive, activeColor = '#00bfa5') => ({
-        color: isActive ? activeColor : '#ffffff',
-        backgroundColor: isActive ? 'rgba(255, 255, 255, 0.15)' : 'transparent',
+    const getButtonStyle = (isActive, activeColor = 'var(--accent-500)') => ({
+        color: isActive ? activeColor : 'var(--text-primary)',
+        backgroundColor: isActive ? 'var(--ui-c178)' : 'transparent',
         borderRadius: '4px',
         transition: 'all 0.2s',
-        '&:hover': { backgroundColor: '#666666' }
+        '&:hover': { backgroundColor: 'var(--ui-c50)666' }
     });
 
     return (
@@ -345,30 +345,30 @@ const EditorToolbar = ({ editorRef, setInputDialog, onOpenAiPanel, aiBusy, aiHas
                 display: 'flex',
                 gap: 1,
                 padding: 1,
-                backgroundColor: '#444',
+                backgroundColor: 'var(--ui-c44)',
                 borderRadius: '8px 8px 0 0',
-                border: '1px solid #555',
+                border: '1px solid var(--ui-c48)',
                 flexWrap: 'nowrap',
                 overflowX: 'auto',
                 overflowY: 'hidden',
                 scrollbarWidth: 'thin',
-                scrollbarColor: '#00bfa5 rgba(255,255,255,0.08)',
+                scrollbarColor: 'var(--accent-500) color-mix(in oklab, var(--text-primary) 8%, transparent)',
                 paddingBottom: '6px',
                 '&::-webkit-scrollbar': {
                     height: '8px',
                 },
                 '&::-webkit-scrollbar-track': {
-                    background: 'linear-gradient(90deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02))',
+                    background: 'linear-gradient(90deg, color-mix(in oklab, var(--text-primary) 6%, transparent), var(--ui-c188))',
                     borderRadius: '999px',
                 },
                 '&::-webkit-scrollbar-thumb': {
-                    background: 'linear-gradient(90deg, #00d4b8, #00a58f)',
+                    background: 'linear-gradient(90deg, var(--ui-c10), var(--ui-c5))',
                     borderRadius: '999px',
-                    border: '1px solid rgba(255,255,255,0.28)',
-                    boxShadow: 'inset 0 0 0 1px rgba(0,0,0,0.16)',
+                    border: '1px solid var(--ui-c197)',
+                    boxShadow: 'inset 0 0 0 1px var(--ui-c133)',
                 },
                 '&::-webkit-scrollbar-thumb:hover': {
-                    background: 'linear-gradient(90deg, #00e0c2, #00b39b)',
+                    background: 'linear-gradient(90deg, var(--ui-c12), var(--ui-c6))',
                 },
                 '&::-webkit-scrollbar-corner': {
                     background: 'transparent',
@@ -378,8 +378,8 @@ const EditorToolbar = ({ editorRef, setInputDialog, onOpenAiPanel, aiBusy, aiHas
             <IconButton size="small" onClick={() => applyCommand('bold')} sx={{ ...getButtonStyle(activeStyles.bold), flex: '0 0 auto' }}><FormatBoldIcon /></IconButton>
             <IconButton size="small" onClick={() => applyCommand('italic')} sx={{ ...getButtonStyle(activeStyles.italic), flex: '0 0 auto' }}><FormatItalicIcon /></IconButton>
             <IconButton size="small" onClick={() => applyCommand('underline')} sx={{ ...getButtonStyle(activeStyles.underline), flex: '0 0 auto' }}><FormatUnderlinedIcon /></IconButton>
-            <IconButton size="small" onClick={() => { const url = prompt('URL:'); if(url) applyCommand('createLink', url); }} sx={{ color: '#00bfa5', flex: '0 0 auto' }}><LinkIcon /></IconButton>
-            <IconButton size="small" onClick={() => applyCommand('formatBlock', '<h2>')} sx={{ ...getButtonStyle(activeStyles.h2, '#ffeb3b'), flex: '0 0 auto' }}><TitleIcon /></IconButton>
+            <IconButton size="small" onClick={() => { const url = prompt('URL:'); if(url) applyCommand('createLink', url); }} sx={{ color: 'var(--accent-500)', flex: '0 0 auto' }}><LinkIcon /></IconButton>
+            <IconButton size="small" onClick={() => applyCommand('formatBlock', '<h2>')} sx={{ ...getButtonStyle(activeStyles.h2, 'var(--ui-c102)'), flex: '0 0 auto' }}><TitleIcon /></IconButton>
             <IconButton size="small" onClick={() => applyCommand('insertUnorderedList')} sx={{ ...getButtonStyle(activeStyles.listBulleted), flex: '0 0 auto' }}><FormatListBulletedIcon /></IconButton>
             <IconButton size="small" onClick={() => applyCommand('insertOrderedList')} sx={{ ...getButtonStyle(activeStyles.listNumbered), flex: '0 0 auto' }}><FormatListNumberedIcon /></IconButton>
 
@@ -391,7 +391,7 @@ const EditorToolbar = ({ editorRef, setInputDialog, onOpenAiPanel, aiBusy, aiHas
                     flex: '0 0 auto',
                     borderBottom: `2px solid ${currentTextColor}`,
                     borderRadius: '4px',
-                    '&:hover': { backgroundColor: 'rgba(255,255,255,0.1)' }
+                    '&:hover': { backgroundColor: 'var(--ui-c191)' }
                 }}
                 title="Цвет текста"
             >
@@ -405,21 +405,21 @@ const EditorToolbar = ({ editorRef, setInputDialog, onOpenAiPanel, aiBusy, aiHas
                 sx={{ zIndex: 1600 }}
                 PaperProps={{
                     sx: {
-                        backgroundColor: '#333',
+                        backgroundColor: 'var(--border-default)',
                         color: 'white'
                     }
                 }}
             >
                 <MenuItem
                     onClick={() => {
-                        applyTextColor('#ffffff');
+                        applyTextColor('var(--text-primary)');
                         setTextColorAnchor(null);
                     }}
                 >
                     Сбросить цвет (по умолчанию)
                 </MenuItem>
 
-                <Divider sx={{ borderColor: 'rgba(255,255,255,0.12)' }} />
+                <Divider sx={{ borderColor: 'var(--ui-c192)' }} />
 
                 {basicTextColors.map((colorOption) => (
                     <MenuItem
@@ -436,7 +436,7 @@ const EditorToolbar = ({ editorRef, setInputDialog, onOpenAiPanel, aiBusy, aiHas
                                 height: 14,
                                 borderRadius: '50%',
                                 backgroundColor: colorOption.value,
-                                border: colorOption.value === '#ffffff' ? '1px solid #777' : 'none'
+                                border: colorOption.value === 'var(--text-primary)' ? '1px solid var(--ui-c52)' : 'none'
                             }}
                         />
                         {colorOption.name}
@@ -444,13 +444,13 @@ const EditorToolbar = ({ editorRef, setInputDialog, onOpenAiPanel, aiBusy, aiHas
                 ))}
             </Menu>
             
-            <Box sx={{ width: '1px', backgroundColor: '#666', marginX: 1, my: 0.5 }} />
+            <Box sx={{ width: '1px', backgroundColor: 'var(--ui-c50)', marginX: 1, my: 0.5 }} />
 
-            <IconButton size="small" onClick={insertCodeBlock} sx={{ color: '#00bfa5', flex: '0 0 auto' }} title="Вставить код">
+            <IconButton size="small" onClick={insertCodeBlock} sx={{ color: 'var(--accent-500)', flex: '0 0 auto' }} title="Вставить код">
                 <CodeIcon />
             </IconButton>
 
-            <IconButton size="small" onClick={(e) => setFontSizeAnchor(e.currentTarget)} sx={{ color: '#ffffff', flex: '0 0 auto' }} title="Размер текста">
+            <IconButton size="small" onClick={(e) => setFontSizeAnchor(e.currentTarget)} sx={{ color: 'var(--text-primary)', flex: '0 0 auto' }} title="Размер текста">
                 <FormatSizeIcon />
             </IconButton>
             <Menu
@@ -460,7 +460,7 @@ const EditorToolbar = ({ editorRef, setInputDialog, onOpenAiPanel, aiBusy, aiHas
                 sx={{ zIndex: 1600 }}
                 PaperProps={{
                     sx: {
-                        backgroundColor: '#333',
+                        backgroundColor: 'var(--border-default)',
                         color: 'white',
                     }
                 }}
@@ -477,12 +477,12 @@ const EditorToolbar = ({ editorRef, setInputDialog, onOpenAiPanel, aiBusy, aiHas
                 size="small"
                 onClick={(e) => onOpenAiPanel?.(e.currentTarget)}
                 sx={{
-                    color: aiHasSuggestion ? '#00e5c9' : '#cde9e4',
-                    border: '1px solid rgba(0,229,201,0.35)',
+                    color: aiHasSuggestion ? 'var(--accent-400)' : 'var(--ui-c77)',
+                    border: '1px solid var(--ui-c145)',
                     width: 26,
                     height: 26,
                     flex: '0 0 auto',
-                    '&:hover': { backgroundColor: 'rgba(0,229,201,0.12)' }
+                    '&:hover': { backgroundColor: 'var(--ui-c143)' }
                 }}
                 title="AI-редактор"
             >
@@ -493,12 +493,12 @@ const EditorToolbar = ({ editorRef, setInputDialog, onOpenAiPanel, aiBusy, aiHas
                 size="small"
                 onClick={(e) => setHelpAnchor(e.currentTarget)}
                 sx={{
-                    color: '#ffffff',
-                    border: '1px solid rgba(255,255,255,0.25)',
+                    color: 'var(--text-primary)',
+                    border: '1px solid var(--ui-c196)',
                     width: 24,
                     height: 24,
                     flex: '0 0 auto',
-                    '&:hover': { backgroundColor: 'rgba(255,255,255,0.12)' }
+                    '&:hover': { backgroundColor: 'var(--ui-c192)' }
                 }}
                 title="Горячие клавиши"
             >
@@ -512,10 +512,10 @@ const EditorToolbar = ({ editorRef, setInputDialog, onOpenAiPanel, aiBusy, aiHas
                 sx={{ zIndex: 1600 }}
                 PaperProps={{
                     sx: {
-                        backgroundColor: '#232323',
+                        backgroundColor: 'var(--ui-c33)',
                         color: 'white',
                         width: 340,
-                        border: '1px solid rgba(255,255,255,0.12)'
+                        border: '1px solid var(--ui-c192)'
                     }
                 }}
             >
@@ -528,27 +528,27 @@ const EditorToolbar = ({ editorRef, setInputDialog, onOpenAiPanel, aiBusy, aiHas
                             width: '8px'
                         },
                         '&::-webkit-scrollbar-track': {
-                            background: 'rgba(255, 255, 255, 0.06)',
+                            background: 'var(--ui-c174)',
                             borderRadius: '10px'
                         },
                         '&::-webkit-scrollbar-thumb': {
-                            background: 'linear-gradient(180deg, #00d4b8, #00a58f)',
+                            background: 'linear-gradient(180deg, var(--ui-c10), var(--ui-c5))',
                             borderRadius: '10px'
                         },
                         '&::-webkit-scrollbar-thumb:hover': {
-                            background: 'linear-gradient(180deg, #00e0c2, #00b39b)'
+                            background: 'linear-gradient(180deg, var(--ui-c12), var(--ui-c6))'
                         },
                         scrollbarWidth: 'thin',
-                        scrollbarColor: '#00bfa5 rgba(255,255,255,0.06)'
+                        scrollbarColor: 'var(--accent-500) color-mix(in oklab, var(--text-primary) 6%, transparent)'
                     }}
                 >
-                    <Typography sx={{ fontWeight: 700, color: '#00bfa5', mb: 1 }}>
+                    <Typography sx={{ fontWeight: 700, color: 'var(--accent-500)', mb: 1 }}>
                         Горячие клавиши редактора
                     </Typography>
                     {textEditorShortcuts.map((shortcut) => (
                         <Box key={shortcut.combo} sx={{ display: 'flex', justifyContent: 'space-between', gap: 1, mb: 0.7 }}>
-                            <Typography sx={{ color: '#e0e0e0', fontWeight: 600 }}>{shortcut.combo}</Typography>
-                            <Typography sx={{ color: '#bdbdbd', textAlign: 'right' }}>{shortcut.action}</Typography>
+                            <Typography sx={{ color: 'var(--ui-c87)', fontWeight: 600 }}>{shortcut.combo}</Typography>
+                            <Typography sx={{ color: 'var(--text-secondary)', textAlign: 'right' }}>{shortcut.action}</Typography>
                         </Box>
                     ))}
                 </Box>
@@ -1195,13 +1195,13 @@ const extractApiErrorMessage = async (response, fallback = 'Ошибка зап�
                         top: 0,
                         py: 0.5,
                         zIndex: 2,
-                        backgroundColor: '#2c2c2c'
+                        backgroundColor: 'var(--surface-elevated)'
                     }}
                 >
-                    <Typography variant="h6" sx={{ color: '#00bfa5', fontWeight: 'bold' }}>
+                    <Typography variant="h6" sx={{ color: 'var(--accent-500)', fontWeight: 'bold' }}>
                         Редактирование
                     </Typography>
-                    <IconButton aria-label="Закрыть" onClick={handleClose} sx={{ color: '#bdbdbd' }}>
+                    <IconButton aria-label="Закрыть" onClick={handleClose} sx={{ color: 'var(--text-secondary)' }}>
                         <CloseIcon />
                     </IconButton>
                 </Box>
@@ -1214,10 +1214,10 @@ const extractApiErrorMessage = async (response, fallback = 'Ошибка зап�
                         onChange={handleModeChange}
                         aria-label="edit mode"
                         sx={{ 
-                            bgcolor: '#3a3a3a',
+                            bgcolor: 'var(--ui-c42)',
                             width: { xs: '100%', sm: 'auto' },
-                            '& .MuiToggleButton-root': { color: '#bdbdbd', border: '1px solid #555' },
-                            '& .Mui-selected': { color: '#fff !important', bgcolor: '#00bfa5 !important' }
+                            '& .MuiToggleButton-root': { color: 'var(--text-secondary)', border: '1px solid var(--ui-c48)' },
+                            '& .Mui-selected': { color: 'var(--text-primary) !important', bgcolor: 'var(--accent-500) !important' }
                         }}
                     >
                         <ToggleButton value="content" sx={{ px: { xs: 1.5, sm: 3 }, flex: { xs: 1, sm: 'none' } }}>
@@ -1257,7 +1257,7 @@ const extractApiErrorMessage = async (response, fallback = 'Ошибка зап�
                         />
                         
                         <Box>
-                            <Typography variant="caption" sx={{ color: '#bdbdbd', mb: 0.5, display: 'block' }}>
+                            <Typography variant="caption" sx={{ color: 'var(--text-secondary)', mb: 0.5, display: 'block' }}>
                                 Полный текст
                             </Typography>
                             <EditorToolbar
@@ -1276,17 +1276,17 @@ const extractApiErrorMessage = async (response, fallback = 'Ошибка зап�
                                     maxHeight: { xs: '34dvh', sm: '300px' },
                                     overflowY: 'auto',
                                     p: 2,
-                                    bgcolor: '#3a3a3a',
-                                    border: '1px solid #555',
+                                    bgcolor: 'var(--ui-c42)',
+                                    border: '1px solid var(--ui-c48)',
                                     borderRadius: '0 0 8px 8px',
                                     color: 'white',
                                     outline: 'none',
                                     '& *': { color: 'inherit' },
-                                    '& h2': { color: '#ffeb3b', fontSize: '1.4rem' },
-                                    '& a': { color: '#00bfa5' },
+                                    '& h2': { color: 'var(--ui-c102)', fontSize: '1.4rem' },
+                                    '& a': { color: 'var(--accent-500)' },
                                     '&::-webkit-scrollbar': { width: '8px' },
-                                    '&::-webkit-scrollbar-track': { background: 'rgba(255,255,255,0.05)' },
-                                    '&::-webkit-scrollbar-thumb': { background: '#00bfa5', borderRadius: '4px' }
+                                    '&::-webkit-scrollbar-track': { background: 'var(--ui-c189)' },
+                                    '&::-webkit-scrollbar-thumb': { background: 'var(--accent-500)', borderRadius: '4px' }
                                 }}
                             />
 
@@ -1299,18 +1299,18 @@ const extractApiErrorMessage = async (response, fallback = 'Ошибка зап�
                                     sx: {
                                         width: { xs: '92vw', sm: 520 },
                                         maxWidth: '92vw',
-                                        backgroundColor: '#1d2a2a',
-                                        border: '1px solid rgba(0,191,165,0.35)',
-                                        color: '#d6fff8',
+                                        backgroundColor: 'var(--ui-c27)',
+                                        border: '1px solid var(--ui-c142)',
+                                        color: 'var(--ui-c83)',
                                         p: 1.4
                                     }
                                 }}
                             >
-                                <Typography sx={{ color: '#9ff5e8', fontWeight: 700, display: 'flex', alignItems: 'center', gap: 1, mb: 0.8 }}>
+                                <Typography sx={{ color: 'var(--ui-c65)', fontWeight: 700, display: 'flex', alignItems: 'center', gap: 1, mb: 0.8 }}>
                                     <AutoFixHighIcon fontSize="small" /> AI-редактор
                                 </Typography>
 
-                                <Typography variant="caption" sx={{ color: '#b9e9e2' }}>
+                                <Typography variant="caption" sx={{ color: 'var(--ui-c71)' }}>
                                     Если выделить часть текста в редакторе, ИИ изменит только этот фрагмент. Это снижает расход токенов.
                                 </Typography>
 
@@ -1325,8 +1325,8 @@ const extractApiErrorMessage = async (response, fallback = 'Ошибка зап�
                                         flexWrap: 'wrap',
                                         gap: 0.6,
                                         '& .MuiToggleButton-root': {
-                                            color: '#cde9e4',
-                                            border: '1px solid rgba(255,255,255,0.2)',
+                                            color: 'var(--ui-c77)',
+                                            border: '1px solid var(--ui-c195)',
                                             borderRadius: '8px !important',
                                             textTransform: 'none',
                                             px: 1.2,
@@ -1334,9 +1334,9 @@ const extractApiErrorMessage = async (response, fallback = 'Ошибка зап�
                                             fontSize: '0.78rem'
                                         },
                                         '& .Mui-selected': {
-                                            color: '#ffffff !important',
-                                            bgcolor: '#00bfa5 !important',
-                                            borderColor: '#00bfa5 !important'
+                                            color: 'var(--text-primary) !important',
+                                            bgcolor: 'var(--accent-500) !important',
+                                            borderColor: 'var(--accent-500) !important'
                                         }
                                     }}
                                 >
@@ -1354,12 +1354,12 @@ const extractApiErrorMessage = async (response, fallback = 'Ошибка зап�
                                     startIcon={aiLoading ? <CircularProgress size={18} color="inherit" /> : <AutoFixHighIcon />}
                                     sx={{
                                         mt: 1,
-                                        color: '#00d8bf',
-                                        borderColor: '#00bfa5',
+                                        color: 'var(--ui-c11)',
+                                        borderColor: 'var(--accent-500)',
                                         fontWeight: 700,
                                         '&:hover': {
-                                            borderColor: '#00d8bf',
-                                            bgcolor: 'rgba(0,191,165,0.1)'
+                                            borderColor: 'var(--ui-c11)',
+                                            bgcolor: 'var(--ui-c139)'
                                         }
                                     }}
                                 >
@@ -1368,12 +1368,12 @@ const extractApiErrorMessage = async (response, fallback = 'Ошибка зап�
 
                                 {aiSuggestion && (
                                     <Box sx={{ mt: 1, display: 'flex', flexDirection: 'column', gap: 1.1 }}>
-                                        <Typography variant="caption" sx={{ color: '#bde8e2' }}>
+                                        <Typography variant="caption" sx={{ color: 'var(--ui-c73)' }}>
                                             {aiSuggestion.sourceWasSelection ? 'Изменен выделенный фрагмент.' : 'Изменена вся статья.'}
                                         </Typography>
 
                                         {isAiTyping && (
-                                            <Typography variant="caption" sx={{ color: '#9ee9de' }}>
+                                            <Typography variant="caption" sx={{ color: 'var(--ui-c62)' }}>
                                                 ИИ печатает изменения прямо в основном поле...
                                             </Typography>
                                         )}
@@ -1383,7 +1383,7 @@ const extractApiErrorMessage = async (response, fallback = 'Ошибка зап�
                                                 variant="contained"
                                                 onClick={handleApproveAiChanges}
                                                 startIcon={<CheckCircleOutlineIcon />}
-                                                sx={{ bgcolor: '#00bfa5', '&:hover': { bgcolor: '#00897b' } }}
+                                                sx={{ bgcolor: 'var(--accent-500)', '&:hover': { bgcolor: 'var(--accent-600)' } }}
                                             >
                                                 Принять изменения
                                             </Button>
@@ -1391,7 +1391,7 @@ const extractApiErrorMessage = async (response, fallback = 'Ошибка зап�
                                                 variant="outlined"
                                                 onClick={handleRejectAiChanges}
                                                 startIcon={<HighlightOffIcon />}
-                                                sx={{ color: '#ff9e9e', borderColor: '#ff9e9e' }}
+                                                sx={{ color: 'var(--ui-c100)', borderColor: 'var(--ui-c100)' }}
                                             >
                                                 Отклонить
                                             </Button>
@@ -1402,7 +1402,7 @@ const extractApiErrorMessage = async (response, fallback = 'Ошибка зап�
                         </Box>
 
                         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-                            <Typography variant="body2" sx={{ color: '#bdbdbd', fontWeight: 'bold' }}>
+                            <Typography variant="body2" sx={{ color: 'var(--text-secondary)', fontWeight: 'bold' }}>
                                 Фото статьи (до {formatBytes(MAX_ARTICLE_IMAGE_BYTES)})
                             </Typography>
                             <input
@@ -1416,7 +1416,7 @@ const extractApiErrorMessage = async (response, fallback = 'Ошибка зап�
                                 <Button
                                     variant="outlined"
                                     onClick={() => fileInputRef.current?.click()}
-                                    sx={{ color: '#00bfa5', borderColor: '#00bfa5', '&:hover': { borderColor: '#009688', backgroundColor: 'rgba(0, 191, 165, 0.08)' } }}
+                                    sx={{ color: 'var(--accent-500)', borderColor: 'var(--accent-500)', '&:hover': { borderColor: 'var(--accent-600)', backgroundColor: 'color-mix(in oklab, var(--accent-500) 8%, transparent)' } }}
                                 >
                                     Выбрать фото
                                 </Button>
@@ -1424,17 +1424,17 @@ const extractApiErrorMessage = async (response, fallback = 'Ошибка зап�
                                     <Button
                                         variant="text"
                                         onClick={clearSelectedImage}
-                                        sx={{ color: '#ff8a80' }}
+                                        sx={{ color: 'var(--ui-c98)' }}
                                     >
                                         Убрать
                                     </Button>
                                 )}
-                                <Typography variant="body2" sx={{ color: '#9e9e9e' }}>
+                                <Typography variant="body2" sx={{ color: 'var(--text-secondary)' }}>
                                     {imageFile ? `${imageFile.name} (${formatBytes(imageFile.size)})` : 'Файл не выбран'}
                                 </Typography>
                             </Box>
                             {imageError && (
-                                <Typography variant="body2" sx={{ color: '#ff8a80' }}>
+                                <Typography variant="body2" sx={{ color: 'var(--ui-c98)' }}>
                                     {imageError}
                                 </Typography>
                             )}
@@ -1450,7 +1450,7 @@ const extractApiErrorMessage = async (response, fallback = 'Ошибка зап�
                                         borderRadius: '12px',
                                         objectFit: 'cover',
                                         objectPosition: 'left center',
-                                        border: '1px solid #444',
+                                        border: '1px solid var(--ui-c44)',
                                     }}
                                 />
                             )}
@@ -1463,7 +1463,7 @@ const extractApiErrorMessage = async (response, fallback = 'Ошибка зап�
                             disabled={isLoading}
                             startIcon={<SaveIcon />}
                             fullWidth
-                            sx={{ mt: 1, py: 1.5, bgcolor: '#00bfa5', '&:hover': { bgcolor: '#00897b' }, fontWeight: 'bold' }}
+                            sx={{ mt: 1, py: 1.5, bgcolor: 'var(--accent-500)', '&:hover': { bgcolor: 'var(--accent-600)' }, fontWeight: 'bold' }}
                         >
                             {isLoading ? <CircularProgress size={24} color="inherit" /> : 'Сохранить изменения в статье'}
                         </Button>
@@ -1473,7 +1473,7 @@ const extractApiErrorMessage = async (response, fallback = 'Ошибка зап�
                 {/* --- РЕЖИМ 2: РЕДАКТИРОВАНИЕ ТЕГОВ --- */}
                 {editMode === 'tags' && (
                     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, minHeight: '300px' }}>
-                        <Typography variant="body1" sx={{ color: '#bdbdbd' }}>
+                        <Typography variant="body1" sx={{ color: 'var(--text-secondary)' }}>
                             Выберите теги (выбрано: {selectedTags.length}/5)
                         </Typography>
                         
@@ -1484,9 +1484,9 @@ const extractApiErrorMessage = async (response, fallback = 'Ошибка зап�
                             p: 2,
                             maxHeight: { xs: '42dvh', sm: 'none' },
                             overflowY: { xs: 'auto', sm: 'visible' },
-                            border: '1px solid #444',
+                            border: '1px solid var(--ui-c44)',
                             borderRadius: '8px',
-                            bgcolor: 'rgba(255, 255, 255, 0.05)'
+                            bgcolor: 'color-mix(in oklab, var(--text-primary) 5%, transparent)'
                         }}>
                             {AVAILABLE_TAGS.map((tag) => {
                                 const isSelected = selectedTags.includes(tag);
@@ -1499,11 +1499,11 @@ const extractApiErrorMessage = async (response, fallback = 'Ошибка зап�
                                         disabled={selectedTags.length >= 5 && !isSelected}
                                         sx={{
                                             cursor: 'pointer',
-                                            backgroundColor: isSelected ? '#00bfa5' : 'rgba(255, 255, 255, 0.1)',
-                                            color: '#ffffff',
-                                            border: isSelected ? 'none' : '1px solid rgba(255,255,255,0.2)',
+                                            backgroundColor: isSelected ? 'var(--accent-500)' : 'var(--ui-c176)',
+                                            color: 'var(--text-primary)',
+                                            border: isSelected ? 'none' : '1px solid var(--ui-c195)',
                                             '&:hover': {
-                                                backgroundColor: isSelected ? '#009688' : 'rgba(255, 255, 255, 0.2)',
+                                                backgroundColor: isSelected ? 'var(--accent-600)' : 'var(--ui-c181)',
                                             },
                                         }}
                                     />
@@ -1519,7 +1519,7 @@ const extractApiErrorMessage = async (response, fallback = 'Ошибка зап�
                             disabled={isLoading}
                             startIcon={<SaveIcon />}
                             fullWidth
-                            sx={{ py: 1.5, bgcolor: '#00bfa5', '&:hover': { bgcolor: '#00897b' }, fontWeight: 'bold' }}
+                            sx={{ py: 1.5, bgcolor: 'var(--accent-500)', '&:hover': { bgcolor: 'var(--accent-600)' }, fontWeight: 'bold' }}
                         >
                             {isLoading ? <CircularProgress size={24} color="inherit" /> : 'Сохранить новые теги'}
                         </Button>
@@ -1527,7 +1527,7 @@ const extractApiErrorMessage = async (response, fallback = 'Ошибка зап�
                 )}
                 
                 {/* ✅ БЛОК ДЕЙСТВИЙ: Кнопка Удалить */}
-                <Box sx={{ mt: 3, pt: 2, borderTop: '1px solid #444', display: 'flex', justifyContent: 'flex-end' }}>
+                <Box sx={{ mt: 3, pt: 2, borderTop: '1px solid var(--ui-c44)', display: 'flex', justifyContent: 'flex-end' }}>
                     <Button 
                         onClick={handleDeleteArticle} 
                         color="error"
@@ -1535,9 +1535,9 @@ const extractApiErrorMessage = async (response, fallback = 'Ошибка зап�
                         disabled={isLoading}
                         variant="outlined"
                         sx={{ 
-                            '&:hover': { backgroundColor: 'rgba(255, 82, 82, 0.1)', borderColor: '#ff5252' },
-                            borderColor: '#ff5252',
-                            color: '#ff5252',
+                            '&:hover': { backgroundColor: 'var(--ui-c185)', borderColor: 'var(--ui-c95)' },
+                            borderColor: 'var(--ui-c95)',
+                            color: 'var(--ui-c95)',
                             fontSize: '1rem'
                         }}
                     >
