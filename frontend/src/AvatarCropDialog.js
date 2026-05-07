@@ -47,16 +47,16 @@ const AvatarCropDialog = ({ open, imageSrc, onClose, onCropComplete }) => {
       fullWidth
       PaperProps={{
         sx: {
-          backgroundColor: '#1e1e1e',
-          color: '#ffffff',
+          backgroundColor: 'var(--surface-panel)',
+          color: 'var(--text-primary)',
           borderRadius: '16px',
-          boxShadow: '0px 10px 40px rgba(0,0,0,0.5)',
+          boxShadow: '0px 10px 40px var(--ui-c136)',
         }
       }}
     >
-      <DialogTitle sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', pb: 1, borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
+      <DialogTitle sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', pb: 1, borderBottom: '1px solid var(--ui-c191)' }}>
         <Typography variant="h6" sx={{ fontWeight: 600 }}>Редактирование фото</Typography>
-        <IconButton onClick={onClose} sx={{ color: '#9e9e9e', '&:hover': { color: '#ffffff' } }}>
+        <IconButton onClick={onClose} sx={{ color: 'var(--text-secondary)', '&:hover': { color: 'var(--text-primary)' } }}>
           <CloseIcon />
         </IconButton>
       </DialogTitle>
@@ -65,7 +65,7 @@ const AvatarCropDialog = ({ open, imageSrc, onClose, onCropComplete }) => {
           position: 'relative', 
           width: '100%', 
           height: { xs: 300, sm: 400 }, 
-          background: '#121212',
+          background: 'var(--bg-canvas)',
           borderRadius: '12px',
           overflow: 'hidden'
         }}>
@@ -81,14 +81,14 @@ const AvatarCropDialog = ({ open, imageSrc, onClose, onCropComplete }) => {
               onCropComplete={handleCropComplete}
               onZoomChange={setZoom}
               style={{
-                containerStyle: { backgroundColor: '#121212' },
-                cropAreaStyle: { border: '2px solid #00bfa5' }
+                containerStyle: { backgroundColor: 'var(--bg-canvas)' },
+                cropAreaStyle: { border: '2px solid var(--accent-500)' }
               }}
             />
           )}
         </Box>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, px: 2 }}>
-          <ZoomOutIcon sx={{ color: '#9e9e9e' }} />
+          <ZoomOutIcon sx={{ color: 'var(--text-secondary)' }} />
           <Slider
             value={zoom}
             min={1}
@@ -96,14 +96,14 @@ const AvatarCropDialog = ({ open, imageSrc, onClose, onCropComplete }) => {
             step={0.05}
             onChange={(e, value) => setZoom(value)}
             sx={{
-              color: '#00bfa5',
+              color: 'var(--accent-500)',
               '& .MuiSlider-thumb': {
                 width: 20,
                 height: 20,
                 border: '2px solid currentColor',
-                backgroundColor: '#1e1e1e',
+                backgroundColor: 'var(--surface-panel)',
                 '&:hover, &.Mui-focusVisible': {
-                  boxShadow: '0px 0px 0px 8px rgba(0, 191, 165, 0.16)',
+                  boxShadow: '0px 0px 0px 8px var(--ui-c116)',
                 },
               },
               '& .MuiSlider-track': {
@@ -114,11 +114,11 @@ const AvatarCropDialog = ({ open, imageSrc, onClose, onCropComplete }) => {
                 height: 6,
                 borderRadius: 4,
                 opacity: 0.3,
-                backgroundColor: '#9e9e9e'
+                backgroundColor: 'var(--text-secondary)'
               },
             }}
           />
-          <ZoomInIcon sx={{ color: '#9e9e9e' }} />
+          <ZoomInIcon sx={{ color: 'var(--text-secondary)' }} />
         </Box>
       </DialogContent>
       <DialogActions sx={{ p: 2, pt: 0, px: 3 }}>
@@ -126,10 +126,10 @@ const AvatarCropDialog = ({ open, imageSrc, onClose, onCropComplete }) => {
           onClick={onClose} 
           disabled={isProcessing}
           sx={{ 
-            color: '#bdbdbd',
+            color: 'var(--text-secondary)',
             textTransform: 'none',
             fontSize: '1rem',
-            '&:hover': { background: 'rgba(255,255,255,0.05)' }
+            '&:hover': { background: 'var(--ui-c189)' }
           }}
         >
           Отмена
@@ -139,15 +139,15 @@ const AvatarCropDialog = ({ open, imageSrc, onClose, onCropComplete }) => {
           variant="contained" 
           disabled={isProcessing}
           sx={{ 
-            backgroundColor: '#00bfa5', 
-            color: '#ffffff',
+            backgroundColor: 'var(--accent-500)', 
+            color: 'var(--text-primary)',
             textTransform: 'none',
             fontSize: '1rem',
             fontWeight: 600,
             borderRadius: '8px',
             px: 3,
-            '&:hover': { backgroundColor: '#00a08b' },
-            '&.Mui-disabled': { backgroundColor: 'rgba(0, 191, 165, 0.5)', color: 'rgba(255,255,255,0.5)' }
+            '&:hover': { backgroundColor: 'var(--ui-c3)' },
+            '&.Mui-disabled': { backgroundColor: 'var(--ui-c121)', color: 'var(--ui-c198)' }
           }}
         >
           {isProcessing ? 'Сохранение...' : 'Применить'}

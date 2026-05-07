@@ -1,4 +1,4 @@
-﻿using LambdaGeneration.API.Core.Enums;
+using LambdaGeneration.API.Core.Enums;
 using LambdaGeneration.API.Core.Models;
 using LambdaGeneration.API.Date.Entities;
 using Microsoft.EntityFrameworkCore;
@@ -24,6 +24,7 @@ namespace LambdaGeneration.API.Date.Repositories
                 AboutUser = user.AboutUser,
                 PasswordHash = user.PasswordHash,
                 Role = (int)user.Role,
+                TagName = user.Tag.ToApiValue(),
                 CreatedDate = user.CreatedDate,
                 countArticles = 0,
                 countSubscribers = 0,
@@ -45,34 +46,14 @@ namespace LambdaGeneration.API.Date.Repositories
             {
                 return null;
             }
+
             return Users.Map(
                 userEntity.UserID,
                 userEntity.UserName,
                 userEntity.PasswordHash,
                 userEntity.Email,
                 (Role)userEntity.Role,
-                userEntity.AboutUser,
-                userEntity.CreatedDate,
-                userEntity.countSubscribers,
-                userEntity.countFollowing,
-                userEntity.countArticles,
-                userEntity.IsBanned,
-                userEntity.PathAvatar
-                );
-        }
-        public async Task<Users?> GetByName(string name)
-        {
-            var userEntity = await _context.Users
-                .AsNoTracking()
-                .FirstOrDefaultAsync(u => u.UserName == name);
-            if (userEntity == null)
-                return null;
-            return Users.Map(
-                userEntity.UserID,
-                userEntity.UserName,
-                userEntity.PasswordHash,
-                userEntity.Email,
-                (Role)userEntity.Role,
+                UserTagExtensions.FromStorageValue(userEntity.TagName),
                 userEntity.AboutUser,
                 userEntity.CreatedDate,
                 userEntity.countSubscribers,
@@ -82,6 +63,32 @@ namespace LambdaGeneration.API.Date.Repositories
                 userEntity.PathAvatar
             );
         }
+
+        public async Task<Users?> GetByName(string name)
+        {
+            var userEntity = await _context.Users
+                .AsNoTracking()
+                .FirstOrDefaultAsync(u => u.UserName == name);
+            if (userEntity == null)
+                return null;
+
+            return Users.Map(
+                userEntity.UserID,
+                userEntity.UserName,
+                userEntity.PasswordHash,
+                userEntity.Email,
+                (Role)userEntity.Role,
+                UserTagExtensions.FromStorageValue(userEntity.TagName),
+                userEntity.AboutUser,
+                userEntity.CreatedDate,
+                userEntity.countSubscribers,
+                userEntity.countFollowing,
+                userEntity.countArticles,
+                userEntity.IsBanned,
+                userEntity.PathAvatar
+            );
+        }
+
         public async Task Delete(Guid id)
         {
             var userEntity = await _context.Users.AsNoTracking().FirstOrDefaultAsync(u => u.UserID == id);
@@ -91,6 +98,7 @@ namespace LambdaGeneration.API.Date.Repositories
             _context.Users.Remove(userEntity);
             await _context.SaveChangesAsync();
         }
+
         public async Task<Users?> GetProfile(Guid id)
         {
             var userEntity = await _context.Users.AsNoTracking().FirstOrDefaultAsync(u => u.UserID == id);
@@ -106,6 +114,7 @@ namespace LambdaGeneration.API.Date.Repositories
                 userEntity.PasswordHash,
                 userEntity.Email,
                 (Role)userEntity.Role,
+                UserTagExtensions.FromStorageValue(userEntity.TagName),
                 userEntity.AboutUser,
                 userEntity.CreatedDate,
                 userEntity.countSubscribers,
@@ -113,8 +122,9 @@ namespace LambdaGeneration.API.Date.Repositories
                 userEntity.countArticles,
                 userEntity.IsBanned,
                 userEntity.PathAvatar
-                );
+            );
         }
+
         public async Task<Users?> Update(Guid id, string name, string email, string aboutUser, string pathAvatar)
         {
             var userEntity = await _context.Users.FirstOrDefaultAsync(u => u.UserID == id);
@@ -133,6 +143,7 @@ namespace LambdaGeneration.API.Date.Repositories
 
             return await GetProfile(id);
         }
+
         public async Task ChangePassword(Guid id, string newPasswordHash)
         {
             await _context.Users
@@ -218,6 +229,7 @@ namespace LambdaGeneration.API.Date.Repositories
                     userEntity.PasswordHash,
                     userEntity.Email,
                     (Role)userEntity.Role,
+                    UserTagExtensions.FromStorageValue(userEntity.TagName),
                     userEntity.AboutUser,
                     userEntity.CreatedDate,
                     userEntity.countSubscribers,
@@ -240,6 +252,7 @@ namespace LambdaGeneration.API.Date.Repositories
                     userEntity.PasswordHash,
                     userEntity.Email,
                     (Role)userEntity.Role,
+                    UserTagExtensions.FromStorageValue(userEntity.TagName),
                     userEntity.AboutUser,
                     userEntity.CreatedDate,
                     userEntity.countSubscribers,

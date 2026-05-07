@@ -91,14 +91,26 @@ namespace LambdaGeneration.API.Midleware
             services.AddScoped<ILikeCommentService, LikeCommentService>();
             services.AddScoped<IRecommendationService, RecommendationService>();
 
-            services.AddSingleton<IGigaChatModerationService>(provider =>
+            services.AddSingleton<IGigaChatContentService>(provider =>
             {
                 var config = provider.GetRequiredService<IConfiguration>();
-                return new GigaChatModerationService(
+                return new GigaChatContentService(
                     config["GigaChat:ClientId"],
                     config["GigaChat:ClientSecret"],
                     config["GigaChat:Scope"] ?? "GigaChat"
                 );
+            });
+
+            services.AddSingleton<IImageModerationService>(provider =>
+            {
+                var config = provider.GetRequiredService<IConfiguration>();
+                var logger = provider.GetRequiredService<ILogger<ImageModerator>>();
+
+                var apiKey = config["ImageModeration:ApiKey"] ?? string.Empty;
+                var baseUrl = config["ImageModeration:BaseUrl"] ?? "https://api.openai.com/v1";
+                var modelId = config["ImageModeration:Model"] ?? "gemma-3-27b";
+
+                return new ImageModerator(apiKey, baseUrl, logger, modelId);
             });
             
             services.AddHttpClient();
@@ -316,7 +328,21 @@ namespace LambdaGeneration.API.Midleware
                     var _context = services.GetRequiredService<LambdaGenerationDbContext>();
                     var adminService = services.GetRequiredService<IAdminService>();
 
-                    await adminService.Create();
+                    foreach (var adminSeed in new[]
+                    {
+                        new { ConfigSection = "AdminConfig", Tag = UserTag.Admin },
+                        new { ConfigSection = "DrossAdminConfig", Tag = UserTag.DrossBoss },
+                    })
+                    {
+                        try
+                        {
+                            await adminService.Create(adminSeed.ConfigSection, adminSeed.Tag);
+                        }
+                        catch (Exception ex)
+                        {
+                            logger.LogWarning(ex.Message);
+                        }
+                    }
                 }
                 catch (Exception ex)
                 {

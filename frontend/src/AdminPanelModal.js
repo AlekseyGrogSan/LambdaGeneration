@@ -27,19 +27,19 @@ const scrollbarStyle = {
         width: '8px',
     },
     '&::-webkit-scrollbar-track': {
-        background: '#1a1a1a',
+        background: 'var(--ui-c25)',
         borderRadius: '10px',
     },
     '&::-webkit-scrollbar-thumb': {
-        background: '#00bfa5',
+        background: 'var(--accent-500)',
         borderRadius: '10px',
-        border: '2px solid #1a1a1a',
+        border: '2px solid var(--ui-c25)',
     },
     '&::-webkit-scrollbar-thumb:hover': {
-        background: '#009e8a',
+        background: 'var(--accent-600)',
     },
     scrollbarWidth: 'thin',
-    scrollbarColor: '#00bfa5 #1a1a1a',
+    scrollbarColor: 'var(--accent-500) var(--ui-c25)',
 };
 
 const modalStyle = {
@@ -49,10 +49,10 @@ const modalStyle = {
     transform: 'translate(-50%, -50%)',
     width: { xs: '95%', sm: 800 },
     maxHeight: '90vh',
-    bgcolor: '#181818',
+    bgcolor: 'var(--ui-c23)',
     borderRadius: '18px',
-    border: '1px solid rgba(255, 255, 255, 0.1)',
-    boxShadow: '0 20px 50px rgba(0,0,0,0.6)',
+    border: '1px solid var(--ui-c176)',
+    boxShadow: '0 20px 50px var(--ui-c138)',
     px: 4,
     py: 3,
     color: 'white',
@@ -64,9 +64,9 @@ const sectionStyle = {
     mt: 3,
     p: 2.5,
     borderRadius: '14px',
-    bgcolor: 'rgba(255, 255, 255, 0.03)',
-    border: '1px solid rgba(255, 255, 255, 0.08)',
-    color: '#fff'
+    bgcolor: 'var(--ui-c172)',
+    border: '1px solid var(--ui-c175)',
+    color: 'var(--text-primary)'
 };
 
 const AdminPanelModal = ({ open, handleClose }) => {
@@ -416,29 +416,29 @@ const AdminPanelModal = ({ open, handleClose }) => {
         <>
         <Modal disableRestoreFocus open={open} onClose={handleCloseModal}>
             <Box sx={modalStyle}>
-                <Typography variant="h5" sx={{ mb: 2, color: '#00bfa5' }}>
+                <Typography variant="h5" sx={{ mb: 2, color: 'var(--accent-500)' }}>
                     Админ-панель
                 </Typography>
 
                     <Stack spacing={2} direction={{ xs: 'column', sm: 'row' }} sx={{ mb: 2 }}>
                         <FormControl
                             variant="filled"
-                            sx={{ flex: 1, backgroundColor: '#222' }}
+                            sx={{ flex: 1, backgroundColor: 'var(--ui-c32)' }}
                             size="small"
                         >
-                            <InputLabel sx={{ color: '#fff' }}>Пользователь</InputLabel>
+                            <InputLabel sx={{ color: 'var(--text-primary)' }}>Пользователь</InputLabel>
                             <Select
                                 value={selectedUserId}
                                 onChange={(event) => setSelectedUserId(event.target.value)}
-                                MenuProps={{ PaperProps: { sx: { bgcolor: '#181818', color: '#fff' } } }}
+                                MenuProps={{ PaperProps: { sx: { bgcolor: 'var(--ui-c23)', color: 'var(--text-primary)' } } }}
                                 sx={{
-                                    color: '#fff',
-                                    '.MuiSelect-select': { color: '#fff' },
-                                    '.MuiSelect-icon': { color: '#fff' }
+                                    color: 'var(--text-primary)',
+                                    '.MuiSelect-select': { color: 'var(--text-primary)' },
+                                    '.MuiSelect-icon': { color: 'var(--text-primary)' }
                                 }}
                             >
                                 {userList.map((user) => (
-                                    <MenuItem key={user.userID} value={user.userID} sx={{ color: '#fff', '&.Mui-selected': { backgroundColor: 'rgba(255, 255, 255, 0.16)' } }}>
+                                    <MenuItem key={user.userID} value={user.userID} sx={{ color: 'var(--text-primary)', '&.Mui-selected': { backgroundColor: 'var(--ui-c179)' } }}>
                                         {user.userName} {user.role ? `(${user.role})` : ''}
                                     </MenuItem>
                                 ))}
@@ -450,7 +450,7 @@ const AdminPanelModal = ({ open, handleClose }) => {
                             disabled={loadingUser || !selectedUserId}
                             sx={{ minWidth: 140 }}
                         >
-                            {loadingUser ? <CircularProgress size={20} sx={{ color: '#fff' }} /> : 'Загрузить'}
+                            {loadingUser ? <CircularProgress size={20} sx={{ color: 'var(--text-primary)' }} /> : 'Загрузить'}
                         </Button>
                     </Stack>
 
@@ -463,7 +463,7 @@ const AdminPanelModal = ({ open, handleClose }) => {
                 {userData && (
                     <Paper elevation={0} sx={{ ...sectionStyle }}>
                         <Stack spacing={1}>
-                            <Typography variant="h6" sx={{ color: "#fff" }}>{userData.userName}</Typography>
+                            <Typography variant="h6" sx={{ color: "var(--text-primary)" }}>{userData.userName}</Typography>
                             <Typography variant="body2">ID: {userData.userID}</Typography>
                             <Typography variant="body2">Email: {userData.email}</Typography>
                             <Typography variant="body2">Роль: {userData.role}</Typography>
@@ -483,7 +483,7 @@ const AdminPanelModal = ({ open, handleClose }) => {
                                 sx={{ flex: 1 }}
                             >
                                 {actionLoading ? (
-                                    <CircularProgress size={20} sx={{ color: '#fff' }} />
+                                    <CircularProgress size={20} sx={{ color: 'var(--text-primary)' }} />
                                 ) : userData.isBanned ? 'Разбанить' : 'Забанить'}
                             </Button>
                             <Button
@@ -502,12 +502,12 @@ const AdminPanelModal = ({ open, handleClose }) => {
 
                 <Box sx={{ ...sectionStyle }}>
                     <Stack direction="row" justifyContent="space-between" alignItems="center">
-                        <Typography variant="h6" sx={{ color: '#fff' }}>Статьи</Typography>
+                        <Typography variant="h6" sx={{ color: 'var(--text-primary)' }}>Статьи</Typography>
                         <Button
                             variant="text"
                             onClick={() => userData && fetchUserArticles(userData.userID)}
                             size="small"
-                            sx={{ color: '#00bfa5', textTransform: 'none' }}
+                            sx={{ color: 'var(--accent-500)', textTransform: 'none' }}
                         >
                             Обновить
                         </Button>
@@ -515,24 +515,24 @@ const AdminPanelModal = ({ open, handleClose }) => {
 
                     {articlesLoading ? (
                         <Box sx={{ display: 'flex', justifyContent: 'center', py: 2 }}>
-                            <CircularProgress size={24} sx={{ color: '#00bfa5' }} />
+                            <CircularProgress size={24} sx={{ color: 'var(--accent-500)' }} />
                         </Box>
                     ) : articles.length === 0 ? (
-                        <Typography sx={{ color: '#bbb', mt: 1 }}>Нет статей.</Typography>
+                        <Typography sx={{ color: 'var(--ui-c72)', mt: 1 }}>Нет статей.</Typography>
                     ) : (
                         <List sx={{ mt: 1, maxHeight: 220, overflowY: 'auto', ...scrollbarStyle }}>
                             {articles.map((article) => (
-                                <ListItem key={article.articleID} sx={{ borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
+                                <ListItem key={article.articleID} sx={{ borderBottom: '1px solid color-mix(in oklab, var(--text-primary) 8%, transparent)' }}>
                                     <ListItemText
                                         primary={article.articleTitle || 'Без названия'}
-                                        primaryTypographyProps={{ color: '#fff', sx: { fontWeight: 600 } }}
+                                        primaryTypographyProps={{ color: 'var(--text-primary)', sx: { fontWeight: 600 } }}
                                         secondary={
                                             <>
-                                                <Typography component="span" sx={{ color: '#aaa' }}>
+                                                <Typography component="span" sx={{ color: 'var(--ui-c66)' }}>
                                                     {new Date(article.createdDate).toLocaleString()}
                                                 </Typography>
                                                 {' · '}
-                                                <Typography component="span" sx={{ color: '#aaa' }}>
+                                                <Typography component="span" sx={{ color: 'var(--ui-c66)' }}>
                                                     Лайки: {article.countLikes} · Комментарии: {article.countComments}
                                                 </Typography>
                                             </>
@@ -543,7 +543,7 @@ const AdminPanelModal = ({ open, handleClose }) => {
                                             size="small"
                                             variant="outlined"
                                             onClick={() => handleEditArticle(article.articleID)}
-                                            sx={{ textTransform: 'none', color: '#00bfa5', borderColor: '#00bfa5' }}
+                                            sx={{ textTransform: 'none', color: 'var(--accent-500)', borderColor: 'var(--accent-500)' }}
                                         >
                                             Редактировать
                                         </Button>
@@ -573,12 +573,12 @@ const AdminPanelModal = ({ open, handleClose }) => {
 
                 <Box sx={{ ...sectionStyle }}>
                     <Stack direction="row" justifyContent="space-between" alignItems="center">
-                        <Typography variant="h6" sx={{ color: '#fff' }}>Комментарии пользователя</Typography>
+                        <Typography variant="h6" sx={{ color: 'var(--text-primary)' }}>Комментарии пользователя</Typography>
                         <Button
                             variant="text"
                             onClick={() => userData && fetchUserComments(userData.userID)}
                             size="small"
-                            sx={{ color: '#00bfa5', textTransform: 'none' }}
+                            sx={{ color: 'var(--accent-500)', textTransform: 'none' }}
                             disabled={!userData}
                         >
                             Обновить
@@ -587,23 +587,23 @@ const AdminPanelModal = ({ open, handleClose }) => {
 
                     {userCommentsLoading ? (
                         <Box sx={{ display: 'flex', justifyContent: 'center', py: 2 }}>
-                            <CircularProgress size={24} sx={{ color: '#00bfa5' }} />
+                            <CircularProgress size={24} sx={{ color: 'var(--accent-500)' }} />
                         </Box>
                     ) : userComments.length === 0 ? (
-                        <Typography sx={{ color: '#bbb', mt: 1 }}>Нет комментариев.</Typography>
+                        <Typography sx={{ color: 'var(--ui-c72)', mt: 1 }}>Нет комментариев.</Typography>
                     ) : (
                         <List sx={{ mt: 1, maxHeight: 220, overflowY: 'auto', ...scrollbarStyle }}>
                             {userComments.map((comment) => (
-                                <ListItem key={comment.id} sx={{ borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
+                                <ListItem key={comment.id} sx={{ borderBottom: '1px solid color-mix(in oklab, var(--text-primary) 8%, transparent)' }}>
                                     <ListItemText
                                         primary={comment.content || 'Комментарий без текста'}
-                                        primaryTypographyProps={{ color: '#fff' }}
+                                        primaryTypographyProps={{ color: 'var(--text-primary)' }}
                                         secondary={
                                             <>
-                                                <Typography component="span" sx={{ color: '#aaa', display: 'block' }}>
+                                                <Typography component="span" sx={{ color: 'var(--ui-c66)', display: 'block' }}>
                                                     {comment.articleTitle || 'Статья без названия'}
                                                 </Typography>
-                                                <Typography component="span" sx={{ color: '#aaa' }}>
+                                                <Typography component="span" sx={{ color: 'var(--ui-c66)' }}>
                                                     {(comment.datePublish && new Date(comment.datePublish).toLocaleString()) || '—'} · Лайки: {comment.countLikes}
                                                 </Typography>
                                             </>
@@ -614,7 +614,7 @@ const AdminPanelModal = ({ open, handleClose }) => {
                                             size="small"
                                             variant="text"
                                             onClick={() => handleEditComment(comment.id, comment.content)}
-                                            sx={{ color: '#00bfa5', textTransform: 'none' }}
+                                            sx={{ color: 'var(--accent-500)', textTransform: 'none' }}
                                         >
                                             Редактировать
                                         </Button>
@@ -638,13 +638,13 @@ const AdminPanelModal = ({ open, handleClose }) => {
                 {selectedArticle && (
                     <Paper elevation={0} sx={{ ...sectionStyle }}>
                         <Stack direction="row" justifyContent="space-between" alignItems="center">
-                            <Typography variant="h6" sx={{ color: "#fff" }}>Комментарии к «{selectedArticle.title}»</Typography>
+                            <Typography variant="h6" sx={{ color: "var(--text-primary)" }}>Комментарии к «{selectedArticle.title}»</Typography>
                             <Button
                                 variant="text"
                                 onClick={handleDeleteAllComments}
                                 size="small"
                                 disabled={commentsLoading}
-                                sx={{ color: '#ff8a80', textTransform: 'none' }}
+                                sx={{ color: 'var(--ui-c98)', textTransform: 'none' }}
                             >
                                 Удалить все
                             </Button>
@@ -652,10 +652,10 @@ const AdminPanelModal = ({ open, handleClose }) => {
 
                         {commentsLoading ? (
                             <Box sx={{ display: 'flex', justifyContent: 'center', py: 2 }}>
-                                <CircularProgress size={24} sx={{ color: '#00bfa5' }} />
+                                <CircularProgress size={24} sx={{ color: 'var(--accent-500)' }} />
                             </Box>
                         ) : comments.length === 0 ? (
-                            <Typography sx={{ color: '#bbb', mt: 1 }}>Комментариев нет.</Typography>
+                            <Typography sx={{ color: 'var(--ui-c72)', mt: 1 }}>Комментариев нет.</Typography>
                         ) : (
                             <List sx={{ mt: 1, maxHeight: 220, overflowY: 'auto', ...scrollbarStyle }}>
                                 {comments.map((comment) => (
@@ -667,7 +667,7 @@ const AdminPanelModal = ({ open, handleClose }) => {
                                                     size="small"
                                                     variant="text"
                                                     onClick={() => handleEditComment(comment.id, comment.content)}
-                                                    sx={{ color: '#00bfa5', textTransform: 'none' }}
+                                                    sx={{ color: 'var(--accent-500)', textTransform: 'none' }}
                                                 >
                                                     Редактировать
                                                 </Button>
@@ -675,19 +675,19 @@ const AdminPanelModal = ({ open, handleClose }) => {
                                                     size="small"
                                                     variant="text"
                                                     onClick={() => handleDeleteComment(comment.id)}
-                                                    sx={{ color: '#ff8a80', textTransform: 'none' }}
+                                                    sx={{ color: 'var(--ui-c98)', textTransform: 'none' }}
                                                 >
                                                     Удалить
                                                 </Button>
                                             </Stack>
                                         }
-                                        sx={{ alignItems: 'flex-start', borderBottom: '1px solid rgba(255,255,255,0.08)' }}
+                                        sx={{ alignItems: 'flex-start', borderBottom: '1px solid color-mix(in oklab, var(--text-primary) 8%, transparent)' }}
                                     >
                                         <ListItemText
                                             primary={comment.content}
-                                            primaryTypographyProps={{ color: "#fff" }}
+                                            primaryTypographyProps={{ color: "var(--text-primary)" }}
                                             secondary={
-                                                <Typography variant="caption" sx={{ color: '#aaa' }}>
+                                                <Typography variant="caption" sx={{ color: 'var(--ui-c66)' }}>
                                                     Автор: {comment.authorId} · Опубликовано: {new Date(comment.datePublish).toLocaleString()}
                                                 </Typography>
                                             }

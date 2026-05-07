@@ -24,7 +24,9 @@ import {
     Stack,
     Menu,
     MenuItem,
-    ListItemIcon
+    ListItemIcon,
+    Tooltip,
+    Zoom
 } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
 import LogoutIcon from '@mui/icons-material/Logout';
@@ -33,11 +35,15 @@ import SaveIcon from '@mui/icons-material/Save';
 import DeleteIcon from '@mui/icons-material/Delete'; 
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
+import AddIcon from '@mui/icons-material/Add';
 import PostCard from './PostCard'; 
 import EditArticleModal from './EditArticleModal';
 import EmailVerificationModal from './EmailVerificationModal'; 
 import AvatarCropDialog from './AvatarCropDialog';
+import UserRoleBadge from './UserRoleBadge';
 import { buildArticleImageUrl, buildAvatarUrl, DEFAULT_AVATAR_SRC, formatBytes, isAvatarTooLarge, MAX_AVATAR_BYTES } from './avatarUtils';
+import { buildModerationErrorMessage } from './moderationFlags';
+import { ProfileIcon, PROFILE_ICON_PRESETS, normalizeProfileIconValue, resolveProfileIconValue, extractNameAndIcon } from './profileIcons';
 
 const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || '/api';
 
@@ -49,13 +55,13 @@ const modalStyle = {
     width: { xs: '100vw', sm: '95%', md: 1200 }, 
     height: { xs: '100dvh', sm: 'auto' },
     maxHeight: { xs: '100dvh', sm: '90vh' }, 
-    background: 'linear-gradient(180deg, rgba(34, 34, 34, 0.72), rgba(18, 18, 18, 0.82))',
+    background: 'var(--surface-panel)',
     backdropFilter: 'blur(16px) saturate(120%)', 
     borderRadius: { xs: 0, sm: '16px' }, 
-    boxShadow: '0 16px 48px rgba(0, 0, 0, 0.65)',
-    border: '1px solid rgba(255, 255, 255, 0.18)',
+    boxShadow: 'var(--shadow-soft)',
+    border: '1px solid var(--border-default)',
     padding: '0', 
-    color: 'white',
+    color: 'var(--text-primary)',
     overflowY: 'auto',
     overscrollBehavior: 'contain',
     
@@ -63,29 +69,29 @@ const modalStyle = {
         width: '8px',
     },
     '&::-webkit-scrollbar-track': {
-        background: 'rgba(255, 255, 255, 0.05)',
+        background: 'var(--surface-soft)',
         borderRadius: '10px',
     },
     '&::-webkit-scrollbar-thumb': {
-        background: '#00bfa5',
+        background: 'var(--accent-500)',
         borderRadius: '10px',
     },
     '&::-webkit-scrollbar-thumb:hover': {
-        background: '#009688',
+        background: 'var(--accent-600)',
     },
 };
 
 const inputStyle = {
     '& .MuiFilledInput-root': {
-        backgroundColor: 'rgba(44, 44, 44, 0.85)',
-        color: 'white',
+        backgroundColor: 'var(--surface-input)',
+        color: 'var(--text-primary)',
         fontSize: '1.1rem', 
         borderRadius: '12px',
-        boxShadow: 'inset 0 0 0 1px rgba(255, 255, 255, 0.05)',
-        '&:hover': { backgroundColor: 'rgba(58, 58, 58, 0.9)' },
-        '&.Mui-focused': { backgroundColor: 'rgba(58, 58, 58, 0.9)' }
+        boxShadow: 'inset 0 0 0 1px color-mix(in oklab, var(--text-primary) 10%, transparent)',
+        '&:hover': { backgroundColor: 'color-mix(in oklab, var(--surface-input) 92%, transparent)' },
+        '&.Mui-focused': { backgroundColor: 'color-mix(in oklab, var(--surface-input) 92%, transparent)' }
     },
-    '& .MuiInputLabel-root': { color: '#bdbdbd' },
+    '& .MuiInputLabel-root': { color: 'var(--text-secondary)' },
 };
 
 const cardContainerStyle = { 
@@ -98,10 +104,10 @@ const cardContainerStyle = {
 
 const sectionStyle = {
     p: { xs: 2, sm: 4 },
-    backgroundColor: 'rgba(30, 30, 30, 0.78)',
+    backgroundColor: 'var(--surface-elevated)',
     borderRadius: '20px',
-    boxShadow: '0 14px 30px rgba(0, 0, 0, 0.45)',
-    border: '1px solid rgba(255, 255, 255, 0.05)'
+    boxShadow: 'var(--shadow-soft)',
+    border: '1px solid var(--border-default)'
 };
 
 const statCardStyle = {
@@ -109,21 +115,56 @@ const statCardStyle = {
     textAlign: 'center',
     padding: '16px 18px',
     borderRadius: '16px',
-    backgroundColor: 'rgba(255, 255, 255, 0.04)',
-    border: '1px solid rgba(255, 255, 255, 0.18)',
-    boxShadow: '0 10px 24px rgba(0, 0, 0, 0.35)',
+    backgroundColor: 'var(--surface-soft)',
+    border: '1px solid var(--border-default)',
+    boxShadow: 'var(--shadow-soft)',
     boxSizing: 'border-box',
     transition: 'transform 0.2s, box-shadow 0.2s, background-color 0.2s'
 };
 
 const glassButtonStyle = {
     backdropFilter: 'blur(10px)',
-    backgroundColor: 'rgba(255, 255, 255, 0.12)',
-    border: '1px solid rgba(255, 255, 255, 0.25)',
-    boxShadow: '0 8px 24px rgba(0, 0, 0, 0.35)',
+    backgroundColor: 'var(--surface-panel)',
+    border: '1px solid var(--border-default)',
+    boxShadow: 'var(--shadow-soft)',
     textTransform: 'none',
     whiteSpace: 'nowrap'
 };
+
+const createAvatarFlipStyle = (size, borderWidth) => ({
+    width: size,
+    height: size,
+    border: `${borderWidth}px solid var(--accent-500)`,
+    cursor: 'pointer',
+    position: 'relative',
+    overflow: 'hidden',
+    boxShadow: 'var(--shadow-soft)',
+    transformStyle: 'preserve-3d',
+    backfaceVisibility: 'hidden',
+    transition: 'transform 0.9s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.45s ease, filter 0.45s ease',
+    animation: 'avatarAmbientFloat 3.6s ease-in-out infinite',
+    '@keyframes avatarAmbientFloat': {
+        '0%, 100%': {
+            transform: 'perspective(1000px) rotateY(0deg) translateY(0px)',
+            filter: 'saturate(1) brightness(1)'
+        },
+        '50%': {
+            transform: 'perspective(1000px) rotateY(-5deg) translateY(-2px)',
+            filter: 'saturate(1.08) brightness(1.03)'
+        }
+    },
+    '@media (hover: hover) and (pointer: fine)': {
+        '&:hover': {
+            transform: 'perspective(1000px) rotateY(180deg) scale(1.04)',
+            boxShadow: '0 18px 32px color-mix(in oklab, var(--accent-500) 25%, transparent)',
+            filter: 'saturate(1.15)'
+        }
+    },
+    '&:active': {
+        transform: 'perspective(1000px) rotateY(180deg) scale(1.02)',
+        boxShadow: '0 14px 28px color-mix(in oklab, var(--accent-500) 22%, transparent)'
+    }
+});
 
 const getAuthHeaders = () => {
     return { 
@@ -163,6 +204,9 @@ const extractApiErrorMessage = async (response) => {
     try {
         const payload = await response.json();
         if (payload) {
+            const moderationMessage = buildModerationErrorMessage(payload);
+            if (moderationMessage) return moderationMessage;
+
             if (payload.message) return payload.message;
             if (payload.detail) return payload.detail;
             if (payload.error) return payload.error;
@@ -184,7 +228,7 @@ const extractApiErrorMessage = async (response) => {
 
     return response.statusText || 'Ошибка';
 };
-const ProfileModal = ({ open, handleClose, userId, onUnauthorized, onLogout, onPostClick, onLikes, openProfile }) => {
+const ProfileModal = ({ open, handleClose, userId, onUnauthorized, onLogout, onProfileUpdate, onPostClick, onLikes, openProfile }) => {
     const profileModalRef = useRef(null);
     const isMyProfile = userId === null; 
     const [profileData, setProfileData] = useState(null);
@@ -193,7 +237,7 @@ const ProfileModal = ({ open, handleClose, userId, onUnauthorized, onLogout, onP
     const [isLoading, setIsLoading] = useState(false);
     
     const [isEditingProfile, setIsEditingProfile] = useState(false);
-    const [editData, setEditData] = useState({ name: '', aboutUser: '' });
+    const [editData, setEditData] = useState({ name: '', aboutUser: '', profileIcon: '' });
     const [emailEdit, setEmailEdit] = useState('');
     const [emailError, setEmailError] = useState(null);
     const [emailSuccess, setEmailSuccess] = useState(null);
@@ -235,6 +279,82 @@ const ProfileModal = ({ open, handleClose, userId, onUnauthorized, onLogout, onP
     const handleMenuOpen = (event) => setMenuAnchorEl(event.currentTarget);
     const handleMenuClose = () => setMenuAnchorEl(null);
 
+    const [anchorElIcon, setAnchorElIcon] = useState(null);
+    const [isUpdatingIcon, setIsUpdatingIcon] = useState(false);
+    const [isProfileIconInfoOpen, setIsProfileIconInfoOpen] = useState(false);
+    const handleOpenIconMenu = (event) => setAnchorElIcon(event.currentTarget);
+    const handleCloseIconMenu = () => setAnchorElIcon(null);
+    const handleCloseProfileIconInfo = () => setIsProfileIconInfoOpen(false);
+
+    const handleUpdateIcon = async (iconId) => {
+        setIsUpdatingIcon(true);
+        try {
+            const formData = new FormData();
+            formData.append('icon', iconId);
+
+            const iconPreset = PROFILE_ICON_PRESETS.find(p => p.id === iconId);
+            const iconEmoji = iconPreset ? iconPreset.emoji : '';
+
+            const response = await fetch(`${API_BASE_URL}/Users/update-icon`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ icon: iconEmoji })
+            });
+
+            if (!response.ok) {
+                const errorText = await extractApiErrorMessage(response);
+                throw new Error(errorText || 'Failed to update icon');
+            }
+
+            const updatedProfile = await response.json();
+            setProfileData(updatedProfile);
+            setEditData({ ...editData, profileIcon: normalizeProfileIconValue(resolveProfileIconValue(updatedProfile)) });
+            authorProfileCache.current.clear();
+
+            if (onProfileUpdate) {
+                onProfileUpdate();
+            }
+
+            if (isMyProfile) {
+                try {
+                    const likesResponse = await fetch(`${API_BASE_URL}/Articles/likesArticles`, { credentials: 'include' });
+                    if (likesResponse.ok) {
+                        const likesJson = await likesResponse.json();
+                        const likedArticlesRaw = likesJson.articles || likesJson || [];
+                        const mappedArticles = likedArticlesRaw.map(article => ({ ...mapArticleFromApi(article), isLiked: true }));
+                        const enrichedArticles = await Promise.all(mappedArticles.map(enrichArticleWithAuthorProfile));
+                        setLikesList(enrichedArticles);
+                        setLikedArticlesCount(enrichedArticles.length);
+                    }
+                } catch {
+                    // Ignore refresh errors here; the next explicit open will refetch again.
+                }
+            }
+            
+            // Также обновляем локальные посты в профиле
+            if (userPosts.length > 0) {
+                setUserPosts(prevPosts => prevPosts.map(post => ({
+                    ...post,
+                    authorProfileIcon: normalizeProfileIconValue(resolveProfileIconValue(updatedProfile))
+                })));
+            }
+
+        } catch (err) {
+            console.error('Error updating icon:', err);
+        } finally {
+            setIsUpdatingIcon(false);
+            handleCloseIconMenu();
+        }
+    };
+
+    const resolvedProfileIcon = normalizeProfileIconValue(resolveProfileIconValue(profileData));
+    const activeProfileIconPreset = PROFILE_ICON_PRESETS.find((preset) => preset.id === resolvedProfileIcon);
+
+    const handleOpenProfileIconInfo = () => {
+        if (!activeProfileIconPreset) return;
+        setIsProfileIconInfoOpen(true);
+    };
+
     // --- FETCHING LOGIC ---
 
     const fetchProfileData = async () => {
@@ -270,8 +390,9 @@ const ProfileModal = ({ open, handleClose, userId, onUnauthorized, onLogout, onP
             setProfileData(profileJson);
             
             setEditData({ 
-                name: profileJson.name, 
-                aboutUser: profileJson.aboutUser || '' 
+                name: extractNameAndIcon(profileJson.name).name, 
+                aboutUser: profileJson.aboutUser || '',
+                profileIcon: normalizeProfileIconValue(resolveProfileIconValue(profileJson))
             });
             if (isMyProfile) {
                 setEmailEdit(profileJson.email || '');
@@ -286,9 +407,11 @@ const ProfileModal = ({ open, handleClose, userId, onUnauthorized, onLogout, onP
             
             const postsJson = await postsResponse.json(); 
             const profileAvatar = profileJson.pathAvatar ?? profileJson.PathAvatar ?? null;
+            const profileRole = profileJson.tag ?? profileJson.Tag ?? 'user';
             const formattedPosts = (postsJson.articles || []).map(article => ({
                 ...mapArticleFromApi(article, profileJson.name || 'Автор'),
                 authorAvatar: profileAvatar,
+                authorRole: profileRole,
             }));
             setUserPosts(formattedPosts);
 
@@ -342,6 +465,7 @@ const ProfileModal = ({ open, handleClose, userId, onUnauthorized, onLogout, onP
             setAvatarFile(null);
             setAvatarPreview('');
             setAvatarError(null);
+            setIsProfileIconInfoOpen(false);
             setVisiblePostsCount(10);
             fetchProfileData();
         }
@@ -428,6 +552,7 @@ const ProfileModal = ({ open, handleClose, userId, onUnauthorized, onLogout, onP
             formData.append('name', editData.name || '');
             formData.append('email', profileData?.email || emailEdit || '');
             formData.append('aboutUser', editData.aboutUser ?? '');
+            formData.append('profileIcon', editData.profileIcon || '');
             if (avatarFile) {
                 formData.append('avatar', avatarFile, avatarFile.name || 'avatar.jpg');
             }
@@ -451,11 +576,15 @@ const ProfileModal = ({ open, handleClose, userId, onUnauthorized, onLogout, onP
             const updatedProfile = await response.json(); 
             setProfileData(updatedProfile);
             setEditData({ 
-                name: updatedProfile.name, 
-                aboutUser: updatedProfile.aboutUser || '' 
+                name: extractNameAndIcon(updatedProfile.name).name, 
+                aboutUser: updatedProfile.aboutUser || '',
+                profileIcon: normalizeProfileIconValue(resolveProfileIconValue(updatedProfile))
             });
             if (isMyProfile) {
                 setEmailEdit(updatedProfile.email || '');
+            }
+            if (onProfileUpdate) {
+                onProfileUpdate();
             }
             setAvatarFile(null);
             setAvatarPreview('');
@@ -544,6 +673,7 @@ const ProfileModal = ({ open, handleClose, userId, onUnauthorized, onLogout, onP
             formData.append('name', profileData?.name || editData.name || '');
             formData.append('email', pendingEmail || '');
             formData.append('aboutUser', editData.aboutUser ?? profileData?.aboutUser ?? '');
+            formData.append('profileIcon', editData.profileIcon || normalizeProfileIconValue(resolveProfileIconValue(profileData)) || '');
             const response = await fetch(`${API_BASE_URL}/Users`, {
                 method: 'PUT',
                 credentials: 'include',
@@ -608,32 +738,44 @@ const ProfileModal = ({ open, handleClose, userId, onUnauthorized, onLogout, onP
         return Number.isFinite(parsed) ? parsed : 0;
     };
 
-    const mapArticleFromApi = (article, fallbackNickname = 'Автор') => ({
-        id: article.article_id ?? article.articleId ?? article.ArticleID,
-        article_id: article.article_id ?? article.articleId ?? article.ArticleID,
-        author_id: article.author_id ?? article.authorId ?? article.AuthorID,
-        authorId: article.author_id ?? article.authorId ?? article.AuthorID,
-        nickname: article.nickname || article.authorName || fallbackNickname,
-        authorAvatar: article.pathAvatar ?? article.PathAvatar ?? article.authorAvatar ?? article.author_avatar ?? null,
-        title: article.article_title ?? article.articleTitle ?? article.ArticleTitle,
-        article_preview: article.article_preview ?? article.articlePreview ?? article.ArticlePreview,
-        article_content: article.article_content ?? article.articleContent ?? article.ArticleContent,
-        file_path: article.file_path ?? article.filePath ?? article.FilePath,
-        articleImageUrl: buildArticleImageUrl(API_BASE_URL, article.file_path ?? article.filePath ?? article.FilePath),
-        likesCount: article.countLikes ?? article.likesCount ?? article.likes_count ?? 0,
-        commentsCount: article.countComments ?? article.commentsCount ?? article.comments_count ?? 0,
-        isLiked: article.is_liked ?? article.isLiked ?? false,
-        tags: article.article_tags ?? article.articleTags ?? [],
-    });
+    const mapArticleFromApi = (article, fallbackNickname = 'Автор') => {
+        const rawNickname = article.nickname || article.authorName || fallbackNickname;
+        const iconInfo = extractNameAndIcon(rawNickname);
+        return {
+            id: article.article_id ?? article.articleId ?? article.ArticleID,
+            article_id: article.article_id ?? article.articleId ?? article.ArticleID,
+            author_id: article.author_id ?? article.authorId ?? article.AuthorID,
+            authorId: article.author_id ?? article.authorId ?? article.AuthorID,
+            nickname: iconInfo.name,
+            authorAvatar: article.pathAvatar ?? article.PathAvatar ?? article.authorAvatar ?? article.author_avatar ?? null,
+            authorProfileIcon: iconInfo.icon || normalizeProfileIconValue(resolveProfileIconValue(article)),
+            authorRole: article.tag ?? article.Tag ?? article.authorRole ?? 'user',
+            title: article.article_title ?? article.articleTitle ?? article.ArticleTitle,
+            article_preview: article.article_preview ?? article.articlePreview ?? article.ArticlePreview,
+            article_content: article.article_content ?? article.articleContent ?? article.ArticleContent,
+            file_path: article.file_path ?? article.filePath ?? article.FilePath,
+            articleImageUrl: buildArticleImageUrl(API_BASE_URL, article.file_path ?? article.filePath ?? article.FilePath),
+            likesCount: article.countLikes ?? article.likesCount ?? article.likes_count ?? 0,
+            commentsCount: article.countComments ?? article.commentsCount ?? article.comments_count ?? 0,
+            viewsCount: article.countViews ?? article.viewsCount ?? article.views_count ?? article.CountViews ?? 0,
+            isLiked: article.is_liked ?? article.isLiked ?? false,
+            tags: article.article_tags ?? article.articleTags ?? [],
+        };
+    };
 
     const applyAuthorProfileToArticle = (article, profile) => {
         if (!profile) return article;
         const authorAvatar = profile.pathAvatar ?? profile.PathAvatar ?? profile.Pathavatar ?? profile.avatar ?? article.authorAvatar;
-        const nickname = profile.name || profile.UserName || profile.userName || article.nickname || 'Автор';
+        const profileNameInfo = extractNameAndIcon(profile.name || profile.UserName || profile.userName || '');
+        const articleNameInfo = extractNameAndIcon(article.nickname || '');
+        const nickname = profileNameInfo.name || articleNameInfo.name || 'Автор';
+        const authorProfileIcon = normalizeProfileIconValue(resolveProfileIconValue(profile)) || profileNameInfo.icon || article.authorProfileIcon;
         return {
             ...article,
             nickname,
             authorAvatar,
+            authorProfileIcon,
+            authorRole: profile.tag ?? profile.Tag ?? article.authorRole ?? 'user',
         };
     };
 
@@ -660,6 +802,48 @@ const ProfileModal = ({ open, handleClose, userId, onUnauthorized, onLogout, onP
         return applyAuthorProfileToArticle(article, profile);
     };
 
+    const loadLikesList = async () => {
+        if (!isMyProfile) return;
+        setIsLikesListLoading(true);
+        setLikesListError(null);
+        try {
+            authorProfileCache.current.clear();
+            const response = await fetch(`${API_BASE_URL}/Articles/likesArticles`, { credentials: 'include' });
+            if (response.status === 401 || response.status === 403) {
+                if (onUnauthorized) onUnauthorized();
+                throw new Error('Необходимо войти в аккаунт.');
+            }
+            if (response.status === 400) {
+                const responseText = (await response.text()).trim();
+                const isUnauthorized = /incorrect user|unauthorized/i.test(responseText);
+                if (isUnauthorized) {
+                    if (onUnauthorized) onUnauthorized();
+                    throw new Error('Необходимо войти в аккаунт.');
+                }
+
+                setLikesList([]);
+                setLikedArticlesCount(0);
+                return;
+            }
+            if (response.status === 404 || response.status === 204) {
+                setLikesList([]);
+                setLikedArticlesCount(0);
+                return;
+            }
+            if (!response.ok) throw new Error('Не удалось загрузить понравившиеся статьи.');
+            const data = await response.json();
+            const likedArticlesRaw = data.articles || data || [];
+            const mappedArticles = likedArticlesRaw.map(article => ({ ...mapArticleFromApi(article), isLiked: true }));
+            const enrichedArticles = await Promise.all(mappedArticles.map(enrichArticleWithAuthorProfile));
+            setLikesList(enrichedArticles);
+            setLikedArticlesCount(enrichedArticles.length);
+        } catch (err) {
+            setLikesListError(err.message || 'Ошибка загрузки понравившихся статей.');
+        } finally {
+            setIsLikesListLoading(false);
+        }
+    };
+
     const visiblePosts = userPosts.slice(0, visiblePostsCount);
     const canLoadMorePosts = visiblePostsCount < userPosts.length;
     const handleLoadMorePosts = () => {
@@ -673,7 +857,6 @@ const ProfileModal = ({ open, handleClose, userId, onUnauthorized, onLogout, onP
     const handleOpenFollowingList = async () => {
         if (!isMyProfile) return;
         setIsFollowingListOpen(true);
-        if (followingList.length > 0) return;
         setIsFollowingListLoading(true);
         setFollowingListError(null);
         try {
@@ -697,30 +880,17 @@ const ProfileModal = ({ open, handleClose, userId, onUnauthorized, onLogout, onP
     const handleOpenLikesList = async () => {
         if (!isMyProfile) return;
         setIsLikesListOpen(true);
-        if (likesList.length > 0) return;
-        setIsLikesListLoading(true);
-        setLikesListError(null);
-        try {
-            const response = await fetch(`${API_BASE_URL}/Articles/likesArticles`, { credentials: 'include' });
-            if (response.status === 401 || response.status === 403) {
-                if (onUnauthorized) onUnauthorized();
-                throw new Error('Необходимо войти в аккаунт.');
-            }
-            if (!response.ok) throw new Error('Не удалось загрузить понравившиеся статьи.');
-            const data = await response.json();
-            const likedArticlesRaw = data.articles || data || [];
-            const mappedArticles = likedArticlesRaw.map(article => ({ ...mapArticleFromApi(article), isLiked: true }));
-            const enrichedArticles = await Promise.all(mappedArticles.map(enrichArticleWithAuthorProfile));
-            setLikesList(enrichedArticles);
-            setLikedArticlesCount(enrichedArticles.length);
-        } catch (err) {
-            setLikesListError(err.message || 'Ошибка загрузки понравившихся статей.');
-        } finally {
-            setIsLikesListLoading(false);
-        }
     };
 
     const handleCloseLikesList = () => setIsLikesListOpen(false);
+
+    // Intentionally reload the list every time it opens.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    useEffect(() => {
+        if (isLikesListOpen && isMyProfile) {
+            void loadLikesList();
+        }
+    }, [isLikesListOpen, isMyProfile]);
 
     const handleToggleFollow = async () => {
         if (isMyProfile || !userId) return;
@@ -826,7 +996,7 @@ const ProfileModal = ({ open, handleClose, userId, onUnauthorized, onLogout, onP
                     {/* Left Actions */}
                     {isMyProfile && !isEditingProfile && (
                         <Box sx={{ position: 'absolute', top: { xs: 8, sm: 15 }, left: { xs: 8, sm: 15 }, zIndex: 5 }}>
-                            <IconButton onClick={handleMenuOpen} sx={{ color: '#bdbdbd' }}>
+                            <IconButton onClick={handleMenuOpen} sx={{ color: 'var(--text-secondary)' }}>
                                 <MoreVertIcon />
                             </IconButton>
                             <Menu
@@ -836,11 +1006,11 @@ const ProfileModal = ({ open, handleClose, userId, onUnauthorized, onLogout, onP
                                 slotProps={{
                                     paper: {
                                         sx: {
-                                            backgroundColor: '#2c2c2c',
-                                            color: 'white',
+                                            backgroundColor: 'var(--surface-elevated)',
+                                            color: 'var(--text-primary)',
                                             borderRadius: '8px',
-                                            boxShadow: '0 8px 16px rgba(0,0,0,0.5)',
-                                            border: '1px solid rgba(255, 255, 255, 0.1)',
+                                            boxShadow: '0 8px 16px var(--ui-c136)',
+                                            border: '1px solid var(--border-default)',
                                             mt: 1.5,
                                         }
                                     }
@@ -848,12 +1018,12 @@ const ProfileModal = ({ open, handleClose, userId, onUnauthorized, onLogout, onP
                                 transformOrigin={{ horizontal: 'left', vertical: 'top' }}
                                 anchorOrigin={{ horizontal: 'left', vertical: 'bottom' }}
                             >
-                                <MenuItem onClick={() => { handleMenuClose(); onLogout && onLogout(); }} sx={{ color: '#ff5252', '&:hover': { backgroundColor: 'rgba(255, 82, 82, 0.1)' } }}>
-                                    <ListItemIcon><LogoutIcon sx={{ color: '#ff5252' }} fontSize="small" /></ListItemIcon>
+                                <MenuItem onClick={() => { handleMenuClose(); onLogout && onLogout(); }} sx={{ color: 'var(--ui-c95)', '&:hover': { backgroundColor: 'var(--ui-c185)' } }}>
+                                    <ListItemIcon><LogoutIcon sx={{ color: 'var(--ui-c95)' }} fontSize="small" /></ListItemIcon>
                                     <ListItemText>Выйти из аккаунта</ListItemText>
                                 </MenuItem>
-                                <MenuItem onClick={() => { handleMenuClose(); handleDeleteUserOpen(); }} sx={{ color: '#ff5252', '&:hover': { backgroundColor: 'rgba(255, 82, 82, 0.1)' } }}>
-                                    <ListItemIcon><DeleteIcon sx={{ color: '#ff5252' }} fontSize="small" /></ListItemIcon>
+                                <MenuItem onClick={() => { handleMenuClose(); handleDeleteUserOpen(); }} sx={{ color: 'var(--ui-c95)', '&:hover': { backgroundColor: 'var(--ui-c185)' } }}>
+                                    <ListItemIcon><DeleteIcon sx={{ color: 'var(--ui-c95)' }} fontSize="small" /></ListItemIcon>
                                     <ListItemText>Удалить аккаунт</ListItemText>
                                 </MenuItem>
                             </Menu>
@@ -864,7 +1034,7 @@ const ProfileModal = ({ open, handleClose, userId, onUnauthorized, onLogout, onP
                     <Box sx={{ position: 'absolute', top: { xs: 8, sm: 15 }, right: { xs: 8, sm: 15 }, zIndex: 5 }}>
                         <IconButton
                             onClick={handleProfileModalClose}
-                            sx={{ color: '#bdbdbd', '&:hover': { backgroundColor: 'rgba(255,255,255,0.1)' } }}
+                            sx={{ color: 'var(--text-secondary)', '&:hover': { backgroundColor: 'var(--ui-c191)' } }}
                         >
                             <CloseIcon />
                         </IconButton>
@@ -878,14 +1048,14 @@ const ProfileModal = ({ open, handleClose, userId, onUnauthorized, onLogout, onP
                                 flexDirection: 'column',
                                 gap: 2,
                                 backdropFilter: 'blur(18px) saturate(120%)',
-                                background: 'linear-gradient(180deg, rgba(32, 32, 32, 0.85), rgba(18, 18, 18, 0.9))',
-                                border: '1px solid rgba(255, 255, 255, 0.08)',
+                                background: 'var(--surface-elevated)',
+                                border: '1px solid var(--border-default)',
                                 borderRadius: '20px',
-                                boxShadow: '0 18px 48px rgba(0, 0, 0, 0.55)',
+                                boxShadow: 'var(--shadow-soft)',
                                 margin: { xs: '12px', sm: '32px' },
                             }}
                         >
-                            <Typography variant="h5" sx={{ color: '#00bfa5', fontWeight: 'bold', textAlign: 'center' }}>
+                            <Typography variant="h5" sx={{ color: 'var(--accent-500)', fontWeight: 'bold', textAlign: 'center' }}>
                                 Редактирование профиля
                             </Typography>
 
@@ -897,17 +1067,7 @@ const ProfileModal = ({ open, handleClose, userId, onUnauthorized, onLogout, onP
                                     <Avatar
                                         src={buildAvatarUrl(API_BASE_URL, avatarPreview || profileData?.pathAvatar || profileData?.PathAvatar)}
                                         onClick={() => setIsAvatarViewerOpen(true)}
-                                        sx={{ 
-                                            width: 96, 
-                                            height: 96, 
-                                            border: '2px solid #00bfa5', 
-                                            cursor: 'pointer',
-                                            transition: 'transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.3s ease',
-                                            '&:hover': {
-                                                transform: 'scale(1.05)',
-                                                boxShadow: '0 8px 24px rgba(0, 191, 165, 0.4)'
-                                            }
-                                        }}
+                                        sx={createAvatarFlipStyle(96, 2)}
                                         imgProps={{
                                             onError: (e) => {
                                                 e.currentTarget.src = DEFAULT_AVATAR_SRC;
@@ -918,17 +1078,17 @@ const ProfileModal = ({ open, handleClose, userId, onUnauthorized, onLogout, onP
                                         <Button
                                             variant="outlined"
                                             component="label"
-                                            sx={{ color: '#00bfa5', borderColor: '#00bfa5', '&:hover': { borderColor: '#009688', backgroundColor: 'rgba(0, 191, 165, 0.08)' } }}
+                                            sx={{ color: 'var(--accent-500)', borderColor: 'var(--accent-500)', '&:hover': { borderColor: 'var(--accent-600)', backgroundColor: 'color-mix(in oklab, var(--accent-500) 8%, transparent)' } }}
                                         >
                                             Загрузить аватар
                                             <input hidden type="file" accept="image/*" onChange={handleAvatarChange} />
                                         </Button>
                                         {avatarFile && (
-                                            <Typography variant="body2" sx={{ color: '#bdbdbd' }}>
+                                            <Typography variant="body2" sx={{ color: 'var(--text-secondary)' }}>
                                                 {avatarFile.name}
                                             </Typography>
                                         )}
-                                        <Typography variant="caption" sx={{ color: '#7e7e7e' }}>
+                                        <Typography variant="caption" sx={{ color: 'var(--ui-c53)' }}>
                                             Максимум {formatBytes(MAX_AVATAR_BYTES)}
                                         </Typography>
                                     </Box>
@@ -957,9 +1117,9 @@ const ProfileModal = ({ open, handleClose, userId, onUnauthorized, onLogout, onP
                                     startIcon={<SaveIcon />}
                                     onClick={handleSaveProfile}
                                     disabled={isLoading}
-                                    sx={{ bgcolor: '#00bfa5', '&:hover': { bgcolor: '#009688' } }}
+                                    sx={{ bgcolor: 'var(--accent-500)', '&:hover': { bgcolor: 'var(--accent-600)' } }}
                                 >
-                                    {isLoading ? <CircularProgress size={24} sx={{ color: 'white' }} /> : 'Сохранить изменения'}
+                                    {isLoading ? <CircularProgress size={24} sx={{ color: 'var(--accent-contrast)' }} /> : 'Сохранить изменения'}
                                 </Button>
                             </Box>
                         </Box>
@@ -967,23 +1127,12 @@ const ProfileModal = ({ open, handleClose, userId, onUnauthorized, onLogout, onP
                         <>
 
                     {/* --- ВЕРХНЯЯ ЧАСТЬ ПРОФИЛЯ (ИМЯ/EMAIL/ДАТА) --- */}
-                    <Box sx={{ p: { xs: 2, sm: 4 }, display: 'flex', flexDirection: 'column', alignItems: 'center', background: 'linear-gradient(180deg, #252525 0%, #1e1e1e 100%)' }}>
+                    <Box sx={{ p: { xs: 2, sm: 4 }, display: 'flex', flexDirection: 'column', alignItems: 'center', background: 'linear-gradient(180deg, color-mix(in oklab, var(--surface-soft) 92%, var(--surface-panel)) 0%, var(--surface-panel) 100%)' }}>
                         
                         <Avatar
                             src={buildAvatarUrl(API_BASE_URL, profileData?.pathAvatar ?? profileData?.PathAvatar)}
                             onClick={() => setIsAvatarViewerOpen(true)}
-                            sx={{ 
-                                width: 110, 
-                                height: 110, 
-                                border: '3px solid #00bfa5', 
-                                mb: 2, 
-                                cursor: 'pointer',
-                                transition: 'transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.3s ease',
-                                '&:hover': {
-                                    transform: 'scale(1.08)',
-                                    boxShadow: '0 12px 32px rgba(0, 191, 165, 0.4)'
-                                }
-                            }}
+                            sx={{ mb: 2, ...createAvatarFlipStyle(110, 3) }}
                             imgProps={{
                                 onError: (e) => {
                                     e.currentTarget.src = DEFAULT_AVATAR_SRC;
@@ -991,23 +1140,131 @@ const ProfileModal = ({ open, handleClose, userId, onUnauthorized, onLogout, onP
                             }}
                         />
 
-                        <Typography variant="h4" sx={{ color: 'white', fontWeight: 'bold', mb: 0.5, textAlign: 'center', fontSize: { xs: '1.65rem', sm: '2.125rem' } }}>
-                            {profileData.name}
-                        </Typography>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
+                            <Typography variant="h4" sx={{ color: 'var(--text-primary)', fontWeight: 'bold', textAlign: 'center', fontSize: { xs: '1.65rem', sm: '2.125rem' } }}>
+                                {extractNameAndIcon(profileData.name).name}
+                            </Typography>
+                            <ButtonBase
+                                onClick={handleOpenProfileIconInfo}
+                                disabled={!activeProfileIconPreset}
+                                sx={{
+                                    borderRadius: '999px',
+                                    p: 0.35,
+                                    minWidth: 'auto',
+                                    cursor: activeProfileIconPreset ? 'pointer' : 'default',
+                                    '&:hover': activeProfileIconPreset ? {
+                                        backgroundColor: 'var(--ui-c114)'
+                                    } : undefined
+                                }}
+                                title={activeProfileIconPreset ? 'Показать значение эмодзи' : undefined}
+                            >
+                                <ProfileIcon
+                                    icon={resolvedProfileIcon}
+                                    size={28}
+                                    sx={{ filter: 'drop-shadow(0 0 6px var(--ui-c132))' }}
+                                />
+                            </ButtonBase>
+                            {isMyProfile && (
+                                <>
+                                    <IconButton size="small" onClick={handleOpenIconMenu} sx={{ color: 'var(--accent-500)', padding: '4px', '&:hover': { background: 'var(--ui-c115)' } }}>
+                                        <AddIcon fontSize="small" />
+                                    </IconButton>
+                                    <Menu
+                                        anchorEl={anchorElIcon}
+                                        open={Boolean(anchorElIcon)}
+                                        onClose={handleCloseIconMenu}
+                                        PaperProps={{
+                                            sx: { 
+                                                bgcolor: 'var(--surface-elevated)',
+                                                backdropFilter: 'blur(10px)',
+                                                border: '1px solid var(--border-default)',
+                                                color: 'var(--text-primary)',
+                                                mt: 1,
+                                                width: 320,
+                                                maxHeight: 400
+                                            }
+                                        }}
+                                    >
+                                        <Box sx={{ p: 2, display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 1 }}>
+                                            {PROFILE_ICON_PRESETS.map((preset) => (
+                                                <Tooltip
+                                                    key={preset.id}
+                                                    title={preset.description}
+                                                    arrow
+                                                    placement="top"
+                                                    enterTouchDelay={0}
+                                                    PopperProps={{
+                                                        modifiers: [
+                                                            { name: 'offset', options: { offset: [0, 10] } }
+                                                        ]
+                                                    }}
+                                                    componentsProps={{
+                                                        tooltip: {
+                                                            sx: {
+                                                                bgcolor: 'var(--surface-panel)',
+                                                                color: 'var(--text-primary)',
+                                                                border: '1px solid var(--border-default)',
+                                                                boxShadow: '0 12px 30px var(--ui-c134)',
+                                                                backdropFilter: 'blur(8px)',
+                                                                fontSize: '0.72rem',
+                                                                lineHeight: 1.35,
+                                                                px: 1.25,
+                                                                py: 0.75,
+                                                                maxWidth: 220,
+                                                                textAlign: 'center',
+                                                            }
+                                                        },
+                                                        arrow: {
+                                                            sx: {
+                                                                color: 'var(--surface-panel)'
+                                                            }
+                                                        }
+                                                    }}
+                                                >
+                                                    <ButtonBase
+                                                        onClick={() => handleUpdateIcon(preset.id)}
+                                                        disabled={isUpdatingIcon}
+                                                        sx={{
+                                                            borderRadius: '12px',
+                                                            border: '1px solid var(--ui-c191)',
+                                                            backgroundColor: 'var(--ui-c189)',
+                                                            minHeight: 54,
+                                                            display: 'flex',
+                                                            flexDirection: 'column',
+                                                            alignItems: 'center',
+                                                            justifyContent: 'center',
+                                                            transition: 'all 0.2s ease',
+                                                            '&:hover': {
+                                                                borderColor: 'var(--accent-500)',
+                                                                backgroundColor: 'var(--ui-c115)'
+                                                            }
+                                                        }}
+                                                        title={preset.label}
+                                                    >
+                                                        <Box component="span" sx={{ fontSize: '1.5rem', lineHeight: 1 }}>{preset.emoji}</Box>
+                                                    </ButtonBase>
+                                                </Tooltip>
+                                            ))}
+                                        </Box>
+                                    </Menu>
+                                </>
+                            )}
+                        </Box>
+                        <UserRoleBadge role={profileData?.tag ?? profileData?.Tag ?? 'user'} size="md" />
                         {isMyProfile && (
                             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
-                                <Typography variant="h6" sx={{ color: '#00bfa5' }}>
+                                <Typography variant="h6" sx={{ color: 'var(--accent-500)' }}>
                                     {profileData.email}
                                 </Typography>
                                 <IconButton
                                     size="small"
                                     onClick={handleOpenEmailModal}
                                     sx={{
-                                        color: '#00bfa5',
-                                        border: '1px solid rgba(0, 191, 165, 0.4)',
+                                        color: 'var(--accent-500)',
+                                        border: '1px solid var(--ui-c118)',
                                         width: 30,
                                         height: 30,
-                                        '&:hover': { backgroundColor: 'rgba(0, 191, 165, 0.12)' }
+                                        '&:hover': { backgroundColor: 'var(--ui-c114)' }
                                     }}
                                 >
                                     <EditIcon fontSize="small" />
@@ -1015,7 +1272,7 @@ const ProfileModal = ({ open, handleClose, userId, onUnauthorized, onLogout, onP
                             </Box>
                         )}
 
-                        <Typography variant="body1" sx={{ color: '#757575', mt: 1 }}>
+                        <Typography variant="body1" sx={{ color: 'var(--text-secondary)', mt: 1 }}>
                             На сайте с {new Date(profileData.createDate).toLocaleDateString()}
                         </Typography>
 
@@ -1030,16 +1287,16 @@ const ProfileModal = ({ open, handleClose, userId, onUnauthorized, onLogout, onP
                                             cursor: isMyProfile ? 'pointer' : 'default',
                                             '&:hover': isMyProfile ? { 
                                                 transform: 'translateY(-2px)', 
-                                                boxShadow: '0 14px 30px rgba(0,0,0,0.45)',
-                                                backgroundColor: 'rgba(0, 191, 165, 0.12)'
+                                                boxShadow: '0 14px 30px var(--ui-c135)',
+                                                backgroundColor: 'var(--ui-c114)'
                                             } : undefined
                                         }}
                                     >
                                         <Stack spacing={0.5}>
-                                            <Typography variant="h4" sx={{ color: 'white', fontWeight: 'bold' }}>
+                                            <Typography variant="h4" sx={{ color: 'var(--text-primary)', fontWeight: 'bold' }}>
                                                 {followingCount}
                                             </Typography>
-                                            <Typography variant="body2" sx={{ color: '#bdbdbd', letterSpacing: 0.3 }}>
+                                            <Typography variant="body2" sx={{ color: 'var(--text-secondary)', letterSpacing: 0.3 }}>
                                                 Подписки
                                             </Typography>
                                         </Stack>
@@ -1048,10 +1305,10 @@ const ProfileModal = ({ open, handleClose, userId, onUnauthorized, onLogout, onP
                                 <Grid item xs={12} sm={6} md={3}>
                                     <Box sx={statCardStyle}>
                                         <Stack spacing={0.5}>
-                                            <Typography variant="h4" sx={{ color: 'white', fontWeight: 'bold' }}>
+                                            <Typography variant="h4" sx={{ color: 'var(--text-primary)', fontWeight: 'bold' }}>
                                                 {subscribersCount}
                                             </Typography>
-                                            <Typography variant="body2" sx={{ color: '#bdbdbd', letterSpacing: 0.3 }}>
+                                            <Typography variant="body2" sx={{ color: 'var(--text-secondary)', letterSpacing: 0.3 }}>
                                                 Подписчики
                                             </Typography>
                                         </Stack>
@@ -1060,10 +1317,10 @@ const ProfileModal = ({ open, handleClose, userId, onUnauthorized, onLogout, onP
                                 <Grid item xs={12} sm={6} md={3}>
                                     <Box sx={statCardStyle}>
                                         <Stack spacing={0.5}>
-                                            <Typography variant="h4" sx={{ color: 'white', fontWeight: 'bold' }}>
+                                            <Typography variant="h4" sx={{ color: 'var(--text-primary)', fontWeight: 'bold' }}>
                                                 {articlesCount}
                                             </Typography>
-                                            <Typography variant="body2" sx={{ color: '#bdbdbd', letterSpacing: 0.3 }}>
+                                            <Typography variant="body2" sx={{ color: 'var(--text-secondary)', letterSpacing: 0.3 }}>
                                                 Статьи
                                             </Typography>
                                         </Stack>
@@ -1079,16 +1336,16 @@ const ProfileModal = ({ open, handleClose, userId, onUnauthorized, onLogout, onP
                                                 cursor: 'pointer',
                                                 '&:hover': { 
                                                     transform: 'translateY(-2px)', 
-                                                    boxShadow: '0 14px 30px rgba(0,0,0,0.45)',
-                                                    backgroundColor: 'rgba(0, 191, 165, 0.12)'
+                                                    boxShadow: '0 14px 30px var(--ui-c135)',
+                                                    backgroundColor: 'var(--ui-c114)'
                                                 }
                                             }}
                                         >
                                             <Stack spacing={0.5}>
-                                                <Typography variant="h4" sx={{ color: 'white', fontWeight: 'bold' }}>
+                                                <Typography variant="h4" sx={{ color: 'var(--text-primary)', fontWeight: 'bold' }}>
                                                     {likedArticlesCount}
                                                 </Typography>
-                                                <Typography variant="body2" sx={{ color: '#bdbdbd', letterSpacing: 0.3 }}>
+                                                <Typography variant="body2" sx={{ color: 'var(--text-secondary)', letterSpacing: 0.3 }}>
                                                     Понравившиеся
                                                 </Typography>
                                             </Stack>
@@ -1105,11 +1362,11 @@ const ProfileModal = ({ open, handleClose, userId, onUnauthorized, onLogout, onP
                                     startIcon={<EditIcon />}
                                     onClick={() => setIsEditingProfile(true)}
                                     sx={{
-                                        color: '#00bfa5',
-                                        borderColor: '#00bfa5',
+                                        color: 'var(--accent-500)',
+                                        borderColor: 'var(--accent-500)',
                                         fontSize: '1rem',
                                         padding: '6px 20px',
-                                        '&:hover': { borderColor: '#00a38f', backgroundColor: 'rgba(0, 191, 165, 0.1)' }
+                                        '&:hover': { borderColor: 'var(--ui-c4)', backgroundColor: 'color-mix(in oklab, var(--accent-500) 10%, transparent)' }
                                     }}
                                 >
                                     Редактировать профиль
@@ -1120,12 +1377,12 @@ const ProfileModal = ({ open, handleClose, userId, onUnauthorized, onLogout, onP
                                     onClick={handleToggleFollow}
                                     disabled={isFollowBusy}
                                     sx={{
-                                        bgcolor: isFollowingUser ? 'transparent' : '#00bfa5',
-                                        color: isFollowingUser ? '#00bfa5' : '#101010',
-                                        borderColor: '#00bfa5',
+                                        bgcolor: isFollowingUser ? 'transparent' : 'var(--accent-500)',
+                                        color: isFollowingUser ? 'var(--accent-500)' : 'var(--ui-c18)',
+                                        borderColor: 'var(--accent-500)',
                                         '&:hover': { 
-                                            bgcolor: isFollowingUser ? 'rgba(0, 191, 165, 0.1)' : '#00897b',
-                                            borderColor: '#00a38f'
+                                            bgcolor: isFollowingUser ? 'color-mix(in oklab, var(--accent-500) 10%, transparent)' : 'var(--accent-600)',
+                                            borderColor: 'var(--ui-c4)'
                                         }
                                     }}
                                 >
@@ -1135,24 +1392,24 @@ const ProfileModal = ({ open, handleClose, userId, onUnauthorized, onLogout, onP
                         </Box>
                     </Box>
 
-                    <Divider sx={{ backgroundColor: '#333' }} />
+                    <Divider sx={{ backgroundColor: 'var(--border-default)' }} />
 
                     {/* --- СЕКЦИЯ "О СЕБЕ" --- */}
                     <Box sx={{ ...sectionStyle, m: { xs: 1.5, sm: 3 }, textAlign: 'center' }}>
-                        <Typography variant="h5" sx={{ color: '#bdbdbd', fontWeight: 'bold', mb: 2 }}>
+                        <Typography variant="h5" sx={{ color: 'var(--text-secondary)', fontWeight: 'bold', mb: 2 }}>
                             О себе
                         </Typography>
                         
-                        <Typography variant="h6" sx={{ color: 'white', lineHeight: 1.6, maxWidth: 800, margin: '0 auto', fontWeight: 300 }}>
+                        <Typography variant="h6" sx={{ color: 'var(--text-primary)', lineHeight: 1.6, maxWidth: 800, margin: '0 auto', fontWeight: 300 }}>
                             {profileData.aboutUser || 'Пользователь ничего о себе не добавил.'}
                         </Typography>
                     </Box>
 
-                    <Divider sx={{ backgroundColor: '#333' }} />
+                    <Divider sx={{ backgroundColor: 'var(--border-default)' }} />
                     
                     {/* --- ПУБЛИКАЦИИ --- */}
                     <Box sx={{ p: { xs: 2, sm: 4 } }}>
-                        <Typography variant="h4" sx={{ mb: 3, color: '#00bfa5', fontWeight: 'bold' }}>
+                        <Typography variant="h4" sx={{ mb: 3, color: 'var(--accent-500)', fontWeight: 'bold' }}>
                             Публикации ({articlesCount})
                         </Typography>
 
@@ -1194,7 +1451,7 @@ const ProfileModal = ({ open, handleClose, userId, onUnauthorized, onLogout, onP
                                                         left: 0,
                                                         right: 0,
                                                         bottom: 0,
-                                                        backgroundColor: 'rgba(0,0,0,0.6)',
+                                                        backgroundColor: 'var(--ui-c138)',
                                                         display: 'flex',
                                                         flexDirection: 'column',
                                                         justifyContent: 'center',
@@ -1219,10 +1476,10 @@ const ProfileModal = ({ open, handleClose, userId, onUnauthorized, onLogout, onP
                                                         }}
                                                         sx={{ 
                                                             ...glassButtonStyle,
-                                                            color: 'white',
-                                                            borderColor: 'rgba(255,255,255,0.6)',
+                                                            color: 'var(--text-primary)',
+                                                            borderColor: 'var(--ui-c199)',
                                                             maxWidth: 220,
-                                                            '&:hover': { borderColor: 'white', backgroundColor: 'rgba(255,255,255,0.18)' } 
+                                                            '&:hover': { borderColor: 'var(--text-primary)', backgroundColor: 'var(--ui-c194)' } 
                                                         }}
                                                     >
                                                         Просмотреть
@@ -1238,10 +1495,10 @@ const ProfileModal = ({ open, handleClose, userId, onUnauthorized, onLogout, onP
                                                         sx={{ 
                                                             ...glassButtonStyle,
                                                             maxWidth: 220,
-                                                            bgcolor: 'rgba(0, 191, 165, 0.35)',
-                                                            color: 'white',
-                                                            borderColor: 'rgba(0, 191, 165, 0.5)',
-                                                            '&:hover': { bgcolor: 'rgba(0, 151, 136, 0.45)' } 
+                                                            bgcolor: 'color-mix(in oklab, var(--accent-500) 35%, transparent)',
+                                                            color: 'var(--text-primary)',
+                                                            borderColor: 'var(--ui-c121)',
+                                                            '&:hover': { bgcolor: 'var(--ui-c113)' } 
                                                         }}
                                                     >
                                                         Редактировать
@@ -1252,7 +1509,7 @@ const ProfileModal = ({ open, handleClose, userId, onUnauthorized, onLogout, onP
                                     </Grid>
                                 ))
                             ) : (
-                                <Box sx={{ p: 2, color: '#777', width: '100%', textAlign: 'center' }}>
+                                <Box sx={{ p: 2, color: 'var(--ui-c52)', width: '100%', textAlign: 'center' }}>
                                     <Typography variant="h6">Статей пока нет.</Typography>
                                 </Box>
                             )}
@@ -1263,10 +1520,10 @@ const ProfileModal = ({ open, handleClose, userId, onUnauthorized, onLogout, onP
                                     variant="outlined"
                                     onClick={handleLoadMorePosts}
                                     sx={{
-                                        color: '#00bfa5',
-                                        borderColor: '#00bfa5',
+                                        color: 'var(--accent-500)',
+                                        borderColor: 'var(--accent-500)',
                                         textTransform: 'none',
-                                        '&:hover': { borderColor: '#00a38f', backgroundColor: 'rgba(0, 191, 165, 0.08)' }
+                                        '&:hover': { borderColor: 'var(--ui-c4)', backgroundColor: 'color-mix(in oklab, var(--accent-500) 8%, transparent)' }
                                     }}
                                 >
                                     Показать еще
@@ -1301,18 +1558,18 @@ const ProfileModal = ({ open, handleClose, userId, onUnauthorized, onLogout, onP
                         width: { xs: '92%', sm: 420 },
                         p: 3,
                         borderRadius: '18px',
-                        color: 'white',
+                        color: 'var(--text-primary)',
                         backdropFilter: 'blur(18px) saturate(120%)',
-                        background: 'linear-gradient(180deg, rgba(40, 40, 40, 0.85), rgba(20, 20, 20, 0.9))',
-                        border: '1px solid rgba(255, 255, 255, 0.08)',
-                        boxShadow: '0 18px 48px rgba(0, 0, 0, 0.55)',
+                        background: 'var(--surface-elevated)',
+                        border: '1px solid var(--border-default)',
+                        boxShadow: 'var(--shadow-soft)',
                     }}
                 >
                     <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                        <Typography variant="h6" sx={{ color: '#00bfa5', fontWeight: 'bold' }}>
+                        <Typography variant="h6" sx={{ color: 'var(--accent-500)', fontWeight: 'bold' }}>
                             Изменение Email
                         </Typography>
-                        <IconButton onClick={handleCloseEmailModal} sx={{ ml: 'auto', color: '#bdbdbd' }}>
+                        <IconButton onClick={handleCloseEmailModal} sx={{ ml: 'auto', color: 'var(--text-secondary)' }}>
                             <CloseIcon />
                         </IconButton>
                     </Box>
@@ -1334,9 +1591,9 @@ const ProfileModal = ({ open, handleClose, userId, onUnauthorized, onLogout, onP
                         fullWidth
                         onClick={handleSendEmailVerification}
                         disabled={emailSending}
-                        sx={{ color: '#00bfa5', borderColor: '#00bfa5', '&:hover': { borderColor: '#00a38f', backgroundColor: 'rgba(0, 191, 165, 0.1)' } }}
+                        sx={{ color: 'var(--accent-500)', borderColor: 'var(--accent-500)', '&:hover': { borderColor: 'var(--ui-c4)', backgroundColor: 'color-mix(in oklab, var(--accent-500) 10%, transparent)' } }}
                     >
-                        {emailSending ? <CircularProgress size={22} sx={{ color: '#00bfa5' }} /> : 'Отправить код подтверждения'}
+                        {emailSending ? <CircularProgress size={22} sx={{ color: 'var(--accent-500)' }} /> : 'Отправить код подтверждения'}
                     </Button>
                 </Box>
             </Modal>
@@ -1352,14 +1609,14 @@ const ProfileModal = ({ open, handleClose, userId, onUnauthorized, onLogout, onP
             <Dialog 
                 open={isDeleteConfirmOpen} 
                 onClose={handleDeleteUserClose}
-                PaperProps={{ sx: { backgroundColor: '#1e1e1e', color: 'white', borderRadius: '12px' } }}
+                PaperProps={{ sx: { backgroundColor: 'var(--surface-panel)', color: 'var(--text-primary)', borderRadius: '12px' } }}
             >
-                <DialogTitle sx={{ color: '#ff5252', fontWeight: 'bold' }}>
+                <DialogTitle sx={{ color: 'var(--ui-c95)', fontWeight: 'bold' }}>
                     Подтвердите удаление аккаунта
                 </DialogTitle>
                 <DialogContent>
                     {deleteError && <Alert severity="error" sx={{ mb: 2 }}>{deleteError}</Alert>}
-                    <Typography sx={{ color: '#bdbdbd', mb: 2 }}>
+                    <Typography sx={{ color: 'var(--text-secondary)', mb: 2 }}>
                         Это действие **необратимо**. Все ваши публикации и данные будут удалены. 
                         Для подтверждения введите ваш Email и Пароль.
                     </Typography>
@@ -1387,7 +1644,7 @@ const ProfileModal = ({ open, handleClose, userId, onUnauthorized, onLogout, onP
                     />
                 </DialogContent>
                 <DialogActions sx={{ p: 3 }}>
-                    <Button onClick={handleDeleteUserClose} sx={{ color: '#00bfa5' }}>
+                    <Button onClick={handleDeleteUserClose} sx={{ color: 'var(--accent-500)' }}>
                         Отмена
                     </Button>
                     <Button 
@@ -1396,7 +1653,7 @@ const ProfileModal = ({ open, handleClose, userId, onUnauthorized, onLogout, onP
                         variant="contained"
                         disabled={isDeletingUser || deleteConfirmData.email !== profileData?.email || deleteConfirmData.password.length === 0}
                     >
-                        {isDeletingUser ? <CircularProgress size={24} sx={{ color: 'white' }} /> : 'Удалить аккаунт'}
+                        {isDeletingUser ? <CircularProgress size={24} sx={{ color: 'var(--accent-contrast)' }} /> : 'Удалить аккаунт'}
                     </Button>
                 </DialogActions>
             </Dialog>
@@ -1404,26 +1661,26 @@ const ProfileModal = ({ open, handleClose, userId, onUnauthorized, onLogout, onP
             <Dialog
                 open={isFollowingListOpen}
                 onClose={handleCloseFollowingList}
-                PaperProps={{ sx: { backgroundColor: '#1b1b1b', color: 'white', borderRadius: '12px', minWidth: { xs: '90vw', sm: 520 } } }}
+                PaperProps={{ sx: { backgroundColor: 'var(--surface-elevated)', color: 'var(--text-primary)', borderRadius: '12px', minWidth: { xs: '90vw', sm: 520 } } }}
             >
-                <DialogTitle sx={{ color: '#00bfa5', fontWeight: 'bold' }}>
+                <DialogTitle sx={{ color: 'var(--accent-500)', fontWeight: 'bold' }}>
                     Мои подписки
                 </DialogTitle>
                 <DialogContent sx={{
                     overflowY: 'auto',
                     '&::-webkit-scrollbar': { width: '8px' },
-                    '&::-webkit-scrollbar-track': { background: 'rgba(255, 255, 255, 0.05)', borderRadius: '10px' },
-                    '&::-webkit-scrollbar-thumb': { background: '#00bfa5', borderRadius: '10px' },
-                    '&::-webkit-scrollbar-thumb:hover': { background: '#009688' }
+                    '&::-webkit-scrollbar-track': { background: 'color-mix(in oklab, var(--text-primary) 5%, transparent)', borderRadius: '10px' },
+                    '&::-webkit-scrollbar-thumb': { background: 'var(--accent-500)', borderRadius: '10px' },
+                    '&::-webkit-scrollbar-thumb:hover': { background: 'var(--accent-600)' }
                 }}>
                     {isFollowingListLoading && (
                         <Box sx={{ display: 'flex', justifyContent: 'center', py: 3 }}>
-                            <CircularProgress size={28} sx={{ color: '#00bfa5' }} />
+                            <CircularProgress size={28} sx={{ color: 'var(--accent-500)' }} />
                         </Box>
                     )}
                     {followingListError && <Alert severity="error" sx={{ mb: 2 }}>{followingListError}</Alert>}
                     {!isFollowingListLoading && followingList.length === 0 && !followingListError && (
-                        <Typography sx={{ color: '#bdbdbd', textAlign: 'center', py: 2 }}>
+                        <Typography sx={{ color: 'var(--text-secondary)', textAlign: 'center', py: 2 }}>
                             У вас пока нет подписок.
                         </Typography>
                     )}
@@ -1445,7 +1702,7 @@ const ProfileModal = ({ open, handleClose, userId, onUnauthorized, onLogout, onP
                                         <ListItemAvatar>
                                             <Avatar
                                                 src={buildAvatarUrl(API_BASE_URL, user.pathAvatar ?? user.PathAvatar)}
-                                                sx={{ bgcolor: '#00bfa5' }}
+                                                sx={{ bgcolor: 'var(--accent-500)' }}
                                                 imgProps={{
                                                     onError: (e) => {
                                                         e.currentTarget.src = DEFAULT_AVATAR_SRC;
@@ -1458,7 +1715,7 @@ const ProfileModal = ({ open, handleClose, userId, onUnauthorized, onLogout, onP
                                         <ListItemText
                                             primary={user.name || 'Пользователь'}
                                             secondary={
-                                                <span style={{ color: '#9e9e9e' }}>
+                                                <span style={{ color: 'var(--text-secondary)' }}>
                                                     Подписчики: {user.followersCount ?? 0} · Подписки: {user.followingCount ?? 0} · Статьи: {user.articlesCount ?? 0}
                                                 </span>
                                             }
@@ -1470,7 +1727,7 @@ const ProfileModal = ({ open, handleClose, userId, onUnauthorized, onLogout, onP
                     )}
                 </DialogContent>
                 <DialogActions sx={{ p: 2 }}>
-                    <Button onClick={handleCloseFollowingList} sx={{ color: '#00bfa5' }}>
+                    <Button onClick={handleCloseFollowingList} sx={{ color: 'var(--accent-500)' }}>
                         Закрыть
                     </Button>
                 </DialogActions>
@@ -1479,32 +1736,36 @@ const ProfileModal = ({ open, handleClose, userId, onUnauthorized, onLogout, onP
             <Dialog
                 open={isLikesListOpen}
                 onClose={handleCloseLikesList}
-                PaperProps={{ sx: { backgroundColor: '#1b1b1b', color: 'white', borderRadius: '12px', minWidth: { xs: '90vw', sm: 520 } } }}
+                PaperProps={{ sx: { backgroundColor: 'var(--surface-elevated)', color: 'var(--text-primary)', borderRadius: '12px', minWidth: { xs: '90vw', sm: 520 } } }}
             >
-                <DialogTitle sx={{ color: '#00bfa5', fontWeight: 'bold' }}>
+                <DialogTitle sx={{ color: 'var(--accent-500)', fontWeight: 'bold' }}>
                     Понравившиеся статьи
                 </DialogTitle>
                 <DialogContent sx={{
                     overflowY: 'auto',
                     '&::-webkit-scrollbar': { width: '8px' },
-                    '&::-webkit-scrollbar-track': { background: 'rgba(255, 255, 255, 0.05)', borderRadius: '10px' },
-                    '&::-webkit-scrollbar-thumb': { background: '#00bfa5', borderRadius: '10px' },
-                    '&::-webkit-scrollbar-thumb:hover': { background: '#009688' }
+                    '&::-webkit-scrollbar-track': { background: 'color-mix(in oklab, var(--text-primary) 5%, transparent)', borderRadius: '10px' },
+                    '&::-webkit-scrollbar-thumb': { background: 'var(--accent-500)', borderRadius: '10px' },
+                    '&::-webkit-scrollbar-thumb:hover': { background: 'var(--accent-600)' }
                 }}>
                     {isLikesListLoading && (
                         <Box sx={{ display: 'flex', justifyContent: 'center', py: 3 }}>
-                            <CircularProgress size={28} sx={{ color: '#00bfa5' }} />
+                            <CircularProgress size={28} sx={{ color: 'var(--accent-500)' }} />
                         </Box>
                     )}
                     {likesListError && <Alert severity="error" sx={{ mb: 2 }}>{likesListError}</Alert>}
                     {!isLikesListLoading && likesList.length === 0 && !likesListError && (
-                        <Typography sx={{ color: '#bdbdbd', textAlign: 'center', py: 2 }}>
-                            У вас пока нет понравившихся статей.
+                        <Typography sx={{ color: 'var(--text-secondary)', textAlign: 'center', py: 2 }}>
+                            Пока нет статей, которые вы лайкнули.
                         </Typography>
                     )}
                     {!isLikesListLoading && likesList.length > 0 && (
                         <List sx={{ width: '100%' }}>
                             {likesList.map((article) => (
+                                (() => {
+                                    const likedAuthorName = extractNameAndIcon(article.nickname || 'Автор').name;
+                                    const likedAuthorInitial = likedAuthorName?.[0]?.toUpperCase() || 'A';
+                                    return (
                                 <ListItem key={article.article_id || article.id} disablePadding>
                                     <ListItemButton
                                         onClick={() => {
@@ -1518,32 +1779,34 @@ const ProfileModal = ({ open, handleClose, userId, onUnauthorized, onLogout, onP
                                         <ListItemAvatar>
                                             <Avatar
                                                 src={buildAvatarUrl(API_BASE_URL, article.authorAvatar)}
-                                                sx={{ bgcolor: '#00bfa5' }}
+                                                sx={{ bgcolor: 'var(--accent-500)' }}
                                                 imgProps={{
                                                     onError: (e) => {
                                                         e.currentTarget.src = DEFAULT_AVATAR_SRC;
                                                     },
                                                 }}
                                             >
-                                                {article.nickname?.[0]?.toUpperCase() || 'A'}
+                                                {likedAuthorInitial}
                                             </Avatar>
                                         </ListItemAvatar>
                                         <ListItemText
                                             primary={article.title || 'Статья'}
                                             secondary={
-                                                <span style={{ color: '#9e9e9e' }}>
-                                                    @{article.nickname || 'Автор'} · Лайки: {article.likesCount ?? 0} · Комментарии: {article.commentsCount ?? 0}
+                                                <span style={{ color: 'var(--text-secondary)' }}>
+                                                    @{likedAuthorName} · Лайки: {article.likesCount ?? 0} · Комментарии: {article.commentsCount ?? 0}
                                                 </span>
                                             }
                                         />
                                     </ListItemButton>
                                 </ListItem>
+                                    );
+                                })()
                             ))}
                         </List>
                     )}
                 </DialogContent>
                 <DialogActions sx={{ p: 2 }}>
-                    <Button onClick={handleCloseLikesList} sx={{ color: '#00bfa5' }}>
+                    <Button onClick={handleCloseLikesList} sx={{ color: 'var(--accent-500)' }}>
                         Закрыть
                     </Button>
                 </DialogActions>
@@ -1553,11 +1816,32 @@ const ProfileModal = ({ open, handleClose, userId, onUnauthorized, onLogout, onP
                 open={isAvatarViewerOpen}
                 onClose={() => setIsAvatarViewerOpen(false)}
                 maxWidth="md"
+                sx={{ zIndex: 1800 }}
+                TransitionComponent={Zoom}
+                transitionDuration={260}
+                keepMounted
                 PaperProps={{
                     sx: {
                         bgcolor: 'transparent',
                         boxShadow: 'none',
                         m: 0,
+                        '@keyframes avatarViewerZoomIn': {
+                            '0%': {
+                                transform: 'scale(0.84)',
+                                opacity: 0
+                            },
+                            '100%': {
+                                transform: 'scale(1)',
+                                opacity: 1
+                            }
+                        }
+                    }
+                }}
+                BackdropProps={{
+                    sx: {
+                        zIndex: -1,
+                        backgroundColor: 'var(--ui-c112)',
+                        backdropFilter: 'blur(2px)'
                     }
                 }}
             >
@@ -1568,10 +1852,46 @@ const ProfileModal = ({ open, handleClose, userId, onUnauthorized, onLogout, onP
                         maxWidth: '90vw',
                         maxHeight: '90vh',
                         objectFit: 'contain',
-                        borderRadius: '8px'
+                        borderRadius: '10px',
+                        transformOrigin: 'center center',
+                        animation: 'avatarViewerZoomIn 260ms cubic-bezier(0.22, 1, 0.36, 1)'
                     }}
                     onError={(e) => { e.currentTarget.src = DEFAULT_AVATAR_SRC; }}
                 />
+            </Dialog>
+
+            <Dialog
+                open={isProfileIconInfoOpen}
+                onClose={handleCloseProfileIconInfo}
+                PaperProps={{
+                    sx: {
+                        bgcolor: 'var(--ui-c164)',
+                        color: 'var(--text-primary)',
+                        border: '1px solid var(--border-default)',
+                        borderRadius: '18px',
+                        backdropFilter: 'blur(10px)',
+                        minWidth: { xs: 'auto', sm: 360 },
+                    }
+                }}
+            >
+                <DialogTitle sx={{ display: 'flex', alignItems: 'center', gap: 1.25, pb: 1 }}>
+                    <Box component="span" sx={{ fontSize: '1.8rem', lineHeight: 1 }}>
+                        {activeProfileIconPreset?.emoji}
+                    </Box>
+                    <Typography variant="h6" sx={{ fontWeight: 700 }}>
+                        {activeProfileIconPreset?.label || 'Эмодзи профиля'}
+                    </Typography>
+                </DialogTitle>
+                <DialogContent sx={{ pt: 0.5 }}>
+                    <Typography variant="body1" sx={{ color: 'var(--ui-c84)', lineHeight: 1.6 }}>
+                        {activeProfileIconPreset?.description || 'Описание для этого эмодзи пока недоступно.'}
+                    </Typography>
+                </DialogContent>
+                <DialogActions sx={{ px: 3, pb: 2.5 }}>
+                    <Button onClick={handleCloseProfileIconInfo} sx={{ color: 'var(--accent-500)' }}>
+                        Закрыть
+                    </Button>
+                </DialogActions>
             </Dialog>
 
             <AvatarCropDialog

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react'; 
+import React, { useState, useEffect, useRef, useCallback, useContext } from 'react'; 
 import { 
     Box,
     Button,
@@ -16,7 +16,9 @@ import {
     useMediaQuery,
     useTheme,
     SwipeableDrawer,
+    Collapse,
 } from '@mui/material';
+import LocalFireDepartmentIcon from '@mui/icons-material/LocalFireDepartment';
 import PersonIcon from '@mui/icons-material/Person';
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 import FavoriteIcon from '@mui/icons-material/Favorite';
@@ -29,8 +31,15 @@ import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import MenuBookIcon from '@mui/icons-material/MenuBook';
 import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
+import FolderOutlinedIcon from '@mui/icons-material/FolderOutlined';
+import BookmarkBorderRoundedIcon from '@mui/icons-material/BookmarkBorderRounded';
+import ChevronRightRoundedIcon from '@mui/icons-material/ChevronRightRounded';
 import AdminPanelSettingsIcon from '@mui/icons-material/AdminPanelSettings';
 import RefreshIcon from '@mui/icons-material/Refresh';
+import SlideshowIcon from '@mui/icons-material/Slideshow';
+import DarkModeRoundedIcon from '@mui/icons-material/DarkModeRounded';
+import LightModeRoundedIcon from '@mui/icons-material/LightModeRounded';
+import TonalityRoundedIcon from '@mui/icons-material/TonalityRounded';
 
 import PostCard from './PostCard';
 import PostDetailPage from './PostDetailPage';
@@ -46,10 +55,18 @@ import CategoryModal, { TAG_CATEGORIES } from './CategoryModal';
 import ResourcesModal from './ResourcesModal';
 import FaqModal from './FaqModal';
 import AdminPanelModal from './AdminPanelModal';
+import SiteGuideSlidesModal from './SiteGuideSlidesModal';
+import BestArticlesList from './BestArticlesList';
 import { buildArticleImageUrl, buildAvatarUrl, DEFAULT_AVATAR_SRC } from './avatarUtils';
+import { ProfileIcon, resolveProfileIconValue, extractNameAndIcon } from './profileIcons';
+import UserRoleBadge from './UserRoleBadge';
+import { ColorModeContext } from './theme';
 
 const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || '/api';
 const POST_PAGE_NAV_STATE_KEY = 'lambda.postPage.navState.v1';
+
+const normalizeViewsCount = (article) =>
+    article?.countViews ?? article?.viewsCount ?? article?.views_count ?? article?.CountViews ?? 0;
 
 const readPostPageNavState = () => {
     try {
@@ -72,20 +89,20 @@ const writePostPageNavState = (state) => {
 
 const commentInputStyle = {
     '& .MuiFilledInput-root': {
-        backgroundColor: '#2c2c2c',
-        color: 'white',
+        backgroundColor: 'var(--surface-elevated)',
+        color: 'var(--text-primary)',
         borderRadius: '10px',
-        '&:hover': { backgroundColor: '#3a3a3a' },
-        '&.Mui-focused': { backgroundColor: '#3a3a3a' },
+        '&:hover': { backgroundColor: 'var(--ui-c42)' },
+        '&.Mui-focused': { backgroundColor: 'var(--ui-c42)' },
     },
-    '& .MuiInputLabel-root': { color: '#bdbdbd' },
+    '& .MuiInputLabel-root': { color: 'var(--text-secondary)' },
 };
 
 const commentsSidebarStyle = {
     width: 340,
     minWidth: 340,
-    backgroundColor: '#1f1f1f',
-    borderRight: '1px solid #333',
+    backgroundColor: 'var(--surface-panel)',
+    borderRight: '1px solid var(--border-default)',
     display: 'none',
     '@media (min-width: 768px)': {
         display: 'flex',
@@ -95,6 +112,7 @@ const commentsSidebarStyle = {
     position: 'sticky',
     top: 0,
     left: 0,
+    backdropFilter: 'blur(12px)',
 };
 
 const commentsDrawerInnerSx = {
@@ -102,7 +120,7 @@ const commentsDrawerInnerSx = {
     height: '100%',
     display: 'flex',
     flexDirection: 'column',
-    backgroundColor: '#1f1f1f',
+    backgroundColor: 'var(--surface-panel)',
     overflow: 'hidden',
 };
 
@@ -126,10 +144,10 @@ const updateCommentInTree = (tree, commentId, updater) => tree.map((item) => {
 });
 
 const sidebarStyle = {
-    width: 250,
-    minWidth: 250,
-    backgroundColor: '#1f1f1f',
-    padding: 2,
+    width: 296,
+    minWidth: 296,
+    backgroundColor: 'transparent',
+    padding: '18px 16px 16px',
     display: 'none',
     '@media (min-width: 768px)': {
         display: 'flex',
@@ -137,7 +155,7 @@ const sidebarStyle = {
     flexDirection: 'column',
     justifyContent: 'flex-start',
     height: '100vh',
-    borderLeft: '1px solid #333',
+    borderLeft: '1px solid var(--border-default)',
     position: 'sticky',
     top: 0,
     right: 0,
@@ -145,37 +163,56 @@ const sidebarStyle = {
 };
 
 const commonButtonStyle = {
-    fontWeight: 'bold',
+    fontWeight: 700,
     textTransform: 'none',
-    fontSize: '0.9rem',
+    fontSize: '0.875rem',
     justifyContent: 'flex-start',
-    padding: '8px 16px',
-    borderRadius: '8px',
-    marginBottom: 1,
-    width: '100%'
+    padding: '9px 14px',
+    borderRadius: '10px',
+    width: '100%',
+    minHeight: 40,
 };
 
 const sidebarButtonStyle = {
     ...commonButtonStyle,
-    backgroundColor: 'rgba(255, 255, 255, 0.05)',
-    color: '#ffffff',
-    '&:hover': { backgroundColor: 'rgba(255, 255, 255, 0.1)' },
+    backgroundColor: 'color-mix(in oklab, var(--surface-soft) 88%, transparent)',
+    color: 'var(--text-primary)',
+    border: '1px solid var(--border-default)',
+    boxShadow: 'none',
+    '&:hover': {
+        backgroundColor: 'color-mix(in oklab, var(--surface-soft) 98%, transparent)',
+        borderColor: 'color-mix(in oklab, var(--text-primary) 22%, var(--border-default))',
+        color: 'var(--text-primary)',
+        boxShadow: 'none',
+    },
 };
 
 const profileButtonStyle = {
     ...commonButtonStyle,
-    color: '#00bfa5',
-    borderColor: '#00bfa5',
-    borderWidth: '1px',
-    borderStyle: 'solid',
-    '&:hover': { borderColor: '#00897b', color: '#00897b', backgroundColor: 'rgba(0, 191, 165, 0.08)' },
+    backgroundColor: 'color-mix(in oklab, var(--accent-500) 10%, transparent)',
+    color: 'var(--text-primary)',
+    border: '1px solid color-mix(in oklab, var(--accent-500) 22%, transparent)',
+    boxShadow: 'none',
+    '&:hover': {
+        backgroundColor: 'color-mix(in oklab, var(--accent-500) 18%, transparent)',
+        borderColor: 'color-mix(in oklab, var(--accent-500) 40%, transparent)',
+        color: 'var(--accent-500)',
+        boxShadow: 'none',
+    },
 };
 
 const adminButtonStyle = {
     ...commonButtonStyle,
-    backgroundColor: '#c62828',
-    color: '#fff',
-    '&:hover': { backgroundColor: '#ff1744' }
+    backgroundColor: 'color-mix(in oklab, var(--accent-500) 10%, transparent)',
+    color: 'var(--text-primary)',
+    border: '1px solid color-mix(in oklab, var(--accent-500) 22%, transparent)',
+    boxShadow: 'none',
+    '&:hover': {
+        backgroundColor: 'color-mix(in oklab, var(--accent-500) 18%, transparent)',
+        borderColor: 'color-mix(in oklab, var(--accent-500) 40%, transparent)',
+        color: 'var(--accent-500)',
+        boxShadow: 'none',
+    },
 };
 
 const scrollbarStyle = {
@@ -183,91 +220,213 @@ const scrollbarStyle = {
         width: '8px',
     },
     '&::-webkit-scrollbar-track': {
-        background: '#1a1a1a',
+        background: 'var(--surface-soft)',
         borderRadius: '10px',
     },
     '&::-webkit-scrollbar-thumb': {
-        background: '#00bfa5',
+        background: 'var(--accent-500)',
         borderRadius: '10px',
-        border: '2px solid #1a1a1a',
+        border: '2px solid var(--surface-soft)',
     },
     '&::-webkit-scrollbar-thumb:hover': {
-        background: '#009e8a',
+        background: 'var(--accent-600)',
     },
     scrollbarWidth: 'thin',
-    scrollbarColor: '#00bfa5 #1a1a1a',
+    scrollbarColor: 'var(--accent-500) var(--surface-soft)',
 };
 
-const Sidebar = ({ handleOpen, handleProfileOpen, handlePostOpen, handleCategoryOpen, handleResourcesOpen, handleFaqOpen, handleAdminOpen, isAdmin, currentUser }) => (
-    <Box sx={sidebarStyle}>
-        <Typography variant="h5" sx={{ color: '#00bfa5', fontWeight: 'bold', textAlign: 'center', mb: 4, letterSpacing: 1 }}>
-            Lambda
-        </Typography>
+const desktopFeedCardTopOffset = '84px';
 
-        {currentUser ? (
-            <Box sx={{ mb: 3, p: 2, bgcolor: '#2c2c2c', borderRadius: '12px', display: 'flex', alignItems: 'center', gap: 1 }}>
-                <Avatar
-                    src={buildAvatarUrl(API_BASE_URL, currentUser.pathAvatar ?? currentUser.PathAvatar)}
-                    sx={{ bgcolor: '#00bfa5' }}
-                    imgProps={{
-                        onError: (e) => {
-                            e.currentTarget.src = DEFAULT_AVATAR_SRC;
+const Sidebar = ({ handleOpen, handleProfileOpen, handlePostOpen, handleCategoryOpen, handleResourcesOpen, handleFaqOpen, handleGuideOpen,handleAdminOpen, isAdmin, currentUser, mode, onSetTheme }) => {
+    const currentUserName = extractNameAndIcon(currentUser?.name || '').name;
+    const currentUserIcon = resolveProfileIconValue(currentUser);
+    const [themeMenuAnchor, setThemeMenuAnchor] = useState(null);
+    const themeMenuOpen = Boolean(themeMenuAnchor);
+
+    return (
+        <Box sx={sidebarStyle}>
+                <Box
+                    sx={{
+                        bgcolor: 'var(--surface-panel)',
+                        border: '1px solid var(--border-default)',
+                        borderRadius: '18px',
+                        p: 2,
+                        boxShadow: 'var(--shadow-soft)',
+                        backdropFilter: 'blur(14px)',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        height: '100%',
+                    }}
+            >
+                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2.2 }}>
+                    <Typography variant="h4" sx={{ color: 'var(--accent-500)', fontWeight: 800, letterSpacing: 0.2 }}>
+                        Lambda
+                    </Typography>
+                    <IconButton
+                        onClick={(event) => setThemeMenuAnchor(event.currentTarget)}
+                        aria-label="Выбор темы"
+                        sx={{
+                            color: 'var(--text-secondary)',
+                            border: '1px solid var(--border-default)',
+                            backgroundColor: 'color-mix(in oklab, var(--surface-soft) 82%, transparent)',
+                            width: 34,
+                            height: 34,
+                            '&:hover': {
+                                borderColor: 'color-mix(in oklab, var(--accent-500) 35%, var(--border-default))',
+                                color: 'var(--accent-500)',
+                                backgroundColor: 'color-mix(in oklab, var(--accent-500) 10%, transparent)',
+                            },
+                        }}
+                    >
+                        {mode === 'dark' ? (
+                            <DarkModeRoundedIcon fontSize="small" />
+                        ) : mode === 'light' ? (
+                            <LightModeRoundedIcon fontSize="small" />
+                        ) : (
+                            <TonalityRoundedIcon fontSize="small" />
+                        )}
+                    </IconButton>
+                </Box>
+                <Menu
+                    anchorEl={themeMenuAnchor}
+                    open={themeMenuOpen}
+                    onClose={() => setThemeMenuAnchor(null)}
+                    anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+                    transformOrigin={{ vertical: 'top', horizontal: 'right' }}
+                    slotProps={{
+                        paper: {
+                            sx: {
+                                mt: 1,
+                                minWidth: 180,
+                                backgroundColor: 'color-mix(in oklab, var(--bg-elevated) 94%, var(--bg-canvas))',
+                                border: '1px solid var(--border-default)',
+                                borderRadius: 2,
+                                color: 'var(--text-primary)',
+                                boxShadow: 'var(--shadow-soft)',
+                                backdropFilter: 'blur(16px)',
+                            },
                         },
                     }}
                 >
-                    {currentUser.name[0]?.toUpperCase()}
-                </Avatar>
-                <Box sx={{ overflow: 'hidden' }}>
-                    <Typography variant="subtitle2" sx={{ color: '#bdbdbd', fontSize: '0.75rem' }}>Вы вошли как:</Typography>
-                    <Typography variant="body1" sx={{ color: 'white', fontWeight: 'bold', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                        {currentUser.name}
+                    <MenuItem
+                        selected={mode === 'dark'}
+                        onClick={() => {
+                            onSetTheme?.('dark');
+                            setThemeMenuAnchor(null);
+                        }}
+                    >
+                        Темная
+                    </MenuItem>
+                    <MenuItem
+                        selected={mode === 'light'}
+                        onClick={() => {
+                            onSetTheme?.('light');
+                            setThemeMenuAnchor(null);
+                        }}
+                    >
+                        Светлая
+                    </MenuItem>
+                </Menu>
+
+                {currentUser ? (
+                    <Box sx={{ mb: 2.2, display: 'flex', alignItems: 'center', gap: 1.1 }}>
+                        <Avatar
+                            src={buildAvatarUrl(API_BASE_URL, currentUser.pathAvatar ?? currentUser.PathAvatar)}
+                            sx={{ bgcolor: 'var(--accent-500)', width: 34, height: 34 }}
+                            imgProps={{
+                                onError: (e) => {
+                                    e.currentTarget.src = DEFAULT_AVATAR_SRC;
+                                },
+                            }}
+                        >
+                            {currentUserName[0]?.toUpperCase()}
+                        </Avatar>
+                        <Box sx={{ overflow: 'hidden', minWidth: 0 }}>
+                            <Typography variant="caption" sx={{ color: 'var(--text-secondary)', display: 'block', mb: 0.25 }}>
+                                Вы вошли как
+                            </Typography>
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, minWidth: 0 }}>
+                                <Typography variant="body2" sx={{ color: 'var(--text-primary)', fontWeight: 700, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                    {currentUserName}
+                                </Typography>
+                                <ProfileIcon icon={currentUserIcon} size={16} />
+                            </Box>
+                            <Box sx={{ mt: 0.35 }}>
+                                <UserRoleBadge role={currentUser.tag ?? currentUser.Tag} size="sm" />
+                            </Box>
+                        </Box>
+                    </Box>
+                ) : (
+                    <Typography variant="body2" sx={{ color: 'var(--text-secondary)', mb: 2.2 }}>
+                        Вы гость
                     </Typography>
+                )}
+
+                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.15 }}>
+                    <Button
+                        variant="contained"
+                        sx={sidebarButtonStyle}
+                        onClick={handleCategoryOpen}
+                        startIcon={<FolderOutlinedIcon fontSize="small" />}
+                        endIcon={<ChevronRightRoundedIcon fontSize="small" />}
+                    >
+                        Категории
+                    </Button>
+                    <Button
+                        variant="contained"
+                        sx={sidebarButtonStyle}
+                        onClick={handleResourcesOpen}
+                        startIcon={<BookmarkBorderRoundedIcon fontSize="small" />}
+                        endIcon={<ChevronRightRoundedIcon fontSize="small" />}
+                    >
+                        Полезные материалы
+                    </Button>
+                    <Button
+                        variant="contained"
+                        sx={sidebarButtonStyle}
+                        onClick={handleFaqOpen}
+                        startIcon={<HelpOutlineIcon fontSize="small" />}
+                        endIcon={<ChevronRightRoundedIcon fontSize="small" />}
+                    >
+                        FAQ
+                    </Button>
                 </Box>
-            </Box>
-        ) : (
-            <Box sx={{ mb: 3, textAlign: 'center' }}>
-                <Typography variant="body2" sx={{ color: '#757575', mb: 1 }}>Вы гость</Typography>
-            </Box>
-        )}
 
-        <Box sx={{ display: 'flex', flexDirection: 'column', flexGrow: 1 }}>
-            <Button variant="contained" sx={sidebarButtonStyle} onClick={handleCategoryOpen}>Категории</Button>
-            <Button variant="contained" sx={sidebarButtonStyle} onClick={handleResourcesOpen}>Полезные материалы</Button>
-            <Button variant="contained" sx={sidebarButtonStyle} onClick={handleFaqOpen}>FAQ</Button>
+                <Box sx={{ mt: 2.6, borderTop: '1px solid color-mix(in oklab, var(--text-primary) 10%, transparent)' }} />
+
+                <Box sx={{ mt: 'auto', display: 'flex', flexDirection: 'column', gap: 1.2 }}>
+                    <Button sx={profileButtonStyle} startIcon={<PersonIcon />} onClick={handleProfileOpen}>
+                        {currentUser ? 'Профиль' : 'Войти / Профиль'}
+                    </Button>
+                    <Button sx={profileButtonStyle} startIcon={<CloudUploadIcon />} onClick={handlePostOpen}>
+                        Опубликовать
+                    </Button>
+                    <Button
+                        variant="text"
+                        sx={{ color: 'var(--text-secondary)', fontSize: '0.79rem', alignSelf: 'center', mt: 0.2 }}
+                        onClick={handleGuideOpen}
+                    >
+                        Инструкция
+                    </Button>
+                    {isAdmin && (
+                        <Button sx={adminButtonStyle} startIcon={<DeleteOutlineIcon />} onClick={handleAdminOpen}>
+                            Админ-панель
+                        </Button>
+                    )}
+                </Box>
+
+                {!currentUser && (
+                    <Box sx={{ pt: 1.8, textAlign: 'center' }}>
+                        <Typography variant="body2" sx={{ color: 'var(--text-secondary)', mb: 0.4 }}>Нет аккаунта?</Typography>
+                        <MuiLink component="span" onClick={() => handleOpen('register')} sx={{ color: 'var(--accent-500)', cursor: 'pointer', textDecoration: 'none', '&:hover': { color: 'var(--accent-400)' } }}>
+                            Зарегистрироваться?
+                        </MuiLink>
+                    </Box>
+                )}
+            </Box>
         </Box>
-
-        <Box sx={{ mt: 'auto', display: 'flex', flexDirection: 'column', gap: 1 }}>
-            {isAdmin && (
-                <Button
-                    sx={adminButtonStyle}
-                    startIcon={<DeleteOutlineIcon />}
-                    onClick={handleAdminOpen}
-                >
-                    Админ-панель
-                </Button>
-            )}
-            <Button
-                sx={profileButtonStyle}
-                startIcon={<PersonIcon />}
-                onClick={handleProfileOpen}
-            >
-                {currentUser ? 'Мой профиль' : 'Войти / Профиль'}
-            </Button>
-            <Button sx={profileButtonStyle} startIcon={<CloudUploadIcon />} onClick={handlePostOpen}>
-                Опубликовать
-            </Button>
-        </Box>
-
-        {!currentUser && (
-            <Box sx={{ paddingTop: 2, textAlign: 'center' }}>
-                <Typography variant="body2" sx={{ color: '#757575', marginBottom: 0.5 }}>Нет аккаунта?</Typography>
-                <MuiLink component="span" onClick={() => handleOpen('register')} sx={{ color: '#757575', cursor: 'pointer', textDecoration: 'none', '&:hover': { color: '#00bfa5' } }}>
-                    Зарегистрироваться?
-                </MuiLink>
-            </Box>
-        )}
-    </Box>
-);
+    );
+};
 
 const FeedCommentItem = ({
     comment,
@@ -295,15 +454,15 @@ const FeedCommentItem = ({
             ml: Math.min(depth, 3) * 1.2,
             mt: 1.5,
             pl: 1.2,
-            borderLeft: depth > 0 ? '2px solid #3f3f3f' : 'none',
+            borderLeft: depth > 0 ? '2px solid var(--ui-c43)' : 'none',
             width: '100%',
             boxSizing: 'border-box',
         }}
     >
         <Box
             sx={{
-                backgroundColor: depth === 0 ? '#222' : '#262626',
-                border: '1px solid #333',
+                backgroundColor: depth === 0 ? 'var(--ui-c32)' : 'var(--ui-c35)',
+                border: '1px solid var(--border-default)',
                 borderRadius: '12px',
                 p: 1.2,
             }}
@@ -311,23 +470,26 @@ const FeedCommentItem = ({
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                 <Avatar
                     src={buildAvatarUrl(API_BASE_URL, comment.authorAvatar)}
-                    sx={{ width: 28, height: 28, border: '1px solid #00bfa5' }}
+                    sx={{ width: 28, height: 28, border: '1px solid var(--accent-500)' }}
                     imgProps={{
                         onError: (e) => {
                             e.currentTarget.src = DEFAULT_AVATAR_SRC;
                         },
                     }}
                 />
-                <Typography variant="body2" sx={{ color: '#00bfa5', fontWeight: 700 }}>
-                    @{comment.authorName}
-                </Typography>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, minWidth: 0 }}>
+                    <Typography variant="body2" sx={{ color: 'var(--accent-500)', fontWeight: 700 }}>
+                        @{comment.authorName}
+                    </Typography>
+                    <ProfileIcon icon={comment.authorProfileIcon} size={18} />
+                </Box>
             </Box>
 
-            <Typography variant="body2" sx={{ color: 'white', mt: 0.5, whiteSpace: 'pre-wrap' }}>
+            <Typography variant="body2" sx={{ color: 'var(--text-primary)', mt: 0.5, whiteSpace: 'pre-wrap' }}>
                 {comment.content}
             </Typography>
 
-            <Typography variant="caption" sx={{ color: '#888', display: 'block', mt: 0.8 }}>
+            <Typography variant="caption" sx={{ color: 'var(--ui-c56)', display: 'block', mt: 0.8 }}>
                 {new Date(comment.publishDate).toLocaleString('ru-RU')}
             </Typography>
 
@@ -335,11 +497,11 @@ const FeedCommentItem = ({
                 <IconButton
                     size="small"
                     onClick={() => onLikeToggle(comment.commentId, comment.isLiked)}
-                    sx={{ color: comment.isLiked ? '#ff1744' : '#9e9e9e', p: 0.4 }}
+                    sx={{ color: comment.isLiked ? 'var(--ui-c94)' : 'var(--text-secondary)', p: 0.4 }}
                 >
                     <FavoriteIcon sx={{ fontSize: 17 }} />
                 </IconButton>
-                <Typography variant="caption" sx={{ color: '#bdbdbd', ml: 0.4, fontWeight: 700 }}>
+                <Typography variant="caption" sx={{ color: 'var(--text-secondary)', ml: 0.4, fontWeight: 700 }}>
                     {comment.countLikes || 0}
                 </Typography>
 
@@ -350,7 +512,7 @@ const FeedCommentItem = ({
                         onClick={() => onToggleReplies(comment.commentId)}
                         sx={{
                             ml: 1,
-                            color: '#00bfa5',
+                            color: 'var(--accent-500)',
                             textTransform: 'none',
                             borderRadius: '8px',
                             minWidth: 'auto',
@@ -373,7 +535,7 @@ const FeedCommentItem = ({
                         onClick={() => onToggleReplyEditor(comment.commentId)}
                         sx={{
                             ml: 1,
-                            color: '#00bfa5',
+                            color: 'var(--accent-500)',
                             textTransform: 'none',
                             borderRadius: '8px',
                             minWidth: 'auto',
@@ -390,7 +552,7 @@ const FeedCommentItem = ({
                         onClick={() => onToggleEditEditor(comment.commentId, comment.content)}
                         sx={{
                             ml: 1,
-                            color: '#80d8ff',
+                            color: 'var(--ui-c54)',
                             textTransform: 'none',
                             borderRadius: '8px',
                             minWidth: 'auto',
@@ -408,7 +570,7 @@ const FeedCommentItem = ({
                         onClick={() => onDeleteComment(comment)}
                         sx={{
                             ml: 1,
-                            color: '#ff8a80',
+                            color: 'var(--ui-c98)',
                             textTransform: 'none',
                             borderRadius: '8px',
                             minWidth: 'auto',
@@ -443,9 +605,9 @@ const FeedCommentItem = ({
                         sx={{
                             minWidth: 'auto',
                             borderRadius: '10px',
-                            backgroundColor: '#00bfa5',
+                            backgroundColor: 'var(--accent-500)',
                             px: 1.2,
-                            '&:hover': { backgroundColor: '#009e8a' },
+                            '&:hover': { backgroundColor: 'var(--accent-600)' },
                         }}
                     >
                         Отправить
@@ -470,9 +632,9 @@ const FeedCommentItem = ({
                         sx={{
                             minWidth: 'auto',
                             borderRadius: '10px',
-                            backgroundColor: '#00bfa5',
+                            backgroundColor: 'var(--accent-500)',
                             px: 1.2,
-                            '&:hover': { backgroundColor: '#009e8a' },
+                            '&:hover': { backgroundColor: 'var(--accent-600)' },
                         }}
                     >
                         Сохранить
@@ -537,8 +699,8 @@ const CommentsFeedSidebar = ({
     const isDrawer = variant === 'drawer';
 
     const header = (
-        <Box sx={{ px: 2, py: isDrawer ? 1.5 : 1.3, borderBottom: '1px solid #333', display: 'flex', alignItems: 'center', gap: 1, flexShrink: 0 }}>
-            <Typography variant="h6" sx={{ color: '#00e5c9', fontWeight: 700, fontSize: isDrawer ? '1.05rem' : undefined }}>
+        <Box sx={{ px: 2, py: isDrawer ? 1.5 : 1.3, borderBottom: '1px solid var(--border-default)', display: 'flex', alignItems: 'center', gap: 1, flexShrink: 0 }}>
+            <Typography variant="h6" sx={{ color: 'var(--accent-400)', fontWeight: 700, fontSize: isDrawer ? '1.05rem' : undefined }}>
                 Комментарии
             </Typography>
             <IconButton
@@ -546,11 +708,11 @@ const CommentsFeedSidebar = ({
                 aria-label="Закрыть комментарии"
                 sx={{
                     ml: 'auto',
-                    color: '#bdbdbd',
+                    color: 'var(--text-secondary)',
                     minWidth: 44,
                     minHeight: 44,
                     transition: 'background-color 0.2s ease',
-                    '&:hover': { backgroundColor: 'rgba(255,255,255,0.06)' },
+                    '&:hover': { backgroundColor: 'color-mix(in oklab, var(--text-primary) 6%, transparent)' },
                 }}
             >
                 <CloseIcon />
@@ -559,11 +721,11 @@ const CommentsFeedSidebar = ({
     );
 
     const titleBlock = (
-        <Box sx={{ px: 2, pt: 1, pb: 1.5, borderBottom: '1px solid #333', flexShrink: 0 }}>
+        <Box sx={{ px: 2, pt: 1, pb: 1.5, borderBottom: '1px solid var(--border-default)', flexShrink: 0 }}>
             <Typography
                 variant="body2"
                 sx={{
-                    color: '#f5f5f5',
+                    color: 'var(--text-primary)',
                     mt: 0.4,
                     whiteSpace: 'nowrap',
                     overflow: 'hidden',
@@ -579,10 +741,10 @@ const CommentsFeedSidebar = ({
         <Box
             sx={{
                 p: 1.5,
-                borderTop: isDrawer ? '1px solid #333' : undefined,
-                borderBottom: !isDrawer ? '1px solid #333' : undefined,
+                borderTop: isDrawer ? '1px solid var(--border-default)' : undefined,
+                borderBottom: !isDrawer ? '1px solid var(--border-default)' : undefined,
                 flexShrink: 0,
-                backgroundColor: isDrawer ? '#181818' : 'transparent',
+                backgroundColor: isDrawer ? 'var(--ui-c23)' : 'transparent',
                 pb: isDrawer ? 'calc(12px + env(safe-area-inset-bottom, 0px))' : 1.5,
             }}
         >
@@ -612,12 +774,12 @@ const CommentsFeedSidebar = ({
                     onClick={onCreateRootComment}
                     sx={{
                         borderRadius: '10px',
-                        backgroundColor: '#00bfa5',
+                        backgroundColor: 'var(--accent-500)',
                         minWidth: isDrawer ? 88 : undefined,
                         minHeight: 48,
                         alignSelf: 'stretch',
                         transition: 'background-color 0.2s ease',
-                        '&:hover': { backgroundColor: '#009e8a' },
+                        '&:hover': { backgroundColor: 'var(--accent-600)' },
                     }}
                 >
                     {isDrawer ? 'Отпр.' : 'Отпр.'}
@@ -625,7 +787,7 @@ const CommentsFeedSidebar = ({
             </Box>
 
             {commentsError && (
-                <Typography sx={{ color: '#ff8a80', mt: 1, fontSize: '0.85rem' }}>{commentsError}</Typography>
+                <Typography sx={{ color: 'var(--ui-c98)', mt: 1, fontSize: '0.85rem' }}>{commentsError}</Typography>
             )}
         </Box>
     );
@@ -634,10 +796,10 @@ const CommentsFeedSidebar = ({
         <Box sx={{ flex: 1, minHeight: 0, overflowY: 'auto', p: 1.5, ...scrollbarStyle }}>
             {commentsLoading ? (
                 <Box sx={{ py: 3, textAlign: 'center' }}>
-                    <CircularProgress size={26} sx={{ color: '#00bfa5' }} />
+                    <CircularProgress size={26} sx={{ color: 'var(--accent-500)' }} />
                 </Box>
             ) : commentsTree.length === 0 ? (
-                <Typography sx={{ color: '#bdbdbd', fontSize: '0.9rem' }}>
+                <Typography sx={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>
                     Пока нет комментариев. Будьте первым.
                 </Typography>
             ) : (
@@ -688,6 +850,8 @@ const CommentsFeedSidebar = ({
 };
 
 const PostPage = () => {
+    const { mode, setColorMode } = useContext(ColorModeContext);
+    const [isBestArticlesOpen, setIsBestArticlesOpen] = useState(false);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [openProfileAfterAuth, setOpenProfileAfterAuth] = useState(false);
     const [isPostModalOpen, setIsPostModalOpen] = useState(false);
@@ -696,6 +860,7 @@ const PostPage = () => {
     const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
 const [isResourcesModalOpen, setIsResourcesModalOpen] = useState(false);
 const [isFaqModalOpen, setIsFaqModalOpen] = useState(false);
+const [isGuideModalOpen, setIsGuideModalOpen] = useState(false);
 const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
     const [moreMenuAnchor, setMoreMenuAnchor] = useState(null);
     const moreMenuLockRef = useRef(null);
@@ -722,12 +887,11 @@ const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
     const [isLoading, setIsLoading] = useState(false); 
     const [error, setError] = useState(null);
     const [emptyStateMessage, setEmptyStateMessage] = useState('');
-    const [pullDistance, setPullDistance] = useState(0);
-    const [isPulling, setIsPulling] = useState(false);
-    const pullStartYRef = useRef(null);
-    const [isRefreshingFeed, setIsRefreshingFeed] = useState(false);
+    const [mouseWheelNudge, setMouseWheelNudge] = useState(0);
+    const mouseWheelNudgeTimerRef = useRef(null);
     const [selectedPost, setSelectedPost] = useState(null); 
     const [isViewingDetailPage, setIsViewingDetailPage] = useState(false);
+    const [tagFilterReturnContext, setTagFilterReturnContext] = useState(null);
     const [lastViewedArticleId, setLastViewedArticleId] = useState(null); 
     const [shouldOpenComments, setShouldOpenComments] = useState(false);
     const [activeCommentsPost, setActiveCommentsPost] = useState(null);
@@ -743,6 +907,11 @@ const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
 
     useEffect(() => { articlesRef.current = articles; }, [articles]);
     useEffect(() => { hasMoreRef.current = hasMore; }, [hasMore]);
+    useEffect(() => {
+        if (activeCommentsPost) {
+            setIsBestArticlesOpen(false);
+        }
+    }, [activeCommentsPost]);
 
     useEffect(() => {
         if (paginationType !== 'random' && paginationType !== 'recommend') return;
@@ -767,7 +936,7 @@ const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
         const container = articlesContainerRef.current;
         if (!container) return;
 
-        const shouldLockFeedScroll = Boolean(moreMenuAnchor || isResourcesModalOpen || isFaqModalOpen);
+        const shouldLockFeedScroll = Boolean(moreMenuAnchor || isResourcesModalOpen || isFaqModalOpen || isGuideModalOpen);
         if (shouldLockFeedScroll) {
             if (!moreMenuLockRef.current) {
                 moreMenuScrollTopRef.current = container.scrollTop;
@@ -808,7 +977,7 @@ const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
                 container.style.scrollSnapType = scrollSnapType;
             });
         }
-    }, [moreMenuAnchor, isResourcesModalOpen, isFaqModalOpen]);
+    }, [moreMenuAnchor, isResourcesModalOpen, isFaqModalOpen, isGuideModalOpen]);
     const [returnToProfile, setReturnToProfile] = useState(false);
     const [returnProfileUserId, setReturnProfileUserId] = useState(null);
     const [profileReturnEnabled, setProfileReturnEnabled] = useState(false);
@@ -897,6 +1066,7 @@ const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
     const articlesContainerRef = useRef(null); 
     const postRefs = useRef({}); 
     const setPostRef = (id) => (el) => { postRefs.current[id] = el; };
+    const pendingFeedRestoreArticleIdRef = useRef(null);
     const lastCenteredIdRef = useRef(null);
 
     const showFeedPublishNotice = useCallback((message) => {
@@ -1072,6 +1242,8 @@ const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
     
     const handleFaqOpen = () => setIsFaqModalOpen(true);
     const handleFaqClose = () => setIsFaqModalOpen(false);
+    const handleGuideOpen = () => setIsGuideModalOpen(true);
+    const handleGuideClose = () => setIsGuideModalOpen(false);
     const handleAdminOpen = () => setIsAdminPanelOpen(true);
     const handleAdminClose = () => setIsAdminPanelOpen(false);
 
@@ -1125,15 +1297,20 @@ const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
     };
 
     const handlePostClick = (postData, options = {}, openComments = false) => { 
+        setIsBestArticlesOpen(false);
         setLastViewedArticleId(postData.article_id); 
         setSelectedPost(postData); 
         setIsViewingDetailPage(true);
         setReturnToProfile(!!options.returnToProfile);
         setReturnProfileUserId(options.profileUserId ?? null);
         setShouldOpenComments(openComments);
+        void registerArticleView(postData.article_id);
     };
     
     const handleBackToFeed = () => { 
+        if (!returnToProfile) {
+            pendingFeedRestoreArticleIdRef.current = selectedPost?.article_id ?? lastViewedArticleId ?? null;
+        }
         setSelectedPost(null); 
         setIsViewingDetailPage(false); 
         setShouldOpenComments(false);
@@ -1143,54 +1320,6 @@ const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
         }
         setReturnToProfile(false);
         setReturnProfileUserId(null);
-    };
-
-    const handleRefreshFeed = async () => {
-        setIsRefreshingFeed(true);
-        setPageNumber(1);
-        setHasMore(true);
-        setArticles([]);
-        setEmptyStateMessage('');
-        feedCacheRef.current[paginationType] = null;
-        
-        try {
-            await fetchArticlesPage(1, paginationType, { force: true, searchQuery: searchQueryRef.current });
-        } finally {
-            setIsRefreshingFeed(false);
-            setPullDistance(0);
-        }
-    };
-
-    const handlePullStart = (clientY) => {
-        const container = articlesContainerRef.current;
-        if (!container) return;
-        if (container.scrollTop === 0) {
-            pullStartYRef.current = clientY;
-            setIsPulling(true);
-        }
-    };
-
-    const handlePullMove = (clientY) => {
-        if (!isPulling || isRefreshingFeed || pullStartYRef.current === null) return;
-        const delta = clientY - pullStartYRef.current;
-        const container = articlesContainerRef.current;
-        if (delta > 0 && container && container.scrollTop === 0) {
-            const distance = Math.min(delta * 0.4, 120);
-            setPullDistance(distance);
-        } else {
-            setPullDistance(0);
-        }
-    };
-
-    const handlePullEnd = () => {
-        if (!isPulling) return;
-        setIsPulling(false);
-        pullStartYRef.current = null;
-        if (pullDistance > 80 && !isRefreshingFeed) {
-            handleRefreshFeed();
-        } else {
-            setPullDistance(0);
-        }
     };
 
     const handleSearchOpen = () => {
@@ -1206,13 +1335,116 @@ const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
         fetchArticlesPage(1, 'search', { force: true, searchQuery: query });
     };
 
-    const handleApplyTagFilter = (tagIds) => {
+    const handleApplyTagFilter = (tagIds, options = {}) => {
+        const { keepReturnContext = false } = options;
+        if (!keepReturnContext) {
+            setTagFilterReturnContext(null);
+        }
         setSelectedTagIds(tagIds);
         setPaginationType('tags');
         setArticles([]);
         setPageNumber(1);
         setHasMore(true);
         fetchArticlesPage(1, 'tags', { force: true, tagIds });
+    };
+
+    const handleExitTagFilter = () => {
+        const context = tagFilterReturnContext;
+        if (context?.post) {
+            const feedState = context.feedState || null;
+            if (feedState) {
+                setPaginationType(feedState.paginationType || 'random');
+                setIsSearchMode(Boolean(feedState.isSearchMode));
+                const restoredQuery = feedState.searchQuery || '';
+                setSearchQuery(restoredQuery);
+                searchQueryRef.current = restoredQuery;
+                setSelectedTagIds(Array.isArray(feedState.selectedTagIds) ? feedState.selectedTagIds : []);
+                setArticles(Array.isArray(feedState.articles) ? feedState.articles : []);
+                setPageNumber(feedState.pageNumber || 1);
+                setHasMore(Boolean(feedState.hasMore));
+                setEmptyStateMessage(feedState.emptyStateMessage || '');
+                setLastViewedArticleId(feedState.lastViewedArticleId ?? null);
+            } else {
+                setSelectedTagIds([]);
+                const targetFeedType = lastFeedTypeRef.current || 'random';
+                handlePaginationTypeChange(targetFeedType);
+            }
+
+            setSelectedPost(context.post);
+            setIsViewingDetailPage(true);
+            setShouldOpenComments(false);
+            setReturnToProfile(!!context.returnToProfile);
+            setReturnProfileUserId(context.returnProfileUserId ?? null);
+            setTagFilterReturnContext(null);
+            return;
+        }
+
+        setTagFilterReturnContext(null);
+        setSelectedTagIds([]);
+        const targetFeedType = lastFeedTypeRef.current || 'random';
+        handlePaginationTypeChange(targetFeedType);
+    };
+
+    const handleTagClickFromDetail = (tagLabel) => {
+        const normalizedLabel = String(tagLabel || '').trim().toLowerCase();
+        if (!normalizedLabel) return;
+
+        const matchedTag = TAG_CATEGORIES
+            .flatMap((category) => category.tags)
+            .find((tag) => String(tag.label || '').trim().toLowerCase() === normalizedLabel);
+
+        if (!matchedTag) return;
+
+        setTagFilterReturnContext({
+            post: selectedPost,
+            returnToProfile,
+            returnProfileUserId,
+            feedState: {
+                paginationType,
+                isSearchMode,
+                searchQuery: searchQueryRef.current,
+                selectedTagIds: Array.isArray(selectedTagIds) ? [...selectedTagIds] : [],
+                articles: Array.isArray(articlesRef.current) ? [...articlesRef.current] : [],
+                pageNumber,
+                hasMore,
+                emptyStateMessage,
+                lastViewedArticleId,
+            },
+        });
+
+        setSelectedPost(null);
+        setIsViewingDetailPage(false);
+        setShouldOpenComments(false);
+        setReturnToProfile(false);
+        setReturnProfileUserId(null);
+
+        handleApplyTagFilter([matchedTag.id], { keepReturnContext: true });
+    };
+
+    const handleRemoveTagFromFilter = (tagIdToRemove) => {
+        const nextTagIds = selectedTagIds.filter((id) => id !== tagIdToRemove);
+
+        if (nextTagIds.length === 0) {
+            setSelectedTagIds([]);
+            handlePaginationTypeChange('random');
+            return;
+        }
+
+        setSelectedTagIds(nextTagIds);
+        setPaginationType('tags');
+        setArticles([]);
+        setPageNumber(1);
+        setHasMore(true);
+        fetchArticlesPage(1, 'tags', { force: true, tagIds: nextTagIds });
+    };
+
+    const handleProfileUpdate = () => {
+        // Clear code to force refresh of feed
+        feedCacheRef.current = {};
+        setArticles([]);
+        setPageNumber(1);
+        setHasMore(true);
+        fetchArticlesPage(1, paginationType, { force: true });
     };
 
     const handleLogout = async () => {
@@ -1237,13 +1469,17 @@ const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
     };
 
     useEffect(() => {
-        if (!isViewingDetailPage && lastViewedArticleId) {
-            const targetElement = postRefs.current[lastViewedArticleId];
-            if (targetElement) {
-                targetElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            }
-        }
-    }, [isViewingDetailPage, lastViewedArticleId]);
+        if (isViewingDetailPage) return;
+
+        const restoreId = pendingFeedRestoreArticleIdRef.current;
+        if (!restoreId) return;
+
+        const targetElement = postRefs.current[restoreId];
+        if (!targetElement) return;
+
+        targetElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        pendingFeedRestoreArticleIdRef.current = null;
+    }, [isViewingDetailPage, articles]);
 
     const handleScroll = useCallback(() => {
         if (isProfileModalOpen) return;
@@ -1304,16 +1540,118 @@ const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
         const container = articlesContainerRef.current;
         if (container) {
             container.addEventListener('scroll', handleScroll);
+
+            let isMouseSnapScrolling = false;
+            const onWheel = (e) => {
+                if (window.innerWidth < 768) return;
+                if (isViewingDetailPage) return;
+                if (isLoading) return;
+
+                if (e.ctrlKey || e.metaKey || e.altKey) return;
+
+                const target = e.target;
+                if (!target || !target.closest) return;
+                if (
+                    target.closest('.MuiDrawer-root') ||
+                    target.closest('.MuiModal-root') ||
+                    target.closest('[role="dialog"]') ||
+                    target.closest('textarea') ||
+                    target.closest('input') ||
+                    target.closest('select') ||
+                    target.closest('[contenteditable="true"]')
+                ) {
+                    return;
+                }
+
+                // Intercept only classic mouse-wheel ticks; keep trackpad scrolling native.
+                const normalizedDeltaY = e.deltaMode === 1
+                    ? e.deltaY * 18
+                    : e.deltaMode === 2
+                        ? e.deltaY * window.innerHeight
+                        : e.deltaY;
+                const likelyMouseWheel = e.deltaMode === 1 || Math.abs(normalizedDeltaY) >= 85;
+                if (!likelyMouseWheel) return;
+                if (Math.abs(normalizedDeltaY) < 12) return;
+
+                // Always block native wheel scroll for mouse-mode navigation.
+                e.preventDefault();
+                if (isMouseSnapScrolling) return;
+
+                const dir = normalizedDeltaY > 0 ? 1 : -1;
+
+                try {
+                    const containerRect = container.getBoundingClientRect();
+                    const containerCenterY = containerRect.top + containerRect.height / 2;
+
+                    const postsList = Object.entries(postRefs.current)
+                        .map(([id, el]) => {
+                            if (!el) return null;
+                            const rect = el.getBoundingClientRect();
+                            const center = rect.top + rect.height / 2;
+                            return { id, el, center };
+                        })
+                        .filter(Boolean)
+                        .sort((a, b) => a.center - b.center);
+
+                    if (postsList.length === 0) return;
+
+                    const closestPost = [...postsList].sort(
+                        (a, b) => Math.abs(a.center - containerCenterY) - Math.abs(b.center - containerCenterY),
+                    )[0];
+                    const currentIndex = postsList.findIndex((p) => p.id === closestPost.id);
+
+                    let targetIndex = currentIndex + dir;
+                    targetIndex = Math.max(0, Math.min(targetIndex, postsList.length - 1));
+                    const targetPost = postsList[targetIndex];
+
+                    if (!targetPost || targetPost.id === closestPost.id) return;
+
+                    isMouseSnapScrolling = true;
+                    if (mouseWheelNudgeTimerRef.current) {
+                        clearTimeout(mouseWheelNudgeTimerRef.current);
+                    }
+                    setMouseWheelNudge(dir > 0 ? -14 : 14);
+                    mouseWheelNudgeTimerRef.current = setTimeout(() => {
+                        setMouseWheelNudge(0);
+                        mouseWheelNudgeTimerRef.current = null;
+                    }, 170);
+
+                    container.style.scrollSnapType = 'none';
+                    targetPost.el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+                    setTimeout(() => {
+                        container.style.scrollSnapType = 'y mandatory';
+                        isMouseSnapScrolling = false;
+                    }, 360);
+                } catch (err) {
+                    container.style.scrollSnapType = 'y mandatory';
+                    isMouseSnapScrolling = false;
+                    console.error('Ошибка wheel-навигации ленты', err);
+                }
+            };
+
+            container.addEventListener('wheel', onWheel, { passive: false });
+            container._onWheelRef = onWheel;
         }
-        
+
         return () => {
             if (container) {
                 container.removeEventListener('scroll', handleScroll);
+                if (container._onWheelRef) {
+                    container.removeEventListener('wheel', container._onWheelRef);
+                }
             }
         };
-    }, [handleScroll]);
+    }, [handleScroll, isViewingDetailPage, paginationType, isLoading]);
 
-    
+    useEffect(() => {
+        return () => {
+            if (mouseWheelNudgeTimerRef.current) {
+                clearTimeout(mouseWheelNudgeTimerRef.current);
+            }
+        };
+    }, []);
+
     const enrichArticleData = async (article) => {
         const rawId = article.article_id ?? article.articleId ?? article.ArticleID;
         const rawAuthorId = article.author_id ?? article.authorId ?? article.AuthorID;
@@ -1336,12 +1674,17 @@ const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
         
         const [authorData, likeCountData, isLikedStatus] = await Promise.all([authorReq, likeCountReq, isLikedReq]);
         
+        const rawNickname = authorData.name || 'Автор';
+        const iconInfo = extractNameAndIcon(rawNickname);
+
         return {
             ...article,
             article_id: rawId, 
             author_id: rawAuthorId, 
-            nickname: authorData.name || 'Автор',
+            nickname: iconInfo.name,
             authorAvatar: authorData.pathAvatar ?? authorData.PathAvatar ?? null,
+            authorProfileIcon: iconInfo.icon || resolveProfileIconValue(authorData),
+            authorRole: authorData.tag ?? authorData.Tag ?? 'user',
             authorBio: authorData.aboutUser || 'Описание недоступно.',
             title: article.articleTitle || article.article_title || article.ArticleTitle || 'Нет названия', 
             article_preview: article.articlePreview || article.article_preview || article.ArticlePreview || 'Нет описания',
@@ -1352,9 +1695,44 @@ const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
             imageUrl: buildArticleImageUrl(API_BASE_URL, rawFilePath),
             isLiked: isLikedStatus, 
             commentsCount: article.countComments ?? article.commentsCount ?? article.comments_count ?? article.CountComments ?? 0,
-            tags: article.article_tags || article.articleTags || article.ArticleTags || [], 
+            viewsCount: normalizeViewsCount(article),
+            tags: (article.article_tags || article.articleTags || article.ArticleTags || []).map(tag => typeof tag === 'number' ? tag.toString() : tag),
         };
     };
+
+    const syncArticleViews = useCallback((articleId, viewsCount) => {
+        setArticles((prevArticles) => prevArticles.map((article) =>
+            article.article_id === articleId ? { ...article, viewsCount } : article
+        ));
+
+        setSelectedPost((prevPost) =>
+            prevPost?.article_id === articleId ? { ...prevPost, viewsCount } : prevPost
+        );
+    }, []);
+
+    const registerArticleView = useCallback(async (articleId) => {
+        if (!articleId) return;
+
+        try {
+            const response = await fetch(`${API_BASE_URL}/Articles/view/${articleId}`, {
+                method: 'POST',
+                credentials: 'include',
+            });
+
+            if (!response.ok) {
+                return;
+            }
+
+            const data = await response.json().catch(() => null);
+            const nextViewsCount = data?.countViews ?? data?.CountViews;
+
+            if (typeof nextViewsCount === 'number') {
+                syncArticleViews(articleId, nextViewsCount);
+            }
+        } catch {
+            // Ignore non-critical view tracking errors on the client.
+        }
+    }, [syncArticleViews]);
 
     const buildEmptyStateMessage = (type, options = {}) => {
         const { searchQuery: providedQuery } = options;
@@ -1415,6 +1793,29 @@ const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
             const fetchOptions = { credentials: 'include' };
             const response = await fetch(url, fetchOptions);
             if (!response.ok) {
+                const isUnauthorizedRecommendations = type === 'recommend' && (response.status === 401 || response.status === 403);
+                if (isUnauthorizedRecommendations) {
+                    setArticles([]);
+                    setHasMore(false);
+                    setPageNumber(1);
+                    setError(null);
+                    setEmptyStateMessage('У неавторизованных пользователей этот раздел недоступен.');
+                    return;
+                }
+
+                if (type === 'recommend' && response.status === 400) {
+                    const responseText = (await response.text()).trim();
+                    const isUnauthorized = /incorrect user|unauthorized/i.test(responseText);
+                    if (isUnauthorized) {
+                        setArticles([]);
+                        setHasMore(false);
+                        setPageNumber(1);
+                        setError(null);
+                        setEmptyStateMessage('У неавторизованных пользователей этот раздел недоступен.');
+                        return;
+                    }
+                }
+
                 const isEmptyResponse = (type === 'search' || type === 'tags') && (response.status === 404 || response.status === 204);
                 if (isEmptyResponse) {
                     setArticles([]);
@@ -1470,41 +1871,11 @@ const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
 
     const switchRandomRecommendTab = (type) => {
         if (type !== 'random' && type !== 'recommend') return;
-        if (type === paginationType) return;
         if (isLoading) return;
 
         setPaginationType(type);
         setIsSearchMode(false);
         setSelectedTagIds([]);
-
-        const cached = feedCacheRef.current[type];
-        if (cached && cached.articles && cached.articles.length > 0) {
-            setArticles(cached.articles);
-            setPageNumber(cached.pageNumber);
-            setHasMore(cached.hasMore);
-            setEmptyStateMessage(cached.emptyStateMessage || '');
-            setError(null);
-            setIsLoading(false);
-            queueMicrotask(() => {
-                const el = articlesContainerRef.current;
-                if (el) el.scrollTop = 0;
-            });
-            return;
-        }
-
-        if (cached && Array.isArray(cached.articles) && cached.articles.length === 0) {
-            setArticles([]);
-            setPageNumber(1);
-            setHasMore(false);
-            setEmptyStateMessage(cached.emptyStateMessage || '');
-            setError(null);
-            setIsLoading(false);
-            queueMicrotask(() => {
-                const el = articlesContainerRef.current;
-                if (el) el.scrollTop = 0;
-            });
-            return;
-        }
 
         setArticles([]);
         setPageNumber(1);
@@ -1517,7 +1888,7 @@ const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
     switchRandomRecommendTabRef.current = switchRandomRecommendTab;
 
     const handlePaginationTypeChange = (type) => {
-        if (type === paginationType || isLoading) return;
+        if (isLoading) return;
 
         if (type === 'random' || type === 'recommend') {
             switchRandomRecommendTab(type);
@@ -1529,6 +1900,8 @@ const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
             setReturnProfileUserId(null);
             return;
         }
+
+        if (type === paginationType) return;
 
         setPaginationType(type);
         if (type !== 'search') {
@@ -1570,8 +1943,7 @@ const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
         } else if (isSearchMode) {
             handleSearchClose();
         } else if (paginationType === 'tags') {
-            const targetFeedType = lastFeedTypeRef.current || 'random';
-            handlePaginationTypeChange(targetFeedType);
+            handleExitTagFilter();
         }
         setIsCategoryModalOpen(false);
     };
@@ -1684,7 +2056,7 @@ const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
                 credentials: 'include',
             });
             if (!response.ok) {
-                const fallback = { name: 'Автор', avatar: null };
+                const fallback = { name: 'Автор', avatar: null, profileIcon: '' };
                 feedCommentAuthorCacheRef.current[userId] = fallback;
                 return fallback;
             }
@@ -1693,11 +2065,12 @@ const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
             const info = {
                 name: data.name || 'Автор',
                 avatar: data.pathAvatar ?? data.PathAvatar ?? null,
+                profileIcon: resolveProfileIconValue(data),
             };
             feedCommentAuthorCacheRef.current[userId] = info;
             return info;
         } catch {
-            const fallback = { name: 'Автор', avatar: null };
+            const fallback = { name: 'Автор', avatar: null, profileIcon: '' };
             feedCommentAuthorCacheRef.current[userId] = fallback;
             return fallback;
         }
@@ -1737,6 +2110,7 @@ const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
             repliesCount,
             authorName: authorInfo.name,
             authorAvatar: authorInfo.avatar,
+            authorProfileIcon: authorInfo.profileIcon,
             isLiked,
             replies: [],
             repliesOpen: false,
@@ -1785,6 +2159,11 @@ const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
             setFeedEditEditorOpen({});
             setFeedEditInputs({});
             return;
+        }
+
+        if (isDesktopLayout && isBestArticlesOpen) {
+            setIsBestArticlesOpen(false);
+            await new Promise((resolve) => window.setTimeout(resolve, 220));
         }
 
         setActiveCommentsPost(postData);
@@ -2006,6 +2385,19 @@ const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
         setFeedNewCommentText('');
     };
 
+    const handleBestArticlesToggle = async () => {
+        const nextOpen = !isBestArticlesOpen;
+
+        if (nextOpen && activeCommentsPost) {
+            handleFeedCloseComments();
+            if (isDesktopLayout) {
+                await new Promise((resolve) => window.setTimeout(resolve, 220));
+            }
+        }
+
+        setIsBestArticlesOpen(nextOpen);
+    };
+
     const fetchFeedRepliesTree = async (parentId) => {
         const response = await fetch(`${API_BASE_URL}/Comments/get-replies/${parentId}`, {
             credentials: 'include',
@@ -2089,7 +2481,6 @@ const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
         !isLoading &&
         (paginationType === 'random' || paginationType === 'recommend');
 
-    /** Вертикальный scroll-snap между статьями на мобильной ленте (свайп / инерция к следующей карточке). */
     const mobileArticleSnapEnabled =
         !isDesktopLayout && !isViewingDetailPage && articles.length > 0;
 
@@ -2131,11 +2522,36 @@ const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
     const mobileSearchActive = isSearchMode || paginationType === 'search';
     const mobileCategoriesActive = isCategoryModalOpen || paginationType === 'tags';
     const mobileProfileActive = isProfileModalOpen;
+    const isTagFilterFromDetail = Boolean(tagFilterReturnContext?.post);
 
     return (
-        <Box sx={{ display: 'flex', minHeight: '100vh', backgroundColor: '#121212', overflow: 'hidden' }}>
-            {!isViewingDetailPage && activeCommentsPost && isDesktopLayout && (
-                <CommentsFeedSidebar variant="desktop" {...feedCommentsSidebarProps} />
+        <Box sx={{ display: 'flex', minHeight: '100vh', backgroundColor: 'var(--bg-canvas)', overflow: 'hidden' }}>
+            {isDesktopLayout && <BestArticlesList isMobile={false} onArticleClick={handlePostClick} open={isBestArticlesOpen} onClose={() => setIsBestArticlesOpen(false)} />}
+
+            {isDesktopLayout && (
+                <Collapse
+                    in={!isViewingDetailPage && Boolean(activeCommentsPost)}
+                    orientation="horizontal"
+                    timeout={280}
+                    unmountOnExit
+                    sx={{ height: '100vh', flexShrink: 0 }}
+                >
+                    <Box
+                        sx={{
+                            width: 372,
+                            minWidth: 372,
+                            height: '100vh',
+                            pr: 2,
+                            py: 3,
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'flex-end',
+                            boxSizing: 'border-box',
+                        }}
+                    >
+                        <CommentsFeedSidebar variant="desktop" {...feedCommentsSidebarProps} />
+                    </Box>
+                </Collapse>
             )}
 
             {!isViewingDetailPage && activeCommentsPost && !isDesktopLayout && (
@@ -2154,7 +2570,7 @@ const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
                             width: '100%',
                             maxWidth: '100vw',
                             overflow: 'hidden',
-                            backgroundColor: '#1f1f1f',
+                            backgroundColor: 'var(--surface-panel)',
                             transition: 'transform 0.25s ease-out',
                         },
                     }}
@@ -2184,47 +2600,25 @@ const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
                     '@media (min-width: 768px)': {
                         scrollSnapType: 'y mandatory',
                     },
-                    '&::-webkit-scrollbar': { display: 'none' }, 
-                    msOverflowStyle: 'none', 
-                    scrollbarWidth: 'none', 
-                    display: 'flex', 
-                    flexDirection: 'column', 
+                    ...(isViewingDetailPage
+                        ? {
+                            scrollSnapType: 'none',
+                            scrollBehavior: 'auto',
+                        }
+                        : {}),
+                    '&::-webkit-scrollbar': { display: 'none' },
+                    msOverflowStyle: 'none',
+                    scrollbarWidth: 'none',
+                    display: 'flex',
+                    flexDirection: 'column',
                     alignItems: 'center',
-                    scrollBehavior: 'smooth',
+                    scrollBehavior: isViewingDetailPage ? 'auto' : 'smooth',
                     position: 'relative',
                     width: '100%',
                     maxWidth: '100vw',
                 }}
                 ref={articlesContainerRef}
-                onTouchStart={(e) => handlePullStart(e.touches[0].clientY)}
-                onTouchMove={(e) => handlePullMove(e.touches[0].clientY)}
-                onTouchEnd={handlePullEnd}
-                onMouseDown={(e) => handlePullStart(e.clientY)}
-                onMouseMove={(e) => handlePullMove(e.clientY)}
-                onMouseUp={handlePullEnd}
-                onMouseLeave={handlePullEnd}
             >
-                <div 
-                    style={{
-                        width: '100%',
-                        height: pullDistance > 0 ? pullDistance : isRefreshingFeed ? 60 : 0,
-                        transition: isPulling ? 'none' : 'height 0.3s cubic-bezier(0.25, 0.8, 0.25, 1)',
-                        display: 'flex',
-                        justifyContent: 'center',
-                        alignItems: 'center',
-                        overflow: 'hidden',
-                        opacity: pullDistance > 10 || isRefreshingFeed ? 1 : 0
-                    }}
-                >
-                    <CircularProgress 
-                        size={28} 
-                        thickness={4} 
-                        variant={isRefreshingFeed ? 'indeterminate' : 'determinate'}
-                        value={isRefreshingFeed ? undefined : Math.min((pullDistance / 80) * 100, 100)}
-                        sx={{ color: '#00bfa5' }}
-                    />
-                </div>
-
                 {publishNotice && (
                     <Box
                         sx={{
@@ -2245,10 +2639,10 @@ const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
                                 px: 2,
                                 py: 1,
                                 borderRadius: '12px',
-                                backgroundColor: 'rgba(0, 191, 165, 0.92)',
-                                color: '#0f0f0f',
+                                backgroundColor: 'var(--ui-c124)',
+                                color: 'var(--ui-c17)',
                                 fontWeight: 700,
-                                boxShadow: '0 8px 24px rgba(0,0,0,0.35)',
+                                boxShadow: '0 8px 24px var(--ui-c134)',
                                 maxWidth: { xs: '92vw', sm: '560px' },
                                 textAlign: 'center',
                             }}
@@ -2275,8 +2669,8 @@ const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
                             pt: 'calc(10px + env(safe-area-inset-top, 0px))',
                             pb: 1,
                             gap: 1,
-                            background: 'linear-gradient(180deg, rgba(18,18,18,0.98) 0%, rgba(18,18,18,0.92) 92%, transparent 100%)',
-                            borderBottom: '1px solid rgba(0, 191, 165, 0.12)',
+                            background: 'linear-gradient(180deg, color-mix(in oklab, var(--surface-panel) 92%, transparent) 0%, color-mix(in oklab, var(--surface-panel) 78%, transparent) 86%, transparent 100%)',
+                            borderBottom: '1px solid var(--border-default)',
                             backdropFilter: 'blur(12px)',
                             transition: 'background 0.25s ease',
                         }}
@@ -2289,10 +2683,10 @@ const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
                                     sx={{
                                         minWidth: 44,
                                         minHeight: 44,
-                                        color: '#00e5c9',
-                                        border: '1px solid rgba(0, 191, 165, 0.45)',
+                                        color: 'var(--accent-500)',
+                                        border: '1px solid var(--border-default)',
                                         transition: 'background-color 0.2s ease',
-                                        '&:hover': { backgroundColor: 'rgba(0, 191, 165, 0.1)' },
+                                        '&:hover': { backgroundColor: 'color-mix(in oklab, var(--accent-500) 12%, transparent)' },
                                     }}
                                 >
                                     <ArrowBackIcon />
@@ -2313,17 +2707,17 @@ const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
                                     sx={{
                                         flex: 1,
                                         '& .MuiOutlinedInput-root': {
-                                            color: '#f5f5f5',
+                                            color: 'var(--text-primary)',
                                             borderRadius: '12px',
                                             minHeight: 44,
-                                            backgroundColor: 'rgba(0, 0, 0, 0.25)',
+                                            backgroundColor: 'var(--surface-input)',
                                             transition: 'border-color 0.2s ease',
-                                            '& fieldset': { borderColor: 'rgba(0, 191, 165, 0.4)' },
-                                            '&:hover fieldset': { borderColor: '#00d4b4' },
-                                            '&.Mui-focused fieldset': { borderColor: '#00e5c9' },
+                                            '& fieldset': { borderColor: 'var(--border-default)' },
+                                            '&:hover fieldset': { borderColor: 'color-mix(in oklab, var(--accent-500) 30%, var(--border-default))' },
+                                            '&.Mui-focused fieldset': { borderColor: 'var(--accent-400)' },
                                         },
                                         '& .MuiInputBase-input::placeholder': {
-                                            color: '#b0b0b0',
+                                            color: 'var(--text-secondary)',
                                             opacity: 1,
                                         },
                                     }}
@@ -2333,7 +2727,7 @@ const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
                                                 <IconButton
                                                     onClick={handleSearchSubmit}
                                                     aria-label="Искать"
-                                                    sx={{ color: '#00e5c9', minWidth: 44, minHeight: 44 }}
+                                                    sx={{ color: 'var(--accent-400)', minWidth: 44, minHeight: 44 }}
                                                 >
                                                     <SearchIcon />
                                                 </IconButton>
@@ -2350,13 +2744,28 @@ const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
                                         sx={{
                                             fontWeight: 800,
                                             letterSpacing: 0.5,
-                                            color: '#00e5c9',
+                                            color: 'var(--accent-500)',
                                             fontSize: '1.15rem',
                                         }}
                                     >
                                         Lambda
                                     </Typography>
                                     <Box sx={{ flex: 1 }} />
+                                    {!isDesktopLayout && (
+                                        <>
+                                            <IconButton
+                                                onClick={handleBestArticlesToggle}
+                                                sx={{
+                                                    color: isBestArticlesOpen ? 'var(--accent-500)' : 'var(--text-secondary)',
+                                                    transition: 'all 0.3s ease',
+                                                    '&:hover': { color: 'var(--accent-500)', transform: 'scale(1.1)' }
+                                                }}
+                                            >
+                                                <LocalFireDepartmentIcon />
+                                            </IconButton>
+                                            <BestArticlesList isMobile={true} onArticleClick={handlePostClick} open={isBestArticlesOpen} onClose={() => setIsBestArticlesOpen(false)} />
+                                        </>
+                                    )}
                                     <IconButton
                                         onClick={(e) => {
                                             e.preventDefault();
@@ -2364,7 +2773,7 @@ const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
                                             setMoreMenuAnchor(e.currentTarget);
                                         }}
                                         aria-label="Ещё"
-                                        sx={{ minWidth: 44, minHeight: 44, color: '#e0f7f4' }}
+                                        sx={{ minWidth: 44, minHeight: 44, color: 'var(--ui-c88)' }}
                                     >
                                         <MoreVertIcon />
                                     </IconButton>
@@ -2408,11 +2817,11 @@ const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
                             gap: 2,
                             alignItems: 'center',
                             backdropFilter: 'blur(10px)',
-                            backgroundColor: 'rgba(18, 18, 18, 0.7)',
+                            backgroundColor: 'color-mix(in oklab, var(--surface-panel) 84%, transparent)',
                             borderRadius: '30px',
                             padding: '8px 12px',
-                            border: '1px solid rgba(0, 191, 165, 0.2)',
-                            boxShadow: '0 8px 32px rgba(0, 191, 165, 0.1)',
+                            border: '1px solid var(--border-default)',
+                            boxShadow: 'var(--shadow-soft)',
                             transition: 'all 0.3s ease',
                         }}>
                             {isSearchMode ? (
@@ -2421,9 +2830,9 @@ const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
                                         onClick={handleSearchClose}
                                         sx={{
                                             borderRadius: '50%',
-                                            color: '#00bfa5',
-                                            border: '1px solid rgba(0, 191, 165, 0.5)',
-                                            '&:hover': { backgroundColor: 'rgba(0, 191, 165, 0.12)' }
+                                            color: 'var(--accent-500)',
+                                            border: '1px solid var(--ui-c121)',
+                                            '&:hover': { backgroundColor: 'var(--ui-c114)' }
                                         }}
                                     >
                                         <ArrowBackIcon />
@@ -2443,15 +2852,15 @@ const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
                                         sx={{
                                             minWidth: { xs: 220, sm: 360, md: 420 },
                                             '& .MuiOutlinedInput-root': {
-                                                color: 'white',
+                                                color: 'var(--text-primary)',
                                                 borderRadius: '25px',
-                                                backgroundColor: 'rgba(0, 0, 0, 0.2)',
-                                                '& fieldset': { borderColor: 'rgba(0, 191, 165, 0.4)' },
-                                                '&:hover fieldset': { borderColor: '#00d4b4' },
-                                                '&.Mui-focused fieldset': { borderColor: '#00d4b4' },
+                                                backgroundColor: 'var(--surface-input)',
+                                                '& fieldset': { borderColor: 'var(--border-default)' },
+                                                '&:hover fieldset': { borderColor: 'color-mix(in oklab, var(--accent-500) 30%, var(--border-default))' },
+                                                '&.Mui-focused fieldset': { borderColor: 'var(--accent-500)' },
                                             },
                                             '& .MuiInputBase-input::placeholder': {
-                                                color: '#9e9e9e',
+                                                color: 'var(--text-secondary)',
                                                 opacity: 1,
                                             },
                                         }}
@@ -2460,7 +2869,7 @@ const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
                                                 <InputAdornment position="end">
                                                     <IconButton
                                                         onClick={handleSearchSubmit}
-                                                        sx={{ color: '#00bfa5' }}
+                                                        sx={{ color: 'var(--accent-500)' }}
                                                     >
                                                         <SearchIcon />
                                                     </IconButton>
@@ -2472,15 +2881,12 @@ const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
                             ) : paginationType === 'tags' ? (
                                 <>
                                     <IconButton
-                                        onClick={() => {
-                                            handlePaginationTypeChange('random');
-                                            setSelectedTagIds([]);
-                                        }}
+                                        onClick={handleExitTagFilter}
                                         sx={{
                                             borderRadius: '50%',
-                                            color: '#00bfa5',
-                                            border: '1px solid rgba(0, 191, 165, 0.5)',
-                                            '&:hover': { backgroundColor: 'rgba(0, 191, 165, 0.12)' }
+                                            color: 'var(--accent-500)',
+                                            border: '1px solid var(--ui-c121)',
+                                            '&:hover': { backgroundColor: 'var(--ui-c114)' }
                                         }}
                                     >
                                         <ArrowBackIcon />
@@ -2495,7 +2901,7 @@ const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
                                         whiteSpace: 'nowrap',
                                         pb: 0.5,
                                         '&::-webkit-scrollbar': { height: '4px' },
-                                        '&::-webkit-scrollbar-thumb': { backgroundColor: 'rgba(0, 191, 165, 0.5)', borderRadius: '4px' },
+                                        '&::-webkit-scrollbar-thumb': { backgroundColor: 'var(--ui-c121)', borderRadius: '4px' },
                                         '&::-webkit-scrollbar-track': { backgroundColor: 'transparent' }
                                     }}>
                                         {selectedTagIds && selectedTagIds.length > 0 ? (
@@ -2503,21 +2909,41 @@ const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
                                                 const tag = TAG_CATEGORIES.flatMap(c => c.tags).find(t => t.id === id);
                                                 return tag ? (
                                                     <Box key={id} sx={{
-                                                        padding: '4px 12px',
+                                                        display: 'flex',
+                                                        alignItems: 'center',
+                                                        gap: 0.5,
+                                                        padding: '4px 8px 4px 12px',
                                                         borderRadius: '16px',
-                                                        backgroundColor: 'rgba(0, 191, 165, 0.1)',
-                                                        border: '1px solid rgba(0, 191, 165, 0.4)',
-                                                        color: '#00e5c9',
+                                                        backgroundColor: 'color-mix(in oklab, var(--accent-500) 10%, transparent)',
+                                                        border: '1px solid var(--ui-c118)',
+                                                        color: 'var(--accent-400)',
                                                         fontWeight: 600,
                                                         fontSize: '0.85rem',
                                                         flexShrink: 0
                                                     }}>
-                                                        # {tag.label}
+                                                        <Typography component="span" sx={{ fontWeight: 600, fontSize: '0.85rem', color: 'inherit' }}>
+                                                            # {tag.label}
+                                                        </Typography>
+                                                        {!isTagFilterFromDetail && (
+                                                            <IconButton
+                                                                size="small"
+                                                                aria-label={`Убрать тег ${tag.label}`}
+                                                                onClick={() => handleRemoveTagFromFilter(id)}
+                                                                sx={{
+                                                                    width: 18,
+                                                                    height: 18,
+                                                                    color: 'var(--ui-c58)',
+                                                                    '&:hover': { backgroundColor: 'var(--ui-c126)', color: 'var(--ui-c79)' }
+                                                                }}
+                                                            >
+                                                                <CloseIcon sx={{ fontSize: 12 }} />
+                                                            </IconButton>
+                                                        )}
                                                     </Box>
                                                 ) : null;
                                             })
                                         ) : (
-                                            <Typography sx={{ color: 'white', fontWeight: 'bold', fontSize: '0.95rem' }}>
+                                            <Typography sx={{ color: 'var(--text-primary)', fontWeight: 'bold', fontSize: '0.95rem' }}>
                                                 Выбранные категории
                                             </Typography>
                                         )}
@@ -2525,6 +2951,17 @@ const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
                                 </>
                             ) : (
                                 <>
+                                    <IconButton
+                                        onClick={handleBestArticlesToggle}
+                                        sx={{
+                                            color: isBestArticlesOpen ? 'var(--accent-500)' : 'var(--text-secondary)',
+                                            transition: 'all 0.3s ease',
+                                            marginRight: 1,
+                                            '&:hover': { color: 'var(--accent-500)', transform: 'scale(1.1)' }
+                                        }}
+                                    >
+                                        <LocalFireDepartmentIcon fontSize="large" />
+                                    </IconButton>
                                     <Button
                                         variant={paginationType === 'random' ? 'contained' : 'outlined'}
                                         onClick={() => handlePaginationTypeChange('random')}
@@ -2535,17 +2972,19 @@ const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
                                             py: 1,
                                             fontWeight: 'bold',
                                             transition: 'all 0.3s ease',
+                                            boxShadow: 'none',
                                             ...(paginationType === 'random' ? {
-                                                backgroundColor: '#00bfa5',
-                                                color: '#000',
-                                                '&:hover': { backgroundColor: '#00d4b4' }
+                                                backgroundColor: 'var(--accent-500)',
+                                                color: 'var(--accent-contrast)',
+                                                '&:hover': { backgroundColor: 'var(--accent-600)', boxShadow: 'none' }
                                             } : {
-                                                borderColor: '#00bfa5',
-                                                color: '#00bfa5',
+                                                borderColor: 'var(--border-default)',
+                                                color: 'var(--text-primary)',
                                                 '&:hover': { 
-                                                    backgroundColor: 'rgba(0, 191, 165, 0.12)',
-                                                    borderColor: '#00d4b4',
-                                                    color: '#00d4b4'
+                                                    backgroundColor: 'color-mix(in oklab, var(--surface-soft) 70%, transparent)',
+                                                    borderColor: 'color-mix(in oklab, var(--accent-500) 35%, var(--border-default))',
+                                                    color: 'var(--accent-500)',
+                                                    boxShadow: 'none'
                                                 }
                                             })
                                         }}
@@ -2562,17 +3001,19 @@ const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
                                             py: 1,
                                             fontWeight: 'bold',
                                             transition: 'all 0.3s ease',
+                                            boxShadow: 'none',
                                             ...(paginationType === 'recommend' ? {
-                                                backgroundColor: '#00bfa5',
-                                                color: '#000',
-                                                '&:hover': { backgroundColor: '#00d4b4' }
+                                                backgroundColor: 'var(--accent-500)',
+                                                color: 'var(--accent-contrast)',
+                                                '&:hover': { backgroundColor: 'var(--accent-600)', boxShadow: 'none' }
                                             } : {
-                                                borderColor: '#00bfa5',
-                                                color: '#00bfa5',
+                                                borderColor: 'var(--border-default)',
+                                                color: 'var(--text-primary)',
                                                 '&:hover': { 
-                                                    backgroundColor: 'rgba(0, 191, 165, 0.12)',
-                                                    borderColor: '#00d4b4',
-                                                    color: '#00d4b4'
+                                                    backgroundColor: 'color-mix(in oklab, var(--surface-soft) 70%, transparent)',
+                                                    borderColor: 'color-mix(in oklab, var(--accent-500) 35%, var(--border-default))',
+                                                    color: 'var(--accent-500)',
+                                                    boxShadow: 'none'
                                                 }
                                             })
                                         }}
@@ -2585,20 +3026,22 @@ const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
                                         sx={{ 
                                             textTransform: 'none',
                                             borderRadius: '25px',
-                                            minWidth: '40px',
-                                            p: 1,
+                                            px: 3,
+                                            py: 1,
                                             fontWeight: 'bold',
                                             transition: 'all 0.3s ease',
-                                            borderColor: '#00bfa5',
-                                            color: '#00bfa5',
+                                            borderColor: 'var(--border-default)',
+                                            color: 'var(--text-primary)',
+                                            boxShadow: 'none',
                                             '&:hover': { 
-                                                backgroundColor: 'rgba(0, 191, 165, 0.12)',
-                                                borderColor: '#00d4b4',
-                                                color: '#00d4b4'
+                                                backgroundColor: 'color-mix(in oklab, var(--surface-soft) 70%, transparent)',
+                                                borderColor: 'color-mix(in oklab, var(--accent-500) 35%, var(--border-default))',
+                                                color: 'var(--accent-500)',
+                                                boxShadow: 'none'
                                             }
                                         }}
                                     >
-                                        <SearchIcon />
+                                        Поиск
                                     </Button>
                                 </>
                             )}
@@ -2624,6 +3067,9 @@ const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
                             nickname={selectedPost.nickname}
                             authorId={selectedPost.author_id} 
                             authorAvatar={selectedPost.authorAvatar}
+                            authorProfileIcon={selectedPost.authorProfileIcon}
+                            authorRole={selectedPost.authorRole}
+                            onTagClick={handleTagClickFromDetail}
                             onAuthorClick={handleOtherAuthorProfileOpen} 
                             onUnauthorized={handleOpen}
                             currentUserId={currentUser?.id}
@@ -2647,26 +3093,25 @@ const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
                         '@media (min-width: 768px)': {
                             px: 0,
                             pb: 5,
-                            mt: '20px',
                         },
-                            transform: `translateX(${dragOffset}px)`,
+                            transform: `translate3d(${dragOffset}px, ${isDesktopLayout ? mouseWheelNudge : 0}px, 0)`,
                             transition: Math.abs(dragOffset) > 0.5
                                 ? 'none'
-                                : 'transform 0.28s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.22s ease',
+                                : 'transform 0.34s cubic-bezier(0.22, 0.9, 0.25, 1), opacity 0.22s ease',
                             touchAction: feedSwipeEnabled ? 'pan-y' : 'auto',
                         }}
                         {...(feedSwipeEnabled ? swipeHandlers : {})}
                     >
                         {articles.length === 0 && isLoading && (isDesktopLayout || (paginationType !== 'random' && paginationType !== 'recommend')) && (
-                            <Typography sx={{ color: '#f5f5f5', textAlign: 'center', pt: 4 }}>
-                                <CircularProgress sx={{ color: '#00bfa5' }} />
+                            <Typography sx={{ color: 'var(--text-primary)', textAlign: 'center', pt: 4 }}>
+                                <CircularProgress sx={{ color: 'var(--accent-500)' }} />
                             </Typography>
                         )}
                         {articles.length === 0 && isLoading && !isDesktopLayout && (paginationType === 'random' || paginationType === 'recommend') && (
                             <MobileFeedListSkeleton count={3} />
                         )}
                         {!isLoading && articles.length === 0 && !error && (
-                            <Typography sx={{ color: '#f5f5f5', textAlign: 'center', pt: 4 }}>
+                            <Typography sx={{ color: 'var(--text-primary)', textAlign: 'center', pt: 4 }}>
                                 {emptyStateMessage || (paginationType === 'search' ? 'Статьи не найдены.' : 'Статей пока нет.')}
                             </Typography>
                         )}
@@ -2676,7 +3121,9 @@ const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
                                 key={post.article_id}
                                 ref={setPostRef(post.article_id)}
                                 sx={{ 
+                                    color: 'var(--text-primary)',
                                     minHeight: 'auto',
+                                    boxSizing: 'border-box',
                                     display: 'flex',
                                     justifyContent: 'center',
                                     alignItems: 'stretch',
@@ -2692,8 +3139,9 @@ const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
                                     },
                                     '@media (min-width: 768px)': {
                                         minHeight: '100vh',
-                                        alignItems: 'center',
-                                        py: '20px',
+                                        alignItems: 'flex-start',
+                                        pt: desktopFeedCardTopOffset,
+                                        pb: '20px',
                                         scrollSnapAlign: 'center',
                                     },
                                 }}
@@ -2712,11 +3160,11 @@ const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
                         
                         {isLoading && articles.length > 0 && (
                             <Box sx={{ display: 'flex', justifyContent: 'center', py: 2 }}>
-                                <CircularProgress size={30} sx={{ color: '#00bfa5' }} />
+                                <CircularProgress size={30} sx={{ color: 'var(--accent-500)' }} />
                             </Box>
                         )}
                         
-                        {!hasMore && articles.length > 0 && <Typography sx={{ color: '#f5f5f5', textAlign: 'center', py: 4 }}>Это все статьи!</Typography>}
+                        {!hasMore && articles.length > 0 && <Typography sx={{ color: 'var(--text-primary)', textAlign: 'center', py: 4 }}>Это все статьи!</Typography>}
                         {error && <Typography color="error" sx={{ textAlign: 'center', pt: 4 }}>{error}</Typography>}
                     </Box>
                 )}
@@ -2729,9 +3177,12 @@ const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
                 handleCategoryOpen={handleCategoryOpen} 
                 handleResourcesOpen={handleResourcesOpen} 
                 handleFaqOpen={handleFaqOpen}
+                handleGuideOpen={handleGuideOpen}
                 handleAdminOpen={handleAdminOpen}
                 isAdmin={currentUser?.role === 'Admin'}
                 currentUser={currentUser}
+                mode={mode}
+                onSetTheme={setColorMode}
             />
 
             <Menu
@@ -2745,14 +3196,42 @@ const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
                         sx: {
                             mt: 1,
                             minWidth: 220,
-                            backgroundColor: '#1e1e1e',
-                            border: '1px solid rgba(0, 191, 165, 0.25)',
+                            backgroundColor: 'color-mix(in oklab, var(--bg-elevated) 94%, var(--bg-canvas))',
+                            border: '1px solid color-mix(in oklab, var(--accent-500) 25%, transparent)',
                             borderRadius: 2,
-                            color: '#f5f5f5',
+                            color: 'var(--text-primary)',
+                                boxShadow: 'var(--shadow-soft)',
+                            backdropFilter: 'blur(16px)',
                         },
                     },
                 }}
             >
+                <MenuItem
+                    selected={mode === 'dark'}
+                    onClick={() => {
+                        setMoreMenuAnchor(null);
+                        setColorMode('dark');
+                    }}
+                    sx={{ minHeight: 48 }}
+                >
+                    <ListItemIcon sx={{ color: 'var(--accent-400)' }}>
+                        <DarkModeRoundedIcon fontSize="small" />
+                    </ListItemIcon>
+                    <ListItemText primaryTypographyProps={{ fontSize: '0.95rem' }} primary="Темная тема" />
+                </MenuItem>
+                <MenuItem
+                    selected={mode === 'light'}
+                    onClick={() => {
+                        setMoreMenuAnchor(null);
+                        setColorMode('light');
+                    }}
+                    sx={{ minHeight: 48 }}
+                >
+                    <ListItemIcon sx={{ color: 'var(--accent-400)' }}>
+                        <LightModeRoundedIcon fontSize="small" />
+                    </ListItemIcon>
+                    <ListItemText primaryTypographyProps={{ fontSize: '0.95rem' }} primary="Светлая тема" />
+                </MenuItem>
                 <MenuItem
                     onClick={() => {
                         setMoreMenuAnchor(null);
@@ -2760,7 +3239,7 @@ const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
                     }}
                     sx={{ minHeight: 48, transition: 'background-color 0.2s ease' }}
                 >
-                    <ListItemIcon sx={{ color: '#00e5c9' }}>
+                    <ListItemIcon sx={{ color: 'var(--accent-400)' }}>
                         <MenuBookIcon fontSize="small" />
                     </ListItemIcon>
                     <ListItemText primaryTypographyProps={{ fontSize: '0.95rem' }} primary="Полезные материалы" />
@@ -2772,10 +3251,22 @@ const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
                     }}
                     sx={{ minHeight: 48 }}
                 >
-                    <ListItemIcon sx={{ color: '#00e5c9' }}>
+                    <ListItemIcon sx={{ color: 'var(--accent-400)' }}>
                         <HelpOutlineIcon fontSize="small" />
                     </ListItemIcon>
                     <ListItemText primaryTypographyProps={{ fontSize: '0.95rem' }} primary="FAQ" />
+                </MenuItem>
+                <MenuItem
+                    onClick={() => {
+                        setMoreMenuAnchor(null);
+                        handleGuideOpen();
+                    }}
+                    sx={{ minHeight: 48 }}
+                >
+                    <ListItemIcon sx={{ color: 'var(--accent-400)' }}>
+                        <SlideshowIcon fontSize="small" />
+                    </ListItemIcon>
+                    <ListItemText primaryTypographyProps={{ fontSize: '0.95rem' }} primary="Инструкция по сайту" />
                 </MenuItem>
                 {currentUser?.role === 'Admin' && (
                     <MenuItem
@@ -2785,7 +3276,7 @@ const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
                         }}
                         sx={{ minHeight: 48 }}
                     >
-                        <ListItemIcon sx={{ color: '#ff8a80' }}>
+                        <ListItemIcon sx={{ color: 'var(--ui-c98)' }}>
                             <AdminPanelSettingsIcon fontSize="small" />
                         </ListItemIcon>
                         <ListItemText primaryTypographyProps={{ fontSize: '0.95rem' }} primary="Админ-панель" />
@@ -2823,6 +3314,11 @@ const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
                     handleProfileOpen();
                 }}
             />
+
+            <SiteGuideSlidesModal
+                open={isGuideModalOpen}
+                onClose={handleGuideClose}
+            />
             
             <RegistrationModal 
                 open={isModalOpen} 
@@ -2853,6 +3349,7 @@ const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
                 userId={viewedProfileId} 
                 onUnauthorized={handleOpen}
                 onLogout={handleLogout} 
+                onProfileUpdate={handleProfileUpdate}
                 onPostClick={handlePostClick}
                 onLikes={handleLikeToggle}
                 openProfile={handleOtherAuthorProfileOpen}
@@ -2873,4 +3370,3 @@ const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
 };
 
 export default PostPage;
-

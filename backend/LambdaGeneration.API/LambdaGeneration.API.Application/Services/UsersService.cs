@@ -1,4 +1,5 @@
-﻿using LambdaGeneration.API.Core.Models;
+using LambdaGeneration.API.Core.Enums;
+using LambdaGeneration.API.Core.Models;
 using LambdaGeneration.API.Date.Repositories;
 using LambdaGeneration.API.Infrastructure;
 
@@ -9,6 +10,7 @@ namespace LambdaGeneration.API.Application.Services
         private readonly IUsersRepository _usersRepository;
         private readonly IPasswordHasher _passwordHasher;
         private readonly IJwtProvider _jwtProvider;
+
         public UsersService(IUsersRepository usersRepository, IPasswordHasher passwordHasher, IJwtProvider jwtProvider)
         {
             _usersRepository = usersRepository;
@@ -25,13 +27,12 @@ namespace LambdaGeneration.API.Application.Services
                 throw new ArgumentException("User with this Name is already exist");
             if (userByEmail != null)
                 throw new ArgumentException("User with this Email is already exist");
-
         }
 
         public async Task Register(Guid id, string userName, string email, string password, string aboutUser, string? pathAvatar)
         {
             var hashedPassword = _passwordHasher.HashPassword(password);
-            var user = Users.Create(id, userName, hashedPassword, email, aboutUser, pathAvatar);
+            var user = Users.Create(id, userName, hashedPassword, email, aboutUser, pathAvatar, UserTag.User);
             await _usersRepository.Add(user);
         }
 

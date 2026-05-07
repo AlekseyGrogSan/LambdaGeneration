@@ -1,4 +1,5 @@
-﻿using LambdaGeneration.API.Application.Interfaces.Services;
+using LambdaGeneration.API.Application.Interfaces.Services;
+using LambdaGeneration.API.Core.Enums;
 using LambdaGeneration.API.Core.Models;
 using LambdaGeneration.API.Date.Repositories;
 using LambdaGeneration.API.Infrastructure;
@@ -13,7 +14,9 @@ namespace LambdaGeneration.API.Application.Services
         private readonly IConfiguration _configuration;
         private readonly IPasswordHasher _passwordHasher;
         private readonly ILogger<AdminService> _logger;
-        public AdminService(IUsersRepository userRepository,
+
+        public AdminService(
+            IUsersRepository userRepository,
             IConfiguration configuration,
             IPasswordHasher passwordHasher,
             ILogger<AdminService> logger)
@@ -24,11 +27,14 @@ namespace LambdaGeneration.API.Application.Services
             _logger = logger;
         }
 
-        public async Task Create()
+        public async Task Create(string configSection = "AdminConfig", UserTag tag = UserTag.Admin)
         {
-            var name = _configuration["AdminConfig:Name"];
-            var email = _configuration["AdminConfig:Email"];
-            var password = _configuration["AdminConfig:Password"];
+            var name = _configuration[$"{configSection}:Name"];
+            var email = _configuration[$"{configSection}:Email"];
+            var password = _configuration[$"{configSection}:Password"];
+
+            if (string.IsNullOrWhiteSpace(name) || string.IsNullOrWhiteSpace(email) || string.IsNullOrWhiteSpace(password))
+                throw new ArgumentException($"Admin configuration section \"{configSection}\" is incomplete");
 
             var userByEmail = await _usersRepository.GetByEmail(email);
             var userByName = await _usersRepository.GetByName(name);
@@ -39,10 +45,11 @@ namespace LambdaGeneration.API.Application.Services
                 throw new ArgumentException("Admin with this Email is already exist");
 
             var hashPassword = _passwordHasher.HashPassword(password);
-            Users admin = Users.Create(Guid.NewGuid(), name, hashPassword, email, string.Empty, "/uploads/admin.png");
-            admin.SetRole(Core.Enums.Role.Admin);
+            var admin = Users.Create(Guid.NewGuid(), name, hashPassword, email, string.Empty, "/uploads/admin.png", tag);
+            admin.SetRole(Role.Admin);
+
             await _usersRepository.Add(admin);
-            _logger.LogInformation("Admin is created!");
+            _logger.LogInformation("Admin {AdminName} is created with tag {AdminTag}!", name, tag);
         }
     }
 }

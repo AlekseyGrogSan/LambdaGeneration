@@ -11,6 +11,7 @@ namespace LambdaGeneration.API.DTO.Request
         public string article_preview {  get; set; }
         [Required]
         public string article_content { get; set; }
+        [MaxLength(5)]
         public List<string>? article_tags { get; set; }
         public IFormFile? picture { get; set; }
     }

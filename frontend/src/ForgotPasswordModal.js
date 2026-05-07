@@ -14,21 +14,21 @@ const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || '/api';
 const inputStyle = {
     // Общие стили для полей ввода Material UI в стиле "filled"
     '& .MuiFilledInput-root': {
-        backgroundColor: 'rgba(255, 255, 255, 0.1)',
-        color: '#ffffff',
+        backgroundColor: 'var(--ui-c176)',
+        color: 'var(--text-primary)',
         borderRadius: '8px',
         '&:hover': {
-            backgroundColor: 'rgba(255, 255, 255, 0.15)',
+            backgroundColor: 'var(--ui-c178)',
         },
         '&.Mui-focused': {
-            backgroundColor: 'rgba(255, 255, 255, 0.2)',
+            backgroundColor: 'var(--ui-c181)',
         },
     },
     // Стили для меток (label)
     '& .MuiInputLabel-root': {
-        color: '#bdbdbd',
+        color: 'var(--text-secondary)',
         '&.Mui-focused': {
-            color: '#00bfa5', // Фирменный цвет при фокусе
+            color: 'var(--accent-500)', // Фирменный цвет при фокусе
         },
     },
     // Убираем нижнюю линию у filled-инпутов
@@ -68,11 +68,11 @@ const ForgotPasswordModal = ({ open, handleClose }) => {
         left: '50%',
         transform: 'translate(-50%, -50%)',
         width: { xs: '90%', sm: '400px' },
-        bgcolor: '#383838',
+        bgcolor: 'var(--ui-c41)',
         borderRadius: '16px',
         boxShadow: 24,
         p: 4,
-        color: '#ffffff',
+        color: 'var(--text-primary)',
         display: 'flex',
         flexDirection: 'column',
         gap: 2,
@@ -125,15 +125,15 @@ const ForgotPasswordModal = ({ open, handleClose }) => {
         return (
             <Modal disableRestoreFocus open={open} onClose={handleClose} aria-labelledby="forgot-password-modal-title">
                 <Box sx={modalStyle}>
-                    <Typography variant="h5" component="h2" sx={{ color: '#ffffff', fontWeight: 300, textAlign: 'center', marginBottom: 2 }}>
+                    <Typography variant="h5" component="h2" sx={{ color: 'var(--text-primary)', fontWeight: 300, textAlign: 'center', marginBottom: 2 }}>
                         Забыли пароль?
                     </Typography>
 
-                    <Typography sx={{ color: '#00bfa5', textAlign: 'center', fontWeight: 'bold' }}>
+                    <Typography sx={{ color: 'var(--accent-500)', textAlign: 'center', fontWeight: 'bold' }}>
                         Ссылка для сброса пароля отправлена на вашу почту!
                     </Typography>
 
-                    <Typography variant="body2" sx={{ color: '#bdbdbd', textAlign: 'center', marginBottom: 2 }}>
+                    <Typography variant="body2" sx={{ color: 'var(--text-secondary)', textAlign: 'center', marginBottom: 2 }}>
                         Проверьте адрес: {lastSentEmail}
                     </Typography>
 
@@ -142,8 +142,8 @@ const ForgotPasswordModal = ({ open, handleClose }) => {
                         variant="outlined"
                         fullWidth
                         sx={{
-                            color: '#00bfa5',
-                            borderColor: '#00bfa5',
+                            color: 'var(--accent-500)',
+                            borderColor: 'var(--accent-500)',
                             mt: 2
                         }}
                         onClick={handleResetForNewEmail}
@@ -154,7 +154,7 @@ const ForgotPasswordModal = ({ open, handleClose }) => {
                     <Button
                         variant="text"
                         fullWidth
-                        sx={{ color: '#bdbdbd' }}
+                        sx={{ color: 'var(--text-secondary)' }}
                         onClick={handleClose}
                     >
                         Закрыть
@@ -168,10 +168,10 @@ const ForgotPasswordModal = ({ open, handleClose }) => {
     return (
         <Modal disableRestoreFocus open={open} onClose={handleClose} aria-labelledby="forgot-password-modal-title">
             <Box sx={modalStyle} component="form" onSubmit={handleSubmit}>
-                <Typography id="forgot-password-modal-title" variant="h5" component="h2" sx={{ color: '#ffffff', fontWeight: 300, textAlign: 'center', marginBottom: 2 }}>
+                <Typography id="forgot-password-modal-title" variant="h5" component="h2" sx={{ color: 'var(--text-primary)', fontWeight: 300, textAlign: 'center', marginBottom: 2 }}>
                     Восстановление пароля
                 </Typography>
-                <Typography variant="body2" sx={{ color: '#bdbdbd', textAlign: 'center', marginBottom: 2 }}>
+                <Typography variant="body2" sx={{ color: 'var(--text-secondary)', textAlign: 'center', marginBottom: 2 }}>
                     Введите email, чтобы получить ссылку для сброса пароля.
                 </Typography>
 
@@ -192,8 +192,8 @@ const ForgotPasswordModal = ({ open, handleClose }) => {
                     variant="contained" // Основная кнопка
                     fullWidth
                     sx={{
-                        backgroundColor: '#00bfa5',
-                        '&:hover': { backgroundColor: '#00a38f' },
+                        backgroundColor: 'var(--accent-500)',
+                        '&:hover': { backgroundColor: 'var(--ui-c4)' },
                         color: 'white',
                         fontWeight: 'bold',
                         mt: 1, // Margin Top
@@ -207,7 +207,7 @@ const ForgotPasswordModal = ({ open, handleClose }) => {
                 <Button
                     variant="text"
                     fullWidth
-                    sx={{ color: '#bdbdbd' }}
+                    sx={{ color: 'var(--text-secondary)' }}
                     onClick={handleClose}
                     disabled={isLoading}
                 >

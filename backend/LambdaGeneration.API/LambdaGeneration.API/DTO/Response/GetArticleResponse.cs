@@ -1,6 +1,6 @@
-﻿using LambdaGeneration.API.Core.Models;
+using LambdaGeneration.API.Core.Models;
 
 namespace LambdaGeneration.API.DTO.Response
 {
-    public record GetArticleResponse(Guid article_id, Guid author_id, string article_title, string article_preview, string article_content, List<string> article_tags, DateTime created_time, int countLikes, int countComments, string file_path);
+    public record GetArticleResponse(Guid article_id, Guid author_id, string article_title, string article_preview, string article_content, List<string> article_tags, DateTime created_time, int countViews, int countLikes, int countComments, string file_path);
 }
