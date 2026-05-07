@@ -7,6 +7,7 @@ const AVAILABLE_MODES = ['dark', 'light', 'neutral-gray'];
 export const ColorModeContext = createContext({
     mode: 'dark',
     toggleColorMode: () => {},
+    setColorMode: () => {},
 });
 
 const getInitialMode = () => {
@@ -16,35 +17,32 @@ const getInitialMode = () => {
     } catch (_) {
         // Ignore storage issues and fallback to media query.
     }
-    if (typeof window !== 'undefined' && window.matchMedia?.('(prefers-color-scheme: light)').matches) {
-        return 'light';
-    }
     return 'dark';
 };
 
 const getPaletteByMode = (mode) => ({
     mode: mode === 'neutral-gray' ? 'light' : mode,
-    primary: { main: '#1bcf9c' },
+    primary: { main: '#13a065' },
     secondary: { main: '#37d6ff' },
     error: { main: '#ff5d6c' },
     warning: { main: '#f4b95c' },
-    success: { main: '#22cf88' },
+    success: { main: '#139861' },
     info: { main: '#5cb8ff' },
     background:
         mode === 'dark'
-            ? { default: '#060b14', paper: '#0d1523' }
+                        ? { default: '#121212', paper: '#1b1b1b' }
             : mode === 'neutral-gray'
               ? { default: '#ECECEC', paper: '#E2E2E2' }
               : { default: '#f3f8fb', paper: '#ffffff' },
     text:
         mode === 'dark'
-            ? { primary: '#eef6ff', secondary: '#a6bed8' }
+                        ? { primary: '#f5f5f5', secondary: '#bdbdbd' }
             : mode === 'neutral-gray'
-              ? { primary: '#2F2F2F', secondary: '#6B6B6B' }
-              : { primary: '#13253c', secondary: '#4c637e' },
+                            ? { primary: '#151a21', secondary: '#2f3a49' }
+                            : { primary: '#111827', secondary: '#344256' },
     divider:
         mode === 'dark'
-            ? 'rgba(120, 159, 194, 0.28)'
+                        ? 'rgba(255, 255, 255, 0.08)'
             : mode === 'neutral-gray'
               ? '#CFCFCF'
               : 'rgba(44, 83, 125, 0.18)',
@@ -55,7 +53,7 @@ export const createAppTheme = (mode) =>
         palette: getPaletteByMode(mode),
         shape: { borderRadius: 14 },
         typography: {
-            fontFamily: '"Inter", "Segoe UI", "Roboto", "Arial", sans-serif',
+            fontFamily: '"Manrope", "Segoe UI", "Roboto", "Arial", sans-serif',
             h1: { fontWeight: 800, color: 'var(--text-strong)' },
             h2: { fontWeight: 800, color: 'var(--text-strong)' },
             h3: { fontWeight: 700, color: 'var(--text-strong)' },
@@ -147,7 +145,15 @@ export const useColorModeController = () => {
         });
     }, []);
 
-    const contextValue = useMemo(() => ({ mode, toggleColorMode }), [mode, toggleColorMode]);
+    const setColorMode = useCallback((nextMode) => {
+        if (!AVAILABLE_MODES.includes(nextMode)) return;
+        setMode(nextMode);
+    }, []);
+
+    const contextValue = useMemo(
+        () => ({ mode, toggleColorMode, setColorMode }),
+        [mode, toggleColorMode, setColorMode]
+    );
     const theme = useMemo(() => createAppTheme(mode), [mode]);
 
     return { mode, theme, contextValue };

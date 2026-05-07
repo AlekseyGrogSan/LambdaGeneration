@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap');
+
 *,
 *::before,
 *::after {
@@ -12,10 +14,10 @@ html {
 body {
     margin: 0;
     padding: 0;
-    font-family: "Inter", "Segoe UI", "Roboto", "Helvetica Neue", Arial, sans-serif;
+    font-family: "Manrope", "Segoe UI", "Roboto", "Helvetica Neue", Arial, sans-serif;
     background:
-        radial-gradient(circle at top left, rgba(55, 214, 255, 0.12), transparent 28%),
-        radial-gradient(circle at top right, rgba(27, 207, 156, 0.14), transparent 26%),
+        radial-gradient(circle at top left, rgba(71, 192, 220, 0.12), transparent 28%),
+        radial-gradient(circle at top right, rgba(50, 184, 150, 0.14), transparent 26%),
         var(--bg-canvas);
     color: var(--text-primary);
     overflow-x: hidden;
@@ -28,43 +30,47 @@ body {
 }
 
 :root {
-    --accent-400: #40deb0;
-    --accent-500: #1bcf9c;
-    --accent-600: #12af84;
-    --accent-contrast: #03150f;
+    --accent-400: #5bd7c0;
+    --accent-500: #28b89a;
+    --accent-600: #1b9b82;
+    --accent-contrast: #041a16;
 }
 
 :root[data-theme="dark"] {
-    --bg-canvas: #060b14;
-    --bg-elevated: #0b1321;
-    --surface-panel: rgba(12, 21, 34, 0.88);
-    --surface-elevated: #101b2c;
-    --surface-soft: #13253a;
-    --surface-input: #16263b;
-    --text-primary: #eef6ff;
-    --text-secondary: #a6bed8;
-    --text-strong: #eef6ff;
-    --border-default: rgba(120, 159, 194, 0.28);
-    --shadow-soft: 0 18px 34px rgba(2, 6, 12, 0.42);
+    --bg-canvas: #121212;
+    --bg-elevated: #1b1b1b;
+    --surface-panel: rgba(30, 30, 30, 0.92);
+    --surface-elevated: #1f1f1f;
+    --surface-soft: #242424;
+    --surface-input: #2a2a2a;
+    --text-primary: #f5f5f5;
+    --text-secondary: #bdbdbd;
+    --text-strong: #f5f5f5;
+    --border-default: rgba(255, 255, 255, 0.08);
+    --shadow-soft: 0 16px 30px rgba(0, 0, 0, 0.4);
 
-    --code-bg: var(--ui-c36);
-    --code-header-bg: var(--ui-c30);
-    --code-border: var(--ui-c192);
-    --code-header-text: var(--ui-c199);
+    --code-bg: #1e1e1e;
+    --code-header-bg: #181818;
+    --code-border: rgba(255, 255, 255, 0.08);
+    --code-header-text: #f5f5f5;
+}
+
+:root[data-theme="dark"] body {
+    background: var(--bg-canvas);
 }
 
 :root[data-theme="light"] {
-    --bg-canvas: #f3f8fb;
-    --bg-elevated: #ffffff;
-    --surface-panel: rgba(255, 255, 255, 0.9);
-    --surface-elevated: #ffffff;
-    --surface-soft: #eef4fb;
-    --surface-input: #f6f9fd;
-    --text-primary: #13253c;
-    --text-secondary: #4c637e;
-    --text-strong: #13253c;
-    --border-default: rgba(44, 83, 125, 0.18);
-    --shadow-soft: 0 12px 24px rgba(21, 42, 78, 0.12);
+    --bg-canvas: #f2f4f6;
+    --bg-elevated: #f8fafc;
+    --surface-panel: rgba(247, 250, 253, 0.94);
+    --surface-elevated: #f3f6fa;
+    --surface-soft: #e9eef4;
+    --surface-input: #edf2f7;
+    --text-primary: #111827;
+    --text-secondary: #344256;
+    --text-strong: #0f172a;
+    --border-default: rgba(33, 56, 84, 0.18);
+    --shadow-soft: 0 12px 22px rgba(18, 28, 44, 0.14);
 
     --code-bg: #eef4fb;
     --code-header-bg: #e6edf3;
@@ -73,22 +79,22 @@ body {
 }
 
 :root[data-theme="neutral-gray"] {
-    --bg-canvas: #ECECEC;
-    --bg-elevated: #E2E2E2;
-    --surface-panel: rgba(226, 226, 226, 0.9);
-    --surface-elevated: #E2E2E2;
-    --surface-soft: #E2E2E2;
-    --surface-input: #E8E8E8;
-    --text-primary: #2F2F2F;
-    --text-secondary: #6B6B6B;
-    --text-strong: #1A1A1A;
-    --border-default: #CFCFCF;
-    --shadow-soft: 0 12px 24px rgba(0, 0, 0, 0.10);
+    --bg-canvas: #d3d6db;
+    --bg-elevated: #c7cbd1;
+    --surface-panel: rgba(196, 200, 206, 0.9);
+    --surface-elevated: #c4c8ce;
+    --surface-soft: #bcc0c7;
+    --surface-input: #dfe2e7;
+    --text-primary: #151a21;
+    --text-secondary: #2f3a49;
+    --text-strong: #0f1319;
+    --border-default: rgba(30, 38, 52, 0.28);
+    --shadow-soft: 0 12px 24px rgba(18, 22, 30, 0.22);
 
-    --code-bg: #E2E2E2;
-    --code-header-bg: #D8D8D8;
-    --code-border: #CFCFCF;
-    --code-header-text: #1A1A1A;
+    --code-bg: #c4c8ce;
+    --code-header-bg: #b7bbc2;
+    --code-border: rgba(35, 45, 60, 0.22);
+    --code-header-text: #12151b;
 
     --syntax-keyword: #2D6A4F;
     --syntax-string: #C16F4A;
@@ -187,7 +193,7 @@ table { table-layout: fixed !important; width: 100% !important; max-width: 100% 
     --ui-c10: #00d4b8;
     --ui-c11: #00d8bf;
     --ui-c12: #00e0c2;
-    --ui-c13: #00e676;
+    --ui-c13: #119c59;
     --ui-c14: #048b79;
     --ui-c15: #0d0d0d;
     --ui-c16: #0d1117;

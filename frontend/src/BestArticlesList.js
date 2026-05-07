@@ -4,22 +4,26 @@ import {
   Typography,
   Avatar,
   CircularProgress,
-  Collapse,
   Modal,
+  Collapse,
 } from '@mui/material';
 import ChatBubbleOutlineIcon from '@mui/icons-material/ChatBubbleOutline';
 import FavoriteBorderIcon from '@mui/icons-material/FavoriteBorder';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import { buildAvatarUrl, DEFAULT_AVATAR_SRC } from './avatarUtils';
-import { resolveProfileIconValue, extractNameAndIcon } from './profileIcons';
-import UserRoleBadge from './UserRoleBadge';
+import { resolveProfileIconValue, extractNameAndIcon, ProfileIcon } from './profileIcons';
 import { Chip } from '@mui/material';
 import { mapTagsToLabels } from './CategoryModal';
 
 const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || '/api';
 
 const TAG_COLORS = [
-    'var(--ui-c97)', 'var(--ui-c13)', 'var(--ui-c37)', 'var(--ui-c94)', 'var(--ui-c86)', 'var(--ui-c7)'
+  'color-mix(in oklab, var(--accent-500) 70%, #3b82f6)',
+  'color-mix(in oklab, var(--accent-500) 65%, #f59e0b)',
+  'color-mix(in oklab, var(--accent-500) 60%, #22c55e)',
+  'color-mix(in oklab, var(--accent-500) 58%, #f43f5e)',
+  'color-mix(in oklab, var(--accent-500) 56%, #8b5cf6)',
+  'color-mix(in oklab, var(--accent-500) 54%, #06b6d4)'
 ];
 
 const getTagColor = (tag, index) => {
@@ -97,23 +101,37 @@ const BestArticlesList = ({ isMobile, onArticleClick, open, onClose }) => {
   }, [open]);
 
   const getRankColor = (index) => {
-    if (index === 0) return 'var(--ui-c101)'; // Gold
-    if (index === 1) return 'var(--ui-c74)'; // Silver
-    if (index === 2) return 'var(--ui-c76)'; // Bronze
-    return 'var(--ui-c103)'; // White
+    if (index === 0) return '#d9b45a'; 
+    if (index === 1) return '#b7c0cd'; 
+    if (index === 2) return '#c9915a'; 
+    return 'var(--text-secondary)';
   };
 
   const getRankShadow = (index) => {
-    if (index === 0) return '0 0 10px var(--ui-c171)';
-    if (index === 1) return '0 0 8px var(--ui-c161)';
-    if (index === 2) return '0 0 6px var(--ui-c165)';
+    if (index === 0) return '0 0 10px color-mix(in oklab, #d9b45a 55%, transparent)';
+    if (index === 1) return '0 0 8px color-mix(in oklab, #b7c0cd 55%, transparent)';
+    if (index === 2) return '0 0 6px color-mix(in oklab, #c9915a 55%, transparent)';
     return 'none';
   };
 
   const renderList = () => (
-    <Box sx={{ p: 1, maxHeight: '70vh', overflowY: 'auto' }}>
+    <Box
+      sx={{
+        p: 1,
+        flex: '1 1 0',
+        minHeight: 0,
+        overflowY: 'auto',
+        overscrollBehavior: 'contain',
+        WebkitOverflowScrolling: 'touch',
+        scrollbarWidth: 'thin',
+        scrollbarColor: 'var(--accent-500) var(--surface-soft)',
+        '&::-webkit-scrollbar': { width: 8 },
+        '&::-webkit-scrollbar-track': { background: 'var(--surface-soft)', borderRadius: 10 },
+        '&::-webkit-scrollbar-thumb': { background: 'var(--accent-500)', borderRadius: 10 },
+      }}
+    >
       <Typography variant="h6" sx={{ color: 'var(--accent-500)', mb: 2, textAlign: 'center' }}>
-        Лучший статьи
+        Лучшие статьи
       </Typography>
       {loading ? (
         <Box sx={{ display: 'flex', justifyContent: 'center', p: 3 }}>
@@ -127,7 +145,7 @@ const BestArticlesList = ({ isMobile, onArticleClick, open, onClose }) => {
               key={a.article_id}
               onClick={() => {
                 if (onArticleClick) onArticleClick(a);
-                if (isMobile && onClose) onClose();
+                if (onClose) onClose();
               }}
               sx={{
                 display: 'flex',
@@ -137,8 +155,9 @@ const BestArticlesList = ({ isMobile, onArticleClick, open, onClose }) => {
                 bgcolor: 'var(--surface-panel)',
                 borderRadius: '12px',
                 cursor: 'pointer',
-                border: isFirst ? '2px solid var(--ui-c170)' : '1px solid var(--border-default)',
-                transform: isFirst ? 'scale(1.02)' : 'none',
+                border: isFirst ? '2px solid color-mix(in oklab, var(--accent-500) 45%, var(--border-default))' : '1px solid var(--border-default)',
+                transform: 'none',
+                boxShadow: isFirst ? '0 0 0 1px color-mix(in oklab, var(--accent-500) 25%, transparent) inset' : 'none',
                 transition: 'background-color 0.2s',
                 '&:hover': {
                   bgcolor: 'var(--surface-elevated)',
@@ -162,8 +181,8 @@ const BestArticlesList = ({ isMobile, onArticleClick, open, onClose }) => {
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
                   {isFirst && (
                     <Box sx={{ 
-                      bgcolor: 'var(--ui-c96)', 
-                      color: 'white', 
+                      bgcolor: 'color-mix(in oklab, var(--accent-500) 70%, transparent)', 
+                      color: 'var(--accent-contrast)', 
                       px: 0.8, 
                       py: 0.2, 
                       borderRadius: 1, 
@@ -188,7 +207,6 @@ const BestArticlesList = ({ isMobile, onArticleClick, open, onClose }) => {
                   >
                     {a.article_title || a.title}
                   </Typography>
-                  {/* Tags */}
                   <Box sx={{ display: { xs: 'none', md: 'flex' }, gap: 0.5, flexShrink: 0 }}>
                     {mapTagsToLabels(Array.isArray(a.tags) ? a.tags : []).slice(0, 2).map((tag, i) => {
                       const strTag = String(tag);
@@ -199,7 +217,7 @@ const BestArticlesList = ({ isMobile, onArticleClick, open, onClose }) => {
                           size="small"
                           sx={{
                             backgroundColor: getTagColor(strTag, i),
-                            color: 'white',
+                            color: 'var(--accent-contrast)',
                             fontWeight: 'bold',
                             height: 18,
                             fontSize: '0.65rem'
@@ -221,6 +239,7 @@ const BestArticlesList = ({ isMobile, onArticleClick, open, onClose }) => {
                     <Typography variant="caption" sx={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                       {a.author_name || 'Автор'}
                     </Typography>
+                    <ProfileIcon icon={a.authorProfileIcon} size={14} />
                   </Box>
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, flexShrink: 0 }}>
                     <ChatBubbleOutlineIcon sx={{ fontSize: '0.9rem' }} />
@@ -240,62 +259,74 @@ const BestArticlesList = ({ isMobile, onArticleClick, open, onClose }) => {
           );
         })
       ) : (
-        <Typography sx={{ color: 'var(--text-secondary)', p: 2, textAlign: 'center' }}>РќРµС‚ СЃС‚Р°С‚РµР№</Typography>
+        <Typography sx={{ color: 'var(--text-secondary)', p: 2, textAlign: 'center' }}>Нет статей</Typography>
       )}
     </Box>
   );
 
-  if (isMobile) {
+  if (!isMobile) {
     return (
-      <Modal open={open} onClose={onClose} aria-labelledby="best-articles-mobile">
-        <Box sx={{
-          position: 'absolute',
-          top: '50%',
-          left: '50%',
-          transform: 'translate(-50%, -50%)',
-          width: '90%',
-          maxWidth: 400,
-          bgcolor: 'var(--bg-canvas)',
-          border: '1px solid var(--border-default)',
-          boxShadow: 24,
-          borderRadius: 3,
-          p: 2,
-          outline: 'none'
-        }}>
-          {renderList()}
+      <Collapse
+        in={Boolean(open)}
+        orientation="horizontal"
+        timeout={280}
+        unmountOnExit
+        sx={{ height: '100vh', flexShrink: 0 }}
+      >
+        <Box
+          sx={{
+            width: 340,
+            minWidth: 340,
+            height: '100vh',
+            pl: 2,
+            py: 3,
+            display: 'flex',
+            alignItems: 'center',
+            boxSizing: 'border-box',
+          }}
+        >
+          <Box
+            sx={{
+              width: '100%',
+              height: '100%',
+              backgroundColor: 'color-mix(in oklab, var(--surface-panel) 94%, transparent)',
+              border: '1px solid var(--border-default)',
+              borderRadius: '18px',
+              boxShadow: 'var(--shadow-soft)',
+              overflow: 'hidden',
+              display: 'flex',
+              flexDirection: 'column',
+            }}
+          >
+            {renderList()}
+          </Box>
         </Box>
-      </Modal>
+      </Collapse>
     );
   }
 
   return (
-    <Collapse in={open} orientation="horizontal" timeout={280} unmountOnExit sx={{ height: '100vh', flexShrink: 0 }}>
-      <Box
-        sx={{
-          width: 392,
-          minWidth: 392,
-          height: '100vh',
-          px: 2,
-          py: 3,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'flex-end',
-          boxSizing: 'border-box',
-        }}
-      >
-        <Box sx={{
-          width: '100%',
-          maxHeight: 'calc(100vh - 48px)',
-          bgcolor: 'var(--bg-canvas)',
-          border: '1px solid var(--border-default)',
-          borderRadius: 3,
-          boxShadow: '0 8px 32px var(--ui-c136)',
-          overflow: 'hidden'
-        }}>
-          {renderList()}
-        </Box>
+    <Modal open={open} onClose={onClose} aria-labelledby="best-articles-modal">
+      <Box sx={{
+        position: 'absolute',
+        top: '50%',
+        left: '50%',
+        transform: 'translate(-50%, -50%)',
+        width: '90%',
+        maxWidth: 500,
+        bgcolor: 'var(--surface-panel)',
+        border: '1px solid var(--border-default)',
+        boxShadow: 24,
+        borderRadius: 3,
+        p: 2,
+        outline: 'none',
+        display: 'flex',
+        flexDirection: 'column',
+        height: '80vh',
+      }}>
+        {renderList()}
       </Box>
-    </Collapse>
+    </Modal>
   );
 };
 

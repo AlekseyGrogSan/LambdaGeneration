@@ -72,11 +72,11 @@ const modalStyle = {
     height: { xs: '100dvh', sm: 'auto' },
     maxHeight: { xs: '100dvh', sm: '90vh' },
     bgcolor: 'var(--surface-elevated)',
-    border: '1px solid var(--ui-c44)',
+    border: '1px solid var(--border-default)',
     borderRadius: { xs: 0, sm: '12px' },
     boxShadow: 24,
     p: { xs: 2, sm: 3 },
-    color: 'white',
+    color: 'var(--text-primary)',
     overflowY: 'auto',
     overscrollBehavior: 'contain',
     '&::-webkit-scrollbar': { width: '8px' },
@@ -87,10 +87,10 @@ const modalStyle = {
 
 const inputStyle = {
     '& .MuiFilledInput-root': {
-        backgroundColor: 'var(--ui-c42)',
-        color: 'white',
-        '&:hover': { backgroundColor: 'var(--ui-c46)' },
-        '&.Mui-focused': { backgroundColor: 'var(--ui-c46)' },
+        backgroundColor: 'var(--surface-input)',
+        color: 'var(--text-primary)',
+        '&:hover': { backgroundColor: 'color-mix(in oklab, var(--surface-input) 90%, var(--bg-elevated))' },
+        '&.Mui-focused': { backgroundColor: 'color-mix(in oklab, var(--surface-input) 86%, var(--bg-elevated))' },
         overflowY: 'auto',
         '&::-webkit-scrollbar': {
             width: '8px',
@@ -157,7 +157,7 @@ const EditorToolbar = ({ editorRef, setInputDialog, onOpenAiPanel, aiBusy, aiHas
     }, [editorRef]);
 
     const basicTextColors = [
-        { name: 'Черный', value: 'var(--ui-c1)000' },
+        { name: 'Черный', value: '#111827' },
         { name: 'Белый', value: 'var(--text-primary)' },
         { name: 'Красный', value: 'var(--ui-c93)' },
         { name: 'Оранжевый', value: 'var(--ui-c99)' },
@@ -333,10 +333,10 @@ const EditorToolbar = ({ editorRef, setInputDialog, onOpenAiPanel, aiBusy, aiHas
 
     const getButtonStyle = (isActive, activeColor = 'var(--accent-500)') => ({
         color: isActive ? activeColor : 'var(--text-primary)',
-        backgroundColor: isActive ? 'var(--ui-c178)' : 'transparent',
+        backgroundColor: isActive ? 'color-mix(in oklab, var(--accent-500) 12%, transparent)' : 'transparent',
         borderRadius: '4px',
         transition: 'all 0.2s',
-        '&:hover': { backgroundColor: 'var(--ui-c50)666' }
+        '&:hover': { backgroundColor: 'color-mix(in oklab, var(--surface-soft) 95%, transparent)' }
     });
 
     return (
@@ -345,9 +345,9 @@ const EditorToolbar = ({ editorRef, setInputDialog, onOpenAiPanel, aiBusy, aiHas
                 display: 'flex',
                 gap: 1,
                 padding: 1,
-                backgroundColor: 'var(--ui-c44)',
+                backgroundColor: 'var(--surface-soft)',
                 borderRadius: '8px 8px 0 0',
-                border: '1px solid var(--ui-c48)',
+                border: '1px solid var(--border-default)',
                 flexWrap: 'nowrap',
                 overflowX: 'auto',
                 overflowY: 'hidden',
@@ -406,7 +406,7 @@ const EditorToolbar = ({ editorRef, setInputDialog, onOpenAiPanel, aiBusy, aiHas
                 PaperProps={{
                     sx: {
                         backgroundColor: 'var(--border-default)',
-                        color: 'white'
+                        color: 'var(--text-primary)'
                     }
                 }}
             >
@@ -461,7 +461,7 @@ const EditorToolbar = ({ editorRef, setInputDialog, onOpenAiPanel, aiBusy, aiHas
                 PaperProps={{
                     sx: {
                         backgroundColor: 'var(--border-default)',
-                        color: 'white',
+                        color: 'var(--text-primary)',
                     }
                 }}
             >
@@ -513,7 +513,7 @@ const EditorToolbar = ({ editorRef, setInputDialog, onOpenAiPanel, aiBusy, aiHas
                 PaperProps={{
                     sx: {
                         backgroundColor: 'var(--ui-c33)',
-                        color: 'white',
+                        color: 'var(--text-primary)',
                         width: 340,
                         border: '1px solid var(--ui-c192)'
                     }
@@ -1214,9 +1214,9 @@ const extractApiErrorMessage = async (response, fallback = 'Ошибка зап�
                         onChange={handleModeChange}
                         aria-label="edit mode"
                         sx={{ 
-                            bgcolor: 'var(--ui-c42)',
+                            bgcolor: 'var(--surface-soft)',
                             width: { xs: '100%', sm: 'auto' },
-                            '& .MuiToggleButton-root': { color: 'var(--text-secondary)', border: '1px solid var(--ui-c48)' },
+                            '& .MuiToggleButton-root': { color: 'var(--text-secondary)', border: '1px solid var(--border-default)' },
                             '& .Mui-selected': { color: 'var(--text-primary) !important', bgcolor: 'var(--accent-500) !important' }
                         }}
                     >
@@ -1276,16 +1276,16 @@ const extractApiErrorMessage = async (response, fallback = 'Ошибка зап�
                                     maxHeight: { xs: '34dvh', sm: '300px' },
                                     overflowY: 'auto',
                                     p: 2,
-                                    bgcolor: 'var(--ui-c42)',
-                                    border: '1px solid var(--ui-c48)',
+                                    bgcolor: 'var(--surface-input)',
+                                    border: '1px solid var(--border-default)',
                                     borderRadius: '0 0 8px 8px',
-                                    color: 'white',
+                                    color: 'var(--text-primary)',
                                     outline: 'none',
                                     '& *': { color: 'inherit' },
                                     '& h2': { color: 'var(--ui-c102)', fontSize: '1.4rem' },
                                     '& a': { color: 'var(--accent-500)' },
                                     '&::-webkit-scrollbar': { width: '8px' },
-                                    '&::-webkit-scrollbar-track': { background: 'var(--ui-c189)' },
+                                    '&::-webkit-scrollbar-track': { background: 'var(--surface-soft)' },
                                     '&::-webkit-scrollbar-thumb': { background: 'var(--accent-500)', borderRadius: '4px' }
                                 }}
                             />
@@ -1299,18 +1299,18 @@ const extractApiErrorMessage = async (response, fallback = 'Ошибка зап�
                                     sx: {
                                         width: { xs: '92vw', sm: 520 },
                                         maxWidth: '92vw',
-                                        backgroundColor: 'var(--ui-c27)',
-                                        border: '1px solid var(--ui-c142)',
-                                        color: 'var(--ui-c83)',
+                                        backgroundColor: 'var(--surface-elevated)',
+                                        border: '1px solid var(--border-default)',
+                                        color: 'var(--text-primary)',
                                         p: 1.4
                                     }
                                 }}
                             >
-                                <Typography sx={{ color: 'var(--ui-c65)', fontWeight: 700, display: 'flex', alignItems: 'center', gap: 1, mb: 0.8 }}>
+                                <Typography sx={{ color: 'var(--accent-500)', fontWeight: 700, display: 'flex', alignItems: 'center', gap: 1, mb: 0.8 }}>
                                     <AutoFixHighIcon fontSize="small" /> AI-редактор
                                 </Typography>
 
-                                <Typography variant="caption" sx={{ color: 'var(--ui-c71)' }}>
+                                <Typography variant="caption" sx={{ color: 'var(--text-secondary)' }}>
                                     Если выделить часть текста в редакторе, ИИ изменит только этот фрагмент. Это снижает расход токенов.
                                 </Typography>
 
@@ -1495,7 +1495,7 @@ const extractApiErrorMessage = async (response, fallback = 'Ошибка зап�
                                         key={tag}
                                         label={tag}
                                         onClick={() => handleTagToggle(tag)}
-                                        icon={isSelected ? <DoneIcon style={{ color: 'white' }} /> : undefined}
+                                        icon={isSelected ? <DoneIcon style={{ color: 'var(--text-primary)' }} /> : undefined}
                                         disabled={selectedTags.length >= 5 && !isSelected}
                                         sx={{
                                             cursor: 'pointer',

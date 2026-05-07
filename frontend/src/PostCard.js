@@ -449,14 +449,15 @@ const PostCard = React.memo(({
                 width: '100%',
                 maxWidth: '100%',
                 backgroundColor: 'var(--surface-elevated)',
-                borderRadius: '12px',
+                borderRadius: '14px',
+                border: '1px solid var(--border-default)',
                 height: { xs: 'auto', md: '85vh' },
                 minHeight: { xs: 0, md: 'unset' },
                 cursor: onClick ? 'pointer' : 'default',
                 touchAction: 'manipulation',
                 transition: 'box-shadow 0.25s ease, transform 0.2s ease',
                 '&:hover': {
-                    boxShadow: { xs: 'none', md: '0 8px 16px var(--ui-c107)' },
+                    boxShadow: { xs: 'none', md: 'var(--shadow-soft)' },
                 },
                 display: 'flex',
                 flexDirection: 'column',
@@ -474,17 +475,17 @@ const PostCard = React.memo(({
                         left: '50%',
                         transform: 'translate(-50%, -50%)',
                         zIndex: 2000,
-                        backgroundColor: 'var(--ui-c157)',
-                        border: '1px solid var(--ui-c122)',
+                        backgroundColor: 'var(--surface-panel)',
+                        border: '1px solid var(--border-default)',
                         borderRadius: '12px',
-                        boxShadow: '0 10px 30px var(--ui-c109)',
+                        boxShadow: 'var(--shadow-soft)',
                         px: 3,
                         py: 1.5,
                         pointerEvents: 'none',
                         textAlign: 'center',
                     }}
                 >
-                    <Typography variant="body1" sx={{ color: 'white', fontWeight: 700 }}>
+                    <Typography variant="body1" sx={{ color: 'var(--text-primary)', fontWeight: 700 }}>
                         Ссылка на статью скопирована
                     </Typography>
                 </Box>
@@ -574,7 +575,7 @@ const PostCard = React.memo(({
                                     size="small"
                                     sx={{ 
                                         backgroundColor: getTagColor(strTag, index), 
-                                        color: 'white', 
+                                        color: 'var(--text-primary)', 
                                         fontWeight: 'bold',
                                         height: { xs: 24, md: 22 },
                                         flexShrink: 0,
@@ -611,7 +612,7 @@ const PostCard = React.memo(({
                     </Typography>
                 </Box>
 
-                <Box sx={{ flexGrow: { xs: 0, md: 1 }, mb: { xs: 1, md: 2 }, overflow: 'hidden', color: 'var(--ui-c80)' }}>
+                <Box sx={{ flexGrow: { xs: 0, md: 1 }, mb: { xs: 1, md: 2 }, overflow: 'hidden', color: 'var(--text-secondary)' }}>
                     <Typography variant="body2" sx={{ ...labelStyle, display: { xs: 'none', md: 'block' } }}>
                         Описание
                     </Typography>
@@ -627,7 +628,11 @@ const PostCard = React.memo(({
                             WebkitLineClamp: { xs: 3, md: 15 },
                             WebkitBoxOrient: 'vertical',
                             fontSize: { xs: '0.875rem', md: '1rem' },
-                            lineHeight: 1.45 } }
+                            lineHeight: 1.45,
+                            '[data-theme="light"] & [style*="color: white"], [data-theme="light"] & [style*="color:white"], [data-theme="light"] & [style*="color:#fff"], [data-theme="light"] & [style*="color: #fff"], [data-theme="light"] & [style*="color: rgb(255, 255, 255)"], [data-theme="light"] & font[color="white"]': {
+                                color: 'var(--text-primary) !important',
+                            },
+                        } }
                     />
                 </Box>
             </Box>

@@ -90,7 +90,7 @@ const writePostPageNavState = (state) => {
 const commentInputStyle = {
     '& .MuiFilledInput-root': {
         backgroundColor: 'var(--surface-elevated)',
-        color: 'white',
+        color: 'var(--text-primary)',
         borderRadius: '10px',
         '&:hover': { backgroundColor: 'var(--ui-c42)' },
         '&.Mui-focused': { backgroundColor: 'var(--ui-c42)' },
@@ -112,6 +112,7 @@ const commentsSidebarStyle = {
     position: 'sticky',
     top: 0,
     left: 0,
+    backdropFilter: 'blur(12px)',
 };
 
 const commentsDrawerInnerSx = {
@@ -143,10 +144,10 @@ const updateCommentInTree = (tree, commentId, updater) => tree.map((item) => {
 });
 
 const sidebarStyle = {
-    width: 284,
-    minWidth: 284,
+    width: 296,
+    minWidth: 296,
     backgroundColor: 'transparent',
-    padding: '20px 18px 16px',
+    padding: '18px 16px 16px',
     display: 'none',
     '@media (min-width: 768px)': {
         display: 'flex',
@@ -154,7 +155,7 @@ const sidebarStyle = {
     flexDirection: 'column',
     justifyContent: 'flex-start',
     height: '100vh',
-    borderLeft: '1px solid color-mix(in oklab, var(--accent-500) 22%, var(--border-default))',
+    borderLeft: '1px solid var(--border-default)',
     position: 'sticky',
     top: 0,
     right: 0,
@@ -162,48 +163,56 @@ const sidebarStyle = {
 };
 
 const commonButtonStyle = {
-    fontWeight: 'bold',
+    fontWeight: 700,
     textTransform: 'none',
-    fontSize: '0.9rem',
+    fontSize: '0.875rem',
     justifyContent: 'flex-start',
-    padding: '8px 16px',
-    borderRadius: '8px',
-    marginBottom: 1,
-    width: '100%'
+    padding: '9px 14px',
+    borderRadius: '10px',
+    width: '100%',
+    minHeight: 40,
 };
 
 const sidebarButtonStyle = {
     ...commonButtonStyle,
-    backgroundColor: 'color-mix(in oklab, var(--surface-elevated) 72%, transparent)',
+    backgroundColor: 'color-mix(in oklab, var(--surface-soft) 88%, transparent)',
     color: 'var(--text-primary)',
-    minHeight: 48,
-    borderRadius: '12px',
-    border: '1px solid color-mix(in oklab, var(--text-primary) 8%, var(--border-default))',
-    justifyContent: 'space-between',
+    border: '1px solid var(--border-default)',
+    boxShadow: 'none',
     '&:hover': {
-        backgroundColor: 'color-mix(in oklab, var(--surface-elevated) 82%, transparent)',
-        borderColor: 'color-mix(in oklab, var(--accent-500) 36%, var(--border-default))',
+        backgroundColor: 'color-mix(in oklab, var(--surface-soft) 98%, transparent)',
+        borderColor: 'color-mix(in oklab, var(--text-primary) 22%, var(--border-default))',
+        color: 'var(--text-primary)',
+        boxShadow: 'none',
     },
 };
 
 const profileButtonStyle = {
     ...commonButtonStyle,
-    color: 'var(--accent-500)',
-    borderColor: 'var(--accent-500)',
-    borderWidth: '1px',
-    borderStyle: 'solid',
-    backgroundColor: 'transparent',
-    minHeight: 46,
-    borderRadius: '12px',
-    justifyContent: 'center',
-    '&:hover': { borderColor: 'var(--accent-600)', color: 'var(--accent-600)', backgroundColor: 'color-mix(in oklab, var(--accent-500) 8%, transparent)' },
+    backgroundColor: 'color-mix(in oklab, var(--accent-500) 10%, transparent)',
+    color: 'var(--text-primary)',
+    border: '1px solid color-mix(in oklab, var(--accent-500) 22%, transparent)',
+    boxShadow: 'none',
+    '&:hover': {
+        backgroundColor: 'color-mix(in oklab, var(--accent-500) 18%, transparent)',
+        borderColor: 'color-mix(in oklab, var(--accent-500) 40%, transparent)',
+        color: 'var(--accent-500)',
+        boxShadow: 'none',
+    },
 };
 
 const adminButtonStyle = {
     ...commonButtonStyle,
-    backgroundColor: 'var(--ui-c75)',
+    backgroundColor: 'color-mix(in oklab, var(--accent-500) 10%, transparent)',
     color: 'var(--text-primary)',
-    '&:hover': { backgroundColor: 'var(--ui-c94)' }
+    border: '1px solid color-mix(in oklab, var(--accent-500) 22%, transparent)',
+    boxShadow: 'none',
+    '&:hover': {
+        backgroundColor: 'color-mix(in oklab, var(--accent-500) 18%, transparent)',
+        borderColor: 'color-mix(in oklab, var(--accent-500) 40%, transparent)',
+        color: 'var(--accent-500)',
+        boxShadow: 'none',
+    },
 };
 
 const scrollbarStyle = {
@@ -211,67 +220,113 @@ const scrollbarStyle = {
         width: '8px',
     },
     '&::-webkit-scrollbar-track': {
-        background: 'var(--ui-c25)',
+        background: 'var(--surface-soft)',
         borderRadius: '10px',
     },
     '&::-webkit-scrollbar-thumb': {
         background: 'var(--accent-500)',
         borderRadius: '10px',
-        border: '2px solid var(--ui-c25)',
+        border: '2px solid var(--surface-soft)',
     },
     '&::-webkit-scrollbar-thumb:hover': {
         background: 'var(--accent-600)',
     },
     scrollbarWidth: 'thin',
-    scrollbarColor: 'var(--accent-500) var(--ui-c25)',
+    scrollbarColor: 'var(--accent-500) var(--surface-soft)',
 };
 
 const desktopFeedCardTopOffset = '84px';
 
-const Sidebar = ({ handleOpen, handleProfileOpen, handlePostOpen, handleCategoryOpen, handleResourcesOpen, handleFaqOpen, handleGuideOpen,handleAdminOpen, isAdmin, currentUser, mode, onToggleTheme }) => {
+const Sidebar = ({ handleOpen, handleProfileOpen, handlePostOpen, handleCategoryOpen, handleResourcesOpen, handleFaqOpen, handleGuideOpen,handleAdminOpen, isAdmin, currentUser, mode, onSetTheme }) => {
     const currentUserName = extractNameAndIcon(currentUser?.name || '').name;
     const currentUserIcon = resolveProfileIconValue(currentUser);
+    const [themeMenuAnchor, setThemeMenuAnchor] = useState(null);
+    const themeMenuOpen = Boolean(themeMenuAnchor);
 
     return (
         <Box sx={sidebarStyle}>
-            <Box
-                sx={{
-                    bgcolor: 'color-mix(in oklab, var(--bg-elevated) 78%, transparent)',
-                    border: '1px solid color-mix(in oklab, var(--accent-500) 28%, var(--border-default))',
-                    borderRadius: '18px',
-                    p: 2,
-                    boxShadow: '0 14px 32px color-mix(in oklab, var(--bg-canvas) 70%, transparent)',
-                    backdropFilter: 'blur(10px)',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    height: '100%',
-                }}
+                <Box
+                    sx={{
+                        bgcolor: 'var(--surface-panel)',
+                        border: '1px solid var(--border-default)',
+                        borderRadius: '18px',
+                        p: 2,
+                        boxShadow: 'var(--shadow-soft)',
+                        backdropFilter: 'blur(14px)',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        height: '100%',
+                    }}
             >
                 <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2.2 }}>
                     <Typography variant="h4" sx={{ color: 'var(--accent-500)', fontWeight: 800, letterSpacing: 0.2 }}>
                         Lambda
                     </Typography>
                     <IconButton
-                        onClick={onToggleTheme}
-                        aria-label="Переключить тему"
+                        onClick={(event) => setThemeMenuAnchor(event.currentTarget)}
+                        aria-label="Выбор темы"
                         sx={{
                             color: 'var(--text-secondary)',
-                            border: '1px solid color-mix(in oklab, var(--text-primary) 10%, var(--border-default))',
-                            bgcolor: 'color-mix(in oklab, var(--surface-soft) 76%, transparent)',
+                            border: '1px solid var(--border-default)',
+                            backgroundColor: 'color-mix(in oklab, var(--surface-soft) 82%, transparent)',
                             width: 34,
                             height: 34,
-                            '&:hover': { color: 'var(--accent-500)' },
+                            '&:hover': {
+                                borderColor: 'color-mix(in oklab, var(--accent-500) 35%, var(--border-default))',
+                                color: 'var(--accent-500)',
+                                backgroundColor: 'color-mix(in oklab, var(--accent-500) 10%, transparent)',
+                            },
                         }}
                     >
                         {mode === 'dark' ? (
-                            <LightModeRoundedIcon fontSize="small" />
-                        ) : mode === 'light' ? (
-                            <TonalityRoundedIcon fontSize="small" />
-                        ) : (
                             <DarkModeRoundedIcon fontSize="small" />
+                        ) : mode === 'light' ? (
+                            <LightModeRoundedIcon fontSize="small" />
+                        ) : (
+                            <TonalityRoundedIcon fontSize="small" />
                         )}
                     </IconButton>
                 </Box>
+                <Menu
+                    anchorEl={themeMenuAnchor}
+                    open={themeMenuOpen}
+                    onClose={() => setThemeMenuAnchor(null)}
+                    anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+                    transformOrigin={{ vertical: 'top', horizontal: 'right' }}
+                    slotProps={{
+                        paper: {
+                            sx: {
+                                mt: 1,
+                                minWidth: 180,
+                                backgroundColor: 'color-mix(in oklab, var(--bg-elevated) 94%, var(--bg-canvas))',
+                                border: '1px solid var(--border-default)',
+                                borderRadius: 2,
+                                color: 'var(--text-primary)',
+                                boxShadow: 'var(--shadow-soft)',
+                                backdropFilter: 'blur(16px)',
+                            },
+                        },
+                    }}
+                >
+                    <MenuItem
+                        selected={mode === 'dark'}
+                        onClick={() => {
+                            onSetTheme?.('dark');
+                            setThemeMenuAnchor(null);
+                        }}
+                    >
+                        Темная
+                    </MenuItem>
+                    <MenuItem
+                        selected={mode === 'light'}
+                        onClick={() => {
+                            onSetTheme?.('light');
+                            setThemeMenuAnchor(null);
+                        }}
+                    >
+                        Светлая
+                    </MenuItem>
+                </Menu>
 
                 {currentUser ? (
                     <Box sx={{ mb: 2.2, display: 'flex', alignItems: 'center', gap: 1.1 }}>
@@ -337,11 +392,11 @@ const Sidebar = ({ handleOpen, handleProfileOpen, handlePostOpen, handleCategory
                     </Button>
                 </Box>
 
-                <Box sx={{ mt: 2.6, borderTop: '1px solid color-mix(in oklab, var(--text-primary) 8%, transparent)' }} />
+                <Box sx={{ mt: 2.6, borderTop: '1px solid color-mix(in oklab, var(--text-primary) 10%, transparent)' }} />
 
                 <Box sx={{ mt: 'auto', display: 'flex', flexDirection: 'column', gap: 1.2 }}>
                     <Button sx={profileButtonStyle} startIcon={<PersonIcon />} onClick={handleProfileOpen}>
-                        {currentUser ? 'Войти / Профиль' : 'Войти / Профиль'}
+                        {currentUser ? 'Профиль' : 'Войти / Профиль'}
                     </Button>
                     <Button sx={profileButtonStyle} startIcon={<CloudUploadIcon />} onClick={handlePostOpen}>
                         Опубликовать
@@ -430,7 +485,7 @@ const FeedCommentItem = ({
                 </Box>
             </Box>
 
-            <Typography variant="body2" sx={{ color: 'white', mt: 0.5, whiteSpace: 'pre-wrap' }}>
+            <Typography variant="body2" sx={{ color: 'var(--text-primary)', mt: 0.5, whiteSpace: 'pre-wrap' }}>
                 {comment.content}
             </Typography>
 
@@ -795,7 +850,7 @@ const CommentsFeedSidebar = ({
 };
 
 const PostPage = () => {
-    const { mode, toggleColorMode } = useContext(ColorModeContext);
+    const { mode, setColorMode } = useContext(ColorModeContext);
     const [isBestArticlesOpen, setIsBestArticlesOpen] = useState(false);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [openProfileAfterAuth, setOpenProfileAfterAuth] = useState(false);
@@ -2426,7 +2481,6 @@ const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
         !isLoading &&
         (paginationType === 'random' || paginationType === 'recommend');
 
-    /** Вертикальный scroll-snap между статьями на мобильной ленте (свайп / инерция к следующей карточке). */
     const mobileArticleSnapEnabled =
         !isDesktopLayout && !isViewingDetailPage && articles.length > 0;
 
@@ -2615,8 +2669,8 @@ const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
                             pt: 'calc(10px + env(safe-area-inset-top, 0px))',
                             pb: 1,
                             gap: 1,
-                            background: 'linear-gradient(180deg, var(--ui-c159) 0%, var(--ui-c158) 92%, transparent 100%)',
-                            borderBottom: '1px solid var(--ui-c114)',
+                            background: 'linear-gradient(180deg, color-mix(in oklab, var(--surface-panel) 92%, transparent) 0%, color-mix(in oklab, var(--surface-panel) 78%, transparent) 86%, transparent 100%)',
+                            borderBottom: '1px solid var(--border-default)',
                             backdropFilter: 'blur(12px)',
                             transition: 'background 0.25s ease',
                         }}
@@ -2629,10 +2683,10 @@ const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
                                     sx={{
                                         minWidth: 44,
                                         minHeight: 44,
-                                        color: 'var(--accent-400)',
-                                        border: '1px solid color-mix(in oklab, var(--accent-500) 45%, transparent)',
+                                        color: 'var(--accent-500)',
+                                        border: '1px solid var(--border-default)',
                                         transition: 'background-color 0.2s ease',
-                                        '&:hover': { backgroundColor: 'color-mix(in oklab, var(--accent-500) 10%, transparent)' },
+                                        '&:hover': { backgroundColor: 'color-mix(in oklab, var(--accent-500) 12%, transparent)' },
                                     }}
                                 >
                                     <ArrowBackIcon />
@@ -2656,14 +2710,14 @@ const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
                                             color: 'var(--text-primary)',
                                             borderRadius: '12px',
                                             minHeight: 44,
-                                            backgroundColor: 'var(--ui-c105)',
+                                            backgroundColor: 'var(--surface-input)',
                                             transition: 'border-color 0.2s ease',
-                                            '& fieldset': { borderColor: 'var(--ui-c118)' },
-                                            '&:hover fieldset': { borderColor: 'var(--ui-c9)' },
+                                            '& fieldset': { borderColor: 'var(--border-default)' },
+                                            '&:hover fieldset': { borderColor: 'color-mix(in oklab, var(--accent-500) 30%, var(--border-default))' },
                                             '&.Mui-focused fieldset': { borderColor: 'var(--accent-400)' },
                                         },
                                         '& .MuiInputBase-input::placeholder': {
-                                            color: 'var(--ui-c67)',
+                                            color: 'var(--text-secondary)',
                                             opacity: 1,
                                         },
                                     }}
@@ -2690,7 +2744,7 @@ const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
                                         sx={{
                                             fontWeight: 800,
                                             letterSpacing: 0.5,
-                                            color: 'var(--accent-400)',
+                                            color: 'var(--accent-500)',
                                             fontSize: '1.15rem',
                                         }}
                                     >
@@ -2702,9 +2756,9 @@ const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
                                             <IconButton
                                                 onClick={handleBestArticlesToggle}
                                                 sx={{
-                                                    color: isBestArticlesOpen ? 'var(--ui-c99)' : 'var(--ui-c96)',
+                                                    color: isBestArticlesOpen ? 'var(--accent-500)' : 'var(--text-secondary)',
                                                     transition: 'all 0.3s ease',
-                                                    '&:hover': { color: 'var(--ui-c99)', transform: 'scale(1.1)' }
+                                                    '&:hover': { color: 'var(--accent-500)', transform: 'scale(1.1)' }
                                                 }}
                                             >
                                                 <LocalFireDepartmentIcon />
@@ -2763,11 +2817,11 @@ const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
                             gap: 2,
                             alignItems: 'center',
                             backdropFilter: 'blur(10px)',
-                            backgroundColor: 'var(--ui-c153)',
+                            backgroundColor: 'color-mix(in oklab, var(--surface-panel) 84%, transparent)',
                             borderRadius: '30px',
                             padding: '8px 12px',
-                            border: '1px solid color-mix(in oklab, var(--accent-500) 20%, transparent)',
-                            boxShadow: '0 8px 32px color-mix(in oklab, var(--accent-500) 10%, transparent)',
+                            border: '1px solid var(--border-default)',
+                            boxShadow: 'var(--shadow-soft)',
                             transition: 'all 0.3s ease',
                         }}>
                             {isSearchMode ? (
@@ -2798,12 +2852,12 @@ const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
                                         sx={{
                                             minWidth: { xs: 220, sm: 360, md: 420 },
                                             '& .MuiOutlinedInput-root': {
-                                                color: 'white',
+                                                color: 'var(--text-primary)',
                                                 borderRadius: '25px',
-                                                backgroundColor: 'var(--ui-c104)',
-                                                '& fieldset': { borderColor: 'var(--ui-c118)' },
-                                                '&:hover fieldset': { borderColor: 'var(--ui-c9)' },
-                                                '&.Mui-focused fieldset': { borderColor: 'var(--ui-c9)' },
+                                                backgroundColor: 'var(--surface-input)',
+                                                '& fieldset': { borderColor: 'var(--border-default)' },
+                                                '&:hover fieldset': { borderColor: 'color-mix(in oklab, var(--accent-500) 30%, var(--border-default))' },
+                                                '&.Mui-focused fieldset': { borderColor: 'var(--accent-500)' },
                                             },
                                             '& .MuiInputBase-input::placeholder': {
                                                 color: 'var(--text-secondary)',
@@ -2889,7 +2943,7 @@ const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
                                                 ) : null;
                                             })
                                         ) : (
-                                            <Typography sx={{ color: 'white', fontWeight: 'bold', fontSize: '0.95rem' }}>
+                                            <Typography sx={{ color: 'var(--text-primary)', fontWeight: 'bold', fontSize: '0.95rem' }}>
                                                 Выбранные категории
                                             </Typography>
                                         )}
@@ -2900,10 +2954,10 @@ const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
                                     <IconButton
                                         onClick={handleBestArticlesToggle}
                                         sx={{
-                                            color: isBestArticlesOpen ? 'var(--ui-c99)' : 'var(--ui-c96)',
+                                            color: isBestArticlesOpen ? 'var(--accent-500)' : 'var(--text-secondary)',
                                             transition: 'all 0.3s ease',
                                             marginRight: 1,
-                                            '&:hover': { color: 'var(--ui-c99)', transform: 'scale(1.1)' }
+                                            '&:hover': { color: 'var(--accent-500)', transform: 'scale(1.1)' }
                                         }}
                                     >
                                         <LocalFireDepartmentIcon fontSize="large" />
@@ -2918,17 +2972,19 @@ const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
                                             py: 1,
                                             fontWeight: 'bold',
                                             transition: 'all 0.3s ease',
+                                            boxShadow: 'none',
                                             ...(paginationType === 'random' ? {
                                                 backgroundColor: 'var(--accent-500)',
-                                                color: 'var(--ui-c1)',
-                                                '&:hover': { backgroundColor: 'var(--ui-c9)' }
+                                                color: 'var(--accent-contrast)',
+                                                '&:hover': { backgroundColor: 'var(--accent-600)', boxShadow: 'none' }
                                             } : {
-                                                borderColor: 'var(--accent-500)',
-                                                color: 'var(--accent-500)',
+                                                borderColor: 'var(--border-default)',
+                                                color: 'var(--text-primary)',
                                                 '&:hover': { 
-                                                    backgroundColor: 'var(--ui-c114)',
-                                                    borderColor: 'var(--ui-c9)',
-                                                    color: 'var(--ui-c9)'
+                                                    backgroundColor: 'color-mix(in oklab, var(--surface-soft) 70%, transparent)',
+                                                    borderColor: 'color-mix(in oklab, var(--accent-500) 35%, var(--border-default))',
+                                                    color: 'var(--accent-500)',
+                                                    boxShadow: 'none'
                                                 }
                                             })
                                         }}
@@ -2945,17 +3001,19 @@ const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
                                             py: 1,
                                             fontWeight: 'bold',
                                             transition: 'all 0.3s ease',
+                                            boxShadow: 'none',
                                             ...(paginationType === 'recommend' ? {
                                                 backgroundColor: 'var(--accent-500)',
-                                                color: 'var(--ui-c1)',
-                                                '&:hover': { backgroundColor: 'var(--ui-c9)' }
+                                                color: 'var(--accent-contrast)',
+                                                '&:hover': { backgroundColor: 'var(--accent-600)', boxShadow: 'none' }
                                             } : {
-                                                borderColor: 'var(--accent-500)',
-                                                color: 'var(--accent-500)',
+                                                borderColor: 'var(--border-default)',
+                                                color: 'var(--text-primary)',
                                                 '&:hover': { 
-                                                    backgroundColor: 'var(--ui-c114)',
-                                                    borderColor: 'var(--ui-c9)',
-                                                    color: 'var(--ui-c9)'
+                                                    backgroundColor: 'color-mix(in oklab, var(--surface-soft) 70%, transparent)',
+                                                    borderColor: 'color-mix(in oklab, var(--accent-500) 35%, var(--border-default))',
+                                                    color: 'var(--accent-500)',
+                                                    boxShadow: 'none'
                                                 }
                                             })
                                         }}
@@ -2968,20 +3026,22 @@ const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
                                         sx={{ 
                                             textTransform: 'none',
                                             borderRadius: '25px',
-                                            minWidth: '40px',
-                                            p: 1,
+                                            px: 3,
+                                            py: 1,
                                             fontWeight: 'bold',
                                             transition: 'all 0.3s ease',
-                                            borderColor: 'var(--accent-500)',
-                                            color: 'var(--accent-500)',
+                                            borderColor: 'var(--border-default)',
+                                            color: 'var(--text-primary)',
+                                            boxShadow: 'none',
                                             '&:hover': { 
-                                                backgroundColor: 'var(--ui-c114)',
-                                                borderColor: 'var(--ui-c9)',
-                                                color: 'var(--ui-c9)'
+                                                backgroundColor: 'color-mix(in oklab, var(--surface-soft) 70%, transparent)',
+                                                borderColor: 'color-mix(in oklab, var(--accent-500) 35%, var(--border-default))',
+                                                color: 'var(--accent-500)',
+                                                boxShadow: 'none'
                                             }
                                         }}
                                     >
-                                        <SearchIcon />
+                                        Поиск
                                     </Button>
                                 </>
                             )}
@@ -3061,6 +3121,7 @@ const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
                                 key={post.article_id}
                                 ref={setPostRef(post.article_id)}
                                 sx={{ 
+                                    color: 'var(--text-primary)',
                                     minHeight: 'auto',
                                     boxSizing: 'border-box',
                                     display: 'flex',
@@ -3121,7 +3182,7 @@ const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
                 isAdmin={currentUser?.role === 'Admin'}
                 currentUser={currentUser}
                 mode={mode}
-                onToggleTheme={toggleColorMode}
+                onSetTheme={setColorMode}
             />
 
             <Menu
@@ -3135,14 +3196,42 @@ const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
                         sx: {
                             mt: 1,
                             minWidth: 220,
-                            backgroundColor: 'var(--surface-panel)',
+                            backgroundColor: 'color-mix(in oklab, var(--bg-elevated) 94%, var(--bg-canvas))',
                             border: '1px solid color-mix(in oklab, var(--accent-500) 25%, transparent)',
                             borderRadius: 2,
                             color: 'var(--text-primary)',
+                                boxShadow: 'var(--shadow-soft)',
+                            backdropFilter: 'blur(16px)',
                         },
                     },
                 }}
             >
+                <MenuItem
+                    selected={mode === 'dark'}
+                    onClick={() => {
+                        setMoreMenuAnchor(null);
+                        setColorMode('dark');
+                    }}
+                    sx={{ minHeight: 48 }}
+                >
+                    <ListItemIcon sx={{ color: 'var(--accent-400)' }}>
+                        <DarkModeRoundedIcon fontSize="small" />
+                    </ListItemIcon>
+                    <ListItemText primaryTypographyProps={{ fontSize: '0.95rem' }} primary="Темная тема" />
+                </MenuItem>
+                <MenuItem
+                    selected={mode === 'light'}
+                    onClick={() => {
+                        setMoreMenuAnchor(null);
+                        setColorMode('light');
+                    }}
+                    sx={{ minHeight: 48 }}
+                >
+                    <ListItemIcon sx={{ color: 'var(--accent-400)' }}>
+                        <LightModeRoundedIcon fontSize="small" />
+                    </ListItemIcon>
+                    <ListItemText primaryTypographyProps={{ fontSize: '0.95rem' }} primary="Светлая тема" />
+                </MenuItem>
                 <MenuItem
                     onClick={() => {
                         setMoreMenuAnchor(null);
@@ -3224,8 +3313,6 @@ const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
                     }
                     handleProfileOpen();
                 }}
-                onThemeToggle={toggleColorMode}
-                mode={mode}
             />
 
             <SiteGuideSlidesModal

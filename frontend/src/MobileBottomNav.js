@@ -9,9 +9,6 @@ import FolderOutlinedIcon from '@mui/icons-material/FolderOutlined';
 import FolderIcon from '@mui/icons-material/Folder';
 import PersonOutlineIcon from '@mui/icons-material/PersonOutline';
 import PersonIcon from '@mui/icons-material/Person';
-import DarkModeRoundedIcon from '@mui/icons-material/DarkModeRounded';
-import LightModeRoundedIcon from '@mui/icons-material/LightModeRounded';
-import TonalityRoundedIcon from '@mui/icons-material/TonalityRounded';
 
 const NAV_ITEM_SX = {
     flex: 1,
@@ -64,8 +61,6 @@ const MobileBottomNav = ({
     onCreate,
     onCategories,
     onProfile,
-    onThemeToggle,
-    mode = 'dark',
 }) => {
     if (hidden) return null;
 
@@ -205,21 +200,13 @@ const MobileBottomNav = ({
             <Box
                 component="button"
                 type="button"
-                onClick={onThemeToggle || onProfile}
+                onClick={onProfile}
                 sx={{
                     ...NAV_ITEM_SX,
                     color: profileActive ? 'var(--accent-400)' : 'var(--text-secondary)',
                 }}
             >
-                {onThemeToggle ? (
-                    mode === 'dark' ? (
-                        <LightModeRoundedIcon sx={{ fontSize: 26 }} />
-                    ) : mode === 'light' ? (
-                        <TonalityRoundedIcon sx={{ fontSize: 26 }} />
-                    ) : (
-                        <DarkModeRoundedIcon sx={{ fontSize: 26 }} />
-                    )
-                ) : isAuthenticated ? (
+                {isAuthenticated ? (
                     <Avatar
                         src={profileAvatarSrc || undefined}
                         sx={{
@@ -245,7 +232,7 @@ const MobileBottomNav = ({
                     <PersonOutlineIcon sx={{ fontSize: 26 }} />
                 )}
                 <Typography component="span" sx={labelSx(profileActive)}>
-                    {onThemeToggle ? 'Тема' : (isAuthenticated ? 'Профиль' : 'Вход/Профиль')}
+                    {isAuthenticated ? 'Профиль' : 'Вход/Профиль'}
                 </Typography>
             </Box>
         </Box>

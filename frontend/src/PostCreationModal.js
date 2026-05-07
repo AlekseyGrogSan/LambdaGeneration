@@ -72,14 +72,14 @@ const AI_EDIT_MODES = [
 const inputStyle = {
     // Общие стили для полей ввода Material UI в стиле "filled"
     '& .MuiFilledInput-root': {
-        backgroundColor: 'var(--ui-c176)',
+        backgroundColor: 'var(--surface-input)',
         color: 'var(--text-primary)',
         borderRadius: '8px',
         '&:hover': {
-            backgroundColor: 'var(--ui-c178)',
+            backgroundColor: 'color-mix(in oklab, var(--surface-input) 90%, var(--bg-elevated))',
         },
         '&.Mui-focused': {
-            backgroundColor: 'var(--ui-c181)',
+            backgroundColor: 'color-mix(in oklab, var(--surface-input) 86%, var(--bg-elevated))',
         },
         // ✅ ДОБАВЛЕНО: Активируем прокрутку внутри инпута
         overflowY: 'auto', 
@@ -163,7 +163,7 @@ const EditorToolbar = ({ editorRef, setInputDialog, onOpenAiPanel, aiBusy, aiHas
     }, [editorRef]);
 
     const basicTextColors = [
-        { name: 'Черный', value: 'var(--ui-c1)000' },
+        { name: 'Черный', value: '#111827' },
         { name: 'Белый', value: 'var(--text-primary)' },
         { name: 'Красный', value: 'var(--ui-c93)' },
         { name: 'Оранжевый', value: 'var(--ui-c99)' },
@@ -344,10 +344,10 @@ const EditorToolbar = ({ editorRef, setInputDialog, onOpenAiPanel, aiBusy, aiHas
 
     const getButtonStyle = (isActive, activeColor = 'var(--accent-500)') => ({
         color: isActive ? activeColor : 'var(--text-primary)',
-        backgroundColor: isActive ? 'var(--ui-c178)' : 'transparent',
+        backgroundColor: isActive ? 'color-mix(in oklab, var(--accent-500) 12%, transparent)' : 'transparent',
         borderRadius: '4px',
         transition: 'all 0.2s',
-        '&:hover': { backgroundColor: 'var(--ui-c50)666' }
+        '&:hover': { backgroundColor: 'color-mix(in oklab, var(--surface-soft) 95%, transparent)' }
     });
 
     return (
@@ -356,9 +356,9 @@ const EditorToolbar = ({ editorRef, setInputDialog, onOpenAiPanel, aiBusy, aiHas
                 display: 'flex',
                 gap: 1,
                 padding: 1,
-                backgroundColor: 'var(--ui-c48)555',
+                backgroundColor: 'var(--surface-soft)',
                 borderRadius: '8px 8px 0 0',
-                border: '1px solid var(--ui-c44)444',
+                border: '1px solid var(--border-default)',
                 flexWrap: 'nowrap',
                 overflowX: 'auto',
                 overflowY: 'hidden',
@@ -440,7 +440,7 @@ const EditorToolbar = ({ editorRef, setInputDialog, onOpenAiPanel, aiBusy, aiHas
                 PaperProps={{
                     sx: {
                         backgroundColor: 'var(--border-default)',
-                        color: 'white'
+                        color: 'var(--text-primary)'
                     }
                 }}
             >
@@ -495,7 +495,7 @@ const EditorToolbar = ({ editorRef, setInputDialog, onOpenAiPanel, aiBusy, aiHas
                 PaperProps={{
                     sx: {
                         backgroundColor: 'var(--border-default)',
-                        color: 'white',
+                        color: 'var(--text-primary)',
                     }
                 }}
             >
@@ -547,7 +547,7 @@ const EditorToolbar = ({ editorRef, setInputDialog, onOpenAiPanel, aiBusy, aiHas
                 PaperProps={{
                     sx: {
                         backgroundColor: 'var(--ui-c33)',
-                        color: 'white',
+                        color: 'var(--text-primary)',
                         width: 340,
                         border: '1px solid var(--ui-c192)'
                     }
@@ -652,7 +652,8 @@ const PostCreationModal = ({ open, handleClose, onUnauthorized, onPostSuccess, o
         transform: { xs: 'none', sm: 'translate(-50%, -50%)' },
         width: { xs: '100vw', sm: '90%', md: '800px' },
         height: { xs: '100dvh', sm: 'auto' },
-        bgcolor: 'var(--ui-c41)',
+        bgcolor: 'var(--surface-elevated)',
+        border: '1px solid var(--border-default)',
         borderRadius: { xs: 0, sm: '16px' },
         boxShadow: 24,
         p: { xs: 2, sm: 4 },
@@ -1290,8 +1291,8 @@ const PostCreationModal = ({ open, handleClose, onUnauthorized, onPostSuccess, o
                             overflowY: 'auto', // Добавление вертикальной прокрутки
                             padding: 2,
                             // Стиль поля ввода для соответствия inputStyle
-                            backgroundColor: 'var(--ui-c176)',
-                            border: '1px solid var(--ui-c44)444',
+                            backgroundColor: 'var(--surface-input)',
+                            border: '1px solid var(--border-default)',
                             borderRadius: '0 0 8px 8px',
                             color: 'var(--text-primary)',
                             outline: 'none', // Убрать стандартное синее выделение фокуса
@@ -1345,18 +1346,18 @@ const PostCreationModal = ({ open, handleClose, onUnauthorized, onPostSuccess, o
                             sx: {
                                 width: { xs: '92vw', sm: 520 },
                                 maxWidth: '92vw',
-                                backgroundColor: 'var(--ui-c27)',
-                                border: '1px solid var(--ui-c142)',
-                                color: 'var(--ui-c83)',
+                                backgroundColor: 'var(--surface-elevated)',
+                                border: '1px solid var(--border-default)',
+                                color: 'var(--text-primary)',
                                 p: 1.4
                             }
                         }}
                     >
-                        <Typography sx={{ color: 'var(--ui-c65)', fontWeight: 700, display: 'flex', alignItems: 'center', gap: 1, mb: 0.8 }}>
+                        <Typography sx={{ color: 'var(--accent-500)', fontWeight: 700, display: 'flex', alignItems: 'center', gap: 1, mb: 0.8 }}>
                             <AutoFixHighIcon fontSize="small" /> AI-редактор
                         </Typography>
 
-                        <Typography variant="caption" sx={{ color: 'var(--ui-c71)' }}>
+                        <Typography variant="caption" sx={{ color: 'var(--text-secondary)' }}>
                             Выделите фрагмент в поле текста для частичного редактирования и экономии токенов.
                         </Typography>
 
@@ -1462,7 +1463,7 @@ const PostCreationModal = ({ open, handleClose, onUnauthorized, onPostSuccess, o
                         maxHeight: { xs: '120px', sm: '150px' },
                         overflowY: 'auto',
                         padding: '4px',
-                        border: '1px solid var(--ui-c44)444',
+                        border: '1px solid var(--border-default)',
                         borderRadius: '8px',
                         backgroundColor: 'color-mix(in oklab, var(--text-primary) 5%, transparent)',
                         
@@ -1490,7 +1491,7 @@ const PostCreationModal = ({ open, handleClose, onUnauthorized, onPostSuccess, o
                                     label={tag}
                                     onClick={() => handleTagToggle(tag)}
                                     // Иконка галочки при выборе
-                                    icon={isSelected ? <DoneIcon style={{ color: 'white' }} /> : undefined}
+                                    icon={isSelected ? <DoneIcon style={{ color: 'var(--text-primary)' }} /> : undefined}
                                     // Отключаем клик, если лимит достигнут и тег не выбран
                                     disabled={selectedTags.length >= 5 && !isSelected} 
                                     sx={{
