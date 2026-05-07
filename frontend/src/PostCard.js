@@ -8,6 +8,7 @@ import { createRoot } from 'react-dom/client';
 
 import {
     Box,
+    Button,
     Card,
     Typography,
     IconButton,
@@ -17,13 +18,23 @@ import {
 import FavoriteIcon from '@mui/icons-material/Favorite';
 import ChatBubbleOutlineIcon from '@mui/icons-material/ChatBubbleOutline';
 import ShortcutRoundedIcon from '@mui/icons-material/ShortcutRounded';
+import VisibilityOutlinedIcon from '@mui/icons-material/VisibilityOutlined';
 import { buildArticleImageUrl, buildAvatarUrl, DEFAULT_AVATAR_SRC } from './avatarUtils';
+import { ProfileIcon } from './profileIcons';
 import hljs from 'highlight.js';
 import 'highlight.js/styles/atom-one-dark.css';
-import { formatContentForRender } from './contentFormatting';
+import { formatContentForRender, normalizeCodeLanguage } from './contentFormatting';
+import { mapTagsToLabels } from './CategoryModal';
+import UserRoleBadge from './UserRoleBadge';
 
 const CodeBlock = ({ language, value }) => {
     const [isCopied, setIsCopied] = React.useState(false);
+    const [isExpanded, setIsExpanded] = React.useState(false);
+    const codeLines = String(value || '').split('\n');
+    const isLongCode = codeLines.length > 14;
+    const previewValue = isLongCode && !isExpanded
+        ? codeLines.slice(0, 14).join('\n')
+        : value;
 
     const handleCopy = () => {
         navigator.clipboard.writeText(value);
@@ -32,22 +43,83 @@ const CodeBlock = ({ language, value }) => {
     };
 
     return (
-        <Box sx={{ my: 2, borderRadius: '8px', overflow: 'hidden', border: '1px solid #3a3a3a' }}>
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', bgcolor: '#1e1e1e', py: 0.5, px: 2, borderBottom: '1px solid #2d2d2d' }}>
-                <Typography variant='caption' sx={{ color: '#888', fontWeight: 'bold' }}>
-                    {language || 'text'}
-                </Typography>
-                <IconButton size='small' onClick={handleCopy} sx={{ color: '#888', '&:hover': { color: '#fff' } }}>
-                    {isCopied ? <CheckIcon fontSize='small' sx={{ color: '#00e676' }} /> : <ContentCopyIcon fontSize='small' />}
+        <Box
+            sx={{
+                my: 2,
+                borderRadius: '14px',
+                overflow: 'hidden',
+                border: '1px solid var(--ui-c131)',
+                boxShadow: '0 16px 36px var(--ui-c108)',
+                background: 'linear-gradient(180deg, var(--ui-c150), var(--ui-c146))',
+            }}
+        >
+            <Box
+                sx={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    px: 1.5,
+                    py: 1,
+                    background: 'linear-gradient(90deg, var(--ui-c167), var(--ui-c149))',
+                    borderBottom: '1px solid color-mix(in oklab, var(--text-primary) 8%, transparent)'
+                }}
+            >
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.2 }}>
+                    <Typography variant='caption' sx={{ color: 'var(--ui-c63)', fontWeight: 700, letterSpacing: 0.4 }}>
+                        {(language || 'text').toUpperCase()}
+                    </Typography>
+                </Box>
+                <IconButton size='small' onClick={handleCopy} sx={{ color: 'var(--ui-c60)', '&:hover': { color: 'var(--ui-c90)' } }}>
+                    {isCopied ? <CheckIcon fontSize='small' sx={{ color: 'var(--ui-c39)' }} /> : <ContentCopyIcon fontSize='small' />}
                 </IconButton>
             </Box>
             <SyntaxHighlighter
-                language={language && language !== 'text' ? language : 'javascript'}
+                language={normalizeCodeLanguage(language) !== 'text' ? normalizeCodeLanguage(language) : undefined}
                 style={vscDarkPlus}
-                customStyle={{ margin: 0, padding: '16px', fontSize: '0.9rem', backgroundColor: '#1e1e1e' }}
+                showLineNumbers
+                lineNumberStyle={{ color: 'var(--ui-c160)', minWidth: '2.2em', paddingRight: '1em' }}
+                customStyle={{
+                    margin: 0,
+                    padding: '18px 20px',
+                    fontSize: '0.92rem',
+                    lineHeight: 1.58,
+                    backgroundColor: 'transparent',
+                    fontFamily: 'JetBrains Mono, Fira Code, Consolas, Menlo, monospace'
+                }}
             >
-                {value}
+                {previewValue}
             </SyntaxHighlighter>
+            {isLongCode && (
+                <Box
+                    sx={{
+                        px: 1.5,
+                        py: 1,
+                        borderTop: '1px solid color-mix(in oklab, var(--text-primary) 8%, transparent)',
+                        background: 'linear-gradient(180deg, var(--ui-c147), var(--ui-c210))',
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center'
+                    }}
+                >
+                    <Typography variant='caption' sx={{ color: 'var(--ui-c55)' }}>
+                        {codeLines.length} строк кода
+                    </Typography>
+                    <Button
+                        size='small'
+                        onClick={() => setIsExpanded((prev) => !prev)}
+                        sx={{
+                            color: 'var(--ui-c63)',
+                            textTransform: 'none',
+                            fontWeight: 700,
+                            minWidth: 'auto',
+                            px: 1,
+                            '&:hover': { backgroundColor: 'var(--ui-c152)' }
+                        }}
+                    >
+                        {isExpanded ? 'Свернуть' : 'Показать полностью'}
+                    </Button>
+                </Box>
+            )}
         </Box>
     );
 };
@@ -75,17 +147,17 @@ const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || '/api';
 
 // --- ОБЩИЙ МАССИВ ЦВЕТОВ ДЛЯ ТЕГОВ ---
 const TAG_COLORS = [
-    '#ff6f00', 
-    '#00e676', 
-    '#2979ff', 
-    '#ff1744', 
-    '#e040fb', 
-    '#00bcd4', 
+    'var(--ui-c97)', 
+    'var(--ui-c13)', 
+    'var(--ui-c37)', 
+    'var(--ui-c94)', 
+    'var(--ui-c86)', 
+    'var(--ui-c7)', 
 ];
 
 // ФИКС: ВЫНОСИМ СТИЛЬ МЕТКИ ЗА ПРЕДЕЛЫ КОМПОНЕНТА
 const labelStyle = {
-    color: '#00e5c9',
+    color: 'var(--accent-400)',
     display: 'block',
     mb: 0.5,
     textTransform: 'uppercase',
@@ -108,10 +180,13 @@ const PostCard = React.memo(({
     id, 
     nickname, 
     authorAvatar,
+    authorProfileIcon,
+    authorRole,
     authorId,
     onAuthorClick,
     title, 
     article_preview, 
+    viewsCount = 0,
     likesCount, 
     commentsCount, 
     isLiked, 
@@ -131,6 +206,7 @@ const PostCard = React.memo(({
     const [shareNoticeOpen, setShareNoticeOpen] = useState(false);
     const shareTimerRef = useRef(null);
     const [imageBroken, setImageBroken] = useState(false);
+    const suppressNextClickRef = useRef(false);
 
     const withCacheBust = (url) => {
         if (!url) return url;
@@ -205,19 +281,19 @@ const PostCard = React.memo(({
     const contentRef = useRef(null);
     const renderedPreviewContent = useMemo(() => formatContentForRender(article_preview || ''), [article_preview]);
 
-            useEffect(() => {
+    useEffect(() => {
         if (contentRef.current) {
             contentRef.current.querySelectorAll('pre code').forEach((block) => {
                 if (!block.dataset.highlighted) {
                     const codeText = normalizeCodeBlockText(block);
 
                     const languageClass = Array.from(block.classList).find((cls) => cls.startsWith('language-'));
-                    let language = languageClass ? languageClass.replace('language-', '') : '';
+                    let language = languageClass ? normalizeCodeLanguage(languageClass.replace('language-', '')) : '';
                     if (!language || language === 'text') {
                         // try to find it from an older th element if it was an old table
                         const possibleTh = block.closest('table')?.querySelector('th');
                         if (possibleTh && possibleTh.textContent && possibleTh.textContent.trim() !== 'code') {
-                            language = possibleTh.textContent.trim();
+                            language = normalizeCodeLanguage(possibleTh.textContent.trim());
                         } else {
                             language = 'code';
                         }
@@ -237,10 +313,10 @@ const PostCard = React.memo(({
 
                     // Build our standard unified block
                     const newWrapper = document.createElement('div');
-                    newWrapper.innerHTML = `<table class="tg-code-block code-block-table" style="width: 100%; background: #282c34; border-radius: 8px; border: 1px solid rgba(255,255,255,0.12); border-collapse: separate; border-spacing: 0; margin: 14px 0; overflow: hidden; table-layout: fixed;">
+                    newWrapper.innerHTML = `<table class="tg-code-block code-block-table" style="width: 100%; background: var(--code-bg); border-radius: 8px; border: 1px solid var(--code-border); border-collapse: separate; border-spacing: 0; margin: 14px 0; overflow: hidden; table-layout: fixed;">
     <thead>
         <tr>
-            <th style="padding: 6px 12px; background: #21252b; color: rgba(255,255,255,0.6); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 12px; text-align: left; font-weight: bold; border-bottom: 1px solid rgba(255,255,255,0.12); user-select: none;">
+            <th style="padding: 6px 12px; background: var(--code-header-bg); color: var(--code-header-text); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 12px; text-align: left; font-weight: bold; border-bottom: 1px solid var(--code-border); user-select: none;">
                 ${language}
             </th>
         </tr>
@@ -248,7 +324,7 @@ const PostCard = React.memo(({
     <tbody>
         <tr>
             <td style="padding: 12px; overflow-x: auto;">
-                <pre style="margin: 0; white-space: pre-wrap !important; word-wrap: break-word; background: transparent;"><code class="language-${language}" style="font-family: Consolas, monospace; font-size: 14px; background: transparent !important; padding: 0 !important; border: none !important;"></code></pre>
+                <pre style="margin: 0; white-space: pre-wrap !important; word-wrap: break-word; background: transparent;"><code class="language-${language}" style="font-family: Consolas, monospace; font-size: 14px; background: transparent !important; padding: 0 !important; border: none !important; color: var(--text-primary);"></code></pre>
             </td>
         </tr>
     </tbody>
@@ -256,14 +332,14 @@ const PostCard = React.memo(({
                     const newTable = newWrapper.firstElementChild;
                     const newCode = newTable.querySelector('code');
                     newCode.textContent = codeText;
-                    
+
                     if (language && language !== 'code' && hljs.getLanguage(language)) {
                         hljs.highlightElement(newCode);
                     } else {
                         newCode.innerHTML = hljs.highlightAuto(codeText).value;
                     }
                     newCode.dataset.highlighted = 'true';
-                    
+
                     if (container && container.parentNode) {
                         container.parentNode.replaceChild(newTable, container);
                     }
@@ -280,11 +356,15 @@ const PostCard = React.memo(({
                 if (table.dataset.replaced) return;
                 table.dataset.replaced = 'true';
 
-                const th = table.querySelector('th');
-                const languageClass = th ? th.textContent.trim() : 'text';      
-
                 const codeBlock = table.querySelector('pre code') || table.querySelector('pre');
                 const codeText = codeBlock ? normalizeCodeBlockText(codeBlock) : normalizeCodeBlockText(table);
+                const classLanguage = codeBlock
+                    ? Array.from(codeBlock.classList).find((cls) => cls.startsWith('language-'))
+                    : null;
+                const th = table.querySelector('th');
+                const languageClass = normalizeCodeLanguage(
+                    classLanguage ? classLanguage.replace('language-', '') : (th ? th.textContent.trim() : 'text')
+                );
 
                 const parent = table.parentNode;
                 const wrapper = document.createElement('div');
@@ -303,7 +383,7 @@ const PostCard = React.memo(({
                 const codeText = normalizeCodeBlockText(block);
 
                 const languageCls = Array.from(block.classList).find((cls) => cls.startsWith('language-'));
-                const language = languageCls ? languageCls.replace('language-', '') : '';
+                const language = normalizeCodeLanguage(languageCls ? languageCls.replace('language-', '') : 'text');
 
                 const pre = block.parentNode;
                 const wrapper = document.createElement('div');
@@ -346,7 +426,21 @@ const PostCard = React.memo(({
     };
 
     const handleCardClick = (e) => {
+        if (suppressNextClickRef.current) {
+            suppressNextClickRef.current = false;
+            return;
+        }
         if (onClick) onClick();
+    };
+
+    const handleCardPointerUp = (e) => {
+        if (!onClick || e.pointerType !== 'touch') return;
+
+        const interactiveTarget = e.target?.closest?.('button, a, input, textarea, [role="button"]');
+        if (interactiveTarget) return;
+
+        suppressNextClickRef.current = true;
+        onClick();
     };
 
     return (
@@ -354,14 +448,16 @@ const PostCard = React.memo(({
             sx={{
                 width: '100%',
                 maxWidth: '100%',
-                backgroundColor: '#2c2c2c',
-                borderRadius: '12px',
+                backgroundColor: 'var(--surface-elevated)',
+                borderRadius: '14px',
+                border: '1px solid var(--border-default)',
                 height: { xs: 'auto', md: '85vh' },
                 minHeight: { xs: 0, md: 'unset' },
                 cursor: onClick ? 'pointer' : 'default',
+                touchAction: 'manipulation',
                 transition: 'box-shadow 0.25s ease, transform 0.2s ease',
                 '&:hover': {
-                    boxShadow: { xs: 'none', md: '0 8px 16px rgba(0, 0, 0, 0.4)' },
+                    boxShadow: { xs: 'none', md: 'var(--shadow-soft)' },
                 },
                 display: 'flex',
                 flexDirection: 'column',
@@ -369,6 +465,7 @@ const PostCard = React.memo(({
                 ...sx,
             }}
             onClick={handleCardClick}
+            onPointerUp={handleCardPointerUp}
         >
             {shareNoticeOpen && (
                 <Box
@@ -378,17 +475,17 @@ const PostCard = React.memo(({
                         left: '50%',
                         transform: 'translate(-50%, -50%)',
                         zIndex: 2000,
-                        backgroundColor: 'rgba(18, 18, 18, 0.95)',
-                        border: '1px solid rgba(0, 191, 165, 0.6)',
+                        backgroundColor: 'var(--surface-panel)',
+                        border: '1px solid var(--border-default)',
                         borderRadius: '12px',
-                        boxShadow: '0 10px 30px rgba(0, 0, 0, 0.5)',
+                        boxShadow: 'var(--shadow-soft)',
                         px: 3,
                         py: 1.5,
                         pointerEvents: 'none',
                         textAlign: 'center',
                     }}
                 >
-                    <Typography variant="body1" sx={{ color: 'white', fontWeight: 700 }}>
+                    <Typography variant="body1" sx={{ color: 'var(--text-primary)', fontWeight: 700 }}>
                         Ссылка на статью скопирована
                     </Typography>
                 </Box>
@@ -417,7 +514,7 @@ const PostCard = React.memo(({
                             <Box sx={{ display: 'flex', alignItems: 'center', gap: { xs: 0.75, md: 1 } }}>
                                 <Avatar
                                     src={resolvedAuthorAvatar}
-                                    sx={{ width: { xs: 28, md: 34 }, height: { xs: 28, md: 34 }, border: '2px solid #00bfa5' }}
+                                    sx={{ width: { xs: 28, md: 34 }, height: { xs: 28, md: 34 }, border: '2px solid var(--accent-500)' }}
                                     imgProps={{
                                         onError: (e) => {
                                             if (!e.currentTarget.dataset.retried && resolvedAuthorAvatar) {
@@ -429,19 +526,29 @@ const PostCard = React.memo(({
                                         },
                                     }}
                                 />
-                                <Typography 
-                                    variant="h6" 
-                                    sx={{
-                                        color: '#00e5c9',
-                                        fontWeight: 'bold',
-                                        fontSize: { xs: '0.95rem', md: '1.25rem' },
-                                        overflow: 'hidden',
-                                        textOverflow: 'ellipsis',
-                                        whiteSpace: 'nowrap',
-                                    }}
-                                >
-                                    @{nickname}
-                                </Typography>
+                                <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', minWidth: 0, gap: 0.25 }}>
+                                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, minWidth: 0, flexWrap: 'wrap' }}>
+                                        <Typography 
+                                            variant="h6" 
+                                            sx={{
+                                                color: 'var(--accent-400)',
+                                                fontWeight: 'bold',
+                                                fontSize: { xs: '0.95rem', md: '1.25rem' },
+                                                overflow: 'hidden',
+                                                textOverflow: 'ellipsis',
+                                                whiteSpace: 'nowrap',
+                                            }}
+                                        >
+                                            {nickname}
+                                        </Typography>
+                                        <ProfileIcon
+                                            icon={authorProfileIcon}
+                                            size={20}
+                                            sx={{ filter: 'drop-shadow(0 0 4px var(--ui-c128))' }}
+                                        />
+                                    </Box>
+                                    <UserRoleBadge role={authorRole} size="sm" />
+                                </Box>
                             </Box>
                         </Box>
                         
@@ -454,26 +561,28 @@ const PostCard = React.memo(({
                                 maxWidth: '100%',
                                 pb: 0.25,
                                 scrollbarWidth: 'thin',
-                                scrollbarColor: '#00bfa5 #2c2c2c',
+                                scrollbarColor: 'var(--accent-500) var(--surface-elevated)',
                                 '&::-webkit-scrollbar': { height: 4 },
-                                '&::-webkit-scrollbar-thumb': { background: '#00bfa5', borderRadius: 4 },
+                                '&::-webkit-scrollbar-thumb': { background: 'var(--accent-500)', borderRadius: 4 },
                             }}
                         >
-                            {tags.map((tag, index) => (
+                            {mapTagsToLabels(Array.isArray(tags) ? tags : []).map((tag, index) => {
+                                const strTag = String(tag);
+                                return (
                                 <Chip 
                                     key={index}
-                                    label={tag}
+                                    label={strTag}
                                     size="small"
                                     sx={{ 
-                                        backgroundColor: getTagColor(tag, index), 
-                                        color: 'white', 
+                                        backgroundColor: getTagColor(strTag, index), 
+                                        color: 'var(--text-primary)', 
                                         fontWeight: 'bold',
                                         height: { xs: 24, md: 22 },
                                         flexShrink: 0,
                                         fontSize: { xs: '0.7rem', md: '0.8125rem' },
                                     }}
                                 />
-                            ))}
+                            )})}
                         </Box>
                     </Box>
                 </Box>
@@ -486,7 +595,7 @@ const PostCard = React.memo(({
                     <Typography 
                         variant="h5" 
                         sx={{ 
-                            color: '#f5f5f5',
+                            color: 'var(--text-primary)',
                             fontWeight: 'bold',
                             fontSize: { xs: '0.92rem', sm: '1.1rem', md: '1.5rem' },
                             overflow: 'hidden', 
@@ -503,7 +612,7 @@ const PostCard = React.memo(({
                     </Typography>
                 </Box>
 
-                <Box sx={{ flexGrow: { xs: 0, md: 1 }, mb: { xs: 1, md: 2 }, overflow: 'hidden', color: '#d0d0d0' }}>
+                <Box sx={{ flexGrow: { xs: 0, md: 1 }, mb: { xs: 1, md: 2 }, overflow: 'hidden', color: 'var(--text-secondary)' }}>
                     <Typography variant="body2" sx={{ ...labelStyle, display: { xs: 'none', md: 'block' } }}>
                         Описание
                     </Typography>
@@ -519,7 +628,11 @@ const PostCard = React.memo(({
                             WebkitLineClamp: { xs: 3, md: 15 },
                             WebkitBoxOrient: 'vertical',
                             fontSize: { xs: '0.875rem', md: '1rem' },
-                            lineHeight: 1.45 } }
+                            lineHeight: 1.45,
+                            '[data-theme="light"] & [style*="color: white"], [data-theme="light"] & [style*="color:white"], [data-theme="light"] & [style*="color:#fff"], [data-theme="light"] & [style*="color: #fff"], [data-theme="light"] & [style*="color: rgb(255, 255, 255)"], [data-theme="light"] & font[color="white"]': {
+                                color: 'var(--text-primary) !important',
+                            },
+                        } }
                     />
                 </Box>
             </Box>
@@ -527,34 +640,49 @@ const PostCard = React.memo(({
             {showImage && resolvedImageUrl && !imageBroken && (
                 <Box sx={{ px: { xs: 1.25, md: 2 }, pb: { xs: 1, md: 1.5 }, width: '100%', boxSizing: 'border-box' }}>
                     <Box
-                        component="img"
-                        src={resolvedImageUrl}
-                        alt="Фото статьи"
-                        onError={(e) => {
-                            if (!e.currentTarget.dataset.retried && resolvedImageUrl) {
-                                e.currentTarget.dataset.retried = '1';
-                                e.currentTarget.src = withCacheBust(resolvedImageUrl);
-                                return;
-                            }
-                            setImageBroken(true);
-                        }}
                         sx={{
                             width: '100%',
                             maxWidth: '100%',
-                            height: { xs: 'auto', md: 200 },
-                            maxHeight: { xs: 280, sm: 320, md: 200 },
-                            aspectRatio: { xs: '16 / 10', md: 'auto' },
-                            objectFit: 'cover',
+                            height: { xs: 180, sm: 220, md: 200 },
+                            position: 'relative',
                             borderRadius: '12px',
-                            border: '1px solid #333',
-                            display: 'block',
+                            border: '1px solid var(--border-default)',
+                            backgroundColor: 'transparent',
+                            overflow: 'hidden',
                         }}
-                    />
+                    >
+                        <Box
+                            component="img"
+                            src={resolvedImageUrl}
+                            alt="Фото статьи"
+                            onError={(e) => {
+                                if (!e.currentTarget.dataset.retried && resolvedImageUrl) {
+                                    e.currentTarget.dataset.retried = '1';
+                                    e.currentTarget.src = withCacheBust(resolvedImageUrl);
+                                    return;
+                                }
+                                setImageBroken(true);
+                            }}
+                            sx={{
+                                position: 'absolute',
+                                inset: 0,
+                                margin: 'auto',
+                                width: 'auto',
+                                height: 'auto',
+                                maxWidth: '100%',
+                                maxHeight: '100%',
+                                objectFit: 'contain',
+                                objectPosition: 'center',
+                                borderRadius: '11px',
+                                display: 'block',
+                            }}
+                        />
+                    </Box>
                 </Box>
             )}
 
             <Box sx={{ 
-                borderTop: '1px solid #333', 
+                borderTop: '1px solid var(--border-default)', 
                 px: { xs: 0.5, md: 1.5 },
                 py: { xs: 0.75, md: 1.5 },
                 display: 'flex', 
@@ -566,7 +694,7 @@ const PostCard = React.memo(({
                     <Box sx={{ display: 'flex', alignItems: 'center' }}>
                         <IconButton
                             sx={{
-                                color: isLiked ? '#ff1744' : '#00e5c9',
+                                color: isLiked ? 'var(--ui-c94)' : 'var(--accent-400)',
                                 minWidth: 44,
                                 minHeight: 44,
                                 transition: 'color 0.2s ease, transform 0.15s ease',
@@ -577,7 +705,7 @@ const PostCard = React.memo(({
                         >
                             <FavoriteIcon sx={{ fontSize: { xs: 26, md: 30 } }} />
                         </IconButton>
-                        <Typography variant="subtitle1" sx={{ color: '#f5f5f5', fontWeight: 'bold', fontSize: { xs: '0.9rem', md: '1rem' } }}>
+                        <Typography variant="subtitle1" sx={{ color: 'var(--text-primary)', fontWeight: 'bold', fontSize: { xs: '0.9rem', md: '1rem' } }}>
                             {likesCount}
                         </Typography>
                     </Box>
@@ -586,7 +714,7 @@ const PostCard = React.memo(({
                         <Box sx={{ display: 'flex', alignItems: 'center' }}>
                             <IconButton
                                 sx={{
-                                    color: '#00e5c9',
+                                    color: 'var(--accent-400)',
                                     minWidth: 44,
                                     minHeight: 44,
                                     transition: 'color 0.2s ease',
@@ -596,19 +724,38 @@ const PostCard = React.memo(({
                             >
                                 <ChatBubbleOutlineIcon sx={{ fontSize: { xs: 26, md: 30 } }} />
                             </IconButton>
-                            <Typography variant="subtitle1" sx={{ color: '#f5f5f5', fontWeight: 'bold', fontSize: { xs: '0.9rem', md: '1rem' } }}>
+                            <Typography variant="subtitle1" sx={{ color: 'var(--text-primary)', fontWeight: 'bold', fontSize: { xs: '0.9rem', md: '1rem' } }}>
                                 {commentsCount}
                             </Typography>
                         </Box>
                     )}
 
+                    <Box sx={{ display: 'flex', alignItems: 'center', ml: 'auto' }}>
+                        <IconButton
+                            sx={{
+                                color: 'var(--accent-400)',
+                                minWidth: 44,
+                                minHeight: 44,
+                                transition: 'color 0.2s ease',
+                            }}
+                            disableRipple
+                            disableFocusRipple
+                            aria-label="Просмотры"
+                        >
+                            <VisibilityOutlinedIcon sx={{ fontSize: { xs: 24, md: 28 } }} />
+                        </IconButton>
+                        <Typography variant="subtitle1" sx={{ color: 'var(--text-primary)', fontWeight: 'bold', fontSize: { xs: '0.9rem', md: '1rem' } }}>
+                            {viewsCount}
+                        </Typography>
+                    </Box>
+
                     {showRepost && (
                         <IconButton
                             sx={{
-                                color: '#00e5c9',
+                                color: 'var(--accent-400)',
                                 minWidth: 44,
                                 minHeight: 44,
-                                ml: 'auto',
+                                ml: 0.5,
                                 transition: 'color 0.2s ease',
                             }}
                             onClick={handleShareClick}

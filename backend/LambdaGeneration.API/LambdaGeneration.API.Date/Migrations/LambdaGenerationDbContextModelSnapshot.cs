@@ -38,7 +38,7 @@ namespace LambdaGeneration.API.Date.Migrations
                         .HasMaxLength(500)
                         .HasColumnType("character varying(500)");
 
-                    b.Property<List<int>>("ArticleTags")
+                    b.PrimitiveCollection<List<int>>("ArticleTags")
                         .IsRequired()
                         .HasColumnType("integer[]");
 
@@ -54,6 +54,9 @@ namespace LambdaGeneration.API.Date.Migrations
                         .HasColumnType("integer");
 
                     b.Property<int>("CountLikes")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("CountViews")
                         .HasColumnType("integer");
 
                     b.Property<DateTime>("CreatedDate")
@@ -202,6 +205,11 @@ namespace LambdaGeneration.API.Date.Migrations
                     b.Property<int>("Role")
                         .HasColumnType("integer");
 
+                    b.Property<string>("TagName")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)");
+
                     b.Property<string>("UserName")
                         .IsRequired()
                         .HasMaxLength(100)
@@ -221,6 +229,34 @@ namespace LambdaGeneration.API.Date.Migrations
                     b.ToTable("Users");
                 });
 
+            modelBuilder.Entity("LambdaGeneration.API.Date.Entities.ViewEntity", b =>
+                {
+                    b.Property<Guid>("ID")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("ArticleID")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("UserID")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("VisitorKey")
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)");
+
+                    b.Property<DateTime>("ViewedDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("ID");
+
+                    b.HasIndex("ArticleID", "UserID", "ViewedDate");
+
+                    b.HasIndex("ArticleID", "VisitorKey", "ViewedDate");
+
+                    b.ToTable("Views");
+                });
+
             modelBuilder.Entity("LambdaGeneration.API.Date.Entities.ArticlesEntity", b =>
                 {
                     b.HasOne("LambdaGeneration.API.Date.Entities.UsersEntity", null)
@@ -228,41 +264,6 @@ namespace LambdaGeneration.API.Date.Migrations
                         .HasForeignKey("AuthorID")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
-                });
-
-            modelBuilder.Entity("LambdaGeneration.API.Date.Entities.SubscriptionEntity", b =>
-                {
-                    b.HasOne("LambdaGeneration.API.Date.Entities.UsersEntity", "Follower")
-                        .WithMany("Following")
-                        .HasForeignKey("FollowerId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("LambdaGeneration.API.Date.Entities.UsersEntity", "Following")
-                        .WithMany("Followers")
-                        .HasForeignKey("FollowingId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Follower");
-
-                    b.Navigation("Following");
-                });
-
-            modelBuilder.Entity("LambdaGeneration.API.Date.Entities.LikeEntity", b =>
-                {
-                    b.HasOne("LambdaGeneration.API.Date.Entities.ArticlesEntity", "Articles")
-                        .WithMany("Likes")
-                        .HasForeignKey("ArticleId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Articles");
-                });
-
-            modelBuilder.Entity("LambdaGeneration.API.Date.Entities.ArticlesEntity", b =>
-                {
-                    b.Navigation("Likes");
                 });
 
             modelBuilder.Entity("LambdaGeneration.API.Date.Entities.CommentsEntity", b =>

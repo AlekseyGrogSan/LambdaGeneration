@@ -8,17 +8,17 @@ const style = {
     left: '50%',
     transform: 'translate(-50%, -50%)',
     width: { xs: '92%', sm: 560, md: 700 },
-    bgcolor: '#202020',
-    border: '1px solid rgba(255,255,255,0.08)',
+    bgcolor: 'var(--surface-panel)',
+    border: '1px solid color-mix(in oklab, var(--text-primary) 8%, transparent)',
     borderRadius: '16px',
-    boxShadow: '0 18px 48px rgba(0,0,0,0.55)',
+    boxShadow: 'var(--shadow-soft)',
     p: 4,
-    color: 'white',
+    color: 'var(--text-primary)',
     maxHeight: '85vh',
     overflowY: 'auto',
     '&::-webkit-scrollbar': { width: '8px' },
-    '&::-webkit-scrollbar-track': { background: 'rgba(255,255,255,0.05)' },
-    '&::-webkit-scrollbar-thumb': { background: '#00bfa5', borderRadius: '8px' },
+    '&::-webkit-scrollbar-track': { background: 'var(--surface-soft)' },
+    '&::-webkit-scrollbar-thumb': { background: 'var(--accent-500)', borderRadius: '8px' },
 };
 
 export const TAG_CATEGORIES = [
@@ -68,6 +68,18 @@ export const TAG_CATEGORIES = [
     },
 ];
 
+export const mapTagsToLabels = (tags) => {
+    if (!tags || !Array.isArray(tags)) return [];
+    const allTags = TAG_CATEGORIES.flatMap(c => c.tags);
+    return tags.map(t => {
+        if (typeof t === 'number') {
+            const found = allTags.find(tagObj => tagObj.id === t);
+            return found ? found.label : t.toString();
+        }
+        return t;
+    });
+};
+
 const CategoryModal = ({ open, handleClose, selectedTags = [], onApply }) => {
     const [localSelected, setLocalSelected] = useState([]);
 
@@ -112,13 +124,13 @@ const CategoryModal = ({ open, handleClose, selectedTags = [], onApply }) => {
                 >
                     <CloseIcon />
                 </IconButton>
-                <Typography id="category-modal-title" variant="h6" component="h2" sx={{ color: '#00bfa5', fontWeight: 'bold', mb: 2 }}>
+                <Typography id="category-modal-title" variant="h6" component="h2" sx={{ color: 'var(--accent-500)', fontWeight: 'bold', mb: 2 }}>
                     Категории
                 </Typography>
 
                 {TAG_CATEGORIES.map((group, idx) => (
                     <Box key={group.title} sx={{ mb: 2 }}>
-                        <Typography variant="subtitle1" sx={{ color: '#bdbdbd', mb: 1, fontWeight: 700 }}>
+                        <Typography variant="subtitle1" sx={{ color: 'var(--text-secondary)', mb: 1, fontWeight: 700 }}>
                             {group.title}
                         </Typography>
                         <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
@@ -131,27 +143,31 @@ const CategoryModal = ({ open, handleClose, selectedTags = [], onApply }) => {
                                         onClick={() => toggleTag(tag.id)}
                                         sx={{
                                             cursor: 'pointer',
-                                            backgroundColor: selected ? '#00bfa5' : 'rgba(255,255,255,0.08)',
-                                            color: selected ? '#101010' : '#ffffff',
-                                            border: selected ? 'none' : '1px solid rgba(255,255,255,0.15)',
-                                            '&:hover': { backgroundColor: selected ? '#00d4b4' : 'rgba(255,255,255,0.15)' },
+                                            backgroundColor: selected ? 'var(--accent-500)' : 'var(--surface-elevated)',
+                                            color: selected ? 'var(--accent-contrast)' : 'var(--text-primary)',
+                                            border: selected ? 'none' : '1px solid var(--border-default)',
+                                            '&:hover': {
+                                                backgroundColor: selected
+                                                    ? 'var(--accent-600)'
+                                                    : 'color-mix(in oklab, var(--surface-soft) 92%, var(--surface-elevated))',
+                                            },
                                         }}
                                     />
                                 );
                             })}
                         </Box>
-                        {idx < TAG_CATEGORIES.length - 1 && <Divider sx={{ backgroundColor: '#333', mt: 2 }} />}
+                        {idx < TAG_CATEGORIES.length - 1 && <Divider sx={{ backgroundColor: 'var(--border-default)', mt: 2 }} />}
                     </Box>
                 ))}
 
                 <Box sx={{ display: 'flex', gap: 2, mt: 2, justifyContent: 'flex-end' }}>
-                    <Button onClick={handleClear} sx={{ color: '#bdbdbd' }}>
+                    <Button onClick={handleClear} sx={{ color: 'var(--text-secondary)' }}>
                         Сбросить
                     </Button>
                     <Button
                         variant="contained"
                         onClick={handleApply}
-                        sx={{ bgcolor: '#00bfa5', '&:hover': { bgcolor: '#009688' } }}
+                        sx={{ bgcolor: 'var(--accent-500)', '&:hover': { bgcolor: 'var(--accent-600)' } }}
                     >
                         Применить
                     </Button>

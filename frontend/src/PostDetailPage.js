@@ -1,4 +1,4 @@
-﻿import React, { useEffect, useRef, useState, useMemo } from 'react';
+import React, { useEffect, useRef, useState, useMemo } from 'react';
 
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
@@ -25,18 +25,28 @@ import {
 import FavoriteIcon from '@mui/icons-material/Favorite';
 import ChatBubbleOutlineIcon from '@mui/icons-material/ChatBubbleOutline';
 import ShortcutRoundedIcon from '@mui/icons-material/ShortcutRounded';
+import VisibilityOutlinedIcon from '@mui/icons-material/VisibilityOutlined';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import CloseIcon from '@mui/icons-material/Close';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import ExpandLessIcon from '@mui/icons-material/ExpandLess';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import { buildArticleImageUrl, buildAvatarUrl, DEFAULT_AVATAR_SRC } from './avatarUtils';
+import { ProfileIcon, resolveProfileIconValue, extractNameAndIcon } from './profileIcons';
 import hljs from 'highlight.js';
 import 'highlight.js/styles/atom-one-dark.css';
-import { formatContentForRender } from './contentFormatting';
+import { formatContentForRender, normalizeCodeLanguage } from './contentFormatting';
+import { mapTagsToLabels } from './CategoryModal';
+import UserRoleBadge from './UserRoleBadge';
 
 const CodeBlock = ({ language, value }) => {
     const [isCopied, setIsCopied] = React.useState(false);
+    const [isExpanded, setIsExpanded] = React.useState(false);
+    const codeLines = String(value || '').split('\n');
+    const isLongCode = codeLines.length > 14;
+    const previewValue = isLongCode && !isExpanded
+        ? codeLines.slice(0, 14).join('\n')
+        : value;
 
     const handleCopy = () => {
         navigator.clipboard.writeText(value);
@@ -45,22 +55,83 @@ const CodeBlock = ({ language, value }) => {
     };
 
     return (
-        <Box sx={{ my: 2, borderRadius: '8px', overflow: 'hidden', border: '1px solid #3a3a3a' }}>
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', bgcolor: '#1e1e1e', py: 0.5, px: 2, borderBottom: '1px solid #2d2d2d' }}>
-                <Typography variant='caption' sx={{ color: '#888', fontWeight: 'bold' }}>
-                    {language || 'text'}
-                </Typography>
-                <IconButton size='small' onClick={handleCopy} sx={{ color: '#888', '&:hover': { color: '#fff' } }}>
-                    {isCopied ? <CheckIcon fontSize='small' sx={{ color: '#00e676' }} /> : <ContentCopyIcon fontSize='small' />}
+        <Box
+            sx={{
+                my: 2,
+                borderRadius: '14px',
+                overflow: 'hidden',
+                border: '1px solid var(--ui-c131)',
+                boxShadow: '0 16px 36px var(--ui-c108)',
+                background: 'linear-gradient(180deg, var(--ui-c150), var(--ui-c146))',
+            }}
+        >
+            <Box
+                sx={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    px: 1.5,
+                    py: 1,
+                    background: 'linear-gradient(90deg, var(--ui-c167), var(--ui-c149))',
+                    borderBottom: '1px solid color-mix(in oklab, var(--text-primary) 8%, transparent)'
+                }}
+            >
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.2 }}>
+                    <Typography variant='caption' sx={{ color: 'var(--ui-c63)', fontWeight: 700, letterSpacing: 0.4 }}>
+                        {(language || 'text').toUpperCase()}
+                    </Typography>
+                </Box>
+                <IconButton size='small' onClick={handleCopy} sx={{ color: 'var(--ui-c60)', '&:hover': { color: 'var(--ui-c90)' } }}>
+                    {isCopied ? <CheckIcon fontSize='small' sx={{ color: 'var(--ui-c39)' }} /> : <ContentCopyIcon fontSize='small' />}
                 </IconButton>
             </Box>
             <SyntaxHighlighter
-                language={language && language !== 'text' ? language : 'javascript'}
+                language={normalizeCodeLanguage(language) !== 'text' ? normalizeCodeLanguage(language) : undefined}
                 style={vscDarkPlus}
-                customStyle={{ margin: 0, padding: '16px', fontSize: '0.9rem', backgroundColor: '#1e1e1e' }}
+                showLineNumbers
+                lineNumberStyle={{ color: 'var(--ui-c160)', minWidth: '2.2em', paddingRight: '1em' }}
+                customStyle={{
+                    margin: 0,
+                    padding: '18px 20px',
+                    fontSize: '0.92rem',
+                    lineHeight: 1.58,
+                    backgroundColor: 'transparent',
+                    fontFamily: 'JetBrains Mono, Fira Code, Consolas, Menlo, monospace'
+                }}
             >
-                {value}
+                {previewValue}
             </SyntaxHighlighter>
+            {isLongCode && (
+                <Box
+                    sx={{
+                        px: 1.5,
+                        py: 1,
+                        borderTop: '1px solid color-mix(in oklab, var(--text-primary) 8%, transparent)',
+                        background: 'linear-gradient(180deg, var(--ui-c147), var(--ui-c210))',
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center'
+                    }}
+                >
+                    <Typography variant='caption' sx={{ color: 'var(--ui-c55)' }}>
+                        {codeLines.length} строк кода
+                    </Typography>
+                    <Button
+                        size='small'
+                        onClick={() => setIsExpanded((prev) => !prev)}
+                        sx={{
+                            color: 'var(--ui-c63)',
+                            textTransform: 'none',
+                            fontWeight: 700,
+                            minWidth: 'auto',
+                            px: 1,
+                            '&:hover': { backgroundColor: 'var(--ui-c152)' }
+                        }}
+                    >
+                        {isExpanded ? 'Свернуть' : 'Показать полностью'}
+                    </Button>
+                </Box>
+            )}
         </Box>
     );
 };
@@ -87,27 +158,27 @@ const normalizeCodeBlockText = (block) => {
 const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || '/api';
 
 const TAG_COLORS = [
-    '#ff6f00',
-    '#00e676',
-    '#2979ff',
-    '#ff1744',
-    '#e040fb',
-    '#00bcd4',
+    'var(--ui-c97)',
+    'var(--ui-c13)',
+    'var(--ui-c37)',
+    'var(--ui-c94)',
+    'var(--ui-c86)',
+    'var(--ui-c7)',
 ];
 
 const commentInputStyle = {
     '& .MuiFilledInput-root': {
-        backgroundColor: '#2c2c2c',
-        color: 'white',
+        backgroundColor: 'var(--surface-elevated)',
+        color: 'var(--text-primary)',
         borderRadius: '10px',
-        '&:hover': { backgroundColor: '#3a3a3a' },
-        '&.Mui-focused': { backgroundColor: '#3a3a3a' },
+        '&:hover': { backgroundColor: 'var(--ui-c42)' },
+        '&.Mui-focused': { backgroundColor: 'var(--ui-c42)' },
     },
-    '& .MuiInputLabel-root': { color: '#bdbdbd' },
+    '& .MuiInputLabel-root': { color: 'var(--text-secondary)' },
 };
 
 const labelStyle = {
-    color: '#00bfa5',
+    color: 'var(--accent-500)',
     display: 'block',
     mb: 0.5,
     textTransform: 'uppercase',
@@ -160,13 +231,13 @@ const CommentItem = ({
             ml: Math.min(depth, 3) * 1.5,
             mt: 1.5,
             pl: 1.5,
-            borderLeft: depth > 0 ? '2px solid #3f3f3f' : 'none',
+            borderLeft: depth > 0 ? '2px solid var(--ui-c43)' : 'none',
         }}
     >
         <Box
             sx={{
-                backgroundColor: depth === 0 ? '#222' : '#262626',
-                border: '1px solid #333',
+                backgroundColor: depth === 0 ? 'var(--ui-c32)' : 'var(--ui-c35)',
+                border: '1px solid var(--border-default)',
                 borderRadius: '12px',
                 p: 1.5,
             }}
@@ -174,21 +245,24 @@ const CommentItem = ({
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                 <Avatar
                     src={buildAvatarUrl(API_BASE_URL, comment.authorAvatar)}
-                    sx={{ width: 28, height: 28, border: '1px solid #00bfa5' }}
+                    sx={{ width: 28, height: 28, border: '1px solid var(--accent-500)' }}
                     imgProps={{
                         onError: (e) => {
                             e.currentTarget.src = DEFAULT_AVATAR_SRC;
                         },
                     }}
                 />
-                <Typography variant="body2" sx={{ color: '#00bfa5', fontWeight: 700 }}>
-                    @{comment.authorName}
-                </Typography>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, minWidth: 0 }}>
+                    <Typography variant="body2" sx={{ color: 'var(--accent-500)', fontWeight: 700 }}>
+                        @{comment.authorName}
+                    </Typography>
+                    <ProfileIcon icon={comment.authorProfileIcon} size={18} />
+                </Box>
             </Box>
-            <Typography variant="body1" sx={{ color: 'white', mt: 0.5, whiteSpace: 'pre-wrap' }}>
+            <Typography variant="body1" sx={{ color: 'var(--text-primary)', mt: 0.5, whiteSpace: 'pre-wrap' }}>
                 {comment.content}
             </Typography>
-            <Typography variant="caption" sx={{ color: '#888', display: 'block', mt: 1 }}>
+            <Typography variant="caption" sx={{ color: 'var(--ui-c56)', display: 'block', mt: 1 }}>
                 {new Date(comment.publishDate).toLocaleString('ru-RU')}
             </Typography>
 
@@ -196,11 +270,11 @@ const CommentItem = ({
                 <IconButton
                     size="small"
                     onClick={() => onLikeToggle(comment.commentId, comment.isLiked)}
-                    sx={{ color: comment.isLiked ? '#ff1744' : '#9e9e9e', p: 0.5 }}
+                    sx={{ color: comment.isLiked ? 'var(--ui-c94)' : 'var(--text-secondary)', p: 0.5 }}
                 >
                     <FavoriteIcon sx={{ fontSize: 18 }} />
                 </IconButton>
-                <Typography variant="caption" sx={{ color: '#bdbdbd', ml: 0.5, fontWeight: 700 }}>
+                <Typography variant="caption" sx={{ color: 'var(--text-secondary)', ml: 0.5, fontWeight: 700 }}>
                     {comment.countLikes || 0}
                 </Typography>
 
@@ -211,7 +285,7 @@ const CommentItem = ({
                         onClick={() => onToggleReplies(comment.commentId)}
                         sx={{
                             ml: 1,
-                            color: '#00bfa5',
+                            color: 'var(--accent-500)',
                             textTransform: 'none',
                             borderRadius: '8px',
                             minWidth: 'auto',
@@ -234,7 +308,7 @@ const CommentItem = ({
                         onClick={() => onToggleReplyEditor(comment.commentId)}
                         sx={{
                             ml: 1,
-                            color: '#00bfa5',
+                            color: 'var(--accent-500)',
                             textTransform: 'none',
                             borderRadius: '8px',
                             minWidth: 'auto',
@@ -251,7 +325,7 @@ const CommentItem = ({
                         onClick={() => onToggleEditEditor(comment.commentId, comment.content)}
                         sx={{
                             ml: 1,
-                            color: '#80d8ff',
+                            color: 'var(--ui-c54)',
                             textTransform: 'none',
                             borderRadius: '8px',
                             minWidth: 'auto',
@@ -269,7 +343,7 @@ const CommentItem = ({
                         onClick={() => onDeleteComment(comment)}
                         sx={{
                             ml: 1,
-                            color: '#ff8a80',
+                            color: 'var(--ui-c98)',
                             textTransform: 'none',
                             borderRadius: '8px',
                             minWidth: 'auto',
@@ -304,8 +378,8 @@ const CommentItem = ({
                         sx={{
                             minWidth: 'auto',
                             borderRadius: '10px',
-                            backgroundColor: '#00bfa5',
-                            '&:hover': { backgroundColor: '#009e8a' },
+                            backgroundColor: 'var(--accent-500)',
+                            '&:hover': { backgroundColor: 'var(--accent-600)' },
                         }}
                     >
                         Отправить
@@ -330,8 +404,8 @@ const CommentItem = ({
                         sx={{
                             minWidth: 'auto',
                             borderRadius: '10px',
-                            backgroundColor: '#00bfa5',
-                            '&:hover': { backgroundColor: '#009e8a' },
+                            backgroundColor: 'var(--accent-500)',
+                            '&:hover': { backgroundColor: 'var(--accent-600)' },
                         }}
                     >
                         Сохранить
@@ -369,12 +443,15 @@ const PostDetailPage = React.memo(({
     post,
     onBack,
     onLike,
+    onTagClick,
     onAuthorClick,
     onUnauthorized,
     currentUserId,
     nickname,
     authorId,
     authorAvatar,
+    authorRole,
+    authorProfileIcon,
     containerRef,
     onCommentsCountChange,
     initialOpenComments = false,
@@ -402,14 +479,18 @@ const PostDetailPage = React.memo(({
             ref={contentRef}
             dangerouslySetInnerHTML={{ __html: renderedArticleContent }}
             sx={{
-                color: 'white',
-                lineHeight: 1.6,
+                color: 'var(--text-primary)',
+                lineHeight: { xs: 1.5, md: 1.6 },
                 whiteSpace: 'pre-wrap',
-                '& h1': { fontSize: '2.4rem', mt: 3, mb: 1, color: '#00bfa5' },
-                '& h2': { fontSize: '2rem', mt: 2, mb: 1, color: 'white' },
-                '& h3': { fontSize: '1.7rem', mt: 1.5, mb: 0.5, color: 'white' },
-                '& p': { marginBottom: 1, marginTop: 1, fontSize: '1.15rem' },
-                '& strong': { fontWeight: 'bold', color: 'white' }
+                '& h1': { fontSize: { xs: '1.55rem', md: '2.4rem' }, mt: { xs: 2, md: 3 }, mb: 1, color: 'var(--accent-500)', lineHeight: { xs: 1.25, md: 1.3 } },
+                '& h2': { fontSize: { xs: '1.35rem', md: '2rem' }, mt: { xs: 1.5, md: 2 }, mb: 1, color: 'var(--text-primary)', lineHeight: { xs: 1.3, md: 1.35 } },
+                '& h3': { fontSize: { xs: '1.15rem', md: '1.7rem' }, mt: { xs: 1.25, md: 1.5 }, mb: 0.5, color: 'var(--text-primary)', lineHeight: { xs: 1.35, md: 1.4 } },
+                '& p': { marginBottom: 1, marginTop: 1, fontSize: { xs: '0.98rem', md: '1.15rem' }, color: 'var(--text-primary)' },
+                '& strong': { fontWeight: 'bold', color: 'var(--text-primary)' },
+                '& em': { color: 'var(--text-primary)' },
+                '& li': { color: 'var(--text-primary)' },
+                '& a': { color: 'var(--accent-500)' },
+                '& span': { color: 'inherit' },
             }}
         />
     ), [renderedArticleContent]);
@@ -429,12 +510,12 @@ const PostDetailPage = React.memo(({
                     const codeText = normalizeCodeBlockText(block);
 
                     const languageClass = Array.from(block.classList).find((cls) => cls.startsWith('language-'));
-                    let language = languageClass ? languageClass.replace('language-', '') : '';
+                    let language = languageClass ? normalizeCodeLanguage(languageClass.replace('language-', '')) : '';
                     if (!language || language === 'text') {
                         // try to find it from an older th element if it was an old table
                         const possibleTh = block.closest('table')?.querySelector('th');
                         if (possibleTh && possibleTh.textContent && possibleTh.textContent.trim() !== 'code') {
-                            language = possibleTh.textContent.trim();
+                            language = normalizeCodeLanguage(possibleTh.textContent.trim());
                         } else {
                             language = 'code';
                         }
@@ -454,16 +535,16 @@ const PostDetailPage = React.memo(({
 
                     // Build our standard unified block
                     const newWrapper = document.createElement('div');
-                    newWrapper.innerHTML = `<table class="tg-code-block code-block-table" style="width: 100%; background: #282c34; border-radius: 8px; border: 1px solid rgba(255,255,255,0.12); border-collapse: separate; border-spacing: 0; margin: 14px 0; overflow: hidden; table-layout: fixed;">
+                    newWrapper.innerHTML = `<table class="tg-code-block code-block-table" style="width: 100%; background: var(--code-bg); border-radius: 8px; border: 1px solid var(--code-border); border-collapse: separate; border-spacing: 0; margin: 14px 0; overflow: hidden; table-layout: fixed;">
     <thead>
         <tr>
-            <th style="padding: 2px 6px; background: #21252b; color: rgba(255,255,255,0.6); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 11px; text-align: left; font-weight: bold; border-bottom: 1px solid rgba(255,255,255,0.12); user-select: none;">${language.charAt(0).toUpperCase() + language.slice(1)}</th>
+            <th style="padding: 2px 6px; background: var(--code-header-bg); color: var(--code-header-text); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 11px; text-align: left; font-weight: bold; border-bottom: 1px solid var(--code-border); user-select: none;">${language.charAt(0).toUpperCase() + language.slice(1)}</th>
         </tr>
     </thead>
     <tbody>
         <tr>
             <td style="padding: 10px; overflow-x: auto;">
-                <pre style="margin: 0; white-space: pre-wrap !important; word-wrap: break-word; background: transparent;"><code class="language-${language}" style="font-family: Consolas, monospace; font-size: 14px; background: transparent !important; padding: 0 !important; border: none !important;"></code></pre>
+                <pre style="margin: 0; white-space: pre-wrap !important; word-wrap: break-word; background: transparent;"><code class="language-${language}" style="font-family: Consolas, monospace; font-size: 14px; background: transparent !important; padding: 0 !important; border: none !important; color: var(--text-primary);"></code></pre>
             </td>
         </tr>
     </tbody>
@@ -526,20 +607,22 @@ const PostDetailPage = React.memo(({
             });
 
             if (!response.ok) {
-                const fallback = { name: 'Автор', avatar: null };
+                const fallback = { name: 'Автор', avatar: null, profileIcon: '' };
                 authorCacheRef.current[userId] = fallback;
                 return fallback;
             }
 
             const data = await response.json();
+            const parsedAuthor = extractNameAndIcon(data.name || 'Автор');
             const info = {
-                name: data.name || 'Автор',
+                name: parsedAuthor.name,
                 avatar: data.pathAvatar ?? data.PathAvatar ?? null,
+                profileIcon: parsedAuthor.icon || resolveProfileIconValue(data),
             };
             authorCacheRef.current[userId] = info;
             return info;
         } catch {
-            const fallback = { name: 'Автор', avatar: null };
+            const fallback = { name: 'Автор', avatar: null, profileIcon: '' };
             authorCacheRef.current[userId] = fallback;
             return fallback;
         }
@@ -567,6 +650,7 @@ const PostDetailPage = React.memo(({
             repliesCount,
             authorName: authorInfo.name,
             authorAvatar: authorInfo.avatar,
+            authorProfileIcon: authorInfo.profileIcon,
             isLiked,
             replies: [],
             repliesOpen: false,
@@ -936,11 +1020,15 @@ const PostDetailPage = React.memo(({
                 if (table.dataset.replaced) return;
                 table.dataset.replaced = 'true';
 
-                const th = table.querySelector('th');
-                const languageClass = th ? th.textContent.trim() : 'text';      
-
                 const codeBlock = table.querySelector('pre code') || table.querySelector('pre');
                 const codeText = codeBlock ? normalizeCodeBlockText(codeBlock) : normalizeCodeBlockText(table);
+                const classLanguage = codeBlock
+                    ? Array.from(codeBlock.classList).find((cls) => cls.startsWith('language-'))
+                    : null;
+                const th = table.querySelector('th');
+                const languageClass = normalizeCodeLanguage(
+                    classLanguage ? classLanguage.replace('language-', '') : (th ? th.textContent.trim() : 'text')
+                );
 
                 const parent = table.parentNode;
                 const wrapper = document.createElement('div');
@@ -959,7 +1047,7 @@ const PostDetailPage = React.memo(({
                 const codeText = normalizeCodeBlockText(block);
 
                 const languageCls = Array.from(block.classList).find((cls) => cls.startsWith('language-'));
-                const language = languageCls ? languageCls.replace('language-', '') : '';
+                const language = normalizeCodeLanguage(languageCls ? languageCls.replace('language-', '') : 'text');
 
                 const pre = block.parentNode;
                 const wrapper = document.createElement('div');
@@ -989,24 +1077,24 @@ const PostDetailPage = React.memo(({
     return (
         <Box
             sx={{
-                backgroundColor: '#2c2c2c',
+                backgroundColor: 'var(--surface-elevated)',
                 borderRadius: '12px',
-                boxShadow: '0 4px 12px rgba(0, 0, 0, 0.5)',
+                boxShadow: '0 4px 12px var(--ui-c109)',
                 m: { xs: 0, sm: 1, md: 2 },
                 pb: 2,
-                color: 'white',
+                color: 'var(--text-primary)',
             }}
         >
-            <Box sx={{ p: { xs: 1.25, md: 2 }, borderBottom: '1px solid #333', display: 'flex', alignItems: 'center', gap: 0.5 }}>
+            <Box sx={{ p: { xs: 1.25, md: 2 }, borderBottom: '1px solid var(--border-default)', display: 'flex', alignItems: 'center', gap: 0.5 }}>
                 <IconButton
                     onClick={onBack}
                     aria-label="Назад"
                     sx={{
-                        color: '#00e5c9',
+                        color: 'var(--accent-400)',
                         minWidth: 44,
                         minHeight: 44,
                         transition: 'background-color 0.2s ease',
-                        '&:hover': { backgroundColor: 'rgba(0, 191, 165, 0.1)' },
+                        '&:hover': { backgroundColor: 'color-mix(in oklab, var(--accent-500) 10%, transparent)' },
                     }}
                 >
                     <ArrowBackIcon />
@@ -1014,7 +1102,7 @@ const PostDetailPage = React.memo(({
                 <Typography
                     variant="h6"
                     sx={{
-                        color: '#f5f5f5',
+                        color: 'var(--text-primary)',
                         ml: 0.5,
                         fontSize: { xs: '1rem', md: '1.25rem' },
                         fontWeight: 700,
@@ -1034,7 +1122,7 @@ const PostDetailPage = React.memo(({
                     sx={{
                         fontWeight: 'bold',
                         mb: 2,
-                        fontSize: { xs: '1.1rem', sm: '1.35rem', md: '2.125rem' },
+                        fontSize: { xs: '1rem', sm: '1.28rem', md: '2.125rem' },
                         lineHeight: { xs: 1.25, md: 1.35 },
                         overflowWrap: 'anywhere',
                         wordBreak: 'break-word',
@@ -1053,19 +1141,23 @@ const PostDetailPage = React.memo(({
                     sx={{ cursor: onAuthorClick && authorId ? 'pointer' : 'default' }}
                 >
                     <Typography variant="body2" sx={labelStyle}>Автор</Typography>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
                         <Avatar
                             src={buildAvatarUrl(API_BASE_URL, authorAvatar)}
-                            sx={{ width: 34, height: 34, border: '2px solid #00bfa5' }}
+                            sx={{ width: 34, height: 34, border: '2px solid var(--accent-500)' }}
                             imgProps={{
                                 onError: (e) => {
                                     e.currentTarget.src = DEFAULT_AVATAR_SRC;
                                 },
                             }}
                         />
-                        <Typography variant="h6" sx={{ color: '#00bfa5', fontWeight: 'bold' }}>
-                            {nickname}
-                        </Typography>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, flexWrap: 'wrap' }}>
+                            <UserRoleBadge role={authorRole} size="sm" />
+                            <Typography variant="h6" sx={{ color: 'var(--accent-500)', fontWeight: 'bold' }}>
+                                {nickname}
+                            </Typography>
+                            <ProfileIcon icon={authorProfileIcon} size={20} />
+                        </Box>
                     </Box>
                 </Box>
 
@@ -1082,19 +1174,27 @@ const PostDetailPage = React.memo(({
                         '&::-webkit-scrollbar': { height: 4 },
                     }}
                 >
-                    {post.tags.map((tag, index) => (
+                    {mapTagsToLabels(Array.isArray(post?.tags) ? post.tags : []).map((tag, index) => {
+                        const strTag = String(tag);
+                        return (
                         <Chip
                             key={index}
-                            label={tag}
+                            label={strTag}
+                            onClick={() => onTagClick?.(strTag)}
                             sx={{
-                                backgroundColor: getTagColor(tag, index),
-                                color: 'white',
+                                backgroundColor: getTagColor(strTag, index),
+                                color: 'var(--text-primary)',
                                 fontWeight: 'bold',
                                 borderRadius: '10px',
                                 flexShrink: 0,
+                                cursor: 'pointer',
+                                '&:hover': {
+                                    filter: 'brightness(1.08)',
+                                    transform: 'translateY(-1px)'
+                                }
                             }}
                         />
-                    ))}
+                    )})}
                 </Box>
 
                 {articleImageUrl && !imageBroken && (
@@ -1109,7 +1209,7 @@ const PostDetailPage = React.memo(({
                                 maxHeight: 420,
                                 objectFit: 'cover',
                                 borderRadius: '14px',
-                                border: '1px solid #333',
+                                border: '1px solid var(--border-default)',
                             }}
                         />
                     </Box>
@@ -1123,7 +1223,7 @@ const PostDetailPage = React.memo(({
                 sx={{
                     px: { xs: 1, md: 2 },
                     py: { xs: 1, md: 2 },
-                    borderTop: '1px solid #333',
+                    borderTop: '1px solid var(--border-default)',
                     display: 'flex',
                     gap: { xs: 1, md: 3 },
                     alignItems: 'center',
@@ -1134,11 +1234,11 @@ const PostDetailPage = React.memo(({
                     <IconButton
                         onClick={onLike}
                         aria-label="Лайк"
-                        sx={{ color: post.isLiked ? '#ff1744' : '#00e5c9', minWidth: 44, minHeight: 44 }}
+                        sx={{ color: post.isLiked ? 'var(--ui-c94)' : 'var(--accent-400)', minWidth: 44, minHeight: 44 }}
                     >
                         <FavoriteIcon sx={{ fontSize: 26 }} />
                     </IconButton>
-                    <Typography variant="subtitle1" sx={{ color: '#f5f5f5', fontWeight: 'bold', ml: 0.25 }}>
+                    <Typography variant="subtitle1" sx={{ color: 'var(--text-primary)', fontWeight: 'bold', ml: 0.25 }}>
                         {post.likesCount}
                     </Typography>
                 </Box>
@@ -1147,17 +1247,31 @@ const PostDetailPage = React.memo(({
                     <IconButton
                         onClick={handleToggleComments}
                         aria-label="Комментарии"
-                        sx={{ color: commentsOpen ? '#048b79' : '#00e5c9', minWidth: 44, minHeight: 44 }}
+                        sx={{ color: commentsOpen ? 'var(--ui-c14)' : 'var(--accent-400)', minWidth: 44, minHeight: 44 }}
                     >
                         <ChatBubbleOutlineIcon sx={{ fontSize: 26 }} />
                     </IconButton>
-                    <Typography variant="subtitle1" sx={{ color: '#f5f5f5', fontWeight: 'bold', ml: 0.25 }}>
+                    <Typography variant="subtitle1" sx={{ color: 'var(--text-primary)', fontWeight: 'bold', ml: 0.25 }}>
                         {post.commentsCount}
                     </Typography>
                 </Box>
 
+                <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                    <IconButton
+                        disableRipple
+                        disableFocusRipple
+                        aria-label="Просмотры"
+                        sx={{ color: 'var(--accent-400)', minWidth: 44, minHeight: 44 }}
+                    >
+                        <VisibilityOutlinedIcon sx={{ fontSize: 24 }} />
+                    </IconButton>
+                    <Typography variant="subtitle1" sx={{ color: 'var(--text-primary)', fontWeight: 'bold', ml: 0.25 }}>
+                        {post.viewsCount ?? 0}
+                    </Typography>
+                </Box>
+
                 <IconButton
-                    sx={{ color: '#00e5c9', minWidth: 44, minHeight: 44, ml: 'auto' }}
+                    sx={{ color: 'var(--accent-400)', minWidth: 44, minHeight: 44, ml: 'auto' }}
                     onClick={handleShareArticle}
                 >
                     <ShortcutRoundedIcon sx={{ fontSize: 24, transform: 'rotate(-20deg)' }} />
@@ -1166,8 +1280,8 @@ const PostDetailPage = React.memo(({
 
             {isDesktopComments && (
                 <Collapse in={commentsOpen} timeout="auto" unmountOnExit>
-                    <Box sx={{ p: 2, borderTop: '1px solid #333' }}>
-                        <Typography variant="h6" sx={{ color: '#f5f5f5', mb: 2 }}>Комментарии</Typography>
+                    <Box sx={{ p: 2, borderTop: '1px solid var(--border-default)' }}>
+                        <Typography variant="h6" sx={{ color: 'var(--text-primary)', mb: 2 }}>Комментарии</Typography>
 
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
                             <TextField
@@ -1190,9 +1304,9 @@ const PostDetailPage = React.memo(({
                                 onClick={handleCreateRootComment}
                                 sx={{
                                     borderRadius: '10px',
-                                    backgroundColor: '#00bfa5',
+                                    backgroundColor: 'var(--accent-500)',
                                     px: 2,
-                                    '&:hover': { backgroundColor: '#009e8a' },
+                                    '&:hover': { backgroundColor: 'var(--accent-600)' },
                                 }}
                             >
                                 Отправить
@@ -1200,15 +1314,15 @@ const PostDetailPage = React.memo(({
                         </Box>
 
                         {commentsError && (
-                            <Typography sx={{ color: '#ff8a80', mb: 1 }}>{commentsError}</Typography>
+                            <Typography sx={{ color: 'var(--ui-c98)', mb: 1 }}>{commentsError}</Typography>
                         )}
 
                         {commentsLoading ? (
                             <Box sx={{ py: 2, textAlign: 'center' }}>
-                                <CircularProgress size={28} sx={{ color: '#00bfa5' }} />
+                                <CircularProgress size={28} sx={{ color: 'var(--accent-500)' }} />
                             </Box>
                         ) : commentsTree.length === 0 ? (
-                            <Typography sx={{ color: '#bdbdbd' }}>Пока нет комментариев. Будьте первым.</Typography>
+                            <Typography sx={{ color: 'var(--text-secondary)' }}>Пока нет комментариев. Будьте первым.</Typography>
                         ) : (
                             <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
                                 {commentsTree.map((comment) => (
@@ -1254,7 +1368,7 @@ const PostDetailPage = React.memo(({
                             width: '100%',
                             maxWidth: '100vw',
                             overflow: 'hidden',
-                            backgroundColor: '#1f1f1f',
+                            backgroundColor: 'var(--surface-panel)',
                             transition: 'transform 0.25s ease-out',
                         },
                     }}
@@ -1272,19 +1386,19 @@ const PostDetailPage = React.memo(({
                                 flexShrink: 0,
                                 px: 2,
                                 py: 1.25,
-                                borderBottom: '1px solid #333',
+                                borderBottom: '1px solid var(--border-default)',
                                 display: 'flex',
                                 alignItems: 'center',
                                 gap: 1,
                             }}
                         >
-                            <Typography variant="h6" sx={{ color: '#00e5c9', fontWeight: 700, fontSize: '1.05rem' }}>
+                            <Typography variant="h6" sx={{ color: 'var(--accent-400)', fontWeight: 700, fontSize: '1.05rem' }}>
                                 Комментарии
                             </Typography>
                             <IconButton
                                 onClick={() => setCommentsOpen(false)}
                                 aria-label="Закрыть"
-                                sx={{ ml: 'auto', minWidth: 44, minHeight: 44, color: '#bdbdbd' }}
+                                sx={{ ml: 'auto', minWidth: 44, minHeight: 44, color: 'var(--text-secondary)' }}
                             >
                                 <CloseIcon />
                             </IconButton>
@@ -1300,15 +1414,15 @@ const PostDetailPage = React.memo(({
                             }}
                         >
                             {commentsError && (
-                                <Typography sx={{ color: '#ff8a80', mb: 1 }}>{commentsError}</Typography>
+                                <Typography sx={{ color: 'var(--ui-c98)', mb: 1 }}>{commentsError}</Typography>
                             )}
 
                             {commentsLoading ? (
                                 <Box sx={{ py: 2, textAlign: 'center' }}>
-                                    <CircularProgress size={28} sx={{ color: '#00bfa5' }} />
+                                    <CircularProgress size={28} sx={{ color: 'var(--accent-500)' }} />
                                 </Box>
                             ) : commentsTree.length === 0 ? (
-                                <Typography sx={{ color: '#bdbdbd' }}>Пока нет комментариев. Будьте первым.</Typography>
+                                <Typography sx={{ color: 'var(--text-secondary)' }}>Пока нет комментариев. Будьте первым.</Typography>
                             ) : (
                                 <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
                                     {commentsTree.map((comment) => (
@@ -1339,10 +1453,10 @@ const PostDetailPage = React.memo(({
                         <Box
                             sx={{
                                 flexShrink: 0,
-                                borderTop: '1px solid #333',
+                                borderTop: '1px solid var(--border-default)',
                                 p: 2,
                                 pb: 'calc(12px + env(safe-area-inset-bottom, 0px))',
-                                backgroundColor: '#181818',
+                                backgroundColor: 'var(--ui-c23)',
                             }}
                         >
                             <Box sx={{ display: 'flex', alignItems: 'stretch', gap: 1 }}>
@@ -1371,11 +1485,11 @@ const PostDetailPage = React.memo(({
                                     onClick={handleCreateRootComment}
                                     sx={{
                                         borderRadius: '10px',
-                                        backgroundColor: '#00bfa5',
+                                        backgroundColor: 'var(--accent-500)',
                                         minWidth: 88,
                                         minHeight: 48,
                                         alignSelf: 'stretch',
-                                        '&:hover': { backgroundColor: '#009e8a' },
+                                        '&:hover': { backgroundColor: 'var(--accent-600)' },
                                     }}
                                 >
                                     Отпр.

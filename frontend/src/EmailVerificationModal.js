@@ -78,9 +78,9 @@ const EmailVerificationModal = ({ open, handleClose, email, onVerificationSucces
 
     return (
         <Modal disableRestoreFocus open={open} onClose={handleClose}>
-            <Box sx={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', width: 350, bgcolor: '#363636', p: 4, borderRadius: 4, color: '#fff' }}>
+            <Box sx={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', width: 350, bgcolor: 'var(--ui-c40)', p: 4, borderRadius: 4, color: 'var(--text-primary)' }}>
                 <Typography variant="h5" textAlign="center" gutterBottom>Подтверждение</Typography>
-                <Typography variant="body2" textAlign="center" sx={{ color: '#bdbdbd', mb: 2 }}>Код отправлен на {email}</Typography>
+                <Typography variant="body2" textAlign="center" sx={{ color: 'var(--text-secondary)', mb: 2 }}>Код отправлен на {email}</Typography>
                 
                 {error && <Typography color="error" variant="caption" display="block" textAlign="center">{error}</Typography>}
 
@@ -93,18 +93,18 @@ const EmailVerificationModal = ({ open, handleClose, email, onVerificationSucces
                     sx={{
                         mb: 2,
                         '& .MuiFilledInput-root': {
-                            backgroundColor: 'rgba(255,255,255,0.12)',
-                            color: '#fff',
-                            '&:hover': { backgroundColor: 'rgba(255,255,255,0.18)' },
-                            '&.Mui-focused': { backgroundColor: 'rgba(255,255,255,0.2)' },
+                            backgroundColor: 'var(--ui-c192)',
+                            color: 'var(--text-primary)',
+                            '&:hover': { backgroundColor: 'var(--ui-c194)' },
+                            '&.Mui-focused': { backgroundColor: 'var(--ui-c195)' },
                         },
-                        '& .MuiInputBase-input': { color: '#fff' },
-                        '& .MuiInputLabel-root': { color: '#fff' },
-                        '& .MuiInputLabel-root.Mui-focused': { color: '#fff' },
+                        '& .MuiInputBase-input': { color: 'var(--text-primary)' },
+                        '& .MuiInputLabel-root': { color: 'var(--text-primary)' },
+                        '& .MuiInputLabel-root.Mui-focused': { color: 'var(--text-primary)' },
                     }}
                 />
 
-                <Button fullWidth variant="contained" onClick={handleVerify} disabled={loading} sx={{ bgcolor: '#00bea5' }}>
+                <Button fullWidth variant="contained" onClick={handleVerify} disabled={loading} sx={{ bgcolor: 'var(--ui-c8)' }}>
                     {loading ? <CircularProgress size={24} /> : 'Подтвердить'}
                 </Button>
 
@@ -114,11 +114,11 @@ const EmailVerificationModal = ({ open, handleClose, email, onVerificationSucces
                     onClick={handleResend}
                     sx={{
                         mt: 1,
-                        color: canResend && !resendLoading ? '#00bfa5' : '#bdbdbd',
+                        color: canResend && !resendLoading ? 'var(--accent-500)' : 'var(--text-secondary)',
                         '&.Mui-disabled': {
-                            color: '#bdbdbd',
+                            color: 'var(--text-secondary)',
                             opacity: 1,
-                            WebkitTextFillColor: '#bdbdbd',
+                            WebkitTextFillColor: 'var(--text-secondary)',
                         },
                     }}
                 >

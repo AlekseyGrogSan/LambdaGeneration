@@ -1,4 +1,5 @@
 using LambdaGeneration.API.Application.Interfaces.Services;
+using LambdaGeneration.API.Core.Enums;
 using LambdaGeneration.API.Date.Repositories;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -42,6 +43,7 @@ namespace LambdaGeneration.API.Controllers
                 user.Email,
                 user.AboutUser,
                 user.Role,
+                Tag = user.Tag.ToApiValue(),
                 user.IsBanned,
                 user.CreatedDate,
                 user.FollowersCount,
@@ -60,6 +62,7 @@ namespace LambdaGeneration.API.Controllers
                 user.UserID,
                 user.UserName,
                 Role = user.Role.ToString(),
+                Tag = user.Tag.ToApiValue(),
                 user.IsBanned
             }));
         }

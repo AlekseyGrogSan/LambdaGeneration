@@ -8,21 +8,27 @@ import {
     Link as MuiLink,
 } from '@mui/material';
 import EmailVerificationModal from './EmailVerificationModal';
+import AvatarCropDialog from './AvatarCropDialog';
 import { formatBytes, isAvatarTooLarge, MAX_AVATAR_BYTES } from './avatarUtils';
+import { buildModerationErrorMessage } from './moderationFlags';
 
 const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || '/api';
 
 const inputStyle = {
     '& .MuiFilledInput-root': {
-        backgroundColor: 'rgba(255, 255, 255, 0.1)',
-        color: '#ffffff',
+        backgroundColor: 'var(--surface-input)',
+        color: 'var(--text-primary)',
         borderRadius: '8px',
-        '&:hover': { backgroundColor: 'rgba(255, 255, 255, 0.15)' },
-        '&.Mui-focused': { backgroundColor: 'rgba(255, 255, 255, 0.2)' },
+        transition: 'background-color 0.2s ease, box-shadow 0.2s ease',
+        '&:hover': { backgroundColor: 'color-mix(in oklab, var(--surface-input) 90%, var(--bg-elevated))' },
+        '&.Mui-focused': {
+            backgroundColor: 'color-mix(in oklab, var(--surface-input) 86%, var(--bg-elevated))',
+            boxShadow: 'inset 0 0 0 1px color-mix(in oklab, var(--accent-500) 40%, transparent)',
+        },
     },
     '& .MuiInputLabel-root': {
-        color: '#bdbdbd',
-        '&.Mui-focused': { color: '#00bfa5' },
+        color: 'var(--text-secondary)',
+        '&.Mui-focused': { color: 'var(--accent-500)' },
     },
     '& .MuiFilledInput-underline:before, & .MuiFilledInput-underline:after': {
         borderBottom: 'none',
@@ -61,6 +67,9 @@ const extractApiErrorMessage = async (response) => {
     try {
         const payload = await response.json();
         if (payload) {
+            const moderationMessage = buildModerationErrorMessage(payload);
+            if (moderationMessage) return moderationMessage;
+
             if (payload.message) return payload.message;
             if (payload.detail) return payload.detail;
             if (payload.error) return payload.error;
@@ -98,6 +107,8 @@ const RegistrationModal = ({ open, handleClose, onForgotPassword, onAuthSuccess,
     const [pendingEmail, setPendingEmail] = useState('');
     const [avatarFile, setAvatarFile] = useState(null);
     const [avatarError, setAvatarError] = useState('');
+    const [cropImageSrc, setCropImageSrc] = useState(null);
+    const [isCropDialogOpen, setIsCropDialogOpen] = useState(false);
 
     useEffect(() => {
         if (open) {
@@ -115,6 +126,8 @@ const RegistrationModal = ({ open, handleClose, onForgotPassword, onAuthSuccess,
             setAvatarFile(null);
             setAvatarError('');
             setIsSubmitting(false);
+            setCropImageSrc(null);
+            setIsCropDialogOpen(false);
         }
     }, [open]);
 
@@ -124,11 +137,12 @@ const RegistrationModal = ({ open, handleClose, onForgotPassword, onAuthSuccess,
         left: '50%',
         transform: 'translate(-50%, -50%)',
         width: { xs: '90%', sm: '400px' },
-        bgcolor: '#383838',
+        bgcolor: 'var(--surface-elevated)',
+        border: '1px solid var(--border-default)',
         borderRadius: '16px',
-        boxShadow: 24,
+        boxShadow: 'var(--shadow-soft)',
         p: 4,
-        color: '#ffffff',
+        color: 'var(--text-primary)',
         display: 'flex',
         flexDirection: 'column',
         gap: 2,
@@ -144,10 +158,32 @@ const RegistrationModal = ({ open, handleClose, onForgotPassword, onAuthSuccess,
         if (isAvatarTooLarge(file)) {
             setAvatarError(`Размер аватара не должен превышать ${formatBytes(MAX_AVATAR_BYTES)}.`);
             setAvatarFile(null);
+            e.target.value = '';
             return;
         }
         setAvatarError('');
-        setAvatarFile(file);
+        const reader = new FileReader();
+        reader.onload = () => {
+            setCropImageSrc(reader.result);
+            setIsCropDialogOpen(true);
+        };
+        reader.readAsDataURL(file);
+        e.target.value = '';
+    };
+
+    const handleCropCancel = () => {
+        setIsCropDialogOpen(false);
+        setCropImageSrc(null);
+    };
+
+    const handleCropComplete = (croppedFile) => {
+        setIsCropDialogOpen(false);
+        if (!croppedFile) return;
+        const fileToUpload = croppedFile instanceof File
+            ? croppedFile
+            : new File([croppedFile], 'avatar.jpg', { type: croppedFile.type || 'image/jpeg' });
+        setAvatarFile(fileToUpload);
+        setCropImageSrc(null);
     };
 
     const handleSubmit = async (e) => {
@@ -237,7 +273,7 @@ const RegistrationModal = ({ open, handleClose, onForgotPassword, onAuthSuccess,
                     </Typography>
 
                     {error && <Typography color="error" textAlign="center">{error}</Typography>}
-                    {success && <Typography sx={{ color: '#00bfa5' }} textAlign="center">{success}</Typography>}
+                    {success && <Typography sx={{ color: 'var(--accent-500)' }} textAlign="center">{success}</Typography>}
 
                     {isRegisterMode && (
                         <TextField label="Имя" name="userName" variant="filled" fullWidth sx={inputStyle} value={formData.userName} onChange={handleChange} required />
@@ -265,22 +301,22 @@ const RegistrationModal = ({ open, handleClose, onForgotPassword, onAuthSuccess,
                             <Button
                                 variant="outlined"
                                 component="label"
-                                sx={{ color: '#00bfa5', borderColor: '#00bfa5', '&:hover': { borderColor: '#009688', backgroundColor: 'rgba(0, 191, 165, 0.08)' } }}
+                                sx={{ color: 'var(--accent-500)', borderColor: 'var(--accent-500)', '&:hover': { borderColor: 'var(--accent-600)', backgroundColor: 'color-mix(in oklab, var(--accent-500) 8%, transparent)' } }}
                             >
                                 Загрузить аватар
                                 <input hidden type="file" accept="image/*" onChange={handleAvatarChange} />
                             </Button>
                             {avatarFile && (
-                                <Typography variant="body2" sx={{ color: '#bdbdbd' }}>
+                                <Typography variant="body2" sx={{ color: 'var(--text-secondary)' }}>
                                     {avatarFile.name}
                                 </Typography>
                             )}
                             {avatarError && (
-                                <Typography variant="caption" sx={{ color: '#ff8a80' }}>
+                                <Typography variant="caption" sx={{ color: 'var(--ui-c98)' }}>
                                     {avatarError}
                                 </Typography>
                             )}
-                            <Typography variant="caption" sx={{ color: '#7e7e7e' }}>
+                            <Typography variant="caption" sx={{ color: 'var(--ui-c53)' }}>
                                 Максимум {formatBytes(MAX_AVATAR_BYTES)}
                             </Typography>
                         </Box>
@@ -291,7 +327,7 @@ const RegistrationModal = ({ open, handleClose, onForgotPassword, onAuthSuccess,
                         variant="contained"
                         fullWidth
                         disabled={isSubmitting}
-                        sx={{ bgcolor: '#00bfa5', '&:hover': { bgcolor: '#009688' }, mt: 1 }}
+                        sx={{ bgcolor: 'var(--accent-500)', '&:hover': { bgcolor: 'var(--accent-600)' }, mt: 1 }}
                     >
                         {isSubmitting
                             ? 'Отправка...'
@@ -305,13 +341,20 @@ const RegistrationModal = ({ open, handleClose, onForgotPassword, onAuthSuccess,
                                 setAvatarFile(null);
                                 setAvatarError('');
                             }}
-                            sx={{ color: '#00bfa5', cursor: 'pointer' }}
+                            sx={{ color: 'var(--accent-500)', cursor: 'pointer' }}
                         >
                             {isRegisterMode ? 'Уже есть аккаунт? Войти' : 'Нет аккаунта? Регистрация'}
                         </MuiLink>
                     </Box>
                 </Box>
             </Modal>
+
+            <AvatarCropDialog
+                open={isCropDialogOpen}
+                imageSrc={cropImageSrc}
+                onClose={handleCropCancel}
+                onCropComplete={handleCropComplete}
+            />
 
             <EmailVerificationModal
                 open={showVerification}

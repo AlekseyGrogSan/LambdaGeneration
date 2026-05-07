@@ -27,12 +27,12 @@ const style = {
     left: '50%',
     transform: 'translate(-50%, -50%)',
     width: 'min(92vw, 620px)',
-    bgcolor: '#2c2c2c',
-    border: '2px solid #000',
-    borderRadius: '12px',
-    boxShadow: 24,
+    bgcolor: 'var(--surface-panel)',
+    border: '1px solid color-mix(in oklab, var(--text-primary) 8%, transparent)',
+    borderRadius: '16px',
+    boxShadow: 'var(--shadow-soft)',
     p: 4,
-    color: 'white',
+    color: 'var(--text-primary)',
     maxHeight: '80vh',
     overflowY: 'auto',
 };
@@ -42,19 +42,19 @@ const scrollbarStyle = {
         width: '8px',
     },
     '&::-webkit-scrollbar-track': {
-        background: '#1a1a1a',
+        background: 'var(--surface-soft)',
         borderRadius: '10px',
     },
     '&::-webkit-scrollbar-thumb': {
-        background: '#00bfa5',
+        background: 'var(--accent-500)',
         borderRadius: '10px',
-        border: '2px solid #1a1a1a',
+        border: '2px solid var(--surface-soft)',
     },
     '&::-webkit-scrollbar-thumb:hover': {
-        background: '#009e8a',
+        background: 'var(--accent-600)',
     },
     scrollbarWidth: 'thin',
-    scrollbarColor: '#00bfa5 #1a1a1a',
+    scrollbarColor: 'var(--accent-500) var(--surface-soft)',
 };
 
 const resources = [
@@ -163,63 +163,64 @@ const ResourcesModal = ({ open, handleClose }) => {
                 >
                     <CloseIcon />
                 </IconButton>
-                <Typography id="resources-modal-title" variant="h6" component="h2" sx={{ color: '#00bfa5', fontWeight: 'bold', mb: 1 }}>
+                <Typography id="resources-modal-title" variant="h6" component="h2" sx={{ color: 'var(--accent-500)', fontWeight: 'bold', mb: 1 }}>
                     Полезные материалы
                 </Typography>
-                <Typography sx={{ color: '#bdbdbd', mb: 2 }}>
+                <Typography sx={{ color: 'var(--text-secondary)', mb: 2 }}>
                     Подборка актуальных источников, которые помогут быстрее разобраться с интерфейсом, публикациями и разработкой.
                 </Typography>
-                <Divider sx={{ borderColor: 'rgba(255,255,255,0.08)', mb: 2 }} />
+                <Divider sx={{ borderColor: 'color-mix(in oklab, var(--text-primary) 8%, transparent)', mb: 2 }} />
                 <List sx={{ p: 0 }}>
                     {resources.map((resource) => (
                         resource.children ? (
                             <Box
                                 key={resource.title}
                                 sx={{
-                                    borderBottom: '1px solid rgba(255,255,255,0.06)',
+                                    borderBottom: '1px solid color-mix(in oklab, var(--text-primary) 6%, transparent)',
                                 }}
                             >
                                 <Accordion
                                     disableGutters
                                     sx={{
                                         bgcolor: 'transparent',
-                                        color: 'white',
-                                        '&::before': { display: 'none' },
+                                        color: 'var(--text-primary)',
+                                        backgroundImage: 'none',
                                         boxShadow: 'none',
+                                        '&::before': { display: 'none' },
                                     }}
                                 >
                                     <AccordionSummary
-                                        expandIcon={<ExpandMoreIcon sx={{ color: '#00bfa5' }} />}
+                                        expandIcon={<ExpandMoreIcon sx={{ color: 'var(--accent-500)' }} />}
                                         sx={{ px: 0, py: 1.25 }}
                                     >
                                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25, flexWrap: 'wrap' }}>
                                             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                                                <ListItemIcon sx={{ minWidth: 36, color: '#00bfa5' }}>
+                                                <ListItemIcon sx={{ minWidth: 36, color: 'var(--accent-500)' }}>
                                                     {resource.icon}
                                                 </ListItemIcon>
-                                                <Typography sx={{ color: 'white', fontWeight: 600 }}>
+                                                <Typography sx={{ color: 'var(--text-primary)', fontWeight: 600 }}>
                                                     {resource.title}
                                                 </Typography>
                                             </Box>
-                                            <Chip
-                                                label={resource.tag}
-                                                size="small"
-                                                sx={{
-                                                    bgcolor: 'rgba(0,191,165,0.15)',
-                                                    color: '#00e5c9',
-                                                    fontWeight: 500,
-                                                }}
-                                            />
+                                             <Chip
+                                                 label={resource.tag}
+                                                 size="small"
+                                                 sx={{
+                                                     bgcolor: 'color-mix(in oklab, var(--accent-500) 16%, transparent)',
+                                                     color: 'var(--accent-600)',
+                                                     fontWeight: 500,
+                                                 }}
+                                             />
                                         </Box>
                                     </AccordionSummary>
                                     <AccordionDetails sx={{ px: 0, pb: 2 }}>
-                                        <Typography sx={{ color: '#b0b0b0', mb: 1 }}>
+                                        <Typography sx={{ color: 'var(--text-secondary)', mb: 1 }}>
                                             {resource.description}
                                         </Typography>
                                         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.25 }}>
                                             {resource.children.map((group) => (
                                                 <Box key={group.group}>
-                                                    <Typography sx={{ color: '#9fded5', fontWeight: 600, mb: 0.5 }}>
+                                                    <Typography sx={{ color: 'var(--text-primary)', fontWeight: 600, mb: 0.5 }}>
                                                         {group.group}
                                                     </Typography>
                                                     <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
@@ -230,7 +231,7 @@ const ResourcesModal = ({ open, handleClose }) => {
                                                                 target="_blank"
                                                                 rel="noopener noreferrer"
                                                                 underline="hover"
-                                                                sx={{ color: '#d9d9d9', fontSize: '0.9rem' }}
+                                                                sx={{ color: 'var(--accent-600)', fontSize: '0.9rem' }}
                                                             >
                                                                 {item.title}
                                                             </Link>
@@ -249,10 +250,10 @@ const ResourcesModal = ({ open, handleClose }) => {
                                 sx={{
                                     px: 0,
                                     py: 1.25,
-                                    borderBottom: '1px solid rgba(255,255,255,0.06)',
+                                    borderBottom: '1px solid color-mix(in oklab, var(--text-primary) 6%, transparent)',
                                 }}
                             >
-                                <ListItemIcon sx={{ minWidth: 36, color: '#00bfa5', mt: 0.5 }}>
+                                <ListItemIcon sx={{ minWidth: 36, color: 'var(--accent-500)', mt: 0.5 }}>
                                     {resource.icon}
                                 </ListItemIcon>
                                 <ListItemText
@@ -264,29 +265,29 @@ const ResourcesModal = ({ open, handleClose }) => {
                                                     target="_blank"
                                                     rel="noopener noreferrer"
                                                     underline="hover"
-                                                    sx={{ color: 'white', fontWeight: 600 }}
+                                                    sx={{ color: 'var(--text-primary)', fontWeight: 600 }}
                                                 >
                                                     {resource.title}
                                                 </Link>
                                             ) : (
-                                                <Typography sx={{ color: 'white', fontWeight: 600 }}>
+                                                <Typography sx={{ color: 'var(--text-primary)', fontWeight: 600 }}>
                                                     {resource.title}
                                                 </Typography>
                                             )}
-                                            {resource.href && <LaunchIcon fontSize="small" sx={{ color: '#757575' }} />}
+                                            {resource.href && <LaunchIcon fontSize="small" sx={{ color: 'var(--text-secondary)' }} />}
                                             <Chip
                                                 label={resource.tag}
                                                 size="small"
                                                 sx={{
-                                                    bgcolor: 'rgba(0,191,165,0.15)',
-                                                    color: '#00e5c9',
+                                                    bgcolor: 'color-mix(in oklab, var(--accent-500) 16%, transparent)',
+                                                    color: 'var(--accent-600)',
                                                     fontWeight: 500,
                                                 }}
                                             />
                                         </Box>
                                     }
                                     secondary={
-                                        <Typography component="span" sx={{ color: '#b0b0b0', display: 'block', mt: 0.5 }}>
+                                        <Typography component="span" sx={{ color: 'var(--text-secondary)', display: 'block', mt: 0.5 }}>
                                             {resource.description}
                                         </Typography>
                                     }
@@ -295,7 +296,7 @@ const ResourcesModal = ({ open, handleClose }) => {
                         )
                     ))}
                 </List>
-                <Typography sx={{ mt: 2, color: '#8f8f8f', fontSize: '0.9rem' }}>
+                <Typography sx={{ mt: 2, color: 'var(--text-secondary)', fontSize: '0.9rem' }}>
                     Нужен материал под конкретную задачу? Ищите на нашем сайте!
                 </Typography>
             </Box>

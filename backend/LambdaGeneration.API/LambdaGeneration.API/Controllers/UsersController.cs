@@ -1,6 +1,7 @@
 using LambdaGeneration.API.Application.Interfaces.Infrastructure;
 using LambdaGeneration.API.Application.Interfaces.Services;
 using LambdaGeneration.API.Application.Services;
+using LambdaGeneration.API.Core.Enums;
 using LambdaGeneration.API.Core.Models;
 using LambdaGeneration.API.DTO;
 using LambdaGeneration.API.DTO.Request;
@@ -28,14 +29,16 @@ namespace LambdaGeneration.API.Controllers
         private readonly ISendEmail _sendEmail;
         private readonly IVerifyCodeService _verifiCode;
         private readonly IRegexModerationService _regexModeration;
+        private readonly IImageModerationService _imageModerationService;
         private readonly IWebHostEnvironment _env;
-        public UsersController(IUsersService usersService, IVerifyCodeService verifyCode, ISendEmail sendEmail, IWebHostEnvironment env, IRegexModerationService regexModeration)
+        public UsersController(IUsersService usersService, IVerifyCodeService verifyCode, ISendEmail sendEmail, IWebHostEnvironment env, IRegexModerationService regexModeration, IImageModerationService imageModerationService)
         {
             _usersService = usersService;
             _sendEmail = sendEmail;
             _verifiCode = verifyCode;
             _env = env;
             _regexModeration = regexModeration;
+            _imageModerationService = imageModerationService;
         }
 
         [HttpPost("register")]
@@ -71,8 +74,41 @@ namespace LambdaGeneration.API.Controllers
 
                 if (request.Avatar != null)
                 {
-                    fileName = $"{Guid.NewGuid()}{Path.GetExtension(request.Avatar.FileName)}";
-                    var filePath = Path.Combine(_env.WebRootPath, "temp", fileName);
+                    await using var avatarInputStream = request.Avatar.OpenReadStream();
+                    using var avatarBuffer = new MemoryStream();
+                    await avatarInputStream.CopyToAsync(avatarBuffer);
+
+                    var isSafeAvatar = await _imageModerationService.IsImageSafeAsync(
+                        avatarBuffer.ToArray(),
+                        request.Avatar.ContentType,
+                        HttpContext.RequestAborted);
+
+                    if (!isSafeAvatar)
+                    {
+                        return BadRequest(new
+                        {
+                            error = "Аватар не прошел проверку",
+                            flags = new[] { "unsafe_image" },
+                            field = "avatar"
+                        });
+                    }
+
+                    var fileExtension = Path.GetExtension(request.Avatar.FileName);
+                    if (string.IsNullOrWhiteSpace(fileExtension))
+                    {
+                        fileExtension = request.Avatar.ContentType?.ToLowerInvariant() switch
+                        {
+                            "image/png" => ".png",
+                            "image/webp" => ".webp",
+                            "image/gif" => ".gif",
+                            _ => ".jpg"
+                        };
+                    }
+
+                    fileName = $"{Guid.NewGuid()}{fileExtension}";
+                    var tempDir = Path.Combine(_env.WebRootPath, "temp");
+                    Directory.CreateDirectory(tempDir);
+                    var filePath = Path.Combine(tempDir, fileName);
 
                     using (var stream = new FileStream(filePath, FileMode.Create))
                     {
@@ -105,18 +141,17 @@ namespace LambdaGeneration.API.Controllers
                 if (string.IsNullOrEmpty(pendingData))
                     return BadRequest("Данные регистрации не найдены");
 
-                string avatarUrlForDb = !string.IsNullOrEmpty(pendingAvatar)
-                    ? $"/uploads/{pendingAvatar}"
-                    : null;
                 if (!string.IsNullOrEmpty(pendingAvatar))
                 {
                     var tempPath = Path.Combine(_env.WebRootPath, "temp", pendingAvatar);
-                    var finalPath = Path.Combine(_env.WebRootPath, "uploads", pendingAvatar);
+                    var uploadsDir = Path.Combine(_env.WebRootPath, "uploads");
+                    Directory.CreateDirectory(uploadsDir);
+                    var finalPath = Path.Combine(uploadsDir, pendingAvatar);
 
                     if (System.IO.File.Exists(tempPath))
                     {
                         // Перемещаем (физический перенос файла по адресу)
-                        System.IO.File.Move(tempPath, finalPath);
+                        System.IO.File.Move(tempPath, finalPath, true);
                     }
                 }
 
@@ -229,7 +264,8 @@ namespace LambdaGeneration.API.Controllers
                     user.FollowingCount,
                     user.ArticlesCount,
                     user.PathAvatar,
-                    user.Role.ToString()
+                    user.Role.ToString(),
+                    user.Tag.ToApiValue()
                     );
 
                 return Ok(userResponse);
@@ -256,7 +292,8 @@ namespace LambdaGeneration.API.Controllers
                     user.FollowingCount,
                     user.ArticlesCount,
                     user.PathAvatar,
-                    user.Role.ToString()
+                    user.Role.ToString(),
+                    user.Tag.ToApiValue()
                     );
 
                 return Ok(userResponse);
@@ -266,6 +303,21 @@ namespace LambdaGeneration.API.Controllers
                 return BadRequest(ex.Message);
             }
         }
+        private static readonly string[] ProfileIcons = new[] { "🐶", "📝", "🚀", "💡", "👍", "💬", "⚗️", "🔎", "🔔", "👤", "🔗", "❤️", "⭐", "🔀", "📰", "🌐" };
+
+        private static (string name, string icon) SplitNameAndIcon(string fullName)
+        {
+            if (string.IsNullOrEmpty(fullName)) return ("", "");
+            foreach (var icon in ProfileIcons)
+            {
+                if (fullName.EndsWith(icon))
+                {
+                    return (fullName.Substring(0, fullName.Length - icon.Length).TrimEnd(), icon);
+                }
+            }
+            return (fullName, "");
+        }
+
         [HttpPut]
         [Authorize]
         public async Task<ActionResult<MyProfileResponse>> Update([FromForm] UpdateUserRequest request)
@@ -293,6 +345,25 @@ namespace LambdaGeneration.API.Controllers
 
                 if (request.avatar != null)
                 {
+                    await using var avatarInputStream = request.avatar.OpenReadStream();
+                    using var avatarBuffer = new MemoryStream();
+                    await avatarInputStream.CopyToAsync(avatarBuffer);
+
+                    var isSafeAvatar = await _imageModerationService.IsImageSafeAsync(
+                        avatarBuffer.ToArray(),
+                        request.avatar.ContentType,
+                        HttpContext.RequestAborted);
+
+                    if (!isSafeAvatar)
+                    {
+                        return BadRequest(new
+                        {
+                            error = "Аватар не прошел проверку",
+                            flags = new[] { "unsafe_image" },
+                            field = "avatar"
+                        });
+                    }
+
                     fileName = $"{Guid.NewGuid()}{Path.GetExtension(request.avatar.FileName)}";
                     var filePath = Path.Combine(_env.WebRootPath, "uploads", fileName);
 
@@ -305,10 +376,14 @@ namespace LambdaGeneration.API.Controllers
                     avatarPathForDb = $"/uploads/{fileName}";
                 }
 
+                var existingProfile = await _usersService.GetProfile(id);
+                var (_, existingIcon) = SplitNameAndIcon(existingProfile.UserName);
+                string newNameWithIcon = string.IsNullOrEmpty(existingIcon) ? request.name : $"{request.name} {existingIcon}";
+
                 // Передаем в Update именно путь (avatarPathForDb), а не просто имя файла
                 (Users user, string token) = await _usersService.Update(
                     id,
-                    request.name,
+                    newNameWithIcon,
                     request.email,
                     request.aboutUser ?? "",
                     avatarPathForDb
@@ -324,7 +399,8 @@ namespace LambdaGeneration.API.Controllers
                     user.FollowingCount,
                     user.ArticlesCount,
                     user.PathAvatar,
-                    user.Role.ToString()
+                    user.Role.ToString(),
+                    user.Tag.ToApiValue()
                     );
 
                 HttpContext.Response.Cookies.Append("auth_cookies", token,
@@ -334,6 +410,55 @@ namespace LambdaGeneration.API.Controllers
                         SameSite = SameSiteMode.Lax
                     }
                     );
+
+                return Ok(userProfile);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+
+        [HttpPut("update-icon")]
+        [Authorize]
+        public async Task<ActionResult<MyProfileResponse>> UpdateIcon([FromBody] UpdateIconRequest request)
+        {
+            try
+            {
+                var id = GetUserID();
+                var existingProfile = await _usersService.GetProfile(id);
+                var (baseName, _) = SplitNameAndIcon(existingProfile.UserName);
+                string newNameWithIcon = string.IsNullOrEmpty(request.icon) ? baseName : $"{baseName} {request.icon}";
+
+                // We need to keep other values unchanged
+                (Users user, string token) = await _usersService.Update(
+                    id,
+                    newNameWithIcon,
+                    existingProfile.Email,
+                    existingProfile.AboutUser ?? "",
+                    existingProfile.PathAvatar
+                );
+
+                var userProfile = new MyProfileResponse(
+                    user.UserID,
+                    user.UserName,
+                    user.Email,
+                    user.AboutUser,
+                    user.CreatedDate,
+                    user.FollowersCount,
+                    user.FollowingCount,
+                    user.ArticlesCount,
+                    user.PathAvatar,
+                    user.Role.ToString(),
+                    user.Tag.ToApiValue()
+                );
+
+                HttpContext.Response.Cookies.Append("auth_cookies", token,
+                    new CookieOptions
+                    {
+                        HttpOnly = true,
+                        SameSite = SameSiteMode.Lax
+                    });
 
                 return Ok(userProfile);
             }
@@ -392,7 +517,9 @@ namespace LambdaGeneration.API.Controllers
                         user.FollowersCount,
                         user.FollowingCount,
                         user.ArticlesCount,
-                        user.PathAvatar
+                        user.PathAvatar,
+                        user.Role.ToString(),
+                        user.Tag.ToApiValue()
                         ))
                     .ToList();
 

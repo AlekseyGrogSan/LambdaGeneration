@@ -91,7 +91,7 @@ const PullToRefresh = ({ onRefresh, isRefreshing, children }) => {
                     thickness={4} 
                     variant={isRefreshing ? 'indeterminate' : 'determinate'}
                     value={isRefreshing ? undefined : Math.min((pullDistance / pullThreshold) * 100, 100)}
-                    sx={{ color: '#00bfa5' }}
+                    sx={{ color: 'var(--accent-500)' }}
                 />
             </Box>
             <Box
