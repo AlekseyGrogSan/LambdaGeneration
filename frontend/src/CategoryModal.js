@@ -8,16 +8,16 @@ const style = {
     left: '50%',
     transform: 'translate(-50%, -50%)',
     width: { xs: '92%', sm: 560, md: 700 },
-    bgcolor: 'var(--ui-c29)',
+    bgcolor: 'var(--surface-panel)',
     border: '1px solid color-mix(in oklab, var(--text-primary) 8%, transparent)',
     borderRadius: '16px',
-    boxShadow: '0 18px 48px var(--ui-c137)',
+    boxShadow: 'var(--shadow-soft)',
     p: 4,
-    color: 'white',
+    color: 'var(--text-primary)',
     maxHeight: '85vh',
     overflowY: 'auto',
     '&::-webkit-scrollbar': { width: '8px' },
-    '&::-webkit-scrollbar-track': { background: 'var(--ui-c189)' },
+    '&::-webkit-scrollbar-track': { background: 'var(--surface-soft)' },
     '&::-webkit-scrollbar-thumb': { background: 'var(--accent-500)', borderRadius: '8px' },
 };
 
@@ -143,10 +143,14 @@ const CategoryModal = ({ open, handleClose, selectedTags = [], onApply }) => {
                                         onClick={() => toggleTag(tag.id)}
                                         sx={{
                                             cursor: 'pointer',
-                                            backgroundColor: selected ? 'var(--accent-500)' : 'color-mix(in oklab, var(--text-primary) 8%, transparent)',
-                                            color: selected ? 'var(--ui-c18)' : 'var(--text-primary)',
-                                            border: selected ? 'none' : '1px solid var(--ui-c193)',
-                                            '&:hover': { backgroundColor: selected ? 'var(--ui-c9)' : 'var(--ui-c193)' },
+                                            backgroundColor: selected ? 'var(--accent-500)' : 'var(--surface-elevated)',
+                                            color: selected ? 'var(--accent-contrast)' : 'var(--text-primary)',
+                                            border: selected ? 'none' : '1px solid var(--border-default)',
+                                            '&:hover': {
+                                                backgroundColor: selected
+                                                    ? 'var(--accent-600)'
+                                                    : 'color-mix(in oklab, var(--surface-soft) 92%, var(--surface-elevated))',
+                                            },
                                         }}
                                     />
                                 );

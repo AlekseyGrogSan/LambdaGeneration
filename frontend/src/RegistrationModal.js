@@ -16,11 +16,15 @@ const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || '/api';
 
 const inputStyle = {
     '& .MuiFilledInput-root': {
-        backgroundColor: 'var(--ui-c176)',
+        backgroundColor: 'var(--surface-input)',
         color: 'var(--text-primary)',
         borderRadius: '8px',
-        '&:hover': { backgroundColor: 'var(--ui-c178)' },
-        '&.Mui-focused': { backgroundColor: 'var(--ui-c181)' },
+        transition: 'background-color 0.2s ease, box-shadow 0.2s ease',
+        '&:hover': { backgroundColor: 'color-mix(in oklab, var(--surface-input) 90%, var(--bg-elevated))' },
+        '&.Mui-focused': {
+            backgroundColor: 'color-mix(in oklab, var(--surface-input) 86%, var(--bg-elevated))',
+            boxShadow: 'inset 0 0 0 1px color-mix(in oklab, var(--accent-500) 40%, transparent)',
+        },
     },
     '& .MuiInputLabel-root': {
         color: 'var(--text-secondary)',
@@ -133,9 +137,10 @@ const RegistrationModal = ({ open, handleClose, onForgotPassword, onAuthSuccess,
         left: '50%',
         transform: 'translate(-50%, -50%)',
         width: { xs: '90%', sm: '400px' },
-        bgcolor: 'var(--ui-c41)',
+        bgcolor: 'var(--surface-elevated)',
+        border: '1px solid var(--border-default)',
         borderRadius: '16px',
-        boxShadow: 24,
+        boxShadow: 'var(--shadow-soft)',
         p: 4,
         color: 'var(--text-primary)',
         display: 'flex',

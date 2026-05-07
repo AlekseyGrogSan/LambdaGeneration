@@ -26,11 +26,11 @@ const baseModalSx = {
     height: { xs: '100dvh', sm: 'auto' },
     maxHeight: { xs: '100dvh', sm: '90vh' },
     borderRadius: { xs: 0, sm: '20px' },
-    border: '1px solid var(--ui-c129)',
-    background: 'radial-gradient(circle at 20% 0%, var(--ui-c28) 0%, var(--ui-c22) 55%, var(--ui-c17) 100%)',
-    color: 'var(--ui-c92)',
+    border: '1px solid var(--border-default)',
+    background: 'linear-gradient(180deg, color-mix(in oklab, var(--surface-soft) 92%, var(--surface-panel)) 0%, var(--surface-panel) 100%)',
+    color: 'var(--text-primary)',
     overflow: 'hidden',
-    boxShadow: '0 30px 80px var(--ui-c110)',
+    boxShadow: 'var(--shadow-soft)',
     display: 'flex',
     flexDirection: 'column',
 };
@@ -42,9 +42,9 @@ const slideIconSx = {
     display: 'inline-flex',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: 'var(--ui-c125)',
-    color: 'var(--ui-c57)',
-    border: '1px solid var(--ui-c148)',
+    backgroundColor: 'color-mix(in oklab, var(--accent-500) 14%, transparent)',
+    color: 'var(--accent-600)',
+    border: '1px solid color-mix(in oklab, var(--accent-500) 30%, var(--border-default))',
 };
 
 const getSlides = () => [
@@ -148,9 +148,9 @@ const SiteGuideSlidesModal = ({ open, onClose }) => {
                         gap: 1,
                         px: { xs: 1.5, sm: 2.25 },
                         py: { xs: 1.1, sm: 1.5 },
-                        borderBottom: '1px solid var(--ui-c127)',
+                        borderBottom: '1px solid var(--border-default)',
                         backdropFilter: 'blur(10px)',
-                        backgroundColor: 'var(--ui-c104)',
+                        backgroundColor: 'color-mix(in oklab, var(--surface-panel) 92%, transparent)',
                     }}
                 >
                     <Chip
@@ -158,15 +158,15 @@ const SiteGuideSlidesModal = ({ open, onClose }) => {
                         size="small"
                         sx={{
                             fontWeight: 700,
-                            bgcolor: 'var(--ui-c126)',
-                            color: 'var(--ui-c61)',
-                            border: '1px solid var(--ui-c130)',
+                            bgcolor: 'color-mix(in oklab, var(--accent-500) 16%, transparent)',
+                            color: 'var(--text-primary)',
+                            border: '1px solid color-mix(in oklab, var(--accent-500) 32%, var(--border-default))',
                         }}
                     />
-                    <Typography sx={{ ml: 'auto', color: 'var(--ui-c70)', fontSize: '0.8rem' }}>
+                    <Typography sx={{ ml: 'auto', color: 'var(--text-secondary)', fontSize: '0.8rem' }}>
                         {activeStep + 1} / {maxSteps}
                     </Typography>
-                    <IconButton onClick={onClose} aria-label="Закрыть инструкцию" sx={{ color: 'var(--ui-c82)' }}>
+                    <IconButton onClick={onClose} aria-label="Закрыть инструкцию" sx={{ color: 'var(--text-secondary)' }}>
                         <CloseIcon />
                     </IconButton>
                 </Box>
@@ -184,7 +184,7 @@ const SiteGuideSlidesModal = ({ open, onClose }) => {
                     <Typography id="site-guide-title" variant="h5" sx={{ mt: 1.5, fontWeight: 800, letterSpacing: 0.2 }}>
                         {currentSlide.title}
                     </Typography>
-                    <Typography id="site-guide-content" sx={{ mt: 0.8, color: 'var(--ui-c69)', lineHeight: 1.6 }}>
+                    <Typography id="site-guide-content" sx={{ mt: 0.8, color: 'var(--text-secondary)', lineHeight: 1.6 }}>
                         {currentSlide.subtitle}
                     </Typography>
 
@@ -195,8 +195,8 @@ const SiteGuideSlidesModal = ({ open, onClose }) => {
                                 sx={{
                                     p: 1.3,
                                     borderRadius: '12px',
-                                    border: '1px solid var(--ui-c190)',
-                                    backgroundColor: 'var(--ui-c188)',
+                                    border: '1px solid var(--border-default)',
+                                    backgroundColor: 'var(--surface-elevated)',
                                 }}
                             >
                                 <Typography sx={{ fontSize: { xs: '0.92rem', sm: '0.96rem' }, lineHeight: 1.5 }}>{point}</Typography>
@@ -205,7 +205,7 @@ const SiteGuideSlidesModal = ({ open, onClose }) => {
                     </Box>
                 </Box>
 
-                <Box sx={{ borderTop: '1px solid var(--ui-c127)' }}>
+                <Box sx={{ borderTop: '1px solid var(--border-default)' }}>
                     <MobileStepper
                         variant="dots"
                         steps={maxSteps}
@@ -215,7 +215,7 @@ const SiteGuideSlidesModal = ({ open, onClose }) => {
                             background: 'transparent',
                             px: { xs: 1, sm: 1.6 },
                             '& .MuiMobileStepper-dot': {
-                                backgroundColor: 'var(--ui-c197)',
+                                backgroundColor: 'color-mix(in oklab, var(--text-secondary) 28%, transparent)',
                             },
                             '& .MuiMobileStepper-dotActive': {
                                 backgroundColor: 'var(--accent-400)',
@@ -227,7 +227,7 @@ const SiteGuideSlidesModal = ({ open, onClose }) => {
                                 onClick={handleNext}
                                 disabled={activeStep === maxSteps - 1}
                                 endIcon={<ArrowForwardIosIcon sx={{ fontSize: 13 }} />}
-                                sx={{ color: 'var(--ui-c58)' }}
+                                sx={{ color: 'var(--text-primary)' }}
                             >
                                 Далее
                             </Button>
@@ -238,7 +238,7 @@ const SiteGuideSlidesModal = ({ open, onClose }) => {
                                 onClick={handleBack}
                                 disabled={activeStep === 0}
                                 startIcon={<ArrowBackIosNewIcon sx={{ fontSize: 13 }} />}
-                                sx={{ color: 'var(--ui-c58)' }}
+                                sx={{ color: 'var(--text-primary)' }}
                             >
                                 Назад
                             </Button>

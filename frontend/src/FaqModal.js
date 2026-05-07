@@ -18,12 +18,12 @@ const style = {
     left: '50%',
     transform: 'translate(-50%, -50%)',
     width: 'min(92vw, 620px)',
-    bgcolor: 'var(--ui-c29)',
+    bgcolor: 'var(--surface-panel)',
     border: '1px solid color-mix(in oklab, var(--text-primary) 8%, transparent)',
     borderRadius: '16px',
-    boxShadow: '0 18px 48px var(--ui-c137)',
+    boxShadow: 'var(--shadow-soft)',
     p: 4,
-    color: 'white',
+    color: 'var(--text-primary)',
     maxHeight: '80vh',
     overflowY: 'auto',
 };
@@ -33,19 +33,19 @@ const scrollbarStyle = {
         width: '8px',
     },
     '&::-webkit-scrollbar-track': {
-        background: 'var(--ui-c25)',
+        background: 'var(--surface-soft)',
         borderRadius: '10px',
     },
     '&::-webkit-scrollbar-thumb': {
         background: 'var(--accent-500)',
         borderRadius: '10px',
-        border: '2px solid var(--ui-c25)',
+        border: '2px solid var(--surface-soft)',
     },
     '&::-webkit-scrollbar-thumb:hover': {
         background: 'var(--accent-600)',
     },
     scrollbarWidth: 'thin',
-    scrollbarColor: 'var(--accent-500) var(--ui-c25)',
+    scrollbarColor: 'var(--accent-500) var(--surface-soft)',
 };
 
 const faqItems = [
@@ -128,7 +128,7 @@ const FaqModal = ({ open, handleClose }) => {
                         disableGutters
                         sx={{
                             bgcolor: 'var(--surface-panel)',
-                            color: 'white',
+                            color: 'var(--text-primary)',
                             border: '1px solid color-mix(in oklab, var(--text-primary) 6%, transparent)',
                             '&::before': { display: 'none' },
                             mb: 1,
@@ -140,7 +140,7 @@ const FaqModal = ({ open, handleClose }) => {
                         >
                             <Typography sx={{ fontWeight: 600 }}>{item.question}</Typography>
                         </AccordionSummary>
-                        <AccordionDetails sx={{ px: 2, pb: 2, color: 'var(--ui-c78)', whiteSpace: 'pre-line' }}>
+                        <AccordionDetails sx={{ px: 2, pb: 2, color: 'var(--text-secondary)', whiteSpace: 'pre-line' }}>
                             {item.answer}
                         </AccordionDetails>
                     </Accordion>

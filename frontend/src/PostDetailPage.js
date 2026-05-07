@@ -169,7 +169,7 @@ const TAG_COLORS = [
 const commentInputStyle = {
     '& .MuiFilledInput-root': {
         backgroundColor: 'var(--surface-elevated)',
-        color: 'white',
+        color: 'var(--text-primary)',
         borderRadius: '10px',
         '&:hover': { backgroundColor: 'var(--ui-c42)' },
         '&.Mui-focused': { backgroundColor: 'var(--ui-c42)' },
@@ -259,7 +259,7 @@ const CommentItem = ({
                     <ProfileIcon icon={comment.authorProfileIcon} size={18} />
                 </Box>
             </Box>
-            <Typography variant="body1" sx={{ color: 'white', mt: 0.5, whiteSpace: 'pre-wrap' }}>
+            <Typography variant="body1" sx={{ color: 'var(--text-primary)', mt: 0.5, whiteSpace: 'pre-wrap' }}>
                 {comment.content}
             </Typography>
             <Typography variant="caption" sx={{ color: 'var(--ui-c56)', display: 'block', mt: 1 }}>
@@ -479,14 +479,18 @@ const PostDetailPage = React.memo(({
             ref={contentRef}
             dangerouslySetInnerHTML={{ __html: renderedArticleContent }}
             sx={{
-                color: 'white',
+                color: 'var(--text-primary)',
                 lineHeight: { xs: 1.5, md: 1.6 },
                 whiteSpace: 'pre-wrap',
                 '& h1': { fontSize: { xs: '1.55rem', md: '2.4rem' }, mt: { xs: 2, md: 3 }, mb: 1, color: 'var(--accent-500)', lineHeight: { xs: 1.25, md: 1.3 } },
-                '& h2': { fontSize: { xs: '1.35rem', md: '2rem' }, mt: { xs: 1.5, md: 2 }, mb: 1, color: 'white', lineHeight: { xs: 1.3, md: 1.35 } },
-                '& h3': { fontSize: { xs: '1.15rem', md: '1.7rem' }, mt: { xs: 1.25, md: 1.5 }, mb: 0.5, color: 'white', lineHeight: { xs: 1.35, md: 1.4 } },
-                '& p': { marginBottom: 1, marginTop: 1, fontSize: { xs: '0.98rem', md: '1.15rem' } },
-                '& strong': { fontWeight: 'bold', color: 'white' }
+                '& h2': { fontSize: { xs: '1.35rem', md: '2rem' }, mt: { xs: 1.5, md: 2 }, mb: 1, color: 'var(--text-primary)', lineHeight: { xs: 1.3, md: 1.35 } },
+                '& h3': { fontSize: { xs: '1.15rem', md: '1.7rem' }, mt: { xs: 1.25, md: 1.5 }, mb: 0.5, color: 'var(--text-primary)', lineHeight: { xs: 1.35, md: 1.4 } },
+                '& p': { marginBottom: 1, marginTop: 1, fontSize: { xs: '0.98rem', md: '1.15rem' }, color: 'var(--text-primary)' },
+                '& strong': { fontWeight: 'bold', color: 'var(--text-primary)' },
+                '& em': { color: 'var(--text-primary)' },
+                '& li': { color: 'var(--text-primary)' },
+                '& a': { color: 'var(--accent-500)' },
+                '& span': { color: 'inherit' },
             }}
         />
     ), [renderedArticleContent]);
@@ -1078,7 +1082,7 @@ const PostDetailPage = React.memo(({
                 boxShadow: '0 4px 12px var(--ui-c109)',
                 m: { xs: 0, sm: 1, md: 2 },
                 pb: 2,
-                color: 'white',
+                color: 'var(--text-primary)',
             }}
         >
             <Box sx={{ p: { xs: 1.25, md: 2 }, borderBottom: '1px solid var(--border-default)', display: 'flex', alignItems: 'center', gap: 0.5 }}>
@@ -1179,7 +1183,7 @@ const PostDetailPage = React.memo(({
                             onClick={() => onTagClick?.(strTag)}
                             sx={{
                                 backgroundColor: getTagColor(strTag, index),
-                                color: 'white',
+                                color: 'var(--text-primary)',
                                 fontWeight: 'bold',
                                 borderRadius: '10px',
                                 flexShrink: 0,
