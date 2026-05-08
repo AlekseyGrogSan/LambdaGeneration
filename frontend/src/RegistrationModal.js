@@ -9,6 +9,7 @@ import {
 } from '@mui/material';
 import EmailVerificationModal from './EmailVerificationModal';
 import AvatarCropDialog from './AvatarCropDialog';
+import ForgotPasswordModal from './ForgotPasswordModal';
 import { formatBytes, isAvatarTooLarge, MAX_AVATAR_BYTES } from './avatarUtils';
 import { buildModerationErrorMessage } from './moderationFlags';
 
@@ -109,6 +110,7 @@ const RegistrationModal = ({ open, handleClose, onForgotPassword, onAuthSuccess,
     const [avatarError, setAvatarError] = useState('');
     const [cropImageSrc, setCropImageSrc] = useState(null);
     const [isCropDialogOpen, setIsCropDialogOpen] = useState(false);
+    const [showForgotPassword, setShowForgotPassword] = useState(false); // НОВОЕ: состояние для модалки сброса пароля
 
     useEffect(() => {
         if (open) {
@@ -128,6 +130,7 @@ const RegistrationModal = ({ open, handleClose, onForgotPassword, onAuthSuccess,
             setIsSubmitting(false);
             setCropImageSrc(null);
             setIsCropDialogOpen(false);
+            setShowForgotPassword(false); // Сброс при закрытии
         }
     }, [open]);
 
@@ -196,15 +199,18 @@ const RegistrationModal = ({ open, handleClose, onForgotPassword, onAuthSuccess,
 
         if (!validateEmail(formData.email)) {
             setError('Введите корректный адрес электронной почты.');
+            setIsSubmitting(false);
             return;
         }
 
         if (isRegisterMode && formData.password.length < 6) {
             setError('Пароль должен быть не менее 6 символов.');
+            setIsSubmitting(false);
             return;
         }
         if (isRegisterMode && avatarError) {
             setError(avatarError);
+            setIsSubmitting(false);
             return;
         }
 
@@ -231,13 +237,13 @@ const RegistrationModal = ({ open, handleClose, onForgotPassword, onAuthSuccess,
                 method: 'POST',
                 headers: isRegisterMode ? undefined : { 'Content-Type': 'application/json' },
                 body: isRegisterMode ? payload : JSON.stringify(payload),
-                credentials: 'include', // Важно для сессии на бэкенде
+                credentials: 'include',
             });
 
             if (response.ok) {
                 if (isRegisterMode) {
                     setPendingEmail(formData.email);
-                    setShowVerification(true); // Открываем верификацию
+                    setShowVerification(true);
                 } else {
                     if (onAuthSuccess) {
                         await onAuthSuccess();
@@ -260,8 +266,18 @@ const RegistrationModal = ({ open, handleClose, onForgotPassword, onAuthSuccess,
 
     const handleVerificationSuccess = () => {
         setShowVerification(false);
-        setIsRegisterMode(false); // Переключаем на вход после успеха
+        setIsRegisterMode(false);
         setSuccess('Почта подтверждена! Теперь вы можете войти.');
+    };
+
+    // НОВОЕ: обработчик открытия модалки сброса пароля
+    const handleOpenForgotPassword = () => {
+        setShowForgotPassword(true);
+    };
+
+    // НОВОЕ: обработчик закрытия модалки сброса пароля
+    const handleCloseForgotPassword = () => {
+        setShowForgotPassword(false);
     };
 
     return (
@@ -346,6 +362,18 @@ const RegistrationModal = ({ open, handleClose, onForgotPassword, onAuthSuccess,
                             {isRegisterMode ? 'Уже есть аккаунт? Войти' : 'Нет аккаунта? Регистрация'}
                         </MuiLink>
                     </Box>
+
+                    {/* НОВОЕ: ссылка "Забыли пароль?" - показываем только в режиме входа */}
+                    {!isRegisterMode && (
+                        <Box sx={{ textAlign: 'center', mt: 1 }}>
+                            <MuiLink
+                                onClick={handleOpenForgotPassword}
+                                sx={{ color: 'var(--text-secondary)', cursor: 'pointer', fontSize: '0.875rem' }}
+                            >
+                                Забыли пароль?
+                            </MuiLink>
+                        </Box>
+                    )}
                 </Box>
             </Modal>
 
@@ -361,6 +389,12 @@ const RegistrationModal = ({ open, handleClose, onForgotPassword, onAuthSuccess,
                 handleClose={() => setShowVerification(false)}
                 email={pendingEmail}
                 onVerificationSuccess={handleVerificationSuccess}
+            />
+
+            {/* НОВОЕ: модальное окно восстановления пароля */}
+            <ForgotPasswordModal
+                open={showForgotPassword}
+                handleClose={handleCloseForgotPassword}
             />
         </>
     );

@@ -512,7 +512,7 @@ const EditorToolbar = ({ editorRef, setInputDialog, onOpenAiPanel, aiBusy, aiHas
                 sx={{ zIndex: 1600 }}
                 PaperProps={{
                     sx: {
-                        backgroundColor: 'var(--ui-c33)',
+                        backgroundColor: 'var(--bg-elevated)',
                         color: 'var(--text-primary)',
                         width: 340,
                         border: '1px solid var(--ui-c192)'
