@@ -300,7 +300,7 @@ const Sidebar = ({ handleOpen, handleProfileOpen, handlePostOpen, handleCategory
                     <Box sx={{ mb: 2.2, display: 'flex', alignItems: 'center', gap: 1.1 }}>
                         <Avatar
                             src={buildAvatarUrl(API_BASE_URL, currentUser.pathAvatar ?? currentUser.PathAvatar)}
-                            sx={{ bgcolor: 'var(--accent-500)', width: 34, height: 34 }}
+                            sx={{ bgcolor: 'var(--accent-500)', width: 45, height: 45 }}
                             imgProps={{
                                 onError: (e) => {
                                     e.currentTarget.src = DEFAULT_AVATAR_SRC;
@@ -310,14 +310,14 @@ const Sidebar = ({ handleOpen, handleProfileOpen, handlePostOpen, handleCategory
                             {currentUserName[0]?.toUpperCase()}
                         </Avatar>
                         <Box sx={{ overflow: 'hidden', minWidth: 0 }}>
-                            <Typography variant="caption" sx={{ color: 'var(--text-secondary)', display: 'block', mb: 0.25 }}>
+                            <Typography variant="caption" sx={{ color: 'var(--text-secondary)', display: 'block', mb: 0.5 }}>
                                 Вы вошли как
                             </Typography>
-                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, minWidth: 0 }}>
-                                <Typography variant="body2" sx={{ color: 'var(--text-primary)', fontWeight: 700, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, minWidth: 1 }}>
+                                <Typography variant="body2" sx={{ color: 'var(--text-primary)', fontWeight: 750, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                                     {currentUserName}
                                 </Typography>
-                                <ProfileIcon icon={currentUserIcon} size={16} />
+                                <ProfileIcon icon={currentUserIcon} size={20} />
                             </Box>
                             <Box sx={{ mt: 0.35 }}>
                                 <UserRoleBadge role={currentUser.tag ?? currentUser.Tag} size="sm" />
