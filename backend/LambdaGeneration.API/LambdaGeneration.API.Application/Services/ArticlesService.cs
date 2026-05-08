@@ -1,4 +1,5 @@
 using LambdaGeneration.API.Application.Interfaces.Services;
+using Ganss.XSS;
 using LambdaGeneration.API.Core.Enums;
 using LambdaGeneration.API.Core.Models;
 using LambdaGeneration.API.Date.Repositories;
@@ -11,11 +12,48 @@ namespace LambdaGeneration.API.Application.Services
     {
         private readonly IArticlesRepository _articlesRepository;
         private readonly IMemoryCache _memoryCache;
+        private readonly HtmlSanitizer _sanitizer;
 
         public ArticlesService(IArticlesRepository articlesRepository, IMemoryCache memoryCache)
         {
             _articlesRepository = articlesRepository;
             _memoryCache = memoryCache;
+            _sanitizer = new HtmlSanitizer();
+            // Allow only a limited set of tags/attributes commonly used in articles
+            _sanitizer.AllowedTags.Clear();
+            _sanitizer.AllowedTags.Add("b");
+            _sanitizer.AllowedTags.Add("i");
+            _sanitizer.AllowedTags.Add("strong");
+            _sanitizer.AllowedTags.Add("em");
+            _sanitizer.AllowedTags.Add("u");
+            _sanitizer.AllowedTags.Add("p");
+            _sanitizer.AllowedTags.Add("br");
+            _sanitizer.AllowedTags.Add("ul");
+            _sanitizer.AllowedTags.Add("ol");
+            _sanitizer.AllowedTags.Add("li");
+            _sanitizer.AllowedTags.Add("pre");
+            _sanitizer.AllowedTags.Add("code");
+            _sanitizer.AllowedTags.Add("a");
+            _sanitizer.AllowedTags.Add("table");
+            _sanitizer.AllowedTags.Add("thead");
+            _sanitizer.AllowedTags.Add("tbody");
+            _sanitizer.AllowedTags.Add("tr");
+            _sanitizer.AllowedTags.Add("th");
+            _sanitizer.AllowedTags.Add("td");
+            
+            _sanitizer.AllowedAttributes.Add("href");
+            _sanitizer.AllowedAttributes.Add("target");
+            _sanitizer.AllowedAttributes.Add("rel");
+            _sanitizer.AllowedAttributes.Add("class");
+            _sanitizer.AllowedAttributes.Add("id");
+            _sanitizer.AllowedAttributes.Add("style");
+            _sanitizer.AllowedAttributes.Add("data-language");
+            
+            // Allow only safe URI schemes
+            _sanitizer.AllowedSchemes.Clear();
+            _sanitizer.AllowedSchemes.Add("http");
+            _sanitizer.AllowedSchemes.Add("https");
+            _sanitizer.AllowedSchemes.Add("mailto");
         }
 
         public async Task Create(string article_title,
@@ -25,11 +63,16 @@ namespace LambdaGeneration.API.Application.Services
             Guid author_id,
             string? file_path)
         {
+            // Sanitize inputs server-side to avoid stored XSS
+            var safeTitle = string.IsNullOrWhiteSpace(article_title) ? string.Empty : _sanitizer.Sanitize(article_title);
+            var safePreview = string.IsNullOrWhiteSpace(article_preview) ? string.Empty : _sanitizer.Sanitize(article_preview);
+            var safeContent = string.IsNullOrWhiteSpace(article_content) ? string.Empty : _sanitizer.Sanitize(article_content);
+
             await _articlesRepository.Create(
                 Articles.Create(Guid.NewGuid(),
-                    article_title,
-                    article_content,
-                    article_preview,
+                    safeTitle,
+                    safeContent,
+                    safePreview,
                     article_tags,
                     author_id,
                     file_path)
@@ -57,7 +100,12 @@ namespace LambdaGeneration.API.Application.Services
             {
                 throw new ArgumentException("Article not exist!");
             }
-            var article = await _articlesRepository.Update(article_id, new_title, new_content, new_preview, file_path);
+            // Sanitize updated content
+            var safeTitle = string.IsNullOrWhiteSpace(new_title) ? string.Empty : _sanitizer.Sanitize(new_title);
+            var safePreview = string.IsNullOrWhiteSpace(new_preview) ? string.Empty : _sanitizer.Sanitize(new_preview);
+            var safeContent = string.IsNullOrWhiteSpace(new_content) ? string.Empty : _sanitizer.Sanitize(new_content);
+
+            var article = await _articlesRepository.Update(article_id, safeTitle, safeContent, safePreview, file_path);
 
             return article;
         }
