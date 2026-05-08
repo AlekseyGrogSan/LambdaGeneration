@@ -2,7 +2,7 @@ import { createContext, useCallback, useEffect, useMemo, useState } from 'react'
 import { createTheme } from '@mui/material/styles';
 
 const THEME_STORAGE_KEY = 'lambda.ui.theme.v2';
-const AVAILABLE_MODES = ['dark', 'light', 'neutral-gray'];
+const AVAILABLE_MODES = ['dark', 'light'];
 
 export const ColorModeContext = createContext({
     mode: 'dark',
