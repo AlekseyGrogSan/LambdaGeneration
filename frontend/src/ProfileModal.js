@@ -1865,7 +1865,7 @@ const ProfileModal = ({ open, handleClose, userId, onUnauthorized, onLogout, onP
                 onClose={handleCloseProfileIconInfo}
                 PaperProps={{
                     sx: {
-                        bgcolor: 'var(--ui-c164)',
+                        bgcolor: 'var(--bg-elevated)',
                         color: 'var(--text-primary)',
                         border: '1px solid var(--border-default)',
                         borderRadius: '18px',
