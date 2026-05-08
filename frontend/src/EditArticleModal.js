@@ -1,6 +1,7 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useContext } from 'react';
 import ConfirmationDialog from './ConfirmationDialog';
 import InputDialog from './InputDialog';
+import { ColorModeContext } from './theme';
 import {
     Modal,
     Box,
@@ -120,6 +121,7 @@ const inputStyle = {
 };
 
 const EditorToolbar = ({ editorRef, setInputDialog, onOpenAiPanel, aiBusy, aiHasSuggestion }) => {
+    const { mode } = useContext(ColorModeContext);
     const selectionRangeRef = useRef(null);
     const [activeStyles, setActiveStyles] = useState({
         bold: false,
@@ -156,7 +158,7 @@ const EditorToolbar = ({ editorRef, setInputDialog, onOpenAiPanel, aiBusy, aiHas
         });
     }, [editorRef]);
 
-    const basicTextColors = [
+    const allTextColors = [
         { name: 'Черный', value: '#111827' },
         { name: 'Белый', value: 'var(--text-primary)' },
         { name: 'Красный', value: 'var(--ui-c93)' },
@@ -165,6 +167,13 @@ const EditorToolbar = ({ editorRef, setInputDialog, onOpenAiPanel, aiBusy, aiHas
         { name: 'Зеленый', value: 'var(--ui-c47)' },
         { name: 'Синий', value: 'var(--ui-c31)' }
     ];
+
+    // Filter colors based on theme: remove unreadable combinations
+    const basicTextColors = allTextColors.filter(color => {
+        if (mode === 'light' && color.name === 'Белый') return false; // Can't use white on light theme
+        if (mode === 'dark' && color.name === 'Черный') return false; // Can't use black on dark theme
+        return true;
+    });
 
     const textEditorShortcuts = [
         { combo: 'Ctrl+B', action: 'Жирный текст' },
@@ -405,8 +414,9 @@ const EditorToolbar = ({ editorRef, setInputDialog, onOpenAiPanel, aiBusy, aiHas
                 sx={{ zIndex: 1600 }}
                 PaperProps={{
                     sx: {
-                        backgroundColor: 'var(--border-default)',
-                        color: 'var(--text-primary)'
+                        backgroundColor: 'color-mix(in oklab, var(--surface-panel) 96%, transparent)',
+                        color: 'var(--text-primary)',
+                        backdropFilter: 'blur(4px)'
                     }
                 }}
             >
