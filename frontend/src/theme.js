@@ -21,7 +21,7 @@ const getInitialMode = () => {
 };
 
 const getPaletteByMode = (mode) => ({
-    mode: mode === 'neutral-gray' ? 'light' : mode,
+    mode: mode,
     primary: { main: '#13a065' },
     secondary: { main: '#37d6ff' },
     error: { main: '#ff5d6c' },
@@ -30,22 +30,16 @@ const getPaletteByMode = (mode) => ({
     info: { main: '#5cb8ff' },
     background:
         mode === 'dark'
-                        ? { default: '#121212', paper: '#1b1b1b' }
-            : mode === 'neutral-gray'
-              ? { default: '#ECECEC', paper: '#E2E2E2' }
-              : { default: '#f3f8fb', paper: '#ffffff' },
+            ? { default: '#121212', paper: '#1b1b1b' }
+            : { default: '#f3f8fb', paper: '#ffffff' },
     text:
         mode === 'dark'
-                        ? { primary: '#f5f5f5', secondary: '#bdbdbd' }
-            : mode === 'neutral-gray'
-                            ? { primary: '#151a21', secondary: '#2f3a49' }
-                            : { primary: '#111827', secondary: '#344256' },
+            ? { primary: '#f5f5f5', secondary: '#bdbdbd' }
+            : { primary: '#111827', secondary: '#344256' },
     divider:
         mode === 'dark'
-                        ? 'rgba(255, 255, 255, 0.08)'
-            : mode === 'neutral-gray'
-              ? '#CFCFCF'
-              : 'rgba(44, 83, 125, 0.18)',
+            ? 'rgba(255, 255, 255, 0.08)'
+            : 'rgba(44, 83, 125, 0.18)',
 });
 
 export const createAppTheme = (mode) =>
