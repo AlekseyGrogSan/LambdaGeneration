@@ -90,6 +90,45 @@ const BestArticlesList = ({ isMobile, onArticleClick, open, onClose }) => {
     }
   };
 
+  const getArticleWithLatestLikeStatus = async (article) => {
+    try {
+      // Получаем актуальную информацию о лайке и количестве лайков напрямую
+      const rawId = article.article_id ?? article.id ?? article.articleId;
+      const fetchOptions = { credentials: 'include', cache: 'no-store' };
+
+      const isLikedResp = await fetch(`${API_BASE_URL}/Like/isLiked/${rawId}`, fetchOptions).catch(() => null);
+      let isLiked = article.isLiked ?? false;
+      if (isLikedResp && isLikedResp.ok) {
+        const data = await isLikedResp.json().catch(() => ({}));
+        isLiked = data.isLiked ?? data.is_liked ?? isLiked;
+      }
+
+      const likesResp = await fetch(`${API_BASE_URL}/Like/getLikes/${rawId}`, fetchOptions).catch(() => null);
+      let likesCount = article.likesCount ?? article.countLikes ?? article.count_likes ?? 0;
+      if (likesResp && likesResp.ok) {
+        const ldata = await likesResp.json().catch(() => ({}));
+        likesCount = ldata.countLikes ?? ldata.count_likes ?? likesCount;
+      }
+
+      return { ...article, isLiked, likesCount };
+    } catch (err) {
+      console.error('Failed to fetch like status for article', err);
+    }
+
+    return article;
+  };
+  const handleArticleClick = async (article) => {
+    // Получаем актуальный статус лайка перед открытием статьи
+    const articleWithLatestStatus = await getArticleWithLatestLikeStatus(article);
+    
+    if (onArticleClick) {
+      onArticleClick(articleWithLatestStatus);
+    }
+    if (onClose) {
+      onClose();
+    }
+  };
+
   useEffect(() => {
     const isOpening = open && !wasOpenRef.current;
 
@@ -143,10 +182,7 @@ const BestArticlesList = ({ isMobile, onArticleClick, open, onClose }) => {
           return (
             <Box
               key={a.article_id}
-              onClick={() => {
-                if (onArticleClick) onArticleClick(a);
-                if (onClose) onClose();
-              }}
+              onClick={() => handleArticleClick(a)}
               sx={{
                 display: 'flex',
                 alignItems: 'center',
