@@ -1310,10 +1310,6 @@ const extractApiErrorMessage = async (response, fallback = 'Ошибка зап�
                                     <AutoFixHighIcon fontSize="small" /> AI-редактор
                                 </Typography>
 
-                                <Typography variant="caption" sx={{ color: 'var(--text-secondary)' }}>
-                                    Если выделить часть текста в редакторе, ИИ изменит только этот фрагмент. Это снижает расход токенов.
-                                </Typography>
-
                                 <ToggleButtonGroup
                                     value={aiEditMode}
                                     exclusive

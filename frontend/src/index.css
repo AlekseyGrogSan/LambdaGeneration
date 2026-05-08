@@ -98,6 +98,7 @@ body {
     --code-header-text: #111827;
 }
 
+
 code[class*="language-"] .token.keyword,
 pre[class*="language-"] .token.keyword { color: var(--syntax-keyword, var(--accent-500)); }
 code[class*="language-"] .token.string,
@@ -247,7 +248,7 @@ table { table-layout: fixed !important; width: 100% !important; max-width: 100% 
     --ui-c74: #C0C0C0;
     --ui-c75: #c62828;
     --ui-c76: #CD7F32;
-    --ui-c77: #cde9e4;
+    --ui-c77: #09cca8;
     --ui-c78: #cfcfcf;
     --ui-c79: #cffff8;
     --ui-c80: #d0d0d0;

@@ -3185,8 +3185,8 @@ const PostPage = () => {
                 <MenuItem
                     disableRipple
                     onClick={() => {
-                        const idx = ['dark', 'light', 'neutral-gray'].indexOf(mode);
-                        const next = ['dark', 'light', 'neutral-gray'][(idx === -1 ? 0 : (idx + 1) % 3)];
+                        const idx = ['dark', 'light'].indexOf(mode);
+                        const next = ['dark', 'light'][(idx === -1 ? 0 : (idx + 1) % 2)];
                         setColorMode(next);
                         setMoreMenuAnchor(null);
                     }}
@@ -3195,7 +3195,7 @@ const PostPage = () => {
                     <ListItemIcon sx={{ color: 'var(--accent-400)' }}>
                         {mode === 'dark' ? <DarkModeRoundedIcon fontSize="small" /> : mode === 'light' ? <LightModeRoundedIcon fontSize="small" /> : <TonalityRoundedIcon fontSize="small" />}
                     </ListItemIcon>
-                    <ListItemText primaryTypographyProps={{ fontSize: '0.95rem' }} primary={mode === 'dark' ? 'Темная тема' : mode === 'light' ? 'Светлая тема' : 'Нейтральная тема'} />
+                    <ListItemText primaryTypographyProps={{ fontSize: '0.95rem' }} primary={mode === 'dark' ? 'Темная тема' : 'Светлая тема'} />
                 </MenuItem>
                 <MenuItem
                     onClick={() => {
