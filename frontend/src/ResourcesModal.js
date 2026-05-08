@@ -170,7 +170,7 @@ const ResourcesModal = ({ open, handleClose }) => {
                     Подборка актуальных источников, которые помогут быстрее разобраться с интерфейсом, публикациями и разработкой.
                 </Typography>
                 <Divider sx={{ borderColor: 'color-mix(in oklab, var(--text-primary) 8%, transparent)', mb: 2 }} />
-                <List sx={{ p: 0 }}>
+                <List sx={{ p: 0, border: 'none', boxShadow: 'none', backgroundImage: 'none', backgroundColor: 'transparent' }}>
                     {resources.map((resource) => (
                         resource.children ? (
                             <Box

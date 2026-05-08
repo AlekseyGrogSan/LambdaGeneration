@@ -26,7 +26,6 @@ import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import ExpandLessIcon from '@mui/icons-material/ExpandLess';
 import CloseIcon from '@mui/icons-material/Close';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
-import SearchIcon from '@mui/icons-material/Search';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import MenuBookIcon from '@mui/icons-material/MenuBook';
@@ -40,7 +39,8 @@ import SlideshowIcon from '@mui/icons-material/Slideshow';
 import DarkModeRoundedIcon from '@mui/icons-material/DarkModeRounded';
 import LightModeRoundedIcon from '@mui/icons-material/LightModeRounded';
 import TonalityRoundedIcon from '@mui/icons-material/TonalityRounded';
-
+import SearchIcon from '@mui/icons-material/Search';
+import SearchOutlinedIcon from '@mui/icons-material/SearchOutlined';
 import PostCard from './PostCard';
 import PostDetailPage from './PostDetailPage';
 import ProfileModal from './ProfileModal';
@@ -89,11 +89,11 @@ const writePostPageNavState = (state) => {
 
 const commentInputStyle = {
     '& .MuiFilledInput-root': {
-        backgroundColor: 'var(--surface-elevated)',
+        backgroundColor: 'var(--surface-input)',
         color: 'var(--text-primary)',
         borderRadius: '10px',
-        '&:hover': { backgroundColor: 'var(--ui-c42)' },
-        '&.Mui-focused': { backgroundColor: 'var(--ui-c42)' },
+        '&:hover': { backgroundColor: 'var(--surface-soft)' },
+        '&.Mui-focused': { backgroundColor: 'var(--surface-soft)' },
     },
     '& .MuiInputLabel-root': { color: 'var(--text-secondary)' },
 };
@@ -175,14 +175,14 @@ const commonButtonStyle = {
 
 const sidebarButtonStyle = {
     ...commonButtonStyle,
-    backgroundColor: 'color-mix(in oklab, var(--surface-soft) 88%, transparent)',
-    color: 'var(--text-primary)',
-    border: '1px solid var(--border-default)',
+    backgroundColor: 'color-mix(in oklab, var(--surface-soft))',
+    color: 'var(--accent-contrast)',
+    border: '0px solid color-mix(in oklab, var(--border-default))',
     boxShadow: 'none',
     '&:hover': {
-        backgroundColor: 'color-mix(in oklab, var(--surface-soft) 98%, transparent)',
-        borderColor: 'color-mix(in oklab, var(--text-primary) 22%, var(--border-default))',
-        color: 'var(--text-primary)',
+        backgroundColor: 'color-mix(in oklab, var(--surface-soft))',
+        borderColor: 'color-mix(in oklab, var(--border-default))',
+        color: 'var(--accent-contrast)',
         boxShadow: 'none',
     },
 };
@@ -237,11 +237,17 @@ const scrollbarStyle = {
 
 const desktopFeedCardTopOffset = '84px';
 
+const THEME_CYCLE = ['dark', 'light'];
+
 const Sidebar = ({ handleOpen, handleProfileOpen, handlePostOpen, handleCategoryOpen, handleResourcesOpen, handleFaqOpen, handleGuideOpen,handleAdminOpen, isAdmin, currentUser, mode, onSetTheme }) => {
     const currentUserName = extractNameAndIcon(currentUser?.name || '').name;
     const currentUserIcon = resolveProfileIconValue(currentUser);
-    const [themeMenuAnchor, setThemeMenuAnchor] = useState(null);
-    const themeMenuOpen = Boolean(themeMenuAnchor);
+
+    const handleThemeCycle = () => {
+        const idx = THEME_CYCLE.indexOf(mode);
+        const next = THEME_CYCLE[(idx === -1 ? 0 : (idx + 1) % THEME_CYCLE.length)];
+        onSetTheme?.(next);
+    };
 
     return (
         <Box sx={sidebarStyle}>
@@ -263,8 +269,10 @@ const Sidebar = ({ handleOpen, handleProfileOpen, handlePostOpen, handleCategory
                         Lambda
                     </Typography>
                     <IconButton
-                        onClick={(event) => setThemeMenuAnchor(event.currentTarget)}
-                        aria-label="Выбор темы"
+                        onClick={handleThemeCycle}
+                        disableRipple
+                        disableFocusRipple
+                        aria-label="Переключить тему"
                         sx={{
                             color: 'var(--text-secondary)',
                             border: '1px solid var(--border-default)',
@@ -287,46 +295,6 @@ const Sidebar = ({ handleOpen, handleProfileOpen, handlePostOpen, handleCategory
                         )}
                     </IconButton>
                 </Box>
-                <Menu
-                    anchorEl={themeMenuAnchor}
-                    open={themeMenuOpen}
-                    onClose={() => setThemeMenuAnchor(null)}
-                    anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
-                    transformOrigin={{ vertical: 'top', horizontal: 'right' }}
-                    slotProps={{
-                        paper: {
-                            sx: {
-                                mt: 1,
-                                minWidth: 180,
-                                backgroundColor: 'color-mix(in oklab, var(--bg-elevated) 94%, var(--bg-canvas))',
-                                border: '1px solid var(--border-default)',
-                                borderRadius: 2,
-                                color: 'var(--text-primary)',
-                                boxShadow: 'var(--shadow-soft)',
-                                backdropFilter: 'blur(16px)',
-                            },
-                        },
-                    }}
-                >
-                    <MenuItem
-                        selected={mode === 'dark'}
-                        onClick={() => {
-                            onSetTheme?.('dark');
-                            setThemeMenuAnchor(null);
-                        }}
-                    >
-                        Темная
-                    </MenuItem>
-                    <MenuItem
-                        selected={mode === 'light'}
-                        onClick={() => {
-                            onSetTheme?.('light');
-                            setThemeMenuAnchor(null);
-                        }}
-                    >
-                        Светлая
-                    </MenuItem>
-                </Menu>
 
                 {currentUser ? (
                     <Box sx={{ mb: 2.2, display: 'flex', alignItems: 'center', gap: 1.1 }}>
@@ -403,6 +371,8 @@ const Sidebar = ({ handleOpen, handleProfileOpen, handlePostOpen, handleCategory
                     </Button>
                     <Button
                         variant="text"
+                        disableRipple
+                        disableFocusRipple
                         sx={{ color: 'var(--text-secondary)', fontSize: '0.79rem', alignSelf: 'center', mt: 0.2 }}
                         onClick={handleGuideOpen}
                     >
@@ -461,7 +431,7 @@ const FeedCommentItem = ({
     >
         <Box
             sx={{
-                backgroundColor: depth === 0 ? 'var(--ui-c32)' : 'var(--ui-c35)',
+                backgroundColor: depth === 0 ? 'var(--surface-elevated)' : 'var(--surface-soft)',
                 border: '1px solid var(--border-default)',
                 borderRadius: '12px',
                 p: 1.2,
@@ -744,7 +714,7 @@ const CommentsFeedSidebar = ({
                 borderTop: isDrawer ? '1px solid var(--border-default)' : undefined,
                 borderBottom: !isDrawer ? '1px solid var(--border-default)' : undefined,
                 flexShrink: 0,
-                backgroundColor: isDrawer ? 'var(--ui-c23)' : 'transparent',
+                backgroundColor: isDrawer ? 'var(--surface-panel)' : 'transparent',
                 pb: isDrawer ? 'calc(12px + env(safe-area-inset-bottom, 0px))' : 1.5,
             }}
         >
@@ -858,17 +828,17 @@ const PostPage = () => {
     const [isForgotModalOpen, setIsForgotModalOpen] = useState(false);
     const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
     const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
-const [isResourcesModalOpen, setIsResourcesModalOpen] = useState(false);
-const [isFaqModalOpen, setIsFaqModalOpen] = useState(false);
-const [isGuideModalOpen, setIsGuideModalOpen] = useState(false);
-const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
+    const [isResourcesModalOpen, setIsResourcesModalOpen] = useState(false);
+    const [isFaqModalOpen, setIsFaqModalOpen] = useState(false);
+    const [isGuideModalOpen, setIsGuideModalOpen] = useState(false);
+    const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
     const [moreMenuAnchor, setMoreMenuAnchor] = useState(null);
     const moreMenuLockRef = useRef(null);
     const moreMenuScrollTopRef = useRef(0);
     const theme = useTheme();
     const isDesktopLayout = useMediaQuery(theme.breakpoints.up(768));
     const isProfileModalOpenRef = useRef(false);
-    
+    const [searchActive, setSearchActive] = useState(false);
     const [viewedProfileId, setViewedProfileId] = useState(null); 
     const [articles, setArticles] = useState([]); 
     const [currentUser, setCurrentUser] = useState(null);
@@ -3020,29 +2990,35 @@ const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
                                     >
                                         Рекомендации
                                     </Button>
-                                    <Button
-                                        variant="outlined"
-                                        onClick={handleSearchOpen}
-                                        sx={{ 
-                                            textTransform: 'none',
-                                            borderRadius: '25px',
-                                            px: 3,
-                                            py: 1,
-                                            fontWeight: 'bold',
-                                            transition: 'all 0.3s ease',
-                                            borderColor: 'var(--border-default)',
-                                            color: 'var(--text-primary)',
-                                            boxShadow: 'none',
-                                            '&:hover': { 
-                                                backgroundColor: 'color-mix(in oklab, var(--surface-soft) 70%, transparent)',
-                                                borderColor: 'color-mix(in oklab, var(--accent-500) 35%, var(--border-default))',
-                                                color: 'var(--accent-500)',
-                                                boxShadow: 'none'
-                                            }
-                                        }}
-                                    >
-                                        Поиск
-                                    </Button>
+                                    <Box sx={{ display: 'flex', justifyContent: 'center' }}>
+                                        <Button
+                                            variant="outlined"
+                                            onClick={handleSearchOpen}
+                                            sx={{ textTransform: 'none',
+                                                borderRadius: '20px',
+                                                px: 3,
+                                                py: 1,
+                                                fontWeight: 'bold',
+                                                transition: 'all 0.3s ease',
+                                                borderColor: 'var(--border-default)',
+                                                color: 'var(--text-primary)',
+                                                boxShadow: 'none',
+                                                '&:hover': { 
+                                                    backgroundColor: 'color-mix(in oklab, var(--surface-soft) 70%, transparent)',
+                                                    borderColor: 'color-mix(in oklab, var(--accent-500) 35%, var(--border-default))',
+                                                    color: 'var(--accent-500)',
+                                                    boxShadow: 'none'
+                                                }}}
+                                        >
+                                            <Box sx={{ display: 'flex', justifyContent: 'center' }}>
+                                                {searchActive ? (
+                                                    <SearchIcon sx={{ fontSize: 24 }} />
+                                                ) : (
+                                                    <SearchOutlinedIcon sx={{ fontSize: 24 }} />
+                                                )}
+                                            </Box>
+                                        </Button>
+                                    </Box>
                                 </>
                             )}
                         </Box>
@@ -3207,30 +3183,19 @@ const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
                 }}
             >
                 <MenuItem
-                    selected={mode === 'dark'}
+                    disableRipple
                     onClick={() => {
+                        const idx = ['dark', 'light', 'neutral-gray'].indexOf(mode);
+                        const next = ['dark', 'light', 'neutral-gray'][(idx === -1 ? 0 : (idx + 1) % 3)];
+                        setColorMode(next);
                         setMoreMenuAnchor(null);
-                        setColorMode('dark');
                     }}
                     sx={{ minHeight: 48 }}
                 >
                     <ListItemIcon sx={{ color: 'var(--accent-400)' }}>
-                        <DarkModeRoundedIcon fontSize="small" />
+                        {mode === 'dark' ? <DarkModeRoundedIcon fontSize="small" /> : mode === 'light' ? <LightModeRoundedIcon fontSize="small" /> : <TonalityRoundedIcon fontSize="small" />}
                     </ListItemIcon>
-                    <ListItemText primaryTypographyProps={{ fontSize: '0.95rem' }} primary="Темная тема" />
-                </MenuItem>
-                <MenuItem
-                    selected={mode === 'light'}
-                    onClick={() => {
-                        setMoreMenuAnchor(null);
-                        setColorMode('light');
-                    }}
-                    sx={{ minHeight: 48 }}
-                >
-                    <ListItemIcon sx={{ color: 'var(--accent-400)' }}>
-                        <LightModeRoundedIcon fontSize="small" />
-                    </ListItemIcon>
-                    <ListItemText primaryTypographyProps={{ fontSize: '0.95rem' }} primary="Светлая тема" />
+                    <ListItemText primaryTypographyProps={{ fontSize: '0.95rem' }} primary={mode === 'dark' ? 'Темная тема' : mode === 'light' ? 'Светлая тема' : 'Нейтральная тема'} />
                 </MenuItem>
                 <MenuItem
                     onClick={() => {

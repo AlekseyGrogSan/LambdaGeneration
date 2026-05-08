@@ -78,7 +78,7 @@ const EmailVerificationModal = ({ open, handleClose, email, onVerificationSucces
 
     return (
         <Modal disableRestoreFocus open={open} onClose={handleClose}>
-            <Box sx={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', width: 350, bgcolor: 'var(--ui-c40)', p: 4, borderRadius: 4, color: 'var(--text-primary)' }}>
+            <Box sx={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', width: 350, bgcolor: 'var(--surface-panel)', p: 4, borderRadius: 4, color: 'var(--text-primary)' }}>
                 <Typography variant="h5" textAlign="center" gutterBottom>Подтверждение</Typography>
                 <Typography variant="body2" textAlign="center" sx={{ color: 'var(--text-secondary)', mb: 2 }}>Код отправлен на {email}</Typography>
                 
@@ -104,7 +104,7 @@ const EmailVerificationModal = ({ open, handleClose, email, onVerificationSucces
                     }}
                 />
 
-                <Button fullWidth variant="contained" onClick={handleVerify} disabled={loading} sx={{ bgcolor: 'var(--ui-c8)' }}>
+                <Button fullWidth variant="contained" onClick={handleVerify} disabled={loading} sx={{ bgcolor: 'var(--accent-500)' }}>
                     {loading ? <CircularProgress size={24} /> : 'Подтвердить'}
                 </Button>
 

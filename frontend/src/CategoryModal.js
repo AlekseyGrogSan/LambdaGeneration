@@ -9,7 +9,7 @@ const style = {
     transform: 'translate(-50%, -50%)',
     width: { xs: '92%', sm: 560, md: 700 },
     bgcolor: 'var(--surface-panel)',
-    border: '1px solid color-mix(in oklab, var(--text-primary) 8%, transparent)',
+    border: '1px solid color-mix(in oklab, var(--text-primary) 2%, transparent)',
     borderRadius: '16px',
     boxShadow: 'var(--shadow-soft)',
     p: 4,

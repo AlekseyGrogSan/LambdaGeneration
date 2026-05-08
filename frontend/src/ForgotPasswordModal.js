@@ -68,7 +68,7 @@ const ForgotPasswordModal = ({ open, handleClose }) => {
         left: '50%',
         transform: 'translate(-50%, -50%)',
         width: { xs: '90%', sm: '400px' },
-        bgcolor: 'var(--ui-c41)',
+        bgcolor: 'var(--surface-panel)',
         borderRadius: '16px',
         boxShadow: 24,
         p: 4,

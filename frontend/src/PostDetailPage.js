@@ -168,11 +168,11 @@ const TAG_COLORS = [
 
 const commentInputStyle = {
     '& .MuiFilledInput-root': {
-        backgroundColor: 'var(--surface-elevated)',
+        backgroundColor: 'var(--surface-input)',
         color: 'var(--text-primary)',
         borderRadius: '10px',
-        '&:hover': { backgroundColor: 'var(--ui-c42)' },
-        '&.Mui-focused': { backgroundColor: 'var(--ui-c42)' },
+        '&:hover': { backgroundColor: 'var(--surface-soft)' },
+        '&.Mui-focused': { backgroundColor: 'var(--surface-soft)' },
     },
     '& .MuiInputLabel-root': { color: 'var(--text-secondary)' },
 };
@@ -236,7 +236,7 @@ const CommentItem = ({
     >
         <Box
             sx={{
-                backgroundColor: depth === 0 ? 'var(--ui-c32)' : 'var(--ui-c35)',
+                backgroundColor: depth === 0 ? 'var(--surface-elevated)' : 'var(--surface-soft)',
                 border: '1px solid var(--border-default)',
                 borderRadius: '12px',
                 p: 1.5,
@@ -1456,7 +1456,7 @@ const PostDetailPage = React.memo(({
                                 borderTop: '1px solid var(--border-default)',
                                 p: 2,
                                 pb: 'calc(12px + env(safe-area-inset-bottom, 0px))',
-                                backgroundColor: 'var(--ui-c23)',
+                                backgroundColor: 'var(--surface-panel)',
                             }}
                         >
                             <Box sx={{ display: 'flex', alignItems: 'stretch', gap: 1 }}>

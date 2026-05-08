@@ -39,7 +39,7 @@ body {
 :root[data-theme="dark"] {
     --bg-canvas: #121212;
     --bg-elevated: #1b1b1b;
-    --surface-panel: rgba(30, 30, 30, 0.92);
+    --surface-panel: rgb(30, 30, 30);
     --surface-elevated: #1f1f1f;
     --surface-soft: #242424;
     --surface-input: #2a2a2a;
@@ -60,52 +60,42 @@ body {
 }
 
 :root[data-theme="light"] {
-    --bg-canvas: #f2f4f6;
-    --bg-elevated: #f8fafc;
-    --surface-panel: rgba(247, 250, 253, 0.94);
-    --surface-elevated: #f3f6fa;
-    --surface-soft: #e9eef4;
-    --surface-input: #edf2f7;
+    --bg-main: #f9fafb;
+    --bg-sidebar: #ffffff;
+    --bg-elevated: #ffffff;
+    --bg-input: #e0e0e0;
+    --bg-canvas: #e8edf2;
+    --surface-panel: #d3d6d8;
+    --surface-elevated: #dddddd;
+    --surface-soft: #d5dce5;
+    --surface-input: #cdd5de;
     --text-primary: #111827;
-    --text-secondary: #344256;
-    --text-strong: #0f172a;
-    --border-default: rgba(33, 56, 84, 0.18);
-    --shadow-soft: 0 12px 22px rgba(18, 28, 44, 0.14);
+    --text-secondary: #4b5563;
+    --text-strong: #060d18;
+    --border-default: #c2ccd8;
+    --shadow-soft: 0 4px 20px rgba(0, 0, 0, 0.10);
 
-    --code-bg: #eef4fb;
-    --code-header-bg: #e6edf3;
-    --code-border: rgba(44, 83, 125, 0.18);
-    --code-header-text: #13253c;
-}
+    /* Darker green for light theme readability */
+    --accent-400: #019483;
+    --accent-500: #03806f;
+    --accent-600: #016b5d;
+    --accent-contrast: #ffffff;
 
-:root[data-theme="neutral-gray"] {
-    --bg-canvas: #d3d6db;
-    --bg-elevated: #c7cbd1;
-    --surface-panel: rgba(196, 200, 206, 0.9);
-    --surface-elevated: #c4c8ce;
-    --surface-soft: #bcc0c7;
-    --surface-input: #dfe2e7;
-    --text-primary: #151a21;
-    --text-secondary: #2f3a49;
-    --text-strong: #0f1319;
-    --border-default: rgba(30, 38, 52, 0.28);
-    --shadow-soft: 0 12px 24px rgba(18, 22, 30, 0.22);
+    --accent-glow: rgba(0, 87, 76, 0.12);
 
-    --code-bg: #c4c8ce;
-    --code-header-bg: #b7bbc2;
-    --code-border: rgba(35, 45, 60, 0.22);
-    --code-header-text: #12151b;
+    /* Syntax highlight overrides for light theme */
+    --syntax-keyword: #005f52;
+    --syntax-string: #9a3e1e;
+    --syntax-function: #2c5f9e;
+    --syntax-comment: #5a7a6a;
+    --syntax-number: #8a5c10;
+    --syntax-operator: #005f52;
 
-    --syntax-keyword: #2D6A4F;
-    --syntax-string: #C16F4A;
-    --syntax-function: #4A6FA5;
-    --syntax-comment: #8F8F8F;
-    --syntax-number: #C28B3B;
-    --syntax-operator: #5A9E4E;
-}
-
-:root[data-theme="neutral-gray"] body {
-    background: var(--bg-canvas);
+    /* Code block overrides for light theme */
+    --code-bg: #dce3ec;
+    --code-header-bg: #cfd7e2;
+    --code-border: #b8c5d4;
+    --code-header-text: #111827;
 }
 
 code[class*="language-"] .token.keyword,

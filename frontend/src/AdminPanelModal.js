@@ -27,19 +27,19 @@ const scrollbarStyle = {
         width: '8px',
     },
     '&::-webkit-scrollbar-track': {
-        background: 'var(--ui-c25)',
+        background: 'var(--surface-soft)',
         borderRadius: '10px',
     },
     '&::-webkit-scrollbar-thumb': {
         background: 'var(--accent-500)',
         borderRadius: '10px',
-        border: '2px solid var(--ui-c25)',
+        border: '2px solid var(--surface-soft)',
     },
     '&::-webkit-scrollbar-thumb:hover': {
         background: 'var(--accent-600)',
     },
     scrollbarWidth: 'thin',
-    scrollbarColor: 'var(--accent-500) var(--ui-c25)',
+    scrollbarColor: 'var(--accent-500) var(--surface-soft)',
 };
 
 const modalStyle = {
@@ -49,13 +49,13 @@ const modalStyle = {
     transform: 'translate(-50%, -50%)',
     width: { xs: '95%', sm: 800 },
     maxHeight: '90vh',
-    bgcolor: 'var(--ui-c23)',
+    bgcolor: 'var(--surface-panel)',
     borderRadius: '18px',
-    border: '1px solid var(--ui-c176)',
-    boxShadow: '0 20px 50px var(--ui-c138)',
+    border: '1px solid var(--border-default)',
+    boxShadow: 'var(--shadow-soft)',
     px: 4,
     py: 3,
-    color: 'white',
+    color: 'var(--text-primary)',
     overflowY: 'auto',
     ...scrollbarStyle,
 };
@@ -64,8 +64,8 @@ const sectionStyle = {
     mt: 3,
     p: 2.5,
     borderRadius: '14px',
-    bgcolor: 'var(--ui-c172)',
-    border: '1px solid var(--ui-c175)',
+    bgcolor: 'var(--surface-elevated)',
+    border: '1px solid var(--border-default)',
     color: 'var(--text-primary)'
 };
 
@@ -423,7 +423,7 @@ const AdminPanelModal = ({ open, handleClose }) => {
                     <Stack spacing={2} direction={{ xs: 'column', sm: 'row' }} sx={{ mb: 2 }}>
                         <FormControl
                             variant="filled"
-                            sx={{ flex: 1, backgroundColor: 'var(--ui-c32)' }}
+                            sx={{ flex: 1, backgroundColor: 'var(--surface-soft)' }}
                             size="small"
                         >
                             <InputLabel sx={{ color: 'var(--text-primary)' }}>Пользователь</InputLabel>
@@ -518,7 +518,7 @@ const AdminPanelModal = ({ open, handleClose }) => {
                             <CircularProgress size={24} sx={{ color: 'var(--accent-500)' }} />
                         </Box>
                     ) : articles.length === 0 ? (
-                        <Typography sx={{ color: 'var(--ui-c72)', mt: 1 }}>Нет статей.</Typography>
+                        <Typography sx={{ color: 'var(--text-secondary)', mt: 1 }}>Нет статей.</Typography>
                     ) : (
                         <List sx={{ mt: 1, maxHeight: 220, overflowY: 'auto', ...scrollbarStyle }}>
                             {articles.map((article) => (
@@ -528,11 +528,11 @@ const AdminPanelModal = ({ open, handleClose }) => {
                                         primaryTypographyProps={{ color: 'var(--text-primary)', sx: { fontWeight: 600 } }}
                                         secondary={
                                             <>
-                                                <Typography component="span" sx={{ color: 'var(--ui-c66)' }}>
+                                                <Typography component="span" sx={{ color: 'var(--text-secondary)' }}>
                                                     {new Date(article.createdDate).toLocaleString()}
                                                 </Typography>
                                                 {' · '}
-                                                <Typography component="span" sx={{ color: 'var(--ui-c66)' }}>
+                                                <Typography component="span" sx={{ color: 'var(--text-secondary)' }}>
                                                     Лайки: {article.countLikes} · Комментарии: {article.countComments}
                                                 </Typography>
                                             </>
@@ -590,7 +590,7 @@ const AdminPanelModal = ({ open, handleClose }) => {
                             <CircularProgress size={24} sx={{ color: 'var(--accent-500)' }} />
                         </Box>
                     ) : userComments.length === 0 ? (
-                        <Typography sx={{ color: 'var(--ui-c72)', mt: 1 }}>Нет комментариев.</Typography>
+                        <Typography sx={{ color: 'var(--text-secondary)', mt: 1 }}>Нет комментариев.</Typography>
                     ) : (
                         <List sx={{ mt: 1, maxHeight: 220, overflowY: 'auto', ...scrollbarStyle }}>
                             {userComments.map((comment) => (
@@ -600,10 +600,10 @@ const AdminPanelModal = ({ open, handleClose }) => {
                                         primaryTypographyProps={{ color: 'var(--text-primary)' }}
                                         secondary={
                                             <>
-                                                <Typography component="span" sx={{ color: 'var(--ui-c66)', display: 'block' }}>
+                                                <Typography component="span" sx={{ color: 'var(--text-secondary)', display: 'block' }}>
                                                     {comment.articleTitle || 'Статья без названия'}
                                                 </Typography>
-                                                <Typography component="span" sx={{ color: 'var(--ui-c66)' }}>
+                                                <Typography component="span" sx={{ color: 'var(--text-secondary)' }}>
                                                     {(comment.datePublish && new Date(comment.datePublish).toLocaleString()) || '—'} · Лайки: {comment.countLikes}
                                                 </Typography>
                                             </>
@@ -644,7 +644,7 @@ const AdminPanelModal = ({ open, handleClose }) => {
                                 onClick={handleDeleteAllComments}
                                 size="small"
                                 disabled={commentsLoading}
-                                sx={{ color: 'var(--ui-c98)', textTransform: 'none' }}
+                                sx={{ color: 'var(--text-secondary)', textTransform: 'none' }}
                             >
                                 Удалить все
                             </Button>
@@ -655,7 +655,7 @@ const AdminPanelModal = ({ open, handleClose }) => {
                                 <CircularProgress size={24} sx={{ color: 'var(--accent-500)' }} />
                             </Box>
                         ) : comments.length === 0 ? (
-                            <Typography sx={{ color: 'var(--ui-c72)', mt: 1 }}>Комментариев нет.</Typography>
+                            <Typography sx={{ color: 'var(--text-secondary)', mt: 1 }}>Комментариев нет.</Typography>
                         ) : (
                             <List sx={{ mt: 1, maxHeight: 220, overflowY: 'auto', ...scrollbarStyle }}>
                                 {comments.map((comment) => (
@@ -675,7 +675,7 @@ const AdminPanelModal = ({ open, handleClose }) => {
                                                     size="small"
                                                     variant="text"
                                                     onClick={() => handleDeleteComment(comment.id)}
-                                                    sx={{ color: 'var(--ui-c98)', textTransform: 'none' }}
+                                                    sx={{ color: 'var(--text-secondary)', textTransform: 'none' }}
                                                 >
                                                     Удалить
                                                 </Button>
@@ -687,7 +687,7 @@ const AdminPanelModal = ({ open, handleClose }) => {
                                             primary={comment.content}
                                             primaryTypographyProps={{ color: "var(--text-primary)" }}
                                             secondary={
-                                                <Typography variant="caption" sx={{ color: 'var(--ui-c66)' }}>
+                                                <Typography variant="caption" sx={{ color: 'var(--text-secondary)' }}>
                                                     Автор: {comment.authorId} · Опубликовано: {new Date(comment.datePublish).toLocaleString()}
                                                 </Typography>
                                             }
