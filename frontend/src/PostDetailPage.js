@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState, useMemo } from 'react';
+import React, { useCallback, useEffect, useRef, useState, useMemo } from 'react';
 
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
@@ -77,7 +77,7 @@ const CodeBlock = ({ language, value }) => {
                 }}
             >
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.2 }}>
-                    <Typography variant='caption' sx={{ color: 'var(--ui-c63)', fontWeight: 700, letterSpacing: 0.4 }}>
+                    <Typography variant='caption' sx={{ color: '#ffffff !important', fontWeight: 700, letterSpacing: 0.4, WebkitTextFillColor: '#ffffff !important' }}>
                         {(language || 'text').toUpperCase()}
                     </Typography>
                 </Box>
@@ -469,10 +469,15 @@ const PostDetailPage = React.memo(({
     const authorCacheRef = useRef({});
     const [imageBroken, setImageBroken] = useState(false);
     const [notification, setNotification] = useState({ open: false, message: '', severity: 'info' });
+    const [resolvedAuthorInfo, setResolvedAuthorInfo] = useState(null);
     const theme = useTheme();
     const isDesktopComments = useMediaQuery(theme.breakpoints.up(768));
     const contentRef = useRef(null);
     const renderedArticleContent = useMemo(() => formatContentForRender(post?.article_content || ''), [post?.article_content]);
+    const resolvedArticleAuthorId = authorId ?? post?.author_id ?? post?.authorId;
+    const displayedAuthorName = nickname || resolvedAuthorInfo?.name || 'Автор';
+    const displayedAuthorAvatar = authorAvatar || resolvedAuthorInfo?.avatar || null;
+    const displayedAuthorProfileIcon = authorProfileIcon || resolvedAuthorInfo?.profileIcon || '';
 
     const articleBody = useMemo(() => (
         <Box
@@ -596,7 +601,7 @@ const PostDetailPage = React.memo(({
         return TAG_COLORS[(hash + index) % TAG_COLORS.length];
     };
 
-    const getAuthorInfo = async (userId) => {
+    const getAuthorInfo = useCallback(async (userId) => {
         if (authorCacheRef.current[userId]) {
             return authorCacheRef.current[userId];
         }
@@ -626,7 +631,32 @@ const PostDetailPage = React.memo(({
             authorCacheRef.current[userId] = fallback;
             return fallback;
         }
-    };
+    }, []);
+
+    useEffect(() => {
+        let cancelled = false;
+
+        if (!resolvedArticleAuthorId) {
+            setResolvedAuthorInfo(null);
+            return undefined;
+        }
+
+        if (authorAvatar && nickname && authorProfileIcon) {
+            setResolvedAuthorInfo(null);
+            return undefined;
+        }
+
+        (async () => {
+            const info = await getAuthorInfo(resolvedArticleAuthorId);
+            if (!cancelled) {
+                setResolvedAuthorInfo(info);
+            }
+        })();
+
+        return () => {
+            cancelled = true;
+        };
+    }, [authorAvatar, authorProfileIcon, getAuthorInfo, nickname, resolvedArticleAuthorId]);
 
     const enrichComment = async (comment) => {
         const commentId = comment.commentId ?? comment.CommentId;
@@ -1143,7 +1173,7 @@ const PostDetailPage = React.memo(({
                     <Typography variant="body2" sx={labelStyle}>Автор</Typography>
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
                         <Avatar
-                            src={buildAvatarUrl(API_BASE_URL, authorAvatar)}
+                            src={buildAvatarUrl(API_BASE_URL, displayedAuthorAvatar)}
                             sx={{ width: 34, height: 34, border: '2px solid var(--accent-500)' }}
                             imgProps={{
                                 onError: (e) => {
@@ -1154,9 +1184,9 @@ const PostDetailPage = React.memo(({
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, flexWrap: 'wrap' }}>
                             <UserRoleBadge role={authorRole} size="sm" />
                             <Typography variant="h6" sx={{ color: 'var(--accent-500)', fontWeight: 'bold' }}>
-                                {nickname}
+                                {displayedAuthorName}
                             </Typography>
-                            <ProfileIcon icon={authorProfileIcon} size={20} />
+                            <ProfileIcon icon={displayedAuthorProfileIcon} size={20} />
                         </Box>
                     </Box>
                 </Box>

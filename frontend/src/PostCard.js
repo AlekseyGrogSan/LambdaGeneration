@@ -65,7 +65,7 @@ const CodeBlock = ({ language, value }) => {
                 }}
             >
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.2 }}>
-                    <Typography variant='caption' sx={{ color: 'var(--ui-c63)', fontWeight: 700, letterSpacing: 0.4 }}>
+                    <Typography variant='caption' sx={{ color: '#ffffff !important', fontWeight: 700, letterSpacing: 0.4, WebkitTextFillColor: '#ffffff !important' }}>
                         {(language || 'text').toUpperCase()}
                     </Typography>
                 </Box>
@@ -101,7 +101,7 @@ const CodeBlock = ({ language, value }) => {
                         alignItems: 'center'
                     }}
                 >
-                    <Typography variant='caption' sx={{ color: 'var(--ui-c55)' }}>
+                    <Typography variant='caption' sx={{ color: '#ffffff !important', fontWeight: 700, letterSpacing: 0.4, WebkitTextFillColor: '#ffffff !important' }}>
                         {codeLines.length} строк кода
                     </Typography>
                     <Button

@@ -48,7 +48,7 @@ namespace LambdaGeneration.API.Controllers
         {
             return new GetArticleResponse(
                 article.ArticleID,
-                article.ArticleID,
+                article.AuthorID,
                 article.ArticleTitle,
                 article.ArticlePreview,
                 article.ArticleContent,

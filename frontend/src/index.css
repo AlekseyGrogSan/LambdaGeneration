@@ -90,12 +90,6 @@ body {
     --syntax-comment: #5a7a6a;
     --syntax-number: #8a5c10;
     --syntax-operator: #005f52;
-
-    /* Code block overrides for light theme */
-    --code-bg: #dce3ec;
-    --code-header-bg: #cfd7e2;
-    --code-border: #b8c5d4;
-    --code-header-text: #111827;
 }
 
 
@@ -166,6 +160,28 @@ table { table-layout: fixed !important; width: 100% !important; max-width: 100% 
     white-space: pre-wrap !important;
     word-wrap: break-word !important;
     overflow-x: auto !important;
+}
+
+.code-block-table th,
+.tg-code-block th {
+    color: #ffffff !important;
+    -webkit-text-fill-color: #ffffff !important;
+}
+
+/* Force white text in code block headers for all components */
+.code-block-table th *,
+.tg-code-block th * {
+    color: #ffffff !important;
+    -webkit-text-fill-color: #ffffff !important;
+}
+
+/* Line numbers color override */
+.react-syntax-highlighter-line-number {
+    color: #ffffff !important;
+}
+
+.hljs-ln-n {
+    color: #ffffff !important;
 }
 
 
